@@ -1,17 +1,15 @@
 import TicketBoard from '@/components/tickets/TicketBoard';
 import Sidebar from '@/components/layout/sidebar';
 
-interface TicketsPageProps {
-  params: Promise<{ projectId: string; workflowId: string }>;
-}
-
-export default async function TicketsPage({ params }: TicketsPageProps) {
+export default async function TicketsPage({ params }: {
+    params: Promise<{ projectId: string; workflowId: string }>;
+}) {
   const { projectId, workflowId } = await params;
 
   return (
     <Sidebar>
       <main className="flex-1 h-full overflow-hidden">
-        <TicketBoard projectId={projectId} workflowId={workflowId} />
+        <TicketBoard project_id={projectId} workflow_id={workflowId} />
       </main>
     </Sidebar>
   );

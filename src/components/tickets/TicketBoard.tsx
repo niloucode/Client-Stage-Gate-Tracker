@@ -22,10 +22,10 @@ import { TagManager } from "../tag/TagModals";
 
 // Actions
 import {
-    selectTicket,
+    selectTicketsByWorkflow,
     updateTicketStatus,
     createTicket,
-    cascadeSoftDeleteTicket
+    cascadeSoftDeleteTicket,
 } from "@/actions/ticketActions";
 import {
     selectTag,
@@ -55,10 +55,10 @@ import { TagsIcon, FilterIcon, PlusIcon } from './assets';
  * @param {string} props.workflowId - Unique container scope identifying the target board sprint layout.
  * @returns {JSX.Element} The fully rendered sprint board panel or a full-viewport loading skeleton.
  */
-export default function TicketBoard({projectId, workflowId}:
+export default function TicketBoard({project_id, workflow_id}:
 {
-    projectId: string;
-    workflowId: string;
+    project_id: string;
+    workflow_id: string;
 })
 {
     const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -108,7 +108,7 @@ export default function TicketBoard({projectId, workflowId}:
         async function fetchBot() {
             try {
                 setIsLoading(true);
-                const data = await selectTicket();
+                const data = await selectTicketsByWorkflow(workflow_id);
 
                 // Only update state if the user is still looking at this page!
                 if (isMounted) {
@@ -185,7 +185,7 @@ export default function TicketBoard({projectId, workflowId}:
             // Clean matching call setup with deadlineDate passed as the 3rd argument
             const result = await createTicket(
                 {
-                    workflow_id: "cddde38b-1a89-440a-9d39-6bf12cfb3d05",
+                    workflow_id: workflow_id,
                     name: name,
                     deadline_date: deadline_date,
                     status: TicketStatus.PENDING,

@@ -67,7 +67,7 @@ export default function TicketsShowcase() {
       {/* ── Ticket Board ── */}
       <Section title="Ticket Board">
         <div className="border border-gray-200 rounded-xl overflow-hidden" style={{ height: 560 }}>
-          <TicketBoard projectId="demo" workflowId="sprint-1" />
+          <TicketBoard project_id="demo" workflow_id="sprint-1" />
         </div>
       </Section>
 

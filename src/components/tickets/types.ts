@@ -1,6 +1,7 @@
 import Prisma from '@/lib/generated/prisma';
 import { status, CommentParentType, ImageParentType } from "@/lib/generated/prisma";
-import {selectTicket} from "@/actions/ticketActions";
+import { selectTicket } from "@/actions/ticketActions";
+import { selectComment } from "@/actions/commentActions";
 
 export interface Assignee {
   name: string;
@@ -14,6 +15,8 @@ export interface Profile {
   last_name:string,
   email?: string | null;
 }
+
+export type Comment = Awaited<ReturnType<typeof selectComment>>[number];
 
 export type Ticket = Awaited<ReturnType<typeof selectTicket>>[number];
 // export interface Ticket {
@@ -77,24 +80,6 @@ export interface TicketSubtask {
   subtask_id: string;
   ticket_id: string;
 }
-
-export interface Comment {
-  id: string;
-  text: string;
-  /** Object URL for preview — swap for a real URL once uploaded to storage */
-  imageUrl?: string;
-  timestamp: Date;
-}
-
-
-
-
-
-
-
-
-
-
 
 export interface Attachment {
   id: string;

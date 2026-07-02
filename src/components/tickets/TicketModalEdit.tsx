@@ -1,28 +1,20 @@
 'use client';
 
-import { Ticket, Profile, Tag } from './types';
+import { Ticket, Profile, Tag, Comment } from './types';
 
 import { useState, useRef, useEffect } from 'react';
-import { status as TicketStatus } from "@/lib/generated/prisma";
+import {CommentParentType, status as status} from "@/lib/generated/prisma";
 import { Input } from '@/components/ui/input';
 
 import { selectTag } from "@/actions/tagActions";
 import { selectProfile } from "@/actions/profileActions";
 import { updateTicket } from "@/actions/ticketActions";
+import {createCommentWithImages, selectComment, selectTicketComment} from "@/actions/commentActions";
+import {createClient} from "@/lib/supabase/client";
 
-/** Local comment entry — persisted to backend once wired */
-interface Comment {
-  id: string;
-  text: string;
-  /** Object URL for preview — swap for a real URL once uploaded to storage */
-  imageUrl?: string;
-  timestamp: Date;
-}
 
-const STATUSES: TicketStatus[] = ['PENDING', 'IN_PROGRESS', 'FINISHED'];
-
-function statusLabel(status: TicketStatus) {
-  const map: Record<TicketStatus, string> = {
+function statusLabel(status: status) {
+  const map: Record<status, string> = {
     PENDING:     'Pending',
     IN_PROGRESS: 'In Progress',
     FINISHED:    'Finished',
@@ -30,17 +22,17 @@ function statusLabel(status: TicketStatus) {
   return map[status];
 }
 
+const STATUSES = [status.PENDING, status.IN_PROGRESS, status.FINISHED]
+
 type EditingField = 'title' | 'assignee' | 'watcher' | 'deadline' | 'tags' | 'description' | 'status' | null;
 
-interface EditTicketModalProps {
+export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose, onUpdate, tags }:{
   ticket: Ticket | null;
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (updated: Ticket) => void;
   tags: Tag[];
-}
-
-export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose, onUpdate, tags }: EditTicketModalProps) {
+}) {
   const [ticket, setTicket] = useState<Ticket | null>(initialTicket);
   const [editing, setEditing] = useState<EditingField>(null);
   const [titleDraft, setTitleDraft] = useState('');
@@ -62,48 +54,81 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
   /** Comments — local only until backend is wired */
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
-  const [commentImage, setCommentImage] = useState<File | null>(null);
-  const [commentImagePreview, setCommentImagePreview] = useState<string | null>(null);
+  const [commentImages, setCommentImages] = useState<File[]>([]);
+  const [commentImagePreviews, setCommentImagePreviews] = useState<string[]>([]);
   const commentImageRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+// 1. Fetch profiles cleanly on mount with a cleanup guard
   useEffect(() => {
-    selectProfile().then((data) => setProfiles(data as Profile[]));
+    let isMounted = true;
+
+    selectProfile()
+        .then((data) => {
+          if (isMounted) {
+            setProfiles(data as Profile[]);
+          }
+        })
+        .catch((err) => console.error("Failed to fetch profiles:", err));
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    selectComment()
+        .then((data) => {
+          if (isMounted) {
+            setComments(data as Comment[]);
+          }
+        })
+        .catch((err) => console.error("Failed to fetch comments:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+// Click-outside listener (Fixed event type mismatch: use 'mousedown' instead of MouseEvent)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (assignDropdownRef.current && !assignDropdownRef.current.contains(e.target as Node)) {
         setShowAssignDropdown(false);
       }
     };
+
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+// Sync initialTicket data when it changes + safely fetch tags
   useEffect(() => {
     let isMounted = true;
 
-    if (isMounted) {
-      selectTag()
-          .then(() => {
-            if (isMounted) {
-              setTicket(initialTicket);
-              setEditing(null);
-              setSelectedTags(initialTicket?.TicketTags?.map(t => t.tag_id) ?? []);
-            }
-          })
-          .catch((err) => console.error("Failed to fetch tags:", err));
-    }
+    selectTag()
+        .then((data) => {
+          if (!isMounted) return;
+          setTicket(initialTicket);
+          setEditing(null);
+          setSelectedTags(initialTicket?.TicketTags?.map((t: any) => t.tag_id) ?? []);
+        })
+        .catch((err) => console.error("Failed to fetch tags:", err));
 
     return () => {
-      isMounted = false; // Prevents updating state if component unmounts mid-fetch
+      isMounted = false;
     };
   }, [initialTicket]);
 
-
+// Focus inputs when entering editing modes
   useEffect(() => {
-    if (editing === 'title') titleRef.current?.focus();
-    if (editing === 'description') descRef.current?.focus();
+    if (editing === 'title') {
+      titleRef.current?.focus();
+    } else if (editing === 'description') {
+      descRef.current?.focus();
+    }
   }, [editing]);
 
   if (!ticket) return null;
@@ -143,7 +168,7 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
     setTicket(t => t ? { ...t, watcher_id: userId || null } : t);
   }
 
-  function setStatus(val: TicketStatus) {
+  function setStatus(val: status) {
     setTicket(t => t ? { ...t, status: val } : t);
     setEditing(null);
   }
@@ -176,9 +201,9 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
     onClose();
   }
 
-  const watcher        = profiles.find(u => u.profile_id === ticket.watcher_id);
-  const isOverdue      = ticket.deadline_date && new Date(ticket.deadline_date) < new Date();
-  const deadlineDisplay = ticket.deadline_date
+  const watcher= profiles.find(u => u.profile_id === ticket.watcher_id);
+  const isOverdue= ticket.deadline_date && new Date(ticket.deadline_date) < new Date();
+  const deadlineDisplay= ticket.deadline_date
       ? new Date(ticket.deadline_date).toLocaleDateString()
       : null;
 
@@ -187,30 +212,114 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
   );
 
   function handleCommentImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be under 5MB.');
-      e.target.value = '';
-      return;
+    const files = e.target.files;
+    if (!files) return;
+
+    const validFiles: File[] = [];
+    const validPreviews: string[] = [];
+
+    // Iterate through all selected files
+    Array.from(files).forEach(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`Image "${file.name}" must be under 5MB.`);
+        return;
+      }
+      validFiles.push(file);
+      validPreviews.push(URL.createObjectURL(file));
+    });
+
+    // Append new files to existing state
+    if (validFiles.length > 0) {
+      setCommentImages(prev => [...prev, ...validFiles]);
+      setCommentImagePreviews(prev => [...prev, ...validPreviews]);
     }
-    setCommentImage(file);
-    setCommentImagePreview(URL.createObjectURL(file));
+
+    // Clear the input value so the same file can be re-selected if deleted
+    e.target.value = '';
   }
 
-  function handleAddComment() {
-    if (!commentText.trim() && !commentImage) return;
-    // TODO: POST comment to backend; upload commentImage to storage and link URL to comment record
-    setComments(prev => [...prev, {
-      id: Date.now().toString(),
-      text: commentText.trim(),
-      imageUrl: commentImagePreview ?? undefined,
-      timestamp: new Date(),
-    }]);
-    setCommentText('');
-    setCommentImage(null);
-    setCommentImagePreview(null);
-    if (commentImageRef.current) commentImageRef.current.value = '';
+  function removeImage(index: number) {
+    // Revoke the Object URL to free up memory
+    URL.revokeObjectURL(commentImagePreviews[index]);
+
+    // Filter out the image at the specified index
+    setCommentImages(prev => prev.filter((_, i) => i !== index));
+    setCommentImagePreviews(prev => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleAddComment() {
+    // Guard check against empty submissions
+    if (!commentText.trim() && commentImages.length === 0) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // 1. Initialize Supabase out here so it's available for BOTH auth and storage loops
+      const supabase = createClient();
+
+      // 2. Fetch the user right away at the top level of the try block
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Safety check: ensure they didn't get logged out mid-session
+      if (!user) {
+        throw new Error("You must be logged in to post a comment.");
+      }
+
+      const imageUrls: string[] = [];
+
+      // 3. Upload images to storage (now safely separated from the auth logic)
+      if (commentImages.length > 0) {
+        for (const file of commentImages) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${crypto.randomUUID()}.${fileExt}`;
+          const filePath = `comments/${fileName}`;
+
+          const { data, error } = await supabase.storage
+              .from('images')
+              .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+              });
+
+          if (error) {
+            throw new Error(`Failed to upload image ${file.name}: ${error.message}`);
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+              .from('images')
+              .getPublicUrl(filePath);
+
+          imageUrls.push(publicUrl);
+        }
+      }
+
+      const result = await createCommentWithImages({
+        profile_id: user.id,
+        description: commentText,
+        parent_type: CommentParentType.TICKET,
+        parent_id: ticket?.ticket_id ?? "",
+        imageUrls: imageUrls,
+      });
+
+      setComments((prev) => [
+        ...prev,
+        {
+          ...result,
+          // Ensure creation_date is instantiated as a Date object so .toLocaleTimeString() doesn't crash
+          creation_date: new Date(result.creation_date),
+        } as Comment
+      ]);
+
+      setCommentText('');
+      setCommentImages([]);
+      setCommentImagePreviews([]);
+      if (commentImageRef.current) commentImageRef.current.value = '';
+
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -523,26 +632,31 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
               {comments.length > 0 && (
                 <div className="space-y-3 mb-4">
                   {comments.map(comment => (
-                    <div key={comment.id} className="flex gap-2.5">
+                    <div key={comment.comment_id} className="flex gap-2.5">
                       <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5">
                         {/* TODO: replace with current user's initials from auth context */}
                         U
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="bg-gray-50 rounded-lg px-3 py-2.5">
-                          {comment.imageUrl && (
-                            <img
-                              src={comment.imageUrl}
-                              alt="attachment"
-                              className="max-h-40 rounded-md mb-2 object-contain"
-                            />
+                          {comment.images && comment.images.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {comment.images.map((img) => (
+                                    <img
+                                        key={img.image_id}
+                                        src={img.image_src}
+                                        alt="attachment"
+                                        className="max-h-40 rounded-md object-contain"
+                                    />
+                                ))}
+                              </div>
                           )}
-                          {comment.text && (
-                            <p className="text-sm text-gray-700 leading-relaxed">{comment.text}</p>
+                          {comment.description && (
+                            <p className="text-sm text-gray-700 leading-relaxed">{comment.description}</p>
                           )}
                         </div>
                         <p className="text-xs text-gray-400 mt-1">
-                          {comment.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {comment.creation_date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
@@ -552,55 +666,58 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
 
               {/* Comment input */}
               <div className="border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-shadow">
-                {commentImagePreview && (
-                  <div className="px-3 pt-2.5 pb-0">
-                    <div className="relative inline-block">
-                      <img
-                        src={commentImagePreview}
-                        alt="Preview"
-                        className="h-16 w-auto rounded-md border border-gray-200 object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCommentImage(null);
-                          setCommentImagePreview(null);
-                          if (commentImageRef.current) commentImageRef.current.value = '';
-                        }}
-                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-700 text-white flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
-                      >
-                        ×
-                      </button>
+
+                {/* 1. NEW MULTIPLE PREVIEWS BLOCK GOES HERE (Right above the textarea) */}
+                {commentImagePreviews.length > 0 && (
+                    <div className="px-3 pt-2.5 pb-0 flex flex-wrap gap-2">
+                      {commentImagePreviews.map((preview, idx) => (
+                          <div key={idx} className="relative inline-block">
+                            <img
+                                src={preview}
+                                alt={`Preview ${idx + 1}`}
+                                className="h-16 w-auto rounded-md border border-gray-200 object-cover"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => removeImage(idx)}
+                                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-700 text-white flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
+                            >
+                              ×
+                            </button>
+                          </div>
+                      ))}
                     </div>
-                  </div>
                 )}
+
                 <textarea
-                  value={commentText}
-                  onChange={e => setCommentText(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddComment(); }}
-                  placeholder="Add a comment... (Ctrl+Enter to post)"
-                  rows={2}
-                  className="w-full px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none resize-none bg-transparent"
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddComment(); }}
+                    placeholder="Add a comment... (Ctrl+Enter to post)"
+                    rows={2}
+                    className="w-full px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none resize-none bg-transparent"
                 />
                 <div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 bg-gray-50/50">
-                  <label className="cursor-pointer text-gray-400 hover:text-indigo-500 transition-colors" title="Attach image (jpg, png · Max 5MB)">
+                  <label className="cursor-pointer text-gray-400 hover:text-indigo-500 transition-colors" title="Attach images (jpg, png · Max 5MB)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                     </svg>
-                    {/* TODO: upload commentImage to backend storage, link returned URL to comment record */}
+
+                    {/* 2. THE MULTIPLE ATTRIBUTE GOES HERE */}
                     <input
-                      ref={commentImageRef}
-                      type="file"
-                      accept="image/jpeg,image/png"
-                      onChange={handleCommentImageChange}
-                      className="sr-only"
+                        ref={commentImageRef}
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        multiple  // <-- ADDED THIS
+                        onChange={handleCommentImageChange}
+                        className="sr-only"
                     />
                   </label>
                   <button
-                    type="button"
-                    onClick={handleAddComment}
-                    disabled={!commentText.trim() && !commentImage}
-                    className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors"
+                      type="button"
+                      onClick={handleAddComment}
+                      disabled={!commentText.trim() && commentImages.length === 0}
+                      className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors"
                   >
                     Comment
                   </button>
