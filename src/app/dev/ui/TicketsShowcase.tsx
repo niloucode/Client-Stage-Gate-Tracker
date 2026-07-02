@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { TicketCardContent } from '@/components/tickets/TicketCard';
-import TicketSlideOver from '@/components/tickets/EditTicketModal';
-import CreateTicketModal from '@/components/tickets/CreateTicketModal';
+import TicketSlideOver from '@/components/tickets/TicketModalEdit';
+import TicketModalCreate from '@/components/tickets/TicketModalCreate';
 import TicketBoard from '@/components/tickets/TicketBoard';
 import { MOCK_TICKETS } from '@/components/tickets/types';
 import type { Ticket } from '@/components/tickets/types';
@@ -109,7 +109,7 @@ export default function TicketsShowcase() {
         isOpen={!!slideOverTicket}
         onClose={() => setSlideOverTicket(null)}
       />
-      <CreateTicketModal
+      <TicketModalCreate
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreateTicket={() => setModalOpen(false)}

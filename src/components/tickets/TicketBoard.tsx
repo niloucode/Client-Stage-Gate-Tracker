@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -11,14 +11,16 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import { TicketCardContent } from "./TicketCard";
-import TicketColumn from "./TicketColumn";
-import CreateTicketModal from "./CreateTicketModal";
-import EditTicketModal from "./EditTicketModal";
+
+// Components
 import TopNav from "@/components/layout/TopNav";
-import { COLUMNS, Ticket, Tag, TicketAssigned } from "./types";
-import { TagManager} from "./TagModals";
-import { status as TicketStatus } from "@/lib/generated/prisma";
+import TicketColumn from "./TicketColumn";
+import { TicketCardContent } from "./TicketCard";
+import TicketModalCreate from "./TicketModalCreate";
+import TicketModalEdit from "./TicketModalEdit";
+import { TagManager } from "../tag/TagModals";
+
+// Actions
 import {
     selectTicket,
     updateTicketStatus,
@@ -32,60 +34,33 @@ import {
     softDeleteTag
 } from "@/actions/tagActions";
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
+// Types
+import { COLUMNS, Ticket, Tag, TicketAssigned } from "./types";
+import { status as TicketStatus } from "@/lib/generated/prisma";
 
-function TagsIcon() {
-  return (
-    <svg width="18px" height="18px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21.07 10.3L15.07 4.29996C14.93 4.15996 14.74 4.07996 14.54 4.07996H3C2.59 4.07996 2.25 4.41996 2.25 4.82996V12.71C2.25 12.91 2.33 13.1 2.47 13.24L8.47 19.23C8.91 19.67 9.49 19.91 10.11 19.91C10.73 19.91 11.32 19.67 11.75 19.23L11.97 19.01C12.01 19.09 12.05 19.17 12.12 19.23C12.57 19.68 13.17 19.91 13.76 19.91C14.35 19.91 14.95 19.68 15.41 19.23L21.06 13.58C21.96 12.68 21.96 11.21 21.06 10.3H21.07ZM10.7 18.17C10.54 18.33 10.34 18.41 10.12 18.41C9.9 18.41 9.69 18.32 9.54 18.17L3.75 12.4V5.57996H10.57L16.35 11.36C16.67 11.68 16.67 12.2 16.35 12.52L10.7 18.17ZM20.01 12.52L14.36 18.17C14.04 18.49 13.51 18.49 13.19 18.17C13.12 18.1 13.05 18.06 12.96 18.02L17.4 13.58C18.3 12.67 18.3 11.2 17.4 10.3L12.68 5.57996H14.22L20 11.36C20.32 11.68 20.32 12.2 20 12.52H20.01ZM8.25 8.49996C8.25 9.18996 7.69 9.74996 7 9.74996C6.31 9.74996 5.75 9.18996 5.75 8.49996C5.75 7.80996 6.31 7.24996 7 7.24996C7.69 7.24996 8.25 7.80996 8.25 8.49996Z" fill="#000000"/>
-    </svg>
-  );
-}
-function FilterIcon() {
-    return (
-        <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-        </svg>
-    );
-}
-function PlusIcon() {
-    return (
-        <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-    );
-}
+// Icons
+import { TagsIcon, FilterIcon, PlusIcon } from './assets';
+
 
 // ── Main board ────────────────────────────────────────────────────────────────
 
-interface TicketBoardProps {
+/**
+ * Renders the primary project workflow board workspace.
+ * It coordinates asynchronous data fetching loops for active project elements, handles
+ * client-side state projection syncing with Prisma relational layouts, registers global
+ * dnd-kit pointer listeners, and provides centralized handlers for modals, drawers, and overlays.
+ * * @component
+ * @param {Object} props
+ * @param {string} props.projectId - Unique database identifier for the parent project scope.
+ * @param {string} props.workflowId - Unique container scope identifying the target board sprint layout.
+ * @returns {JSX.Element} The fully rendered sprint board panel or a full-viewport loading skeleton.
+ */
+export default function TicketBoard({projectId, workflowId}:
+{
     projectId: string;
     workflowId: string;
-}
-
-export default function TicketBoard({
-                                        projectId,
-                                        workflowId,
-                                    }: TicketBoardProps) {
+})
+{
     const [tickets, setTickets] = useState<Ticket[]>([]);
     const [tags, setTags] = useState<Tag[]>([]);
 
@@ -156,13 +131,35 @@ export default function TicketBoard({
         };
     }, []); // Empty array is perfectly fine now because fetchBot is self-contained
 
+    /**
+     * Intercepts selection events on individual ticket layout targets to open the view/edit drawer.
+     * Includes a guard condition checking the mutable dragging reference to avoid firing
+     * accidental element selections at the immediate termination of item canvas shifts.
+     * * @param {Ticket} ticket - The specific ticket entity being targeted for inspection.
+     * @returns {void}
+     */
     function handleSelectTicket(ticket: Ticket) {
         if (wasDraggingRef.current) return;
         setSelectedTicket(ticket);
         setSlideOverOpen(true);
     }
 
-    // Pass down the raw parameter fields that your modal form fields will gather
+    /**
+     * Asynchronously posts fields gathered by the creation modal component configuration to the database backend.
+     * Provides error isolation by preserving structural state rollback snapshots if the downstream
+     * network request throws an unhandled server error mutation exception.
+     * * @async
+     * @param {Object} params - Cleaned property payload collected from form context inputs.
+     * @param {string} params.name - Target display summary title for the generated ticket.
+     * @param {Date} params.deadline_date - Due date timestamp threshold flag for overdue visual triggers.
+     * @param {string | null} [params.watcher_id] - Profile reference string track for monitoring changes.
+     * @param {string[] | null} [params.TicketAssigned] - Collection array of profile reference id keys linked to assignees.
+     * @param {string[] | null} [params.tagIds] - Primary key association list attaching metadata styling tags.
+     * @param {string | null} [params.description] - Markdown descriptive content text block string.
+     * @param {Date | null} [params.start_date] - Timestamp scheduling baseline start window boundary.
+     * @param {Date | null} [params.end_date] - Timestamp scheduling baseline completion window boundary.
+     * @returns {Promise<void>} Resolves when the local state append routine completes.
+     */
     async function handleCreateTicket({
                                           name,
                                           deadline_date,
@@ -212,6 +209,13 @@ export default function TicketBoard({
         }
     }
 
+    /**
+     * Triggers a cascaded soft-deletion database script while immediately dropping
+     * the target element from the visible client board arrays to optimize user latency perception.
+     * * @async
+     * @param {string} ticketId - The explicit UUID string mapping to the target document reference.
+     * @returns {Promise<void>} Resolves when state mutation pipelines finish reconciling.
+     */
     async function handleDeleteTicket(ticketId: string) {
         const previousTickets = tickets;
         try {
@@ -224,12 +228,24 @@ export default function TicketBoard({
         }
     }
 
-    async function handleSaveTag(
-        tag_id: string,
+    /**
+     * Processes the creation of a new tag or updates an existing tag by invoking
+     * backend server actions and optimistically/reactively updating the local state.
+     * * - If a `tag_id` is present, it targets an update mutation (`updateTag`).
+     * - If `tag_id` is empty or falsy, it defaults to a creation sequence (`createTag`).
+     * * @async
+     * @param {string} tag_id - The unique identifier of the target tag. Pass an empty string or nullish value to trigger tag creation.
+     * @param {string} name - The intended display name for the tag.
+     * @param {string | null} [description] - Optional contextual details or summary of the tag's purpose.
+     * @param {string | null} [color] - Optional Hex code, Tailwind class, or color variant identifier for UI styling.
+     * @returns {Promise<void>} Resolves when the database mutations complete and React component state is successfully reconciled.
+     */
+    async function handleSaveTag({name, tag_id, description, color}:{
         name: string,
+        tag_id?: string,
         description?: string | null,
         color?: string | null,
-    )
+    }): Promise<void>
     {
         if (tag_id) {
             // Edit
@@ -253,6 +269,13 @@ export default function TicketBoard({
         }
     }
 
+    /**
+     * Executes soft delete sequences on categorization tags. Removes references instantly from layout options
+     * and retains a contextual rollback fallback array to cover unexpected database operational failures.
+     * * @async
+     * @param {string} tagId - Target primary key mapping to the custom styling metadata structure.
+     * @returns {Promise<void>} Resolves when structural mutations finish execution steps.
+     */
     async function handleDeleteTag(tagId: string) {
         const previousTag = tags;
         try {
@@ -265,11 +288,27 @@ export default function TicketBoard({
         }
     }
 
+    /**
+     * Captures active pointer initialization signals emitted from active dnd-kit draggable component bounds.
+     * Sets the layout state values with the current target card string and flags tracking parameters
+     * to ensure background selections remain blocked during the motion phase.
+     * * @param {DragStartEvent} event - Native dnd-kit synthetic payload context tracking mouse/touch triggers.
+     * @returns {void}
+     */
     function handleDragStart(event: DragStartEvent) {
         setActiveId(event.active.id as string);
         wasDraggingRef.current = true;
     }
 
+    /**
+     * Validates landing node layouts at pointer finalization boundaries to execute lane state shifts.
+     * Modifies columns optimistically across local collections and handles exceptions by restoring
+     * state signatures if backend mutations drop or timeout. Includes a short timeout delay clear
+     * to separate trailing pointer tap events from completed movement paths.
+     * * @async
+     * @param {DragEndEvent} event - Context event tracking target item nodes and overlapping droppable lanes.
+     * @returns {Promise<void>}
+     */
     async function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
         setActiveId(null);
@@ -367,7 +406,7 @@ export default function TicketBoard({
                 </DragOverlay>
             </DndContext>
 
-            <EditTicketModal
+            <TicketModalEdit
                 ticket={selectedTicket}
                 isOpen={slideOverOpen}
                 onClose={() => setSlideOverOpen(false)}
@@ -375,7 +414,7 @@ export default function TicketBoard({
                 tags={tags}
             />
 
-            <CreateTicketModal
+            <TicketModalCreate
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 onCreateTicket={handleCreateTicket}

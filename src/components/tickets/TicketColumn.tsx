@@ -1,9 +1,10 @@
 'use client';
 
 import { useDroppable } from '@dnd-kit/core';
+
 import TicketCard from './TicketCard';
-import { Column } from './types';
-import { type Ticket } from "./types";
+
+import { Column, Ticket } from "./types";
 
 interface TicketColumnProps {
   column: Column;

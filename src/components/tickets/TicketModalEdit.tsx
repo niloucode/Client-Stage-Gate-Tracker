@@ -1,9 +1,9 @@
 'use client';
 
-import { Ticket, Profile, Tag, TicketAssigned } from './types';
+import { Ticket, Profile, Tag } from './types';
 
 import { useState, useRef, useEffect } from 'react';
-import { Prisma, status as TicketStatus } from "@/lib/generated/prisma";
+import { status as TicketStatus } from "@/lib/generated/prisma";
 import { Input } from '@/components/ui/input';
 
 import { selectTag } from "@/actions/tagActions";
@@ -18,17 +18,6 @@ interface Comment {
   imageUrl?: string;
   timestamp: Date;
 }
-
-const colorClasses = {
-  indigo: "bg-indigo-50 text-indigo-700",
-  red:    "bg-red-50 text-red-700",
-  green:  "bg-green-50 text-green-700",
-  blue:   "bg-blue-50 text-blue-700",
-  yellow: "bg-yellow-50 text-yellow-700",
-  purple: "bg-purple-50 text-purple-700",
-  pink:   "bg-pink-50 text-pink-700",
-  gray:   "bg-gray-50 text-gray-700",
-};
 
 const STATUSES: TicketStatus[] = ['PENDING', 'IN_PROGRESS', 'FINISHED'];
 
@@ -51,7 +40,7 @@ interface EditTicketModalProps {
   tags: Tag[];
 }
 
-export default function EditTicketModal({ ticket: initialTicket, isOpen, onClose, onUpdate, tags }: EditTicketModalProps) {
+export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose, onUpdate, tags }: EditTicketModalProps) {
   const [ticket, setTicket] = useState<Ticket | null>(initialTicket);
   const [editing, setEditing] = useState<EditingField>(null);
   const [titleDraft, setTitleDraft] = useState('');
@@ -96,7 +85,7 @@ export default function EditTicketModal({ ticket: initialTicket, isOpen, onClose
 
     if (isMounted) {
       selectTag()
-          .then((data) => {
+          .then(() => {
             if (isMounted) {
               setTicket(initialTicket);
               setEditing(null);
@@ -323,9 +312,9 @@ export default function EditTicketModal({ ticket: initialTicket, isOpen, onClose
 
                       {showAssignDropdown && (
                           <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
-                            {availableProfiles.map((user) => (
+                            {availableProfiles.map((profile) => (
                                 <button
-                                    key={user.profile_id}
+                                    key={profile.profile_id}
                                     onClick={() => {
                                       setTicket(t => t ? {
                                         ...t,
@@ -333,9 +322,9 @@ export default function EditTicketModal({ ticket: initialTicket, isOpen, onClose
                                           ...t.TicketAssigned,
                                           {
                                             ticket_id: t.ticket_id,
-                                            profile_id: user.profile_id,
+                                            profile_id: profile.profile_id,
                                             assigned_date: new Date(),
-                                            Profiles: user
+                                            Profiles: profile
                                           }
                                         ]
                                       } : t);
@@ -344,9 +333,9 @@ export default function EditTicketModal({ ticket: initialTicket, isOpen, onClose
                                     className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors"
                                 >
                                   <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-                                    {(`${user.first_name} ${user.last_name}`).split(' ').map((n: string) => n[0]).join('')}
+                                    {(`${profile.first_name} ${profile.last_name}`).split(' ').map((n: string) => n[0]).join('')}
                                   </div>
-                                  <span className="text-sm text-gray-700">{(`${user.first_name} ${user.last_name}`)}</span>
+                                  <span className="text-sm text-gray-700">{(`${profile.first_name} ${profile.last_name}`)}</span>
                                 </button>
                             ))}
                           </div>
@@ -423,7 +412,8 @@ export default function EditTicketModal({ ticket: initialTicket, isOpen, onClose
                     return (
                         <span
                             key={tag_id}
-                            className={(colorClasses[tag?.color as keyof typeof colorClasses] ?? colorClasses.indigo) + " inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"}
+                            style={{ color: tag?.color ?? "" }} // Handles #FFFFFF perfectly
+                            className={"inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"}
                         >
                           {tag?.name}
                           <span
@@ -448,9 +438,9 @@ export default function EditTicketModal({ ticket: initialTicket, isOpen, onClose
                             <button
                                 key={tag.tag_id}
                                 onClick={() => toggleTag(tag.tag_id)}
-                                className={(colorClasses[tag.color as keyof typeof colorClasses] ?? colorClasses.indigo) + ` text-xs font-medium px-2.5 py-1 rounded-full border transition-all ${active ? 'ring-1 ring-current' : 'opacity-50'}`}
-                            >
-                              {active ? '✓ ' : '+ '}{tag.name}
+                                style={{ color: tag?.color ?? ""}} // Handles #FFFFFF perfectly
+                                className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-all ${active ? 'ring-1 ring-current' : 'opacity-50'}`}                            >
+                                {active ? '✓ ' : '+ '}{tag.name}
                             </button>
                         );
                       })}

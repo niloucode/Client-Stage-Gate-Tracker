@@ -157,7 +157,11 @@ export async function updateTicket({
         },
         include: {
             TicketTags: true,
-            TicketAssigned: true,
+            TicketAssigned: {
+                include: {
+                    Profiles: true
+                }
+            },
             Profiles_Tickets_assigner_idToProfiles: true,
             Profiles_Tickets_watcher_idToProfiles: true,
         },

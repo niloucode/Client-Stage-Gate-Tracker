@@ -2,147 +2,54 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
+
 import { type Ticket } from './types';
+import TicketModalDelete from './TicketModalDelete';
+import { CalendarIcon, AlertTriangleIcon, MoreHorizontalIcon } from './assets';
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
-function CalendarIcon({ className = '' }: { className?: string }) {
-    return (
-    <svg
-        width="13"
-        height="13"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-    );
+/**
+ * Generates up to two uppercase initials from a full name string.
+ * It handles leading, trailing, and multiple consecutive spaces gracefully.
+ * * @param {string} name - The full name string to extract initials from.
+ * @returns {string} A 1 to 2 character uppercase string representing the name's initials.
+ * * @example
+ * getInitials(" john   doe ") // Returns "JD"
+ * getInitials("Alice")        // Returns "A"
+ */
+function getInitials(name: string): string {
+    return name
+        .trim()                        // Remove trailing/leading spaces
+        .split(/\s+/)                  // Split into words by any spacing
+        .map((word) => word[0])        // Grab the first character of each word
+        .slice(0, 2)                   // Keep only the first two characters
+        .join("")                      // Combine them
+        .toUpperCase();                // Force uppercase
 }
 
-function AlertTriangleIcon({ className = '' }: { className?: string }) {
-    return (
-    <svg
-        width="13"
-        height="13"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-        <line x1="12" y1="9" x2="12" y2="13" />
-        <line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-    );
-}
-
-function FlagIcon({ className = '' }: { className?: string }) {
-    return (
-    <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        stroke="currentColor"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-        <line x1="4" y1="22" x2="4" y2="15" />
-    </svg>
-    );
-}
-
-function MoreHorizontalIcon({ className = '' }: { className?: string }) {
-    return (
-    <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className={className}
-    >
-        <circle cx="5" cy="12" r="1.5" />
-        <circle cx="12" cy="12" r="1.5" />
-        <circle cx="19" cy="12" r="1.5" />
-    </svg>
-    );
-}
-
-// ── Delete Confirmation Modal ────────────────────────────────────────────────
-
-interface DeleteModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    ticketTitle: string;
-}
-
-function DeleteConfirmationModal({ isOpen, onClose, onConfirm, ticketTitle }: DeleteModalProps) {
-    if (!isOpen) return null;
-
-    return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-        <div 
-          className="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-150"
-          onClick={(e) => e.stopPropagation()}
-        >
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Ticket?</h3>
-        <p className="text-sm text-gray-500 mb-6">
-            Are you sure you want to delete <span className="font-medium text-gray-700">{ticketTitle}</span>? This action cannot be undone.
-        </p>
-        <div className="flex items-center justify-end gap-3">
-            <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-                Cancel
-            </button>
-            <button
-                onClick={onConfirm}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-            >
-                Delete
-            </button>
-        </div>
-        </div>
-    </div>
-    );
-}
-
-// ── Card content (pure presentation, no DnD) ─────────────────────────────────
-
-interface CardContentProps {
+/**
+ * Renders the internal visual contents, layout, and contextual menus of a single ticket.
+ * This sub-component manages its own drop-down actions menu (Edit/Delete) and localized
+ * "outside-click" detection listeners to automatically close the menu overlay. It also calculates
+ * and applies structural indicators if a ticket's deadline is past due.
+ * * @component
+ * @param {Object} props
+ * @param {Ticket} props.ticket - The comprehensive data object representing the current ticket.
+ * @param {(ticket: Ticket) => void} props.onSelect - Callback fired when the main ticket surface is clicked.
+ * @param {(ticket: Ticket) => void} props.onEdit - Callback executed when "Edit" is selected from the dropdown menu.
+ * @param {(ticketId: string) => void} props.onDelete - Callback invoked when a deletion is finalized in the confirmation modal.
+ * @returns {JSX.Element} The underlying structural markup for the ticket's user interface.
+ */
+export function TicketCardContent({
+                                      ticket,
+                                      onSelect,
+                                      onEdit,
+                                      onDelete
+}: {
     ticket: Ticket;
     onSelect: (ticket: Ticket) => void;
     onEdit: (ticket: Ticket) => void;
     onDelete: (ticketId: string) => void;
-}
-
-function getInitials(name: string): string {
-    return name
-    .trim()                        // Remove trailing/leading spaces
-    .split(/\s+/)                  // Split into words by any spacing
-    .map((word) => word[0])        // Grab the first character of each word
-    .slice(0, 2)                   // Keep only the first two characters
-    .join("")                      // Combine them
-    .toUpperCase();                // Force uppercase
-}
-
-export function TicketCardContent({ ticket, onSelect, onEdit, onDelete }: CardContentProps) {
+}) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -286,7 +193,7 @@ export function TicketCardContent({ ticket, onSelect, onEdit, onDelete }: CardCo
         )}
         </div> }
 
-        <DeleteConfirmationModal
+        <TicketModalDelete
         isOpen={isDeleteModalOpen}
         ticketTitle={ticket.name}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -299,16 +206,33 @@ export function TicketCardContent({ ticket, onSelect, onEdit, onDelete }: CardCo
     );
 }
 
-// ── Draggable card ────────────────────────────────────────────────────────────
 
-interface TicketCardProps {
+/**
+ * The default exported React component providing specialized Drag-and-Drop functionality wrapper.
+ * It integrates the `@dnd-kit/core` `useDraggable` hook with individual node references, active
+ * movement translations, visual dragging opacities, and listener configurations. It wraps
+ * `<TicketCardContent />` to pass down the essential ticket metadata properties and handler callbacks.
+ * * @component
+ * @exports
+ * @param {Object} props
+ * @param {Ticket} props.ticket - The data object containing unique ID and details for drag registration.
+ * @param {(ticket: Ticket) => void} props.onSelect - Forwarded selection handler.
+ * @param {(ticket: Ticket) => void} props.onEdit - Forwarded editing action handler.
+ * @param {(ticketId: string) => void} props.onDelete - Forwarded ticket deletion handler.
+ * @returns {JSX.Element} A draggable DOM wrapper component enclosing the ticket card view layer.
+ */
+export default function TicketCard({
+                                       ticket,
+                                       onSelect,
+                                       onEdit,
+                                       onDelete
+}:
+{
     ticket: Ticket;
     onSelect: (ticket: Ticket) => void;
     onEdit: (ticket: Ticket) => void;
     onDelete: (ticketId: string) => void;
-}
-
-export default function TicketCard({ ticket, onSelect, onEdit, onDelete }: TicketCardProps) {
+}) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ticket.ticket_id,
     });
