@@ -15,3 +15,7 @@ body {
   color: var(--foreground);
   font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
 }
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
