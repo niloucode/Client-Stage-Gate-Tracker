@@ -1,4 +1,4 @@
-export { StageStepper } from "./StageStepper";
+export { PhaseStepper } from "./PhaseStepper";
 export { ActivePhaseDetails } from "./ActivePhaseDetails";
 export { ModulesCard } from "./ModulesCard";
 export { ScreenApiTracker } from "./ScreenApiTracker";

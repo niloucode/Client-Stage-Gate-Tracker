@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Module, Phase, Workflow } from "@/app/(app)/editor/page";
 import { WorkflowsList } from "./WorkflowsList";
+import { AddModule } from "./Modals/AddModule";
+import { EditModule } from "./Modals/EditModule";
 
 interface ModulesCardProps {
   activePhase: number;
@@ -12,10 +14,14 @@ interface ModulesCardProps {
 
 export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps) {
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
+  
+  const openCreateModuleModal = () => setIsAddOpen(true);
+  const openEditModuleModal = (module: Module) => setEditingModule(module);
 
   // Get modules for the current active phase
   const currentPhase = phases.find(p => p.number === activePhase);
@@ -27,6 +33,43 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
     description: "",
     roles: "",
   });
+
+  const handleAddModule = (data: { name: string; description: string; roles: string }) => {
+    const rolesList = data.roles.split(",").map(r => r.trim()).filter(Boolean);
+    const newModule: Module = {
+      id: Date.now().toString(),
+      name: data.name || "New Module",
+      description: data.description || "Module description",
+      roles: rolesList.length > 0 ? rolesList : ["Unassigned"],
+      workflows: [],
+    };
+    setPhases(phases.map(phase =>
+      phase.number !== activePhase ? phase : { ...phase, modules: [...phase.modules, newModule] }
+    ));
+    setExpandedModules(prev => new Set(prev).add(newModule.id));
+    setIsAddOpen(false);
+  };
+
+  const handleSaveModule = (data: { name: string; description: string; roles: string }) => {
+    if (!editingModule) return;
+    const rolesList = data.roles.split(",").map(r => r.trim()).filter(Boolean);
+    setPhases(phases.map(phase =>
+      phase.number !== activePhase ? phase : {
+        ...phase,
+        modules: phase.modules.map(m =>
+          m.id === editingModule.id ? { ...m, name: data.name, description: data.description, roles: rolesList } : m
+        ),
+      }
+    ));
+    setEditingModule(null);
+  };
+
+  // EditModule's "Delete" hands off to your existing confirm-delete modal
+  const handleEditDeleteClick = () => {
+    if (!editingModule) return;
+    confirmDelete(editingModule.id);
+    setEditingModule(null);
+  };
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) => {
@@ -40,67 +83,10 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
     });
   };
 
-  // Module CRUD operations
-  const openCreateModuleModal = () => {
-    setEditingModule(null);
-    setModuleFormData({ name: "", description: "", roles: "" });
-    setIsModuleModalOpen(true);
-  };
-
-  const openEditModuleModal = (module: Module) => {
-    setEditingModule(module);
-    setModuleFormData({
-      name: module.name,
-      description: module.description,
-      roles: module.roles.join(", "),
-    });
-    setIsModuleModalOpen(true);
-  };
-
   const closeModuleModal = () => {
     setIsModuleModalOpen(false);
     setEditingModule(null);
     setModuleFormData({ name: "", description: "", roles: "" });
-  };
-
-  const handleSaveModule = () => {
-    const rolesList = moduleFormData.roles.split(",").map((r) => r.trim()).filter(Boolean);
-    
-    const updatedPhases = phases.map((phase) => {
-      if (phase.number !== activePhase) return phase;
-
-      if (editingModule) {
-        return {
-          ...phase,
-          modules: phase.modules.map((m) =>
-            m.id === editingModule.id
-              ? { ...m, name: moduleFormData.name, description: moduleFormData.description, roles: rolesList }
-              : m
-          ),
-        };
-      } else {
-        const newModule: Module = {
-          id: Date.now().toString(),
-          name: moduleFormData.name || "New Module",
-          description: moduleFormData.description || "Module description",
-          roles: rolesList.length > 0 ? rolesList : ["Unassigned"],
-          workflows: [],
-        };
-        return {
-          ...phase,
-          modules: [...phase.modules, newModule],
-        };
-      }
-    });
-
-    setPhases(updatedPhases);
-    
-    if (!editingModule) {
-      const newId = Date.now().toString();
-      setExpandedModules((prev) => new Set(prev).add(newId));
-    }
-    
-    closeModuleModal();
   };
 
   const confirmDelete = (moduleId: string) => {
@@ -139,8 +125,6 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
     });
     setPhases(updatedPhases);
   };
-
-  const roleColors = ["#4F46E5", "#006C49", "#D97706", "#DC2626", "#7C3AED"];
 
   return (
     <div className="mb-8">
@@ -253,102 +237,19 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
       </div>
 
       {/* Module Modal */}
-      {isModuleModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
-            <button
-              onClick={closeModuleModal}
-              className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#475569] transition-colors"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </button>
-
-            <h2 className="text-xl font-bold text-[#0F172A] mb-2">
-              {editingModule ? "Edit Module" : "Create New Module"}
-            </h2>
-            <p className="text-sm text-[#64748B] mb-6">
-              {editingModule 
-                ? "Update the module details below." 
-                : `Fill in the details to create a new module for Phase ${activePhase}.`}
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-                  Module Name *
-                </label>
-                <input
-                  type="text"
-                  value={moduleFormData.name}
-                  onChange={(e) => setModuleFormData({ ...moduleFormData, name: e.target.value })}
-                  placeholder="e.g., Authentication & Identity"
-                  className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-                  Description
-                </label>
-                <input
-                  type="text"
-                  value={moduleFormData.description}
-                  onChange={(e) => setModuleFormData({ ...moduleFormData, description: e.target.value })}
-                  placeholder="e.g., Implementation of security features"
-                  className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
-                />
-              </div>
-
-              {/* <div>
-                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-                  Roles (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={moduleFormData.roles}
-                  onChange={(e) => setModuleFormData({ ...moduleFormData, roles: e.target.value })}
-                  placeholder="e.g., Frontend, Backend, DevOps"
-                  className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
-                />
-                <p className="text-xs text-[#94A3B8] mt-1.5">
-                  Separate roles with commas
-                </p>
-              </div> */}
-            </div>
-
-            <div className="flex justify-between items-center mt-6 pt-4 border-t border-[#F1F5F9]">
-              {editingModule && (
-                <button
-                  onClick={() => confirmDelete(editingModule.id)}
-                  className="px-4 py-2 text-sm font-semibold text-[#EF4444] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center gap-2"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                  Delete Module
-                </button>
-              )}
-              
-              <div className="flex gap-3 ml-auto">
-                <button
-                  onClick={closeModuleModal}
-                  className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveModule}
-                  className="px-4 py-2 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
-                >
-                  {editingModule ? "Save Changes" : "Create Module"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddModule
+        isOpen={isAddOpen}
+        activePhase={activePhase}
+        onClose={() => setIsAddOpen(false)}
+        onSubmit={handleAddModule}
+      />
+      <EditModule
+        isOpen={editingModule !== null}
+        module={editingModule}
+        onClose={() => setEditingModule(null)}
+        onSave={handleSaveModule}
+        onDelete={handleEditDeleteClick}
+      />
 
       {/* Delete Confirmation Modal */}
       {isDeleteConfirmOpen && (

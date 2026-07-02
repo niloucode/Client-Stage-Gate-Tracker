@@ -2,15 +2,17 @@
 
 import { forwardRef, useImperativeHandle, useState, useRef, useEffect } from "react";
 import { Phase } from "@/app/(app)/editor/page";
+import { DeletePhase } from "./Modals/DeletePhase";
+import { AddPhase } from "./Modals/AddPhase";
 
-interface StageStepperProps {
+interface PhaseStepperProps {
   phases: Phase[];
   setPhases: (phases: Phase[]) => void;
   activePhase: number;
   setActivePhase: (phase: number) => void;
 }
 
-export const StageStepper = forwardRef<{ openCreateModal: () => void }, StageStepperProps>(
+export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseStepperProps>(
   ({ phases, setPhases, activePhase, setActivePhase }, ref) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -27,10 +29,7 @@ export const StageStepper = forwardRef<{ openCreateModal: () => void }, StageSte
     });
 
     useImperativeHandle(ref, () => ({
-      openCreateModal: () => {
-        setFormData({ name: "", subtitle: "", description: "" });
-        setIsModalOpen(true);
-      }
+      openCreateModal: () => setIsModalOpen(true)
     }));
 
     // Check scroll position to show/hide arrows
@@ -65,23 +64,28 @@ export const StageStepper = forwardRef<{ openCreateModal: () => void }, StageSte
       setFormData({ name: "", subtitle: "", description: "" });
     };
 
-    const handleAddPhase = () => {
+    const handleAddPhase = (data: { name: string; subtitle: string; description: string }) => {
       const newNumber = phases.length > 0 ? Math.max(...phases.map(p => p.number)) + 1 : 1;
       const newPhase: Phase = {
         number: newNumber,
-        name: formData.name || `Phase ${newNumber}`,
-        subtitle: formData.subtitle || "New Phase",
-        description: formData.description || "Phase description",
+        name: data.name || `Phase ${newNumber}`,
+        subtitle: data.subtitle || "New Phase",
+        description: data.description || "Phase description",
         modules: []
       };
       setPhases([...phases, newPhase]);
       setActivePhase(newNumber);
-      closeModal();
+      setIsModalOpen(false);
     };
 
     const confirmDelete = (phaseNumber: number) => {
       setPhaseToDelete(phaseNumber);
       setIsDeleteConfirmOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+      setIsDeleteConfirmOpen(false);
+      setPhaseToDelete(null);
     };
 
     const handleDeletePhase = () => {
@@ -317,58 +321,25 @@ export const StageStepper = forwardRef<{ openCreateModal: () => void }, StageSte
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#F1F5F9]">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddPhase}
-                  className="px-4 py-2 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
-                >
-                  Create Phase
-                </button>
-              </div>
+              <AddPhase
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleAddPhase}
+              />
             </div>
           </div>
         )}
 
         {/* Delete Confirmation Modal */}
-        {isDeleteConfirmOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative">
-              <h2 className="text-xl font-bold text-[#0F172A] mb-2">
-                Delete Phase
-              </h2>
-              <p className="text-sm text-[#64748B] mb-6">
-                Are you sure you want to delete this phase? This action cannot be undone.
-              </p>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setIsDeleteConfirmOpen(false);
-                    setPhaseToDelete(null);
-                  }}
-                  className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeletePhase}
-                  className="px-4 py-2 bg-[#EF4444] text-white text-sm font-semibold rounded-lg hover:bg-[#DC2626] transition-all shadow-sm"
-                >
-                  Delete Phase
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <DeletePhase
+          isOpen={isDeleteConfirmOpen}
+          phaseLabel={phaseToDelete !== null ? `Phase ${phaseToDelete}` : undefined}
+          onConfirm={handleDeletePhase}
+          onCancel={closeDeleteModal}
+        />
       </>
     );
   }
 );
 
-StageStepper.displayName = 'StageStepper';
+PhaseStepper.displayName = 'PhaseStepper';
