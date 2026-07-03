@@ -230,7 +230,7 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
               className="overflow-x-auto scroll-smooth hide-scrollbar"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              <div className="flex items-start pt-2" style={{ minWidth: `${phases.length * 180}px` }}>
+              <div className="flex items-start pt-3" style={{ minWidth: `${phases.length * 180}px` }}>
                 {phases.map((phase, index) => {
                   const isActive = phase.number === activePhase;
                   const isCompleted = phase.number < activePhase;
