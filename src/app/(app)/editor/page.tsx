@@ -1,6 +1,6 @@
 "use client";
 
-import TopNav from "@/components/layout/TopNav";
+import TopNav from "@/shared/ui/TopNav";
 import Sidebar from '@/shared/ui/sidebar';
 
 import { useState, useRef } from "react";
@@ -112,6 +112,7 @@ export default function EditorPage() {
   return (
     <div className="bg-[#F8FAFC] min-h-screen">
       <Sidebar>
+        <TopNav breadcrumbs={["Acesoft", "Project Alpha", "Project Structure"]} />
       <div className="max-w-[1400px] mx-auto p-8">
         {/* Header */}
         <div className="flex justify-between items-end pb-6 mb-6 border-b border-[#E2E8F0]">
