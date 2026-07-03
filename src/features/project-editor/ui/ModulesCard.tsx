@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Module, Phase, Workflow } from "./types";
+import type { Module, Phase, Workflow } from "../types";
 import { WorkflowsList } from "./WorkflowsList";
-import { AddModule } from "./Modals/AddModule";
-import { EditModule } from "./Modals/EditModule";
+import { AddModule } from "@/features/project-editor/ui/modals/AddModule";
+import { EditModule } from "@/features/project-editor/ui/modals/EditModule";
 
 interface ModulesCardProps {
   activePhase: number;

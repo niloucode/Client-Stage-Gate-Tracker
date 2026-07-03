@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Module } from "../types";
+import type { Module } from "../../types";
 
 interface EditModuleFormData {
   name: string;

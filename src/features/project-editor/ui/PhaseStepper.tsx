@@ -1,9 +1,9 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState, useRef, useEffect } from "react";
-import type { Phase } from "./types";
-import { DeletePhase } from "./Modals/DeletePhase";
-import { AddPhase } from "./Modals/AddPhase";
+import type { Phase } from "../types";
+import { DeletePhase } from "@/features/project-editor/ui/modals/DeletePhase";
+import { AddPhase } from "@/features/project-editor/ui/modals/AddPhase";
 
 interface PhaseStepperProps {
   phases: Phase[];

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { Phase } from "./types";
-import { DeletePhase } from "./Modals/DeletePhase";
+import type { Phase } from "../types";
+import { DeletePhase } from "@/features/project-editor/ui/modals/DeletePhase";
 
 interface ActivePhaseDetailsProps {
   activePhase: number;

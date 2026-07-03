@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Workflow } from "./types";
-import { AddWorkflow } from "./Modals/AddWorkflow";
-import { EditWorkflow } from "./Modals/EditWorkflow";
-import { DeleteWorkflow } from "./Modals/DeleteWorkflow";
+import type { Workflow } from "../types";
+import { AddWorkflow } from "@/features/project-editor/ui/modals/AddWorkflow";
+import { EditWorkflow } from "@/features/project-editor/ui/modals/EditWorkflow";
+import { DeleteWorkflow } from "@/features/project-editor/ui/modals/DeleteWorkflow";
 
 interface WorkflowsListProps {
   workflows: Workflow[];
