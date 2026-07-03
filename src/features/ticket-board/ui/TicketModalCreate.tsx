@@ -1,0 +1,444 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { Profile, Tag, TicketAssigned } from '@/entities/types';
+
+import { XIcon, ChevronDownIcon, EyeIcon } from './assets';
+import { selectProfile } from "@/entities/profile/profileActions";
+
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface CreateTicketModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+	onCreateTicket: (data: {
+		name: string;
+		deadline_date: Date;
+		watcher_id?: string | null;
+		TicketAssigned?: string[] | null;
+		tagIds?: string[] | null;
+		description?: string | null;
+		start_date?: Date | null;
+		end_date?: Date | null;
+	}) => Promise<void>;
+	tags: Tag[];
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tags }: CreateTicketModalProps) {
+	const [title, setTitle] = useState('');
+	const [description, setDescription] = useState('');
+	const [deadline, setDeadline] = useState('');
+	const today = new Date().toISOString().split('T')[0];
+
+	const [selectedTags, setSelectedTags] = useState<string[]>([]);
+	const [tagsOpen, setTagsOpen] = useState(false);
+	const tagsRef = useRef<HTMLDivElement>(null);
+
+	const [profiles, setProfiles] = useState<Profile[]>([]);
+	const [assignedOpen, setAssignedOpen] = useState(false);
+	const [assignedIds, setAssignedIds] = useState<string[]>([]);
+	const [watcherId, setWatcherId] = useState('');
+	const assignedRef = useRef<HTMLDivElement>(null);
+
+	const [imageFile, setImageFile] = useState<File | null>(null);
+	const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+	const [apiMethod, setApiMethod] = useState('GET');
+	const [apiRoute, setApiRoute] = useState('');
+
+	useEffect(() => {
+		selectProfile().then(setProfiles);
+
+		function handleClickOutside(e: MouseEvent) {
+			if (tagsRef.current && !tagsRef.current.contains(e.target as Node)) {
+				setTagsOpen(false);
+			}
+			if (assignedRef.current && !assignedRef.current.contains(e.target as Node)) {
+				setAssignedOpen(false);
+			}
+		}
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, []);
+
+	function toggleTag(tagId: string) {
+		setSelectedTags(prev => prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]);
+	}
+
+	function toggleAssigned(profileId: string) {
+		setAssignedIds(prev =>
+			prev.includes(profileId)
+				? prev.filter(id => id !== profileId)
+				: [...prev, profileId]
+		);
+	}
+
+	const isApiTagSelected = selectedTags.some(
+		tagId => tags.find(t => t.tag_id === tagId)?.name?.toLowerCase() === 'api'
+	);
+
+	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Image must be under 5MB.');
+			e.target.value = '';
+			return;
+		}
+		setImageFile(file);
+		setImagePreview(URL.createObjectURL(file));
+	}
+
+	function handleSubmit(e: React.FormEvent) {
+		e.preventDefault();
+		if (!title.trim()) return;
+
+		onCreateTicket({
+			name: title.trim(),
+			deadline_date: deadline ? new Date(deadline) : new Date(),
+			watcher_id: watcherId || null,
+			TicketAssigned: [], // Replaced trailing ? with short-circuit fallback
+			tagIds: selectedTags || [],        // Replaced trailing ? with short-circuit fallback
+			description: description.trim() || null,
+		});
+
+		setTitle('');
+		setDescription('');
+		setDeadline('');
+		setWatcherId('');
+		setSelectedTags([]);
+		setAssignedIds([]);
+		setImageFile(null);
+		setImagePreview(null);
+		setApiMethod('GET');
+		setApiRoute('');
+		onClose();
+	}
+
+	function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
+		if (e.target === e.currentTarget) onClose();
+	}
+
+	if (!isOpen) return null;
+
+	const colorClasses = {
+		indigo: "bg-indigo-50 text-indigo-700",
+		red:    "bg-red-50 text-red-700",
+		green:  "bg-green-50 text-green-700",
+		blue:   "bg-blue-50 text-blue-700",
+		yellow: "bg-yellow-50 text-yellow-700",
+		purple: "bg-purple-50 text-purple-700",
+		pink:   "bg-pink-50 text-pink-700",
+		gray:   "bg-gray-50 text-gray-700",
+	};
+
+	return (
+		<div
+			className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+			onClick={handleBackdropClick}
+		>
+			<div className="bg-white rounded-2xl w-full max-w-153 max-h-[92vh] flex flex-col shadow-2xl">
+				{/* Modal header */}
+				<div className="flex items-center justify-between px-6 pt-6 pb-5 shrink-0">
+					<h2 className="text-lg font-semibold text-gray-900">New Ticket</h2>
+					<button
+						onClick={onClose}
+						className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+					>
+						<XIcon />
+					</button>
+				</div>
+
+				<div className="h-px bg-gray-100 shrink-0" />
+
+				{/* Form */}
+				<form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+					{/* Ticket Name */}
+					<div className="space-y-1.5">
+						<Label>
+							Ticket Name <span className="text-red-500">*</span>
+						</Label>
+						<Input
+							placeholder="e.g., Update Landing Page Hero"
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							maxLength={25}
+							required
+						/>
+						<p className="text-xs text-gray-500 text-right">
+							{title.length}/25
+						</p>
+					</div>
+
+					{/* Description */}
+					<div className="space-y-1.5">
+						<Label>Description</Label>
+						<textarea
+							placeholder="Provide detailed information about this ticket..."
+							value={description}
+							onChange={(e) => setDescription(e.target.value)}
+							rows={4}
+							className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+						/>
+					</div>
+
+					{/* Assigned to + Watchers row */}
+					<div className="grid grid-cols-2 gap-4">
+						{/* Assigned To */}
+						<div className="space-y-1.5" ref={assignedRef}>
+							<Label>Assigned To</Label>
+							<div className="relative">
+								<button
+									type="button"
+									onClick={() => setAssignedOpen(o => !o)}
+									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-9.5"
+								>
+									<div className="flex flex-wrap gap-1 flex-1">
+										{assignedIds.length === 0 ? (
+											<span className="text-gray-400">Assign to...</span>
+										) : (
+											assignedIds.map(profileId => {
+												const profile = profiles.find(p => p.profile_id === profileId);
+												return (
+													<span
+														key={profileId}
+														className="inline-flex items-center gap-1 rounded bg-indigo-50 text-indigo-700 px-1.5 py-0.5 text-xs font-medium"
+													>
+                                      				{profile?.first_name+" "+profile?.last_name}
+														<span
+															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
+															onClick={e => { e.stopPropagation(); toggleAssigned(profileId); }}
+														>
+                                         ×
+                                      </span>
+                                   </span>
+												);
+											})
+										)}
+									</div>
+									<ChevronDownIcon />
+								</button>
+
+								{assignedOpen && (
+									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+										{profiles.map(profile => (
+											<div
+												key={profile.profile_id}
+												onClick={() => toggleAssigned(profile.profile_id)}
+												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+											>
+												<div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+													assignedIds.includes(profile.profile_id)
+														? 'bg-indigo-600 border-indigo-600'
+														: 'border-gray-300'
+												}`}>
+													{assignedIds.includes(profile.profile_id) && (
+														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+															<polyline points="2 6 5 9 10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+														</svg>
+													)}
+												</div>
+												{profile?.first_name+" "+profile?.last_name}
+											</div>
+										))}
+									</div>
+								)}
+							</div>
+						</div>
+
+						{/* Watcher */}
+						<div className="space-y-1.5">
+							<Label>Watcher</Label>
+							<div className="relative">
+								<div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+									<EyeIcon />
+								</div>
+								<select
+									value={watcherId}
+									onChange={(e) => setWatcherId(e.target.value)}
+									className="w-full appearance-none rounded-lg border border-gray-200 bg-white pl-9 pr-9 py-2.5 text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+								>
+									<option value="">Add watchers...</option>
+									{profiles.map((u) => (
+										<option key={u.profile_id} value={u.profile_id}>{u?.first_name+" "+u?.last_name}</option>
+									))}
+								</select>
+								<div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+									<ChevronDownIcon />
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Tags + Deadline row */}
+					<div className="grid grid-cols-2 gap-4">
+						{/* Tags */}
+						<div className="space-y-1.5" ref={tagsRef}>
+							<Label>Tags</Label>
+							<div className="relative">
+								<button
+									type="button"
+									onClick={() => setTagsOpen(o => !o)}
+									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-9.5"
+								>
+									<div className="flex flex-wrap gap-1 flex-1">
+										{selectedTags.length === 0 ? (
+											<span className="text-gray-400">Select tags...</span>
+										) : (
+											selectedTags.map(tag_id => {
+												const tag = tags.find(t => t.tag_id === tag_id);
+												return (
+													<span
+														key={tag_id}
+														className={
+															(colorClasses[tag?.color as keyof typeof colorClasses] ?? colorClasses.indigo) +
+															" inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
+														}
+													>
+                                     {tag?.name}
+														<span
+															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
+															onClick={e => { e.stopPropagation(); toggleTag(tag_id); }}
+														>
+                                        ×
+                                     </span>
+                                  </span>
+												);
+											})
+										)}
+									</div>
+									<ChevronDownIcon />
+								</button>
+
+								{tagsOpen && (
+									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+										{tags.map(tag => (
+											<div
+												key={tag.tag_id}
+												onClick={() => toggleTag(tag.tag_id)}
+												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+											>
+												<div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+													selectedTags.includes(tag.tag_id)
+														? 'bg-indigo-600 border-indigo-600'
+														: 'border-gray-300'
+												}`}>
+													{selectedTags.includes(tag.tag_id) && (
+														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+															<polyline points="2 6 5 9 10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+														</svg>
+													)}
+												</div>
+												{tag.name}
+											</div>
+										))}
+									</div>
+								)}
+							</div>
+						</div>
+
+						{/* Deadline */}
+						<div className="space-y-1.5">
+							<Label>Deadline</Label>
+							<Input
+								type="date"
+								value={deadline}
+								onChange={(e) => setDeadline(e.target.value)}
+								min={today}
+								className="text-gray-500"
+							/>
+						</div>
+					</div>
+
+					{/* Image Attachment */}
+					<div className="space-y-1.5">
+						<Label>
+							Attachment{' '}
+							<span className="text-xs text-gray-400 font-normal">(jpg, png · Max 5MB)</span>
+						</Label>
+						<label className="flex items-center gap-2.5 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
+							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+								<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+							</svg>
+							<span>{imageFile ? imageFile.name : 'Click to attach an image...'}</span>
+							<input
+								type="file"
+								accept="image/jpeg,image/png"
+								onChange={handleImageChange}
+								className="sr-only"
+							/>
+						</label>
+						{imagePreview && (
+							<div className="relative inline-block mt-1">
+								<img src={imagePreview} alt="Preview" className="h-20 w-auto rounded-lg border border-gray-200 object-cover"/>
+								<button
+									type="button"
+									onClick={() => { setImageFile(null); setImagePreview(null); }}
+									className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
+								>
+									×
+								</button>
+							</div>
+						)}
+					</div>
+
+					{/* API Details — shown only when the "API" tag is applied */}
+					{isApiTagSelected && (
+						<div className="space-y-3 rounded-lg border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
+							<p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">API Details</p>
+							{/* TODO: save apiMethod and apiRoute to ticket record on backend */}
+							<div className="grid grid-cols-[110px_1fr] gap-3 items-end">
+								<div className="space-y-1.5">
+									<Label>Method</Label>
+									<select
+										value={apiMethod}
+										onChange={e => setApiMethod(e.target.value)}
+										className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+									>
+										{['GET', 'POST', 'PUT', 'DELETE'].map(m => (
+											<option key={m}>{m}</option>
+										))}
+									</select>
+								</div>
+								<div className="space-y-1.5">
+									<Label>API Route</Label>
+									<Input
+										placeholder="/api/v1/resource"
+										value={apiRoute}
+										onChange={e => setApiRoute(e.target.value)}
+									/>
+								</div>
+							</div>
+						</div>
+					)}
+				</form>
+
+				{/* Footer */}
+				<div className="h-px bg-gray-100 shrink-0" />
+				<div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0">
+					<button
+						type="button"
+						onClick={onClose}
+						className="px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+					>
+						Cancel
+					</button>
+					<button
+						type="button"
+						onClick={handleSubmit}
+						disabled={!title.trim()}
+						className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+					>
+						Create Ticket
+					</button>
+				</div>
+			</div>
+		</div>
+	);
+}

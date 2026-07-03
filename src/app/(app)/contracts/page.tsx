@@ -1,11 +1,11 @@
 "use client";
 
-import ContractViewer from "@/components/ui/ContractDesign/ContractViewer";
+import ContractViewer from "@/features/contracts/ContractViewer";
 import SignatoriesCard, {
   type Signatory,
-} from "@/components/ui/ContractDesign/SignatoriesCard";
-import ExecuteAgreementCard from "@/components/ui/ContractDesign/ExecuteAgreementCard";
-import { ExecutedBanner } from "@/components/ui/ContractDesign/ExecutedBanner";
+} from "@/features/contracts/SignatoriesCard";
+import ExecuteAgreementCard from "@/features/contracts/ExecuteAgreementCard";
+import { ExecutedBanner } from "@/features/contracts/ExecutedBanner";
 import Sidebar from '@/components/layout/sidebar';
 import TopNav from "@/components/layout/TopNav";
 
@@ -35,10 +35,7 @@ export default function ContractPage({
   params: { projectId: string; contractId: string };
 }) {
   return (
-    <Sidebar>
-            <TopNav breadcrumbs={["Acesoft", "Project Alpha", "Project Structure"]} />
     <div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
-      
       <div className="mx-auto max-w-6xl">
         {allSigned && (
           <ExecutedBanner
@@ -66,6 +63,5 @@ export default function ContractPage({
         </div>
       </div>
     </div>
-    </Sidebar>
   );
 }
