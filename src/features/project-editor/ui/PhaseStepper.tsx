@@ -19,6 +19,7 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
     const [phaseToDelete, setPhaseToDelete] = useState<number | null>(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(true);
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Modal form state
@@ -116,6 +117,84 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
       setPhaseToDelete(null);
     };
 
+    // Drag and Drop Handlers
+    const handleDragStart = (e: React.DragEvent, index: number) => {
+      setDraggedIndex(index);
+      e.dataTransfer.effectAllowed = 'move';
+      // Add a visual indicator
+      setTimeout(() => {
+        (e.target as HTMLElement).style.opacity = '0.5';
+      }, 0);
+    };
+
+    const handleDragEnd = (e: React.DragEvent) => {
+      (e.target as HTMLElement).style.opacity = '1';
+      setDraggedIndex(null);
+      // Remove all drag-over styles
+      document.querySelectorAll('.drag-over').forEach(el => {
+        el.classList.remove('drag-over');
+      });
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      if (draggedIndex === null || draggedIndex === index) return;
+      
+      // Remove all drag-over styles
+      document.querySelectorAll('.drag-over').forEach(el => {
+        el.classList.remove('drag-over');
+      });
+      
+      // Add drag-over style to current target
+      const target = e.currentTarget as HTMLElement;
+      target.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+      (e.currentTarget as HTMLElement).classList.remove('drag-over');
+    };
+
+    const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+      e.preventDefault();
+      
+      const dragIndex = draggedIndex;
+      if (dragIndex === null || dragIndex === dropIndex) {
+        setDraggedIndex(null);
+        return;
+      }
+
+      // Remove drag-over styles
+      document.querySelectorAll('.drag-over').forEach(el => {
+        el.classList.remove('drag-over');
+      });
+
+      // Reorder the phases
+      const reorderedPhases = [...phases];
+      const [draggedPhase] = reorderedPhases.splice(dragIndex, 1);
+      reorderedPhases.splice(dropIndex, 0, draggedPhase);
+      
+      // Re-number the phases
+      const renumberedPhases = reorderedPhases.map((phase, index) => ({
+        ...phase,
+        number: index + 1,
+      }));
+      
+      setPhases(renumberedPhases);
+      
+      // Update active phase if it was moved
+      if (activePhase === dragIndex + 1) {
+        setActivePhase(dropIndex + 1);
+      } else if (activePhase > dragIndex + 1 && activePhase <= dropIndex + 1) {
+        setActivePhase(activePhase - 1);
+      } else if (activePhase < dragIndex + 1 && activePhase >= dropIndex + 1) {
+        setActivePhase(activePhase + 1);
+      }
+      
+      setDraggedIndex(null);
+    };
+
     return (
       <>
         <div className="relative bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8">
@@ -151,14 +230,30 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
               className="overflow-x-auto scroll-smooth hide-scrollbar"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              <div className="flex items-start" style={{ minWidth: `${phases.length * 180}px` }}>
-                {phases.map((phase) => {
+              <div className="flex items-start pt-2" style={{ minWidth: `${phases.length * 180}px` }}>
+                {phases.map((phase, index) => {
                   const isActive = phase.number === activePhase;
                   const isCompleted = phase.number < activePhase;
                   const isPending = phase.number > activePhase;
 
                   return (
-                    <div key={phase.number} className="relative flex flex-col items-center flex-shrink-0" style={{ width: `${100 / phases.length}%`, minWidth: '140px' }}>
+                    <div 
+                      key={phase.number}
+                      className="relative flex flex-col items-center flex-shrink-0 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-105"
+                      style={{ 
+                        width: `${100 / phases.length}%`, 
+                        minWidth: '140px',
+                      }}
+                      draggable={true}
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragEnd={handleDragEnd}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      {/* Drag indicator - subtle border on hover */}
+                      <div className="absolute inset-0 rounded-xl border-2 border-transparent transition-all duration-200 pointer-events-none group-hover:border-[#4F46E5]/20" />
+                      
                       {/* Phase Node */}
                       <div className="relative z-10 flex flex-col items-center group">
                         <button
@@ -231,24 +326,6 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
                           {phase.subtitle}
                         </div>
                       </div>
-
-                      {/* Diamond Gate - positioned between phases */}
-                      {/* {idx < phases.length - 1 && (
-                        <div className="absolute -right-[calc(15%-20px)] top-3">
-                          <div className="relative">
-                            <div className={`w-6 h-6 border-2 rotate-45 border-[#CBD5E1] transition-all duration-200
-                                      ${isCompleted ? "bg-[#F1F5F9]" : "bg-white"}
-                                      `}
-                            />
-                            <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap top-8">
-                              <span className="text-[9px] font-bold text-[#64748B] uppercase tracking-wider 
-                              bg-white px-2 py-0.5 rounded whitespace-nowrap">
-                                GATE
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )} */}
                     </div>
                   );
                 })}

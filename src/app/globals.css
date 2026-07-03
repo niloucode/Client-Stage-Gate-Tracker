@@ -28,3 +28,20 @@ body {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Drag and drop styles */
+.drag-over {
+  border-color: #4F46E5 !important;
+  background-color: rgba(79, 70, 229, 0.05) !important;
+  border-radius: 0.75rem;
+  transform: scale(1.02);
+}
+
+/* Make draggable items show cursor */
+[ draggable="true"] {
+  cursor: grab;
+}
+
+[ draggable="true"]:active {
+  cursor: grabbing;
+}
