@@ -5,7 +5,7 @@ import { TicketCardContent } from '@/features/ticket-board/ui/TicketCard';
 import TicketSlideOver from '@/features/ticket-board/ui/TicketModalEdit';
 import TicketModalCreate from '@/features/ticket-board/ui/TicketModalCreate';
 import TicketBoard from '@/features/ticket-board/ui/TicketBoard';
-import { MOCK_TICKETS } from '@/features/ticket-board/model/types';
+// import { MOCK_TICKETS } from '@/features/ticket-board/model/types';
 import type { Ticket } from '@/features/ticket-board/model/types';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
