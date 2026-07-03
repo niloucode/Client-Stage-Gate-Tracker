@@ -1,107 +1,16 @@
 "use client";
-import Sidebar from '@/components/layout/sidebar';
-import TopNav from "@/components/layout/TopNav";
+
+import TopNav from "@/shared/ui/TopNav";
+import Sidebar from '@/shared/ui/sidebar';
 
 import { useState, useRef } from "react";
 import {
   PhaseStepper,
   ActivePhaseDetails,
   ModulesCard,
-} from "@/components/ui/ProjectEditor";
-
-export interface Workflow {
-  id: string;
-  name: string;
-  tags: string[];
-  ticketCount: number;
-  progress: number;
-}
-
-export interface Module {
-  id: string;
-  name: string;
-  description: string;
-  roles: string[];
-  workflows: Workflow[];
-}
-
-export interface Phase {
-  number: number;
-  name: string;
-  subtitle: string;
-  description: string;
-  modules: Module[];
-}
-
-const defaultPhases: Phase[] = [
-  { 
-    number: 1, 
-    name: "Phase 1", 
-    subtitle: "Discovery", 
-    description: "Initial market research, competitor analysis, and requirement gathering from stakeholders.",
-    modules: [
-      {
-        id: "1",
-        name: "Authentication & Identity",
-        description: "Implementation of Security Features",
-        roles: ["Frontend", "Backend", "DevOps"],
-        workflows: [
-          {
-            id: "1",
-            name: "User Login Flow",
-            tags: ["Frontend"],
-            ticketCount: 8,
-            progress: 75,
-          },
-          {
-            id: "2",
-            name: "Password Reset",
-            tags: ["Backend"],
-            ticketCount: 3,
-            progress: 30,
-          },
-        ],
-      },
-    ]
-  },
-  { 
-    number: 2, 
-    name: "Phase 2", 
-    subtitle: "Core Dev", 
-    description: "Implementation of core backend services, identity provider integration, and primary user dashboards.",
-    modules: [
-      {
-        id: "1",
-        name: "Authentication & Identity",
-        description: "Implementation of Security Features",
-        roles: ["Frontend", "Backend", "DevOps"],
-        workflows: [
-          {
-            id: "1",
-            name: "User Login Flow",
-            tags: ["Frontend"],
-            ticketCount: 8,
-            progress: 75,
-          },
-          {
-            id: "2",
-            name: "Password Reset",
-            tags: ["Backend"],
-            ticketCount: 3,
-            progress: 30,
-          },
-        ],
-      },
-    ]
-  },
-  { 
-    number: 3, 
-    name: "Phase 3", 
-    subtitle: "Production", 
-    description: "Internal beta testing, user acceptance testing, and performance optimization.",
-    modules: []
-  },
-];
+} from "@/features/project-editor";
+import type { Phase } from "@/features/project-editor/types";
+import { defaultPhases } from "@/features/project-editor/defaults";
 
 export default function EditorPage() {
   const [phases, setPhases] = useState<Phase[]>(defaultPhases);
