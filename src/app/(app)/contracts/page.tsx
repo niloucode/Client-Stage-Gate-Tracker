@@ -1,11 +1,11 @@
 "use client";
 
-import ContractViewer from "@/features/contracts/ContractViewer";
+import ContractViewer from "@/features/contracts/ui/ContractViewer";
 import SignatoriesCard, {
   type Signatory,
-} from "@/features/contracts/SignatoriesCard";
-import ExecuteAgreementCard from "@/features/contracts/ExecuteAgreementCard";
-import { ExecutedBanner } from "@/features/contracts/ExecutedBanner";
+} from "@/features/contracts/ui/SignatoriesCard";
+import ExecuteAgreementCard from "@/features/contracts/ui/ExecuteAgreementCard";
+import { ExecutedBanner } from "@/features/contracts/ui/ExecutedBanner";
 
 const signatories: Signatory[] = [
   {
