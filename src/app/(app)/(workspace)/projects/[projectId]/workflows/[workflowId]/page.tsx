@@ -1,5 +1,5 @@
-import TicketBoard from '@/components/tickets/TicketBoard';
-import Sidebar from '@/components/layout/sidebar';
+import TicketBoard from '@/features/ticket-board/ui/TicketBoard';
+import Sidebar from '@/shared/ui/sidebar';
 
 export default async function TicketsPage({ params }: {
     params: Promise<{ projectId: string; workflowId: string }>;

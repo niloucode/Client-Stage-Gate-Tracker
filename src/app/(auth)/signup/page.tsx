@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Hanken_Grotesk } from 'next/font/google'
-import { SignupForm } from '@/components/auth/SignupForm'
+import { SignupForm } from '@/features/auth/ui/SignupForm'
 
 const hanken = Hanken_Grotesk({
   subsets: ['latin'],

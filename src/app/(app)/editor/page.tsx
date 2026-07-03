@@ -1,12 +1,12 @@
 "use client";
-import Sidebar from '@/components/layout/sidebar';
+import Sidebar from '@/shared/ui/sidebar';
 
 import { useState, useRef } from "react";
 import {
   PhaseStepper,
   ActivePhaseDetails,
   ModulesCard,
-} from "@/components/ui/ProjectEditor";
+} from "@/features/project-editor";
 
 export interface Workflow {
   id: string;

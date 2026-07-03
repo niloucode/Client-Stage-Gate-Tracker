@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Hanken_Grotesk } from "next/font/google";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/auth/PasswordInput";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import { Button } from "@/shared/ui/button";
+import { PasswordInput } from "@/features/auth/ui/PasswordInput";
 import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "../context/auth_provider";
+import { useAuth } from "../../../features/auth/context/auth_provider";
 import { AuthError } from "@supabase/supabase-js";
 
 const hanken = Hanken_Grotesk({
