@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Workflow } from "@/app/(app)/editor/page";
+import type { Workflow } from "../types";
 
 interface EditWorkflowFormData {
   name: string;
@@ -25,6 +25,7 @@ export function EditWorkflow({ isOpen, workflow, onClose, onSave, onDelete }: Ed
   const [formData, setFormData] = useState<EditWorkflowFormData>(toFormData(workflow));
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(toFormData(workflow));
   }, [workflow]);
 

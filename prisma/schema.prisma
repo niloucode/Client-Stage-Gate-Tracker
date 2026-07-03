@@ -581,12 +581,12 @@ model HistoryEvent {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Images {
-  image_id    String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  image_src   String           @unique
-  parent_type ImageParentType?
-  parent_id   String           @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  is_deleted  Boolean          @default(false)
-  deleted_at  DateTime?        @db.Timestamptz(6)
+  image_id    String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  image_src   String          @unique
+  parent_type ImageParentType
+  parent_id   String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  is_deleted  Boolean         @default(false)
+  deleted_at  DateTime?       @db.Timestamptz(6)
   Profiles    Profiles[]
 
   @@schema("public")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { phaseSchema } from "@/shared/schemas";
 
 interface AddPhaseFormData {
   name: string;
@@ -16,19 +17,34 @@ interface AddPhaseProps {
 
 const emptyFormData: AddPhaseFormData = { name: "", subtitle: "", description: "" };
 
+type FieldErrors = Partial<Record<keyof AddPhaseFormData, string>>;
+
 export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
   const [formData, setFormData] = useState<AddPhaseFormData>(emptyFormData);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   if (!isOpen) return null;
 
   const handleClose = () => {
     setFormData(emptyFormData);
+    setFieldErrors({});
     onClose();
   };
 
   const handleSubmit = () => {
+    const result = phaseSchema.safeParse(formData);
+    if (!result.success) {
+      const flattened = result.error.flatten().fieldErrors;
+      const mapped: FieldErrors = {};
+      for (const [key, msgs] of Object.entries(flattened)) {
+        if (msgs && msgs.length > 0) mapped[key as keyof AddPhaseFormData] = msgs[0];
+      }
+      setFieldErrors(mapped);
+      return;
+    }
     onSubmit(formData);
     setFormData(emptyFormData);
+    setFieldErrors({});
   };
 
   return (
@@ -62,6 +78,9 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
               placeholder="e.g., Phase 5: Testing"
               className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
             />
+            {fieldErrors.name && (
+              <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>
+            )}
           </div>
 
           <div>

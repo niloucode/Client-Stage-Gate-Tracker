@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
-import { Profile, Tag, TicketAssigned } from '@/entities/types';
+import { Tag } from '@/entities/types';
 
 import { XIcon, ChevronDownIcon, EyeIcon } from './assets';
-import { selectProfile } from "@/entities/profile/profileActions";
+import { useProfiles } from "@/entities/profile/queries";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -40,7 +40,8 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 	const [tagsOpen, setTagsOpen] = useState(false);
 	const tagsRef = useRef<HTMLDivElement>(null);
 
-	const [profiles, setProfiles] = useState<Profile[]>([]);
+	const { data: profiles = [] } = useProfiles();
+
 	const [assignedOpen, setAssignedOpen] = useState(false);
 	const [assignedIds, setAssignedIds] = useState<string[]>([]);
 	const [watcherId, setWatcherId] = useState('');
@@ -53,8 +54,6 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 	const [apiRoute, setApiRoute] = useState('');
 
 	useEffect(() => {
-		selectProfile().then(setProfiles);
-
 		function handleClickOutside(e: MouseEvent) {
 			if (tagsRef.current && !tagsRef.current.contains(e.target as Node)) {
 				setTagsOpen(false);

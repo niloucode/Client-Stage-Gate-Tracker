@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { moduleSchema } from "@/shared/schemas";
 
 interface AddModuleFormData {
   name: string;
@@ -17,19 +18,34 @@ interface AddModuleProps {
 
 const emptyFormData: AddModuleFormData = { name: "", description: "", roles: "" };
 
+type FieldErrors = Partial<Record<keyof AddModuleFormData, string>>;
+
 export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleProps) {
   const [formData, setFormData] = useState<AddModuleFormData>(emptyFormData);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   if (!isOpen) return null;
 
   const handleClose = () => {
     setFormData(emptyFormData);
+    setFieldErrors({});
     onClose();
   };
 
   const handleSubmit = () => {
+    const result = moduleSchema.safeParse(formData);
+    if (!result.success) {
+      const flattened = result.error.flatten().fieldErrors;
+      const mapped: FieldErrors = {};
+      for (const [key, msgs] of Object.entries(flattened)) {
+        if (msgs && msgs.length > 0) mapped[key as keyof AddModuleFormData] = msgs[0];
+      }
+      setFieldErrors(mapped);
+      return;
+    }
     onSubmit(formData);
     setFormData(emptyFormData);
+    setFieldErrors({});
   };
 
   return (
@@ -63,6 +79,9 @@ export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleP
               placeholder="e.g., Authentication & Identity"
               className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
             />
+            {fieldErrors.name && (
+              <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>
+            )}
           </div>
 
           <div>

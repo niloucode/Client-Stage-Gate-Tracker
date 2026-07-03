@@ -1,6 +1,6 @@
 "use client";
 
-import { Tag } from '../../ticket-board/model/types';
+import type { Tag } from "@/entities/types";
 import { getPastelStyle, TAG_COLORS } from "@/features/ticket-board/ui/assets";
 import {useState} from "react";
 import TagModalDelete from "@/features/tag-manager/ui/TagModalDelete";

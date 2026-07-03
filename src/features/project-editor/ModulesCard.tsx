@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Module, Phase, Workflow } from "@/app/(app)/editor/page";
+import type { Module, Phase, Workflow } from "./types";
 import { WorkflowsList } from "./WorkflowsList";
 import { AddModule } from "./Modals/AddModule";
 import { EditModule } from "./Modals/EditModule";
@@ -13,12 +13,21 @@ interface ModulesCardProps {
 }
 
 export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
+
+  // Module form state
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [moduleFormData, setModuleFormData] = useState({
+    name: "",
+    description: "",
+    roles: "",
+  });
   
   const openCreateModuleModal = () => setIsAddOpen(true);
   const openEditModuleModal = (module: Module) => setEditingModule(module);
@@ -26,13 +35,6 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
   // Get modules for the current active phase
   const currentPhase = phases.find(p => p.number === activePhase);
   const modules = currentPhase?.modules || [];
-
-  // Module form state
-  const [moduleFormData, setModuleFormData] = useState({
-    name: "",
-    description: "",
-    roles: "",
-  });
 
   const handleAddModule = (data: { name: string; description: string; roles: string }) => {
     const rolesList = data.roles.split(",").map(r => r.trim()).filter(Boolean);

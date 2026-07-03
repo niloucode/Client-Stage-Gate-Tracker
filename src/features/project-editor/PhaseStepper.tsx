@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useState, useRef, useEffect } from "react";
-import { Phase } from "@/app/(app)/editor/page";
+import type { Phase } from "./types";
 import { DeletePhase } from "./Modals/DeletePhase";
 import { AddPhase } from "./Modals/AddPhase";
 
@@ -152,7 +152,7 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               <div className="flex items-start" style={{ minWidth: `${phases.length * 180}px` }}>
-                {phases.map((phase, idx) => {
+                {phases.map((phase) => {
                   const isActive = phase.number === activePhase;
                   const isCompleted = phase.number < activePhase;
                   const isPending = phase.number > activePhase;

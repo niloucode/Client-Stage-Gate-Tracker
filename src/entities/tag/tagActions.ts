@@ -1,5 +1,7 @@
 "use server";
 import {prisma} from "@/lib/prisma";
+import { tagCreateSchema } from "@/shared/schemas";
+import { z } from "zod";
 
 /**
  * Retrieves all tag records from the database.
@@ -21,6 +23,7 @@ export async function createTag(
     description?: string | null,
     color?: string | null
 ) {
+    tagCreateSchema.parse({ name, description, color });
     try {
         const newTicket = await prisma.tags.create({
             data: {
@@ -37,6 +40,8 @@ export async function createTag(
 }
 
 export async function updateTag(id: string, name:string, description?: string | null, color?: string | null) {
+    z.string().uuid().parse(id);
+    tagCreateSchema.parse({ name, description, color });
     return prisma.tags.update({
         where: { tag_id: id },
         data: {

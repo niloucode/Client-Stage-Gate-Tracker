@@ -7,11 +7,15 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Button } from "@/shared/ui/button";
 import { PasswordInput } from "@/features/auth/ui/PasswordInput";
+import { useQueryClient } from "@tanstack/react-query";
 import { ProfileType } from "@/shared/types";
 import { createClient } from "@/lib/supabase/client";
+import { signupSchema } from "@/shared/schemas";
+import { profileKeys } from "@/shared/query/keys";
 
 export function SignupForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const supabase = createClient();
 
   const [firstName, setFirstName] = useState("");
@@ -23,6 +27,7 @@ export function SignupForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   async function userSignUp(user: ProfileType, password: string) {
@@ -46,37 +51,28 @@ export function SignupForm() {
 
   const handleSignUp = async (e: React.BaseSyntheticEvent) => {
     setError(null);
+    setFieldErrors({});
     setLoading(false);
     e.preventDefault();
 
-    // basic validation
-    const missingFields: string[] = [];
+    const result = signupSchema.safeParse({
+      firstName,
+      lastName,
+      email,
+      phone,
+      jobTitle: jobTitle || undefined,
+      department,
+      password,
+      confirmPassword,
+    });
 
-    if (!firstName) missingFields.push("first name");
-    if (!lastName) missingFields.push("last name");
-    if (!email) missingFields.push("email");
-    if (!phone) missingFields.push("phone number");
-    if (!department) missingFields.push("department");
-    if (!password) missingFields.push("password");
-    if (!confirmPassword) missingFields.push("confirm password");
-
-    // check password mismatch separately — only if both are filled
-    const passwordMismatch =
-      password && confirmPassword && password !== confirmPassword;
-
-    if (missingFields.length >= 3) {
-      setError("Multiple fields are missing.");
-      return;
-    } else if (missingFields.length === 2) {
-      setError(
-        `Please input your ${missingFields[0]} and ${missingFields[1]}.`,
-      );
-      return;
-    } else if (missingFields.length === 1) {
-      setError(`Please input your ${missingFields[0]}.`);
-      return;
-    } else if (passwordMismatch) {
-      setError("Password and confirmed password do not match.");
+    if (!result.success) {
+      const flattened = result.error.flatten().fieldErrors;
+      const mapped: Record<string, string> = {};
+      for (const [key, msgs] of Object.entries(flattened)) {
+        if (msgs && msgs.length > 0) mapped[key] = msgs[0];
+      }
+      setFieldErrors(mapped);
       return;
     }
 
@@ -108,7 +104,7 @@ export function SignupForm() {
     //only triggers if CONFIRM EMAIL option in Supabase is off (shud be on by default tho)
     if (data.session) {
       router.push("/login");
-      router.refresh();
+      queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
     } else {
       setError(
         "Account created! Check your email to confirm your account before logging in.",
@@ -133,6 +129,9 @@ export function SignupForm() {
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
           />
+          {fieldErrors.firstName && (
+            <p className="text-xs text-red-500 mt-1">{fieldErrors.firstName}</p>
+          )}
         </div>
         <div className="flex-1">
           <Label htmlFor="lastname" className="mb-1.5">
@@ -145,6 +144,9 @@ export function SignupForm() {
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
           />
+          {fieldErrors.lastName && (
+            <p className="text-xs text-red-500 mt-1">{fieldErrors.lastName}</p>
+          )}
         </div>
       </div>
 
@@ -160,6 +162,9 @@ export function SignupForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+        {fieldErrors.email && (
+          <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
+        )}
       </div>
 
       {/* Phone Number */}
@@ -174,6 +179,9 @@ export function SignupForm() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
+        {fieldErrors.phone && (
+          <p className="text-xs text-red-500 mt-1">{fieldErrors.phone}</p>
+        )}
       </div>
 
       {/* Job Title + Department */}
@@ -201,6 +209,9 @@ export function SignupForm() {
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
           />
+          {fieldErrors.department && (
+            <p className="text-xs text-red-500 mt-1">{fieldErrors.department}</p>
+          )}
         </div>
       </div>
 
@@ -215,6 +226,9 @@ export function SignupForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        {fieldErrors.password && (
+          <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
+        )}
       </div>
 
       {/* Confirm Password */}
@@ -228,6 +242,9 @@ export function SignupForm() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
+        {fieldErrors.confirmPassword && (
+          <p className="text-xs text-red-500 mt-1">{fieldErrors.confirmPassword}</p>
+        )}
       </div>
 
       {/* Error message */}

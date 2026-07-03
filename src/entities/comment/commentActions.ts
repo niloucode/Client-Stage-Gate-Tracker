@@ -1,8 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import {Prisma, status, CommentParentType, ImageParentType } from "@/lib/generated/prisma";
-import {Profile, TicketAssigned, TicketSubtask, TicketTag} from "@/features/ticket-board/model/types";
+import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 
 export type EntityFilterStatus = 'active' | 'deleted' | 'all';
 

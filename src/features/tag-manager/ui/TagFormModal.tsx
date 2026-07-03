@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {Tag} from "@/features/ticket-board/model/types";
+import type { Tag } from "@/entities/types";
 import {Backdrop, CloseButton, ColorPicker} from "@/features/tag-manager/ui/TagModals";
 
 export default function TagFormModal({ mode, initial, onClose, onSubmit }: {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Module } from "@/app/(app)/editor/page";
+import type { Module } from "../types";
 
 interface EditModuleFormData {
   name: string;
@@ -27,6 +27,7 @@ export function EditModule({ isOpen, module, onClose, onSave, onDelete }: EditMo
   const [formData, setFormData] = useState<EditModuleFormData>(toFormData(module));
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData(toFormData(module));
   }, [module]);
 

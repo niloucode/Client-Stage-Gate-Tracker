@@ -1,15 +1,15 @@
 'use client';
 
-import { Ticket, Profile, Tag, Comment } from '@/entities/types';
+import { Ticket, Tag } from '@/entities/types';
 
 import { useState, useRef, useEffect } from 'react';
 import {CommentParentType, status as status} from "@/lib/generated/prisma";
 import { Input } from '@/shared/ui/input';
 
-import { selectTag } from "@/entities/tag/tagActions";
-import { selectProfile } from "@/entities/profile/profileActions";
+import { useProfiles } from "@/entities/profile/queries";
+import { useComments } from "@/entities/comment/queries";
+import { useCreateComment } from "@/entities/comment/mutations";
 import { updateTicket } from "@/entities/ticket/ticketActions";
-import {createCommentWithImages, selectComment, selectTicketComment} from "@/entities/comment/commentActions";
 import {createClient} from "@/lib/supabase/client";
 
 
@@ -41,7 +41,6 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
   const titleRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLTextAreaElement>(null);
 
-  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
@@ -51,48 +50,20 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
   const [apiMethod, setApiMethod] = useState('GET');
   const [apiRoute, setApiRoute] = useState('');
 
-  /** Comments — local only until backend is wired */
-  const [comments, setComments] = useState<Comment[]>([]);
+  /** Comments */
   const [commentText, setCommentText] = useState('');
   const [commentImages, setCommentImages] = useState<File[]>([]);
   const [commentImagePreviews, setCommentImagePreviews] = useState<string[]>([]);
-  const commentImageRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const commentImageRef = useRef<HTMLInputElement>(null);
 
-// 1. Fetch profiles cleanly on mount with a cleanup guard
-  useEffect(() => {
-    let isMounted = true;
+  // ── TanStack Query ──────────────────────────────────────────────────────
 
-    selectProfile()
-        .then((data) => {
-          if (isMounted) {
-            setProfiles(data as Profile[]);
-          }
-        })
-        .catch((err) => console.error("Failed to fetch profiles:", err));
+  const { data: profiles = [] } = useProfiles();
+  const { data: comments = [] } = useComments();
+  const createCommentMutation = useCreateComment();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    selectComment()
-        .then((data) => {
-          if (isMounted) {
-            setComments(data as Comment[]);
-          }
-        })
-        .catch((err) => console.error("Failed to fetch comments:", err));
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-// Click-outside listener (Fixed event type mismatch: use 'mousedown' instead of MouseEvent)
+  // Click-outside listener
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (assignDropdownRef.current && !assignDropdownRef.current.contains(e.target as Node)) {
@@ -104,22 +75,14 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-// Sync initialTicket data when it changes + safely fetch tags
+  // Sync initialTicket data when it changes
   useEffect(() => {
-    let isMounted = true;
-
-    selectTag()
-        .then((data) => {
-          if (!isMounted) return;
-          setTicket(initialTicket);
-          setEditing(null);
-          setSelectedTags(initialTicket?.TicketTags?.map((t: any) => t.tag_id) ?? []);
-        })
-        .catch((err) => console.error("Failed to fetch tags:", err));
-
-    return () => {
-      isMounted = false;
-    };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTicket(initialTicket);
+    setEditing(null);
+    setSelectedTags(
+      initialTicket?.TicketTags?.map((t: { tag_id: string }) => t.tag_id) ?? []
+    );
   }, [initialTicket]);
 
 // Focus inputs when entering editing modes
@@ -274,7 +237,7 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
           const fileName = `${crypto.randomUUID()}.${fileExt}`;
           const filePath = `comments/${fileName}`;
 
-          const { data, error } = await supabase.storage
+          const { error } = await supabase.storage
               .from('images')
               .upload(filePath, file, {
                 cacheControl: '3600',
@@ -293,22 +256,13 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
         }
       }
 
-      const result = await createCommentWithImages({
+      await createCommentMutation.mutateAsync({
         profile_id: user.id,
         description: commentText,
         parent_type: CommentParentType.TICKET,
         parent_id: ticket?.ticket_id ?? "",
         imageUrls: imageUrls,
       });
-
-      setComments((prev) => [
-        ...prev,
-        {
-          ...result,
-          // Ensure creation_date is instantiated as a Date object so .toLocaleTimeString() doesn't crash
-          creation_date: new Date(result.creation_date),
-        } as Comment
-      ]);
 
       setCommentText('');
       setCommentImages([]);
@@ -716,10 +670,10 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                   <button
                       type="button"
                       onClick={handleAddComment}
-                      disabled={!commentText.trim() && commentImages.length === 0}
+                      disabled={(!commentText.trim() && commentImages.length === 0) || isSubmitting}
                       className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors"
                   >
-                    Comment
+                    {isSubmitting ? "Posting..." : "Comment"}
                   </button>
                 </div>
               </div>

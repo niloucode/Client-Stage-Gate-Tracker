@@ -1,5 +1,3 @@
-import Prisma from '@/lib/generated/prisma';
-import { status, CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 import { selectTicket } from "@/entities/ticket/ticketActions";
 import { selectComment } from "@/entities/comment/commentActions";
 
@@ -19,14 +17,7 @@ export interface TicketTag {
 	ticket_id: string;
 }
 
-export interface Tag {
-	tag_id: string;
-	name: string;
-	description?: string | null;
-	color?: string | null;
-	is_deleted: boolean;
-	deleted_at: Date | null;
-}
+export type { Tag } from "@/shared/schemas";
 
 export interface Subtask {
 	id: string;

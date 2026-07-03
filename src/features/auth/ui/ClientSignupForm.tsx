@@ -7,56 +7,43 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Button } from '@/shared/ui/button'
 import { PasswordInput } from '@/features/auth/ui/PasswordInput'
+import { clientSignupSchema, type ClientSignupInput } from '@/shared/schemas'
 
-type Fields = {
-  // TODO: confirm these map to User.firstName and User.lastName on the backend
-  // (per Byron's data model: User → Client → Contract)
-  firstName: string
-  lastName: string
-  companyName: string
-  email: string
-  password: string
-  confirmPassword: string
-  streetNumber: string
-  streetName: string
-  city: string
-  country: string
-  tin: string
-  phone: string
+type FieldKey = keyof ClientSignupInput
+type Errors = Partial<Record<FieldKey, string>>
+
+const emptyFields: ClientSignupInput = {
+  firstName: '',
+  lastName: '',
+  companyName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  streetNumber: '',
+  streetName: '',
+  city: '',
+  country: '',
+  tin: '',
+  phone: '',
 }
-
-type Errors = Partial<Record<keyof Fields, string>>
 
 export function ClientSignupForm() {
   const router = useRouter()
 
-  const [fields, setFields] = useState<Fields>({
-    firstName: '',
-    lastName: '',
-    companyName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    streetNumber: '',
-    streetName: '',
-    city: '',
-    country: '',
-    tin: '',
-    phone: '',
-  })
+  const [fields, setFields] = useState<ClientSignupInput>(emptyFields)
 
   const [errors, setErrors] = useState<Errors>({})
   const [apiError, setApiError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  function set(key: keyof Fields) {
+  function set(key: FieldKey) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       setFields((prev) => ({ ...prev, [key]: e.target.value }))
       if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }))
     }
   }
 
-  function setNumeric(key: keyof Fields) {
+  function setNumeric(key: FieldKey) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
       const digits = e.target.value.replace(/\D/g, '')
       setFields((prev) => ({ ...prev, [key]: digits }))
@@ -64,37 +51,21 @@ export function ClientSignupForm() {
     }
   }
 
-  function validate(): Errors {
-    const e: Errors = {}
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)
-
-    if (!fields.firstName.trim()) e.firstName = 'First name is required.'
-    if (!fields.lastName.trim()) e.lastName = 'Last name is required.'
-    if (!fields.companyName.trim()) e.companyName = 'Company name is required.'
-    if (!fields.email) e.email = 'Email address is required.'
-    else if (!emailOk) e.email = 'Enter a valid email address.'
-    if (!fields.password) e.password = 'Password is required.'
-    if (!fields.confirmPassword) e.confirmPassword = 'Please confirm your password.'
-    else if (fields.password && fields.password !== fields.confirmPassword)
-      e.confirmPassword = 'Passwords do not match.'
-    if (!fields.streetNumber.trim()) e.streetNumber = 'Required.'
-    if (!fields.streetName.trim()) e.streetName = 'Street name is required.'
-    if (!fields.city.trim()) e.city = 'City is required.'
-    if (!fields.country.trim()) e.country = 'Country is required.'
-    if (!fields.tin) e.tin = 'TIN is required.'
-    if (!fields.phone) e.phone = 'Phone number is required.'
-
-    return e
-  }
-
   async function handleSubmit(e: React.BaseSyntheticEvent) {
     e.preventDefault()
     setApiError(null)
-    const errs = validate()
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs)
+
+    const result = clientSignupSchema.safeParse(fields)
+    if (!result.success) {
+      const flattened = result.error.flatten().fieldErrors
+      const mapped: Errors = {}
+      for (const [key, msgs] of Object.entries(flattened)) {
+        if (msgs && msgs.length > 0) mapped[key as FieldKey] = msgs[0]
+      }
+      setErrors(mapped)
       return
     }
+    setErrors({})
     setLoading(true)
     try {
       // TODO: connect to backend
@@ -112,7 +83,7 @@ export function ClientSignupForm() {
     }
   }
 
-  function errClass(key: keyof Fields) {
+  function errClass(key: FieldKey) {
     return errors[key] ? 'border-red-400 focus:ring-red-400' : ''
   }
 

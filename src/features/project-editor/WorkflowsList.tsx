@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Workflow } from "@/app/(app)/editor/page";
+import type { Workflow } from "./types";
 import { AddWorkflow } from "./Modals/AddWorkflow";
 import { EditWorkflow } from "./Modals/EditWorkflow";
 import { DeleteWorkflow } from "./Modals/DeleteWorkflow";
@@ -12,27 +12,14 @@ interface WorkflowsListProps {
   onUpdateWorkflows: (workflows: Workflow[]) => void;
 }
 
-export function WorkflowsList({ workflows, moduleId, onUpdateWorkflows }: WorkflowsListProps) {
-  const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
+export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [workflowToDelete, setWorkflowToDelete] = useState<Workflow | null>(null);
 
-  // Workflow form state
-  const [workflowFormData, setWorkflowFormData] = useState({
-    name: "",
-    tags: "",
-  });
-
   const openCreateWorkflowModal = () => setIsAddOpen(true);
   const openEditWorkflowModal = (workflow: Workflow) => setEditingWorkflow(workflow);
-
-  const closeWorkflowModal = () => {
-    setIsWorkflowModalOpen(false);
-    setEditingWorkflow(null);
-    setWorkflowFormData({ name: "", tags: "" });
-  };
 
   const handleAddWorkflow = (data: { name: string; tags: string }) => {
     const tagsList = data.tags.split(",").map(t => t.trim()).filter(Boolean);

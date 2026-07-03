@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
     DndContext,
     DragEndEvent,
@@ -18,27 +18,25 @@ import TicketColumn from "./TicketColumn";
 import { TicketCardContent } from "./TicketCard";
 import TicketModalCreate from "./TicketModalCreate";
 import TicketModalEdit from "./TicketModalEdit";
-import { TagManager } from "../../tag-manager/ui/TagModals";
+import { TagManager } from "@/features/tag-manager";
 
-// Actions
+// TanStack Query hooks
+import { useTicketsByWorkflow } from "@/entities/ticket/queries";
 import {
-    updateTicketStatus,
-    createTicket,
-    cascadeSoftDeleteTicket,
-} from "@/entities/ticket/ticketActions";
+  useCreateTicket,
+  useUpdateTicketStatus,
+  useDeleteTicket,
+} from "@/entities/ticket/mutations";
+import { useTags } from "@/entities/tag/queries";
 import {
-    selectTicketsByWorkflow,
-} from "@/features/ticket-board/api/actions"
-import {
-    selectTag,
-    updateTag,
-    createTag,
-    softDeleteTag
-} from "@/entities/tag/tagActions";
+  useCreateTag,
+  useUpdateTag,
+  useDeleteTag,
+} from "@/entities/tag/mutations";
 
 // Types
 import { COLUMNS } from "../model/types";
-import { Ticket, Tag } from "@/entities/types"
+import { Ticket } from "@/entities/types"
 import { status as TicketStatus } from "@/lib/generated/prisma";
 
 // Icons
@@ -49,26 +47,19 @@ import { TagsIcon, FilterIcon, PlusIcon } from './assets';
 
 /**
  * Renders the primary project workflow board workspace.
- * It coordinates asynchronous data fetching loops for active project elements, handles
- * client-side state projection syncing with Prisma relational layouts, registers global
- * dnd-kit pointer listeners, and provides centralized handlers for modals, drawers, and overlays.
- * * @component
+ * Uses TanStack Query for server state and dnd-kit for drag-and-drop.
+ *
  * @param {Object} props
- * @param {string} props.projectId - Unique database identifier for the parent project scope.
- * @param {string} props.workflowId - Unique container scope identifying the target board sprint layout.
- * @returns {JSX.Element} The fully rendered sprint board panel or a full-viewport loading skeleton.
+ * @param {string} props.workflow_id - Unique container scope identifying the target board sprint layout.
+ * @returns {JSX.Element} The fully rendered sprint board panel or a loading skeleton.
  */
-export default function TicketBoard({project_id, workflow_id}:
+export default function TicketBoard({workflow_id}:
 {
-    project_id: string;
+    project_id?: string;
     workflow_id: string;
 })
 {
-    const [tickets, setTickets] = useState<Ticket[]>([]);
-    const [tags, setTags] = useState<Tag[]>([]);
-
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [slideOverOpen, setSlideOverOpen] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -84,55 +75,24 @@ export default function TicketBoard({project_id, workflow_id}:
     });
     const sensors = useSensors(mouseSensor, touchSensor);
 
+    // ── TanStack Query ────────────────────────────────────────────────────
+
+    const {
+      data: tickets = [],
+      isLoading,
+    } = useTicketsByWorkflow(workflow_id);
+
+    const { data: tags = [] } = useTags();
+
+    const createTicketMutation = useCreateTicket();
+    const updateStatusMutation = useUpdateTicketStatus();
+    const deleteTicketMutation = useDeleteTicket();
+    const createTagMutation = useCreateTag();
+    const updateTagMutation = useUpdateTag();
+    const deleteTagMutation = useDeleteTag();
+
     const activeTicket = activeId ? tickets.find((t)=>
         t.ticket_id === activeId) : null;
-
-    useEffect(() => {
-        let isMounted = true;
-
-        if (isMounted) {
-            selectTag()
-                .then((data) => {
-                    if (isMounted) {
-                        setTags(data as Tag[]);
-                    }
-                })
-                .catch((err) => console.error("Failed to fetch tags:", err));
-        }
-
-        return () => {
-            isMounted = false; // Prevents updating state if component unmounts mid-fetch
-        };
-    }, []);
-
-    useEffect(() => {
-        let isMounted = true;
-
-        async function fetchBot() {
-            try {
-                setIsLoading(true);
-                const data = await selectTicketsByWorkflow(workflow_id);
-
-                // Only update state if the user is still looking at this page!
-                if (isMounted) {
-                    setTickets(data);
-                }
-            } catch (error) {
-                console.error("Error loading tickets from database:", error);
-            } finally {
-                if (isMounted) {
-                    setIsLoading(false);
-                }
-            }
-        }
-
-        fetchBot();
-
-        // Cleanup function: Fires if the component unmounts mid-fetch
-        return () => {
-            isMounted = false;
-        };
-    }, []); // Empty array is perfectly fine now because fetchBot is self-contained
 
     /**
      * Intercepts selection events on individual ticket layout targets to open the view/edit drawer.
@@ -173,7 +133,6 @@ export default function TicketBoard({project_id, workflow_id}:
                                           start_date,
                                           end_date,
                                       }: {
-        // Declare the types here in a separate block!
         name: string;
         deadline_date: Date;
         watcher_id?: string | null;
@@ -183,31 +142,21 @@ export default function TicketBoard({project_id, workflow_id}:
         start_date?: Date | null;
         end_date?: Date | null;
     }) {
-        const previousTickets = tickets;
         try {
-            // Clean matching call setup with deadlineDate passed as the 3rd argument
-            const result = await createTicket(
-                {
-                    workflow_id: workflow_id,
-                    name: name,
-                    deadline_date: deadline_date,
-                    status: TicketStatus.PENDING,
-                    watcher_id: watcher_id ?? null,
-                    TicketAssigned: TicketAssigned ?? [],
-                    tagIds: tagIds ?? [],
-                    description: description ?? null,
-                    start_date: start_date ?? null,
-                    end_date: end_date ?? null
-                }
-            );
-
-            if (result) {
-                setTickets((prev) =>
-                    [...prev, result as Ticket]);
-                setModalOpen(false);
-            }
+            await createTicketMutation.mutateAsync({
+                workflow_id: workflow_id,
+                name: name,
+                deadline_date: deadline_date,
+                status: TicketStatus.PENDING,
+                watcher_id: watcher_id ?? null,
+                TicketAssigned: TicketAssigned ?? [],
+                tagIds: tagIds ?? [],
+                description: description ?? null,
+                start_date: start_date ?? null,
+                end_date: end_date ?? null,
+            });
+            setModalOpen(false);
         } catch (error) {
-            setTickets(previousTickets);
             console.error("Failed to create ticket:", error);
         }
     }
@@ -219,16 +168,8 @@ export default function TicketBoard({project_id, workflow_id}:
      * @param {string} ticketId - The explicit UUID string mapping to the target document reference.
      * @returns {Promise<void>} Resolves when state mutation pipelines finish reconciling.
      */
-    async function handleDeleteTicket(ticketId: string) {
-        const previousTickets = tickets;
-        try {
-            setTickets((prev) =>
-                prev.filter((t) => t.ticket_id !== ticketId));
-            await cascadeSoftDeleteTicket(ticketId);
-        } catch (error) {
-            setTickets(previousTickets);
-            console.error("Failed to delete ticket:", error);
-        }
+    function handleDeleteTicket(ticketId: string) {
+        deleteTicketMutation.mutate(ticketId);
     }
 
     /**
@@ -243,32 +184,17 @@ export default function TicketBoard({project_id, workflow_id}:
      * @param {string | null} [color] - Optional Hex code, Tailwind class, or color variant identifier for UI styling.
      * @returns {Promise<void>} Resolves when the database mutations complete and React component state is successfully reconciled.
      */
-    async function handleSaveTag({name, tag_id, description, color}:{
+    function handleSaveTag({name, tag_id, description, color}:{
         name: string,
         tag_id?: string,
         description?: string | null,
         color?: string | null,
-    }): Promise<void>
+    }): void
     {
         if (tag_id) {
-            // Edit
-            const result = await updateTag(tag_id, name, description, color);
-
-            if (result.name)
-                setTags((prev) => prev.map((t) => t.tag_id === tag_id ? { ...t, ...{name, description, color} } as Tag : t));
+            updateTagMutation.mutate({ id: tag_id, name, description, color });
         } else {
-            // Create
-            const result = await createTag(name, description, color);
-
-            if (result.success)
-                setTags((prev) => [...prev, {
-                    tag_id:result?.data?.tag_id ?? "",
-                    name:name,
-                    description:description,
-                    color:color,
-                    deleted_at:null,
-                    is_deleted:false
-                } as Tag]);
+            createTagMutation.mutate({ name, description, color });
         }
     }
 
@@ -279,16 +205,8 @@ export default function TicketBoard({project_id, workflow_id}:
      * @param {string} tagId - Target primary key mapping to the custom styling metadata structure.
      * @returns {Promise<void>} Resolves when structural mutations finish execution steps.
      */
-    async function handleDeleteTag(tagId: string) {
-        const previousTag = tags;
-        try {
-            setTags((prev) =>
-                prev.filter((t) => t.tag_id !== tagId));
-            await softDeleteTag(tagId);
-        } catch (error) {
-            setTags(previousTag);
-            console.error("Failed to delete ticket:", error);
-        }
+    function handleDeleteTag(tagId: string) {
+        deleteTagMutation.mutate(tagId);
     }
 
     /**
@@ -312,26 +230,16 @@ export default function TicketBoard({project_id, workflow_id}:
      * @param {DragEndEvent} event - Context event tracking target item nodes and overlapping droppable lanes.
      * @returns {Promise<void>}
      */
-    async function handleDragEnd(event: DragEndEvent) {
+    function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
         setActiveId(null);
 
         if (over && active.id !== over.id) {
             const newStatus = over.id as TicketStatus;
-            const previousTickets = tickets;
-
-            setTickets((prev) =>
-                prev.map((t) =>
-                    t.ticket_id === active.id ? { ...t, status: newStatus } : t
-                )
-            );
-
-            try {
-                await updateTicketStatus(active.id as string, newStatus);
-            } catch (error) {
-                setTickets(previousTickets);
-                console.error("Failed to update ticket status:", error);
-            }
+            updateStatusMutation.mutate({
+                ticketId: active.id as string,
+                status: newStatus,
+            });
         }
 
         setTimeout(() => {
@@ -413,7 +321,7 @@ export default function TicketBoard({project_id, workflow_id}:
                 ticket={selectedTicket}
                 isOpen={slideOverOpen}
                 onClose={() => setSlideOverOpen(false)}
-                onUpdate={(updated) => setTickets((prev) => prev.map((t) => t.ticket_id === updated.ticket_id ? (updated as Ticket) : t))}
+                onUpdate={() => {}}
                 tags={tags}
             />
 

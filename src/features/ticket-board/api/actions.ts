@@ -1,6 +1,10 @@
+"use server";
+
 import {prisma} from "@/lib/prisma";
+import { z } from "zod";
 
 export async function selectTicketsByWorkflow(workflow_id:string) {
+    z.string().uuid().parse(workflow_id);
 	try {
 		return await prisma.tickets.findMany({
 			where: { is_deleted: false, workflow_id: workflow_id },

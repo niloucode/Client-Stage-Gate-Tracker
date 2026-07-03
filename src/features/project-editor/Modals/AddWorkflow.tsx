@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { workflowSchema } from "@/shared/schemas";
 
 interface AddWorkflowFormData {
   name: string;
@@ -15,19 +16,34 @@ interface AddWorkflowProps {
 
 const emptyFormData: AddWorkflowFormData = { name: "", tags: "" };
 
+type FieldErrors = Partial<Record<keyof AddWorkflowFormData, string>>;
+
 export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
   const [formData, setFormData] = useState<AddWorkflowFormData>(emptyFormData);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   if (!isOpen) return null;
 
   const handleClose = () => {
     setFormData(emptyFormData);
+    setFieldErrors({});
     onClose();
   };
 
   const handleSubmit = () => {
+    const result = workflowSchema.safeParse(formData);
+    if (!result.success) {
+      const flattened = result.error.flatten().fieldErrors;
+      const mapped: FieldErrors = {};
+      for (const [key, msgs] of Object.entries(flattened)) {
+        if (msgs && msgs.length > 0) mapped[key as keyof AddWorkflowFormData] = msgs[0];
+      }
+      setFieldErrors(mapped);
+      return;
+    }
     onSubmit(formData);
     setFormData(emptyFormData);
+    setFieldErrors({});
   };
 
   return (
@@ -61,6 +77,9 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
               placeholder="e.g., User Login Flow"
               className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
             />
+            {fieldErrors.name && (
+              <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>
+            )}
           </div>
         </div>
 

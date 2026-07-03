@@ -1,4 +1,4 @@
-import {Tag} from "@/features/ticket-board/model/types";
+import type { Tag } from "@/entities/types";
 import {Backdrop, CloseButton, TagBadge} from "@/features/tag-manager/ui/TagModals";
 
 export default function TagListModal({ tags, onClose, onCreateTag, onEditTag, onDeleteTag }: {
