@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { PenLine, UploadCloud, X } from "lucide-react";
+import { AdoptSignatureModal, renderSignatureToFile } from "./AdoptSignatureModal";
 
 const ACCEPTED_TYPES = [
   "image/png",
@@ -23,6 +24,7 @@ export function SignatureUpload({ onSignatureChange }: SignatureUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [showAdoptModal, setShowAdoptModal] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback(
@@ -73,7 +75,20 @@ export function SignatureUpload({ onSignatureChange }: SignatureUploadProps) {
     onSignatureChange?.(null);
   };
 
-  const open = () => inputRef.current?.click();
+  // Opens the "Adopt Your Signature" modal instead of the native file picker
+  const open = () => setShowAdoptModal(true);
+
+  const handleAdopt = async ({
+    fullName,
+    font,
+  }: {
+    fullName: string;
+    font: string;
+  }) => {
+    const file = await renderSignatureToFile({ fullName, font });
+    setShowAdoptModal(false);
+    if (file) processFile(file);
+  };
 
   if (state === "preview" && preview) {
     return (
@@ -137,36 +152,14 @@ export function SignatureUpload({ onSignatureChange }: SignatureUploadProps) {
         >
           {isError ? "Upload failed" : "Click to Add Signature"}
         </p>
-
-        <p className={`text-xs ${isError ? "text-red-400" : "text-[#9C9AB0]"}`}>
-          {isError ? errorMsg : "Drag & drop or browse — PNG, JPG, SVG"}
-        </p>
-
-        {isError ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setState("idle");
-              setErrorMsg("");
-            }}
-            className="mt-1 rounded-md border border-red-200 bg-white px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
-          >
-            Try again
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              open();
-            }}
-            className="mt-1 rounded-md border border-[#C4BFE6] bg-white px-3 py-1 text-xs font-medium text-[#4338CA] hover:bg-[#EEF0FF]"
-          >
-            Browse files
-          </button>
-        )}
       </div>
+
+      {showAdoptModal && (
+        <AdoptSignatureModal
+          onCancel={() => setShowAdoptModal(false)}
+          onAdopt={handleAdopt}
+        />
+      )}
     </>
   );
 }
