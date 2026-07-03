@@ -1,3 +1,22 @@
+/**
+ * Generates up to two uppercase initials from a full name string.
+ * It handles leading, trailing, and multiple consecutive spaces gracefully.
+ * * @param {string} name - The full name string to extract initials from.
+ * @returns {string} A 1 to 2 character uppercase string representing the name's initials.
+ * * @example
+ * getInitials(" john   doe ") // Returns "JD"
+ * getInitials("Alice")        // Returns "A"
+ */
+export function getInitials(name: string): string {
+    return name
+        .trim()                        // Remove trailing/leading spaces
+        .split(/\s+/)                  // Split into words by any spacing
+        .map((word) => word[0])        // Grab the first character of each word
+        .slice(0, 2)                   // Keep only the first two characters
+        .join("")                      // Combine them
+        .toUpperCase();                // Force uppercase
+}
+
 export function CalendarIcon({ className = '' }: { className?: string }) {
     return (
         <svg

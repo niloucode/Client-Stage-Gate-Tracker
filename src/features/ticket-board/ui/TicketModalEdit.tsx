@@ -1,16 +1,17 @@
-'use client';
+'use client'
 
-import { Ticket, Tag } from '@/entities/types';
+import { Ticket, Tag } from '@/entities/types'
 
-import { useState, useRef, useEffect } from 'react';
-import {CommentParentType, status as status} from "@/lib/generated/prisma";
-import { Input } from '@/shared/ui/input';
+import { useState, useRef, useEffect } from 'react'
+import {CommentParentType, status as status} from "@/lib/generated/prisma"
+import { Input } from '@/shared/ui/input'
 
-import { useProfiles } from "@/entities/profile/queries";
-import { useComments } from "@/entities/comment/queries";
-import { useCreateComment } from "@/entities/comment/mutations";
-import { updateTicket } from "@/entities/ticket/ticketActions";
-import {createClient} from "@/lib/supabase/client";
+import { useProfiles } from "@/entities/profile/queries"
+import { useComments } from "@/entities/comment/queries"
+import { useCreateComment } from "@/entities/comment/mutations"
+import { updateTicket } from "@/entities/ticket/ticketActions"
+import {createClient} from "@/lib/supabase/client"
+import {getInitials} from './assets'
 
 
 function statusLabel(status: status) {
@@ -18,132 +19,132 @@ function statusLabel(status: status) {
     PENDING:     'Pending',
     IN_PROGRESS: 'In Progress',
     FINISHED:    'Finished',
-  };
-  return map[status];
+  }
+  return map[status]
 }
 
 const STATUSES = [status.PENDING, status.IN_PROGRESS, status.FINISHED]
 
-type EditingField = 'title' | 'assignee' | 'watcher' | 'deadline' | 'tags' | 'description' | 'status' | null;
+type EditingField = 'title' | 'assignee' | 'watcher' | 'deadline' | 'tags' | 'description' | 'status' | null
 
 export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose, onUpdate, tags }:{
-  ticket: Ticket | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onUpdate: (updated: Ticket) => void;
-  tags: Tag[];
+  ticket: Ticket | null
+  isOpen: boolean
+  onClose: () => void
+  onUpdate: (updated: Ticket) => void
+  tags: Tag[]
 }) {
-  const [ticket, setTicket] = useState<Ticket | null>(initialTicket);
-  const [editing, setEditing] = useState<EditingField>(null);
-  const [titleDraft, setTitleDraft] = useState('');
-  const [descDraft, setDescDraft] = useState('');
-  const [deadlineDraft, setDeadlineDraft] = useState('');
-  const titleRef = useRef<HTMLInputElement>(null);
-  const descRef = useRef<HTMLTextAreaElement>(null);
+  const [ticket, setTicket] = useState<Ticket | null>(initialTicket)
+  const [editing, setEditing] = useState<EditingField>(null)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [descDraft, setDescDraft] = useState('')
+  const [deadlineDraft, setDeadlineDraft] = useState('')
+  const titleRef = useRef<HTMLInputElement>(null)
+  const descRef = useRef<HTMLTextAreaElement>(null)
 
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
 
-  const [showAssignDropdown, setShowAssignDropdown] = useState(false);
-  const assignDropdownRef = useRef<HTMLDivElement>(null);
+  const [showAssignDropdown, setShowAssignDropdown] = useState(false)
+  const assignDropdownRef = useRef<HTMLDivElement>(null)
 
   /** API fields — new backend columns needed: api_method, api_route on Tickets table */
-  const [apiMethod, setApiMethod] = useState('GET');
-  const [apiRoute, setApiRoute] = useState('');
+  const [apiMethod, setApiMethod] = useState('GET')
+  const [apiRoute, setApiRoute] = useState('')
 
   /** Comments */
-  const [commentText, setCommentText] = useState('');
-  const [commentImages, setCommentImages] = useState<File[]>([]);
-  const [commentImagePreviews, setCommentImagePreviews] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const commentImageRef = useRef<HTMLInputElement>(null);
+  const [commentText, setCommentText] = useState('')
+  const [commentImages, setCommentImages] = useState<File[]>([])
+  const [commentImagePreviews, setCommentImagePreviews] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const commentImageRef = useRef<HTMLInputElement>(null)
 
   // ── TanStack Query ──────────────────────────────────────────────────────
 
-  const { data: profiles = [] } = useProfiles();
-  const { data: comments = [] } = useComments();
-  const createCommentMutation = useCreateComment();
+  const { data: profiles = [] } = useProfiles()
+  const { data: comments = [] } = useComments()
+  const createCommentMutation = useCreateComment()
 
   // Click-outside listener
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (assignDropdownRef.current && !assignDropdownRef.current.contains(e.target as Node)) {
-        setShowAssignDropdown(false);
+        setShowAssignDropdown(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   // Sync initialTicket data when it changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTicket(initialTicket);
-    setEditing(null);
+    setTicket(initialTicket)
+    setEditing(null)
     setSelectedTags(
       initialTicket?.TicketTags?.map((t: { tag_id: string }) => t.tag_id) ?? []
-    );
-  }, [initialTicket]);
+    )
+  }, [initialTicket])
 
 // Focus inputs when entering editing modes
   useEffect(() => {
     if (editing === 'title') {
-      titleRef.current?.focus();
+      titleRef.current?.focus()
     } else if (editing === 'description') {
-      descRef.current?.focus();
+      descRef.current?.focus()
     }
-  }, [editing]);
+  }, [editing])
 
-  if (!ticket) return null;
+  if (!ticket) return null
 
   const availableProfiles = profiles.filter(
       user => !ticket.TicketAssigned.some(a => a.profile_id === user.profile_id)
-  );
+  )
 
   function startEdit(field: EditingField) {
-    setEditing(field);
-    if (field === 'title') setTitleDraft(ticket!.name);
-    if (field === 'description') setDescDraft(ticket!.description ?? '');
+    setEditing(field)
+    if (field === 'title') setTitleDraft(ticket!.name)
+    if (field === 'description') setDescDraft(ticket!.description ?? '')
     if (field === 'deadline') setDeadlineDraft(
         ticket!.deadline_date ? new Date(ticket!.deadline_date).toISOString().split('T')[0] : ''
-    );
+    )
   }
 
   function commitTitle() {
-    if (titleDraft.trim()) setTicket(t => t ? { ...t, name: titleDraft.trim() } : t);
-    setEditing(null);
+    if (titleDraft.trim()) setTicket(t => t ? { ...t, name: titleDraft.trim() } : t)
+    setEditing(null)
   }
 
   function commitDesc() {
-    setTicket(t => t ? { ...t, description: descDraft } : t);
-    setEditing(null);
+    setTicket(t => t ? { ...t, description: descDraft } : t)
+    setEditing(null)
   }
 
   function commitDeadline() {
     setTicket(t => t ? {
       ...t,
       deadline_date: deadlineDraft ? new Date(deadlineDraft) : t.deadline_date
-    } : t);
-    setEditing(null);
+    } : t)
+    setEditing(null)
   }
 
   function setWatcher(userId: string) {
-    setTicket(t => t ? { ...t, watcher_id: userId || null } : t);
+    setTicket(t => t ? { ...t, watcher_id: userId || null } : t)
   }
 
   function setStatus(val: status) {
-    setTicket(t => t ? { ...t, status: val } : t);
-    setEditing(null);
+    setTicket(t => t ? { ...t, status: val } : t)
+    setEditing(null)
   }
 
   function toggleTag(tagId: string) {
     setSelectedTags(prev =>
         prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]
-    );
+    )
   }
 
   async function handleSave() {
-    if (!ticket) return;
+    if (!ticket) return
     // Persist status updates to database through your server action
     const updated = await updateTicket(
         {
@@ -159,100 +160,100 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
           start_date:ticket.start_date,
           end_date:ticket.end_date
         }
-    );
-    onUpdate(updated as unknown as Ticket);
-    onClose();
+    )
+    onUpdate(updated as unknown as Ticket)
+    onClose()
   }
 
-  const watcher= profiles.find(u => u.profile_id === ticket.watcher_id);
-  const isOverdue= ticket.deadline_date && new Date(ticket.deadline_date) < new Date();
+  const watcher= profiles.find(u => u.profile_id === ticket.watcher_id)
+  const isOverdue= ticket.deadline_date && new Date(ticket.deadline_date) < new Date()
   const deadlineDisplay= ticket.deadline_date
       ? new Date(ticket.deadline_date).toLocaleDateString()
-      : null;
+      : null
 
   const isApiTagSelected = selectedTags.some(
     tagId => tags.find(t => t.tag_id === tagId)?.name?.toLowerCase() === 'api'
-  );
+  )
 
   function handleCommentImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files) return;
+    const files = e.target.files
+    if (!files) return
 
-    const validFiles: File[] = [];
-    const validPreviews: string[] = [];
+    const validFiles: File[] = []
+    const validPreviews: string[] = []
 
     // Iterate through all selected files
     Array.from(files).forEach(file => {
       if (file.size > 5 * 1024 * 1024) {
-        alert(`Image "${file.name}" must be under 5MB.`);
-        return;
+        alert(`Image "${file.name}" must be under 5MB.`)
+        return
       }
-      validFiles.push(file);
-      validPreviews.push(URL.createObjectURL(file));
-    });
+      validFiles.push(file)
+      validPreviews.push(URL.createObjectURL(file))
+    })
 
     // Append new files to existing state
     if (validFiles.length > 0) {
-      setCommentImages(prev => [...prev, ...validFiles]);
-      setCommentImagePreviews(prev => [...prev, ...validPreviews]);
+      setCommentImages(prev => [...prev, ...validFiles])
+      setCommentImagePreviews(prev => [...prev, ...validPreviews])
     }
 
     // Clear the input value so the same file can be re-selected if deleted
-    e.target.value = '';
+    e.target.value = ''
   }
 
   function removeImage(index: number) {
     // Revoke the Object URL to free up memory
-    URL.revokeObjectURL(commentImagePreviews[index]);
+    URL.revokeObjectURL(commentImagePreviews[index])
 
     // Filter out the image at the specified index
-    setCommentImages(prev => prev.filter((_, i) => i !== index));
-    setCommentImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setCommentImages(prev => prev.filter((_, i) => i !== index))
+    setCommentImagePreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   async function handleAddComment() {
     // Guard check against empty submissions
-    if (!commentText.trim() && commentImages.length === 0) return;
+    if (!commentText.trim() && commentImages.length === 0) return
 
     try {
-      setIsSubmitting(true);
+      setIsSubmitting(true)
 
       // 1. Initialize Supabase out here so it's available for BOTH auth and storage loops
-      const supabase = createClient();
+      const supabase = createClient()
 
       // 2. Fetch the user right away at the top level of the try block
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser()
 
       // Safety check: ensure they didn't get logged out mid-session
       if (!user) {
-        throw new Error("You must be logged in to post a comment.");
+        throw new Error("You must be logged in to post a comment.")
       }
 
-      const imageUrls: string[] = [];
+      const imageUrls: string[] = []
 
       // 3. Upload images to storage (now safely separated from the auth logic)
       if (commentImages.length > 0) {
         for (const file of commentImages) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${crypto.randomUUID()}.${fileExt}`;
-          const filePath = `comments/${fileName}`;
+          const fileExt = file.name.split('.').pop()
+          const fileName = `${crypto.randomUUID()}.${fileExt}`
+          const filePath = `comments/${fileName}`
 
           const { error } = await supabase.storage
               .from('images')
               .upload(filePath, file, {
                 cacheControl: '3600',
                 upsert: false
-              });
+              })
 
           if (error) {
-            throw new Error(`Failed to upload image ${file.name}: ${error.message}`);
+            throw new Error(`Failed to upload image ${file.name}: ${error.message}`)
           }
 
           const { data: { publicUrl } } = supabase.storage
               .from('images')
-              .getPublicUrl(filePath);
+              .getPublicUrl(filePath)
 
-          imageUrls.push(publicUrl);
+          imageUrls.push(publicUrl)
         }
       }
 
@@ -262,17 +263,17 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
         parent_type: CommentParentType.TICKET,
         parent_id: ticket?.ticket_id ?? "",
         imageUrls: imageUrls,
-      });
+      })
 
-      setCommentText('');
-      setCommentImages([]);
-      setCommentImagePreviews([]);
-      if (commentImageRef.current) commentImageRef.current.value = '';
+      setCommentText('')
+      setCommentImages([])
+      setCommentImagePreviews([])
+      if (commentImageRef.current) commentImageRef.current.value = ''
 
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error('Error adding comment:', error)
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
@@ -293,7 +294,14 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                     value={titleDraft}
                     onChange={e => setTitleDraft(e.target.value)}
                     onBlur={commitTitle}
-                    onKeyDown={e => { if (e.key === 'Enter') commitTitle(); if (e.key === 'Escape') setEditing(null); }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        commitTitle()
+                      }
+                      if (e.key === 'Escape') {
+                        setEditing(null)
+                      }
+                    }}
                     className="flex-1 text-sm font-semibold text-gray-900 border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
             ) : (
@@ -390,8 +398,8 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                                             Profiles: profile
                                           }
                                         ]
-                                      } : t);
-                                      setShowAssignDropdown(false);
+                                      } : t)
+                                      setShowAssignDropdown(false)
                                     }}
                                     className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors"
                                 >
@@ -425,7 +433,12 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                 {editing === 'watcher' && (
                     <div className="absolute z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1">
                       <button
-                          onClick={() => { setWatcher(''); setEditing(null); }}
+                          onClick={() =>
+                            {
+                              setWatcher('')
+                              setEditing(null)
+                            }
+                          }
                           className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         None
@@ -433,7 +446,12 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                       {profiles.map(u => (
                           <button
                               key={u.profile_id}
-                              onClick={() => { setWatcher(u.profile_id); setEditing(null); }}
+                              onClick={() =>
+                                {
+                                  setWatcher(u.profile_id)
+                                  setEditing(null)
+                                }
+                              }
                               className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             {(`${u.first_name} ${u.last_name}`)}
@@ -452,7 +470,10 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                         value={deadlineDraft}
                         onChange={e => setDeadlineDraft(e.target.value)}
                         onBlur={commitDeadline}
-                        onKeyDown={e => { if (e.key === 'Enter') commitDeadline(); if (e.key === 'Escape') setEditing(null); }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') commitDeadline()
+                          if (e.key === 'Escape') setEditing(null)
+                        }}
                         className="text-sm border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         autoFocus
                     />
@@ -471,7 +492,7 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                 <p className="text-xs text-gray-400 font-medium mb-1.5">Tags</p>
                 <div className="flex flex-wrap gap-1.5 items-center">
                   {selectedTags.map(tag_id => {
-                    const tag = tags.find(t => t.tag_id === tag_id);
+                    const tag = tags.find(t => t.tag_id === tag_id)
                     return (
                         <span
                             key={tag_id}
@@ -484,7 +505,7 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                               onClick={() => toggleTag(tag_id)}
                           >×</span>
                     </span>
-                    );
+                    )
                   })}
                   <button
                       onClick={() => setEditing(editing === 'tags' ? null : 'tags')}
@@ -496,7 +517,7 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                 {editing === 'tags' && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {tags.map(tag => {
-                        const active = selectedTags.includes(tag.tag_id);
+                        const active = selectedTags.includes(tag.tag_id)
                         return (
                             <button
                                 key={tag.tag_id}
@@ -505,7 +526,7 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                                 className={`text-xs font-medium px-2.5 py-1 rounded-full border transition-all ${active ? 'ring-1 ring-current' : 'opacity-50'}`}                            >
                                 {active ? '✓ ' : '+ '}{tag.name}
                             </button>
-                        );
+                        )
                       })}
                     </div>
                 )}
@@ -576,6 +597,48 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                   </p>
               )}
             </div>
+
+            {/* Subtasks */}
+            {/*{ticket.subtasks && ticket.subtasks.length > 0 && (*/}
+            {/*    <div className="px-5 py-4 border-b border-gray-100">*/}
+            {/*      <h3 className="text-sm font-semibold text-gray-900 mb-3">*/}
+            {/*        Subtasks ({completedSubtasks}/{totalSubtasks})*/}
+            {/*      </h3>*/}
+            {/*      <div className="space-y-2">*/}
+            {/*        {ticket.subtasks.map((subtask) => (*/}
+            {/*            <div key={subtask.id} className="flex items-center gap-3 group">*/}
+            {/*              <div*/}
+            {/*                  className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${*/}
+            {/*                      subtask.completed*/}
+            {/*                          ? 'bg-indigo-600 border-indigo-600'*/}
+            {/*                          : 'border-gray-300 group-hover:border-gray-400'*/}
+            {/*                  }`}*/}
+            {/*              >*/}
+            {/*                {subtask.completed && <CheckIcon className="text-white" />}*/}
+            {/*              </div>*/}
+            {/*              <span*/}
+            {/*                  className={`text-sm flex-1 ${*/}
+            {/*                      subtask.completed ? 'line-through text-gray-400' : 'text-gray-700'*/}
+            {/*                  }`}*/}
+            {/*              >*/}
+            {/*              {subtask.title}*/}
+            {/*            </span>*/}
+            {/*              {subtask.assignee ? (*/}
+            {/*                  <div*/}
+            {/*                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 ${subtask.assignee.bgColor}`}*/}
+            {/*                      title={subtask.assignee.name}*/}
+            {/*                  >*/}
+            {/*                    {subtask.assignee.initials}*/}
+            {/*                  </div>*/}
+            {/*              ) : (*/}
+            {/*                  <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-200 shrink-0" />*/}
+            {/*              )}*/}
+            {/*            </div>*/}
+            {/*        ))}*/}
+            {/*      </div>*/}
+            {/*    </div>*/}
+            {/*)}*/}
+
             <div className="h-4" />
 
             {/* Comments */}
@@ -588,8 +651,7 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                   {comments.map(comment => (
                     <div key={comment.comment_id} className="flex gap-2.5">
                       <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5">
-                        {/* TODO: replace with current user's initials from auth context */}
-                        U
+                        {getInitials(comment.Profiles.first_name+' '+comment.Profiles.last_name)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="bg-gray-50 rounded-lg px-3 py-2.5">
@@ -646,7 +708,7 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
                 <textarea
                     value={commentText}
                     onChange={e => setCommentText(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddComment(); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddComment() }}
                     placeholder="Add a comment... (Ctrl+Enter to post)"
                     rows={2}
                     className="w-full px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none resize-none bg-transparent"
@@ -691,5 +753,5 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
           </div>
         </div>
       </>
-  );
+  )
 }

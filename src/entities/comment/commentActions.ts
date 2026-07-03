@@ -10,6 +10,9 @@ export async function selectComment() {
         // Fetch all comments first
         const comments = await prisma.comments.findMany({
             where: { is_deleted: false },
+            include: {
+                Profiles: true // or the actual relation name in your schema
+            }
         });
 
         // If no comments, then just return nothing

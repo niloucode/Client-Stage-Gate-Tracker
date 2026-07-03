@@ -1,30 +1,13 @@
-'use client';
+'use client'
 
-import { useState, useRef, useEffect } from 'react';
-import { useDraggable } from '@dnd-kit/core';
+import { useState, useRef, useEffect } from 'react'
+import { useDraggable } from '@dnd-kit/core'
 
-import { type Ticket } from '@/entities/types';
-import TicketModalDelete from './TicketModalDelete';
-import { CalendarIcon, AlertTriangleIcon, MoreHorizontalIcon } from './assets';
+import { type Ticket } from '@/entities/types'
+import TicketModalDelete from './TicketModalDelete'
+import { CalendarIcon, AlertTriangleIcon, MoreHorizontalIcon } from './assets'
+import {getInitials} from './assets'
 
-/**
- * Generates up to two uppercase initials from a full name string.
- * It handles leading, trailing, and multiple consecutive spaces gracefully.
- * * @param {string} name - The full name string to extract initials from.
- * @returns {string} A 1 to 2 character uppercase string representing the name's initials.
- * * @example
- * getInitials(" john   doe ") // Returns "JD"
- * getInitials("Alice")        // Returns "A"
- */
-function getInitials(name: string): string {
-    return name
-        .trim()                        // Remove trailing/leading spaces
-        .split(/\s+/)                  // Split into words by any spacing
-        .map((word) => word[0])        // Grab the first character of each word
-        .slice(0, 2)                   // Keep only the first two characters
-        .join("")                      // Combine them
-        .toUpperCase();                // Force uppercase
-}
 
 /**
  * Renders the internal visual contents, layout, and contextual menus of a single ticket.
@@ -45,31 +28,31 @@ export function TicketCardContent({
                                       onEdit,
                                       onDelete
 }: {
-    ticket: Ticket;
-    onSelect: (ticket: Ticket) => void;
-    onEdit: (ticket: Ticket) => void;
-    onDelete: (ticketId: string) => void;
+    ticket: Ticket
+    onSelect: (ticket: Ticket) => void
+    onEdit: (ticket: Ticket) => void
+    onDelete: (ticketId: string) => void
 }) {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const [menuOpen, setMenuOpen] = useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+    const menuRef = useRef<HTMLDivElement>(null)
 
-//   const completedSubtasks = ticket.subtasks?.filter((s) => s.completed).length ?? 0;
-//   const totalSubtasks = ticket.subtasks?.length ?? 0;
+//   const completedSubtasks = ticket.subtasks?.filter((s) => s.completed).length ?? 0
+//   const totalSubtasks = ticket.subtasks?.length ?? 0
 
     // Auto-close menu on outside clicks
     useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
         if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
+        setMenuOpen(false)
         }
     }
     if (menuOpen) {
-        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('mousedown', handleClickOutside)
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [menuOpen]);
-	const today = new Date();
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [menuOpen])
+	const today = new Date()
 	today.setHours(0,0,0,0)
     return (
     <div
@@ -103,8 +86,8 @@ export function TicketCardContent({
           
           <button
             onClick={(e) => {
-              e.stopPropagation();
-              setMenuOpen(!menuOpen);
+              e.stopPropagation()
+              setMenuOpen(!menuOpen)
             }}
             className={`p-0.5 rounded transition-colors ${menuOpen ? 'text-gray-700 bg-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
           >
@@ -116,10 +99,10 @@ export function TicketCardContent({
             <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg border border-gray-200 shadow-lg py-1 z-30">
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuOpen(false);
-                  onSelect(ticket);
-                  onEdit(ticket);
+                  e.stopPropagation()
+                  setMenuOpen(false)
+                  onSelect(ticket)
+                  onEdit(ticket)
                 }}
                 className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 font-medium"
               >
@@ -127,9 +110,9 @@ export function TicketCardContent({
               </button>
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuOpen(false);
-                  setIsDeleteModalOpen(true);
+                  e.stopPropagation()
+                  setMenuOpen(false)
+                  setIsDeleteModalOpen(true)
                 }}
                 className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 font-medium"
               >
@@ -198,12 +181,12 @@ export function TicketCardContent({
         ticketTitle={ticket.name}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={() => {
-          setIsDeleteModalOpen(false);
-          onDelete(ticket.ticket_id);
+          setIsDeleteModalOpen(false)
+          onDelete(ticket.ticket_id)
         }}
         />
     </div>
-    );
+    )
 }
 
 
@@ -228,14 +211,14 @@ export default function TicketCard({
                                        onDelete
 }:
 {
-    ticket: Ticket;
-    onSelect: (ticket: Ticket) => void;
-    onEdit: (ticket: Ticket) => void;
-    onDelete: (ticketId: string) => void;
+    ticket: Ticket
+    onSelect: (ticket: Ticket) => void
+    onEdit: (ticket: Ticket) => void
+    onDelete: (ticketId: string) => void
 }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: ticket.ticket_id,
-    });
+    })
 
     const style = {
     transform: transform
@@ -244,7 +227,7 @@ export default function TicketCard({
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 50 : undefined,
     position: isDragging ? ('relative' as const) : undefined,
-    };
+    }
 
     return (
     <div
@@ -261,5 +244,5 @@ export default function TicketCard({
         onDelete={onDelete} 
         />
     </div>
-    );
+    )
 }

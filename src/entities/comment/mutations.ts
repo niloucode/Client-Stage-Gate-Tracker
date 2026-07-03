@@ -34,6 +34,14 @@ export function useCreateComment() {
         queryKey: commentKeys.list(vars.parent_type, vars.parent_id),
       });
       queryClient.invalidateQueries({ queryKey: commentKeys.lists() });
+
+      queryClient.setQueryData(
+          commentKeys.list(vars.parent_type, vars.parent_id),
+          (oldData: any) => {
+            if (!oldData) return [_data];
+            return [_data, ...oldData];
+          }
+      );
     },
   });
 }
