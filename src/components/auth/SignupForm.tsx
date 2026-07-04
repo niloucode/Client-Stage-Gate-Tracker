@@ -24,7 +24,10 @@ export function SignupForm() {
   const [department, setDepartment] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<{
+    type: "error" | "success";
+    text: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [showResend, setShowResend] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -88,10 +91,13 @@ export function SignupForm() {
       },
     });
     setResendLoading(false);
-    setError(
+    setStatus(
       resendError
-        ? resendError.message
-        : "Confirmation email resent. Please check your inbox.",
+        ? { type: "error", text: resendError.message }
+        : {
+            type: "success",
+            text: "Confirmation email resent. Please check your inbox.",
+          },
     );
   }
 
@@ -116,28 +122,38 @@ export function SignupForm() {
       password && confirmPassword && password !== confirmPassword;
 
     if (missingFields.length >= 3) {
-      setError("Multiple fields are missing.");
+      setStatus({ type: "error", text: "Multiple fields are missing." });
       return true;
     } else if (missingFields.length === 2) {
-      setError(
-        `Please input your ${missingFields[0]} and ${missingFields[1]}.`,
-      );
+      setStatus({
+        type: "error",
+        text: `Please input your ${missingFields[0]} and ${missingFields[1]}.`,
+      });
       return true;
     } else if (missingFields.length === 1) {
-      setError(`Please input your ${missingFields[0]}.`);
+      setStatus({
+        type: "error",
+        text: `Please input your ${missingFields[0]}.`,
+      });
       return true;
     } else if (passwordMismatch) {
-      setError("Password and confirmed password do not match.");
+      setStatus({
+        type: "error",
+        text: "Password and confirmed password do not match.",
+      });
       return true;
     } else if (!isNumeric(phone)) {
-      setError("Phone number should only contain numbers.");
+      setStatus({
+        type: "error",
+        text: "Phone number should only contain numbers.",
+      });
       return true;
     }
     return false;
   }
 
   const handleSignUp = async (e: React.BaseSyntheticEvent) => {
-    setError(null);
+    setStatus(null);
     setLoading(false);
     e.preventDefault();
 
@@ -167,7 +183,7 @@ export function SignupForm() {
 
     //catch the sign up error
     if (signupError) {
-      setError(signupError);
+      setStatus({ type: "error", text: signupError });
       setLoading(false);
       return;
     }
@@ -179,13 +195,14 @@ export function SignupForm() {
     }
     //only triggers if user was successfully registered
     else if (data?.user) {
-      setError(
-        "Account created! Check your email to confirm your account before logging in.",
-      );
+      setStatus({
+        type: "success",
+        text: "Account created! Check your email to confirm your account before logging in.",
+      });
       setShowResend(true);
       setLoading(false);
     } else {
-      setError("Something went wrong. Please try again.");
+      setStatus({ type: "error", text: "Something went wrong. Please try again." });
       setLoading(false);
     }
   };
@@ -302,10 +319,16 @@ export function SignupForm() {
         />
       </div>
 
-      {/* Error message */}
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-          {error}
+      {/* Status message */}
+      {status && (
+        <p
+          className={`text-sm rounded-md px-3 py-2 border ${
+            status.type === "success"
+              ? "text-green-700 bg-green-50 border-green-200"
+              : "text-red-600 bg-red-50 border-red-200"
+          }`}
+        >
+          {status.text}
         </p>
       )}
 

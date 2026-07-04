@@ -56,7 +56,10 @@ export function ClientSignupForm() {
   });
 
   const [errors, setErrors] = useState<Errors>({});
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [status, setStatus] = useState<{
+    type: "error" | "success";
+    text: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [showResend, setShowResend] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -152,7 +155,7 @@ export function ClientSignupForm() {
   async function handleSignUp(e: React.BaseSyntheticEvent) {
     setLoading(false);
     e.preventDefault();
-    setApiError(null);
+    setStatus(null);
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -190,11 +193,11 @@ export function ClientSignupForm() {
 
         //error check
         if (!client) {
-          setApiError("Unable to save company data");
+          setStatus({ type: "error", text: "Unable to save company data" });
           return;
         }
       } catch (error: any) {
-        setApiError(error);
+        setStatus({ type: "error", text: error });
         if (client) await clientDeleteByID(client.client_id);
         return;
       }
@@ -219,7 +222,7 @@ export function ClientSignupForm() {
 
     //catch the sign in error
     if (signupError) {
-      setApiError(signupError);
+      setStatus({ type: "error", text: signupError });
       if (client) await clientDeleteByID(client.client_id);
       setLoading(false);
       return;
@@ -230,13 +233,14 @@ export function ClientSignupForm() {
       router.push("/login");
       router.refresh();
     } else if (data?.user) {
-      setApiError(
-        "Account created! Check your email to confirm your account before logging in.",
-      );
+      setStatus({
+        type: "success",
+        text: "Account created! Check your email to confirm your account before logging in.",
+      });
       setShowResend(true);
       setLoading(false);
     } else {
-      setApiError("Something went wrong. Please try again.");
+      setStatus({ type: "error", text: "Something went wrong. Please try again." });
       setLoading(false);
     }
   }
@@ -251,8 +255,13 @@ export function ClientSignupForm() {
       },
     });
     setResendLoading(false);
-    setApiError(
-      error ? error.message : "Confirmation email resent. Please check your inbox.",
+    setStatus(
+      error
+        ? { type: "error", text: error.message }
+        : {
+            type: "success",
+            text: "Confirmation email resent. Please check your inbox.",
+          },
     );
   }
 
@@ -497,9 +506,15 @@ export function ClientSignupForm() {
         )}
       </div>
 
-      {apiError && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-          {apiError}
+      {status && (
+        <p
+          className={`text-sm rounded-md px-3 py-2 border ${
+            status.type === "success"
+              ? "text-green-700 bg-green-50 border-green-200"
+              : "text-red-600 bg-red-50 border-red-200"
+          }`}
+        >
+          {status.text}
         </p>
       )}
 
