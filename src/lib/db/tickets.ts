@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
-export async function getTicketsByWorkflow(workflowId: string) {
-  return prisma.ticket.findMany({ where: { workflowId } });
+export async function getTicketsByWorkflow(workflow_id: string) {
+  return prisma.tickets.findMany({ where: { workflow_id } });
 }
