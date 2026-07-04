@@ -52,13 +52,15 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
       });
     };
 
-    const handleAddPhase = (data: { name: string; subtitle: string; description: string }) => {
+    const handleAddPhase = (data: { name: string; description: string; startDate: Date | null; endDate: Date | null }) => {
       const newNumber = phases.length > 0 ? Math.max(...phases.map(p => p.number)) + 1 : 1;
       const newPhase: Phase = {
         number: newNumber,
         name: data.name || `Phase ${newNumber}`,
-        subtitle: data.subtitle || "New Phase",
-        description: data.description || "Phase description",
+        description: data.description || "",
+        startDate: data.startDate || null,
+        endDate: data.endDate || null,
+        createdAt: new Date(),
         modules: []
       };
       setPhases([...phases, newPhase]);
@@ -179,7 +181,7 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
             {phases.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <p className="text-sm text-[#64748B]">No phases yet</p>
-                <p className="text-xs text-[#94A3B8] mt-1">Click "Add Phase" to create your first phase</p>
+                <p className="text-xs text-[#94A3B8] mt-1">Click Add Phase to create your first phase</p>
               </div>
             ) : (
               <>
