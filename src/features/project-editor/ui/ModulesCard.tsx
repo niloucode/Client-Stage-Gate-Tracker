@@ -7,66 +7,73 @@ import { AddModule } from "@/features/project-editor/ui/modals/AddModule";
 import { EditModule } from "@/features/project-editor/ui/modals/EditModule";
 
 interface ModulesCardProps {
-  activePhase: number;
+  activePhase: number | null;
   phases: Phase[];
   setPhases: (phases: Phase[]) => void;
 }
 
 export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
-  // Module form state
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [moduleFormData, setModuleFormData] = useState({
-    name: "",
-    description: "",
-    roles: "",
-  });
-  
-  const openCreateModuleModal = () => setIsAddOpen(true);
-  const openEditModuleModal = (module: Module) => setEditingModule(module);
-
   // Get modules for the current active phase
-  const currentPhase = phases.find(p => p.number === activePhase);
+  const currentPhase = activePhase !== null ? phases.find(p => p.number === activePhase) : null;
   const modules = currentPhase?.modules || [];
 
-  const handleAddModule = (data: { name: string; description: string; roles: string }) => {
-    const rolesList = data.roles.split(",").map(r => r.trim()).filter(Boolean);
+  const openCreateModuleModal = () => {
+    if (activePhase === null) return;
+    setIsAddOpen(true);
+  };
+  
+  const openEditModuleModal = (module: Module) => setEditingModule(module);
+
+  const formatDate = (date: Date) => {
+    return `${date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    })}`;
+  };
+
+  const handleAddModule = (data: { name: string; startDate: Date | null; endDate: Date | null }) => {
+    if (activePhase === null) return;
+    
     const newModule: Module = {
       id: Date.now().toString(),
       name: data.name || "New Module",
-      description: data.description || "Module description",
-      roles: rolesList.length > 0 ? rolesList : ["Unassigned"],
+      startDate: data.startDate || null,
+      endDate: data.endDate || null,
+      createdAt: new Date(),
       workflows: [],
     };
     setPhases(phases.map(phase =>
-      phase.number !== activePhase ? phase : { ...phase, modules: [...phase.modules, newModule] }
+      phase.number === activePhase ? { ...phase, modules: [...phase.modules, newModule] } : phase
     ));
     setExpandedModules(prev => new Set(prev).add(newModule.id));
     setIsAddOpen(false);
   };
 
-  const handleSaveModule = (data: { name: string; description: string; roles: string }) => {
-    if (!editingModule) return;
-    const rolesList = data.roles.split(",").map(r => r.trim()).filter(Boolean);
+  const handleSaveModule = (data: { name: string; startDate: Date | null; endDate: Date | null }) => {
+    if (!editingModule || activePhase === null) return;
     setPhases(phases.map(phase =>
-      phase.number !== activePhase ? phase : {
+      phase.number === activePhase ? {
         ...phase,
         modules: phase.modules.map(m =>
-          m.id === editingModule.id ? { ...m, name: data.name, description: data.description, roles: rolesList } : m
+          m.id === editingModule.id ? { 
+            ...m, 
+            name: data.name, 
+            startDate: data.startDate, 
+            endDate: data.endDate
+          } : m
         ),
-      }
+      } : phase
     ));
     setEditingModule(null);
   };
 
-  // EditModule's "Delete" hands off to your existing confirm-delete modal
   const handleEditDeleteClick = () => {
     if (!editingModule) return;
     confirmDelete(editingModule.id);
@@ -85,20 +92,13 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
     });
   };
 
-  const closeModuleModal = () => {
-    setIsModuleModalOpen(false);
-    setEditingModule(null);
-    setModuleFormData({ name: "", description: "", roles: "" });
-  };
-
   const confirmDelete = (moduleId: string) => {
     setModuleToDelete(moduleId);
     setIsDeleteConfirmOpen(true);
-    closeModuleModal();
   };
 
   const handleDeleteModule = () => {
-    if (!moduleToDelete) return;
+    if (!moduleToDelete || activePhase === null) return;
     
     const updatedPhases = phases.map((phase) => {
       if (phase.number !== activePhase) return phase;
@@ -114,6 +114,8 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
   };
 
   const handleUpdateWorkflows = (moduleId: string, workflows: Workflow[]) => {
+    if (activePhase === null) return;
+    
     const updatedPhases = phases.map((phase) => {
       if (phase.number !== activePhase) return phase;
       return {
@@ -137,10 +139,15 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
         </h3>
         <button
           onClick={openCreateModuleModal}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+          disabled={activePhase === null}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-all shadow-sm ${
+            activePhase === null 
+              ? 'bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed' 
+              : 'bg-[#4F46E5] text-white hover:bg-[#4338CA]'
+          }`}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 2V12M2 7H12" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M7 2V12M2 7H12" stroke={activePhase === null ? "#94A3B8" : "white"} strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           Add Module
         </button>
@@ -148,7 +155,12 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
 
       {/* Module Cards */}
       <div className="space-y-4">
-        {modules.length === 0 ? (
+        {activePhase === null ? (
+          <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-8 text-center">
+            <p className="text-sm text-[#64748B]">No phase selected</p>
+            <p className="text-xs text-[#94A3B8] mt-1">Select a phase from the stepper above to manage its modules</p>
+          </div>
+        ) : modules.length === 0 ? (
           <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-8 text-center">
             <p className="text-sm text-[#64748B]">No modules yet for this phase.</p>
             <p className="text-xs text-[#94A3B8] mt-1">Click Add Module to create one.</p>
@@ -164,8 +176,10 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
               >
                 {/* Module Header */}
                 <div className="flex justify-between items-center px-5 py-4 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                  
+                  {/* Left Side Block */}
                   <div
-                    className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity flex-1"
+                    className="flex-1 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => toggleModule(module.id)}
                   >
                     <svg
@@ -173,7 +187,7 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
                       height="8"
                       viewBox="0 0 12 8"
                       fill="none"
-                      className={`transform transition-transform ${isExpanded ? "" : "-rotate-90"}`}
+                      className={`flex-shrink-0 transform transition-transform ${isExpanded ? "" : "-rotate-90"}`}
                     >
                       <path d="M1 1L6 6L11 1" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
@@ -181,39 +195,31 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
                       <h4 className="font-semibold text-sm text-[#0F172A]">
                         {module.name}
                       </h4>
-                      <p className="text-xs text-[#64748B] mt-0.5">{module.description}</p>
+                      <p className="text-xs text-[#64748B] mt-0.5">
+                        Created: {formatDate(module.createdAt)}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {/* Role avatars */}
-                    {/* <div className="flex items-center -space-x-1">
-                      {module.roles.slice(0, 3).map((role, idx) => (
-                        <div
-                          key={idx}
-                          className="w-6 h-6 rounded-full flex items-center justify-center shadow-[0_0_0_2px_#FAF8FF]"
-                          style={{ backgroundColor: roleColors[idx % roleColors.length] }}
-                        >
-                          <span className="text-[9px] font-bold text-white">
-                            {role.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      ))}
-                      {module.roles.length > 3 && (
-                        <div className="w-6 h-6 bg-[#94A3B8] rounded-full flex items-center justify-center shadow-[0_0_0_2px_#FAF8FF]">
-                          <span className="text-[9px] font-bold text-white">
-                            +{module.roles.length - 3}
-                          </span>
-                        </div>
-                      )}
-                    </div> */}
-
-                    <div className="w-px h-4 bg-[#C7C4D8] mx-2" />
+                  <div className="flex items-center gap-3">
+                    {/* Date Badge */}
+                    {module.startDate && module.endDate && (
+                      <div className="px-3 py-1 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md">
+                        <h4 className="font-semibold text-xs text-[#334155]">
+                          {formatDate(module.startDate)} – {formatDate(module.endDate)}
+                        </h4>
+                      </div>
+                    )}
+                    
+                    {/* Vertical Divider */}
+                    {module.startDate && module.endDate && (
+                      <div className="w-px h-5 bg-[#E2E8F0] mx-1"></div>
+                    )}
 
                     {/* Edit button */}
                     <button
                       onClick={() => openEditModuleModal(module)}
-                      className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-[#F1F5F9] rounded"
+                      className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-[#E2E8F0] rounded"
                     >
                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                         <circle cx="7" cy="7" r="1.75" fill="#64748B" />
@@ -238,13 +244,15 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
         )}
       </div>
 
-      {/* Module Modal */}
+      {/* Add Module Modal */}
       <AddModule
         isOpen={isAddOpen}
         activePhase={activePhase}
         onClose={() => setIsAddOpen(false)}
         onSubmit={handleAddModule}
       />
+
+      {/* Edit Module Modal */}
       <EditModule
         isOpen={editingModule !== null}
         module={editingModule}

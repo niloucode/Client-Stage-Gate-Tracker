@@ -17,16 +17,26 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [workflowToDelete, setWorkflowToDelete] = useState<Workflow | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const openCreateWorkflowModal = () => setIsAddOpen(true);
   const openEditWorkflowModal = (workflow: Workflow) => setEditingWorkflow(workflow);
 
-  const handleAddWorkflow = (data: { name: string; tags: string }) => {
-    const tagsList = data.tags.split(",").map(t => t.trim()).filter(Boolean);
+  const formatDate = (date: Date) => {
+    return `${date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    })}`;
+  };
+
+  const handleAddWorkflow = (data: { name: string; startDate: Date | null; endDate: Date | null }) => {
     const newWorkflow: Workflow = {
       id: Date.now().toString(),
       name: data.name || "New Workflow",
-      tags: tagsList.length > 0 ? tagsList : ["Draft"],
+      startDate: data.startDate || null,
+      endDate: data.endDate || null,
+      createdAt: new Date(),
       ticketCount: 0,
       progress: 0,
     };
@@ -34,12 +44,16 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
     setIsAddOpen(false);
   };
 
-  const handleSaveWorkflow = (data: { name: string; tags: string }) => {
+  const handleSaveWorkflow = (data: { name: string; startDate: Date | null; endDate: Date | null }) => {
     if (!editingWorkflow) return;
-    const tagsList = data.tags.split(",").map(t => t.trim()).filter(Boolean);
     onUpdateWorkflows(workflows.map(w =>
       w.id === editingWorkflow.id
-        ? { ...w, name: data.name || "New Workflow", tags: tagsList.length > 0 ? tagsList : ["Draft"] }
+        ? { 
+            ...w, 
+            name: data.name || "New Workflow", 
+            startDate: data.startDate || null,
+            endDate: data.endDate || null,
+          }
         : w
     ));
     setEditingWorkflow(null);
@@ -48,7 +62,7 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
   const confirmDelete = (workflow: Workflow) => {
     setWorkflowToDelete(workflow);
     setIsDeleteConfirmOpen(true);
-    setEditingWorkflow(null); // close edit modal if delete was triggered from there
+    setEditingWorkflow(null);
   };
 
   const handleDeleteWorkflow = () => {
@@ -56,38 +70,108 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
     onUpdateWorkflows(workflows.filter(w => w.id !== workflowToDelete.id));
     setIsDeleteConfirmOpen(false);
     setWorkflowToDelete(null);
-  };  
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => {
+      (e.target as HTMLElement).style.opacity = '0.5';
+    }, 0);
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    (e.target as HTMLElement).style.opacity = '1';
+    setDraggedIndex(null);
+    document.querySelectorAll('.drag-over-workflow').forEach(el => {
+      el.classList.remove('drag-over-workflow');
+    });
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    document.querySelectorAll('.drag-over-workflow').forEach(el => {
+      el.classList.remove('drag-over-workflow');
+    });
+    
+    const target = e.currentTarget as HTMLElement;
+    target.classList.add('drag-over-workflow');
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    (e.currentTarget as HTMLElement).classList.remove('drag-over-workflow');
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    const dragIndex = draggedIndex;
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDraggedIndex(null);
+      return;
+    }
+
+    document.querySelectorAll('.drag-over-workflow').forEach(el => {
+      el.classList.remove('drag-over-workflow');
+    });
+
+    const reorderedWorkflows = [...workflows];
+    const [draggedWorkflow] = reorderedWorkflows.splice(dragIndex, 1);
+    reorderedWorkflows.splice(dropIndex, 0, draggedWorkflow);
+    
+    onUpdateWorkflows(reorderedWorkflows);
+    setDraggedIndex(null);
+  };
 
   return (
     <>
       {/* Workflows List */}
       <div className="bg-white">
-        {workflows.map((workflow) => (
+        {workflows.map((workflow, index) => (
           <div
             key={workflow.id}
-            className="flex items-center justify-between px-4 py-3 border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors group"
+            className="flex items-center justify-between px-4 py-3 border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors group cursor-grab active:cursor-grabbing"
+            draggable={true}
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, index)}
           >
             <div className="flex items-center gap-3 flex-1">
-              <svg width="6" height="6" viewBox="0 0 6 6" fill="none">
-                <circle cx="3" cy="3" r="2" fill="#94A3B8" />
+              {/* Drag handle */}
+              <svg width="8" height="12" viewBox="0 0 8 12" fill="none" className="text-[#94A3B8] opacity-40 group-hover:opacity-100 transition-opacity">
+                <circle cx="1" cy="1" r="1" fill="currentColor" />
+                <circle cx="1" cy="6" r="1" fill="currentColor" />
+                <circle cx="1" cy="11" r="1" fill="currentColor" />
+                <circle cx="5" cy="1" r="1" fill="currentColor" />
+                <circle cx="5" cy="6" r="1" fill="currentColor" />
+                <circle cx="5" cy="11" r="1" fill="currentColor" />
               </svg>
-              <span className="font-medium text-sm text-[#0F172A]">
-                {workflow.name}
-              </span>
+              <div>
+                <span className="font-normal text-sm text-[#0F172A]">
+                  {workflow.name}
+                </span>
+                <p className="text-xs text-[#8392a6] mt-0.5">
+                  Created: {formatDate(workflow.createdAt)}
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Tags
-              <div className="flex gap-1.5">
-                {workflow.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-0.5 bg-[#EFF6FF] text-[#3B82F6] rounded text-[10px] font-semibold"
-                  >
-                    {tag}
+              {/* Date Badge */}
+              {workflow.startDate && workflow.endDate && (
+                <div className="px-3 py-1 bg-[#ffffff] border border-slate-300 rounded-md">
+                  <span className="font-medium text-xs text-slate-400">
+                    {formatDate(workflow.startDate)} – {formatDate(workflow.endDate)}
                   </span>
-                ))}
-              </div> */}
+                </div>
+              )}
 
               {/* Ticket Count */}
               <div className="flex items-center gap-1.5 min-w-[90px]">
@@ -129,7 +213,6 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
                   </svg>
                 </button>
               </div>
-
             </div>
           </div>
         ))}
@@ -149,11 +232,14 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
         </button>
       </div>
 
+      {/* Add Workflow Modal */}
       <AddWorkflow
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onSubmit={handleAddWorkflow}
       />
+
+      {/* Edit Workflow Modal */}
       <EditWorkflow
         isOpen={editingWorkflow !== null}
         workflow={editingWorkflow}
@@ -161,6 +247,8 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
         onSave={handleSaveWorkflow}
         onDelete={() => editingWorkflow && confirmDelete(editingWorkflow)}
       />
+
+      {/* Delete Confirmation Modal */}
       <DeleteWorkflow
         isOpen={isDeleteConfirmOpen}
         workflowLabel={workflowToDelete?.name}

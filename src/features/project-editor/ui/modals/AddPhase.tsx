@@ -5,8 +5,9 @@ import { phaseSchema } from "@/shared/schemas";
 
 interface AddPhaseFormData {
   name: string;
-  subtitle: string;
   description: string;
+  startDate: Date | null;
+  endDate: Date | null;
 }
 
 interface AddPhaseProps {
@@ -15,7 +16,7 @@ interface AddPhaseProps {
   onSubmit: (data: AddPhaseFormData) => void;
 }
 
-const emptyFormData: AddPhaseFormData = { name: "", subtitle: "", description: "" };
+const emptyFormData: AddPhaseFormData = { name: "", description: "", startDate: null, endDate: null };
 
 type FieldErrors = Partial<Record<keyof AddPhaseFormData, string>>;
 
@@ -75,25 +76,12 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Phase 5: Testing"
+              placeholder="e.g., Discovery"
               className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
             />
             {fieldErrors.name && (
               <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>
             )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-              Subtitle
-            </label>
-            <input
-              type="text"
-              value={formData.subtitle}
-              onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-              placeholder="e.g., QA & Testing"
-              className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
-            />
           </div>
 
           <div>
@@ -107,6 +95,31 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
               rows={3}
               className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Start Date
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.startDate ? new Date(formData.startDate.getTime() - formData.startDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value ? new Date(e.target.value) : null })}
+                className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                End Date
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.endDate ? new Date(formData.endDate.getTime() - formData.endDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value ? new Date(e.target.value) : null })}
+                className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+              />
+            </div>
           </div>
         </div>
 
