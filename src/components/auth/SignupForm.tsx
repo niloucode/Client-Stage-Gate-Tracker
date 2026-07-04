@@ -26,6 +26,8 @@ export function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showResend, setShowResend] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   async function userSignUp(
     user: ProfileType,
@@ -74,6 +76,23 @@ export function SignupForm() {
       };
 
     return { signupError: null, data: res.data };
+  }
+
+  async function resendConfirmationEmail() {
+    setResendLoading(true);
+    const { error: resendError } = await supabase.auth.resend({
+      type: "signup",
+      email: email,
+      options: {
+        emailRedirectTo: "http://localhost:3000/signup-callback",
+      },
+    });
+    setResendLoading(false);
+    setError(
+      resendError
+        ? resendError.message
+        : "Confirmation email resent. Please check your inbox.",
+    );
   }
 
   function isNumeric(value: string): boolean {
@@ -128,6 +147,7 @@ export function SignupForm() {
     if (hasError) return;
 
     setLoading(true);
+    setShowResend(false);
 
     const user: ProfileType = {
       profile_id: "",
@@ -162,6 +182,7 @@ export function SignupForm() {
       setError(
         "Account created! Check your email to confirm your account before logging in.",
       );
+      setShowResend(true);
       setLoading(false);
     } else {
       setError("Something went wrong. Please try again.");
@@ -286,6 +307,17 @@ export function SignupForm() {
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
           {error}
         </p>
+      )}
+
+      {showResend && (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={resendConfirmationEmail}
+          disabled={resendLoading}
+        >
+          {resendLoading ? "Resending..." : "Resend confirmation email"}
+        </Button>
       )}
 
       <Button type="submit" className="mt-2" disabled={loading}>

@@ -58,6 +58,8 @@ export function ClientSignupForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showResend, setShowResend] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   function set(key: keyof Fields) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,6 +160,7 @@ export function ClientSignupForm() {
     }
 
     setLoading(true);
+    setShowResend(false);
 
     //check if client exists
     let client = await clientSelectByNameTin(fields.companyName, fields.tin);
@@ -230,6 +233,7 @@ export function ClientSignupForm() {
       setApiError(
         "Account created! Check your email to confirm your account before logging in.",
       );
+      setShowResend(true);
       setLoading(false);
     } else {
       setApiError("Something went wrong. Please try again.");
@@ -237,18 +241,19 @@ export function ClientSignupForm() {
     }
   }
 
-  async function resendConfirmationEmail(email: string) {
-    //resend and check for errors
+  async function resendConfirmationEmail() {
+    setResendLoading(true);
     const { error } = await supabase.auth.resend({
       type: "signup",
-      email: email,
+      email: fields.email,
       options: {
         emailRedirectTo: "http://localhost:3000/signup-callback",
       },
     });
-
-    if (error) return { error: error.message };
-    return { error: null };
+    setResendLoading(false);
+    setApiError(
+      error ? error.message : "Confirmation email resent. Please check your inbox.",
+    );
   }
 
   function errClass(key: keyof Fields) {
@@ -496,6 +501,17 @@ export function ClientSignupForm() {
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
           {apiError}
         </p>
+      )}
+
+      {showResend && (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={resendConfirmationEmail}
+          disabled={resendLoading}
+        >
+          {resendLoading ? "Resending..." : "Resend confirmation email"}
+        </Button>
       )}
 
       <Button type="submit" className="mt-2" disabled={loading}>
