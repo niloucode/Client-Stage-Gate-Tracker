@@ -12,6 +12,7 @@ import { useCreateComment } from "@/entities/comment/mutations"
 import { updateTicket } from "@/entities/ticket/ticketActions"
 import {createClient} from "@/lib/supabase/client"
 import {getInitials} from './assets'
+import TicketHistoryLog from './TicketHistoryLog'
 
 
 function statusLabel(status: status) {
@@ -638,6 +639,9 @@ export default function TicketModalEdit({ ticket: initialTicket, isOpen, onClose
             {/*      </div>*/}
             {/*    </div>*/}
             {/*)}*/}
+
+            {/* Activity / history log */}
+            <TicketHistoryLog ticketId={ticket.ticket_id} />
 
             <div className="h-4" />
 

@@ -64,3 +64,9 @@ export const workflowKeys = {
   tickets: (workflowId: string) =>
     [...workflowKeys.detail(workflowId), "tickets"] as const,
 };
+
+export const historyKeys = {
+  all: ["ticketHistory"] as const,
+  lists: () => [...historyKeys.all, "list"] as const,
+  list: (ticketId: string) => [...historyKeys.lists(), ticketId] as const,
+};
