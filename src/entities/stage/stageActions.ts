@@ -27,6 +27,7 @@ export async function createStage(
         const existingStagesCount = await prisma.stages.count({
             where: {
                 project_id: projectId,
+                is_deleted: false,
             },
         });
         const nextStageNumber = existingStagesCount + 1;
@@ -187,7 +188,8 @@ export async function softDeleteStage(stageId: string) {
             data: {
                 is_deleted: true,
                 deleted_at: new Date(),
-            },
+                number: null,
+            } as any,
         });
         return { success: true };
     } catch (error) {
@@ -213,7 +215,7 @@ export async function cascadeSoftDeleteStage(stageId: string, txClient?: Prisma.
     const executeLogic = async (tx: Prisma.TransactionClient) => {
         await tx.stages.update({
             where: { stage_id: stageId },
-            data: { is_deleted: true, deleted_at: new Date() }
+            data: { is_deleted: true, deleted_at: new Date(), number: null } as any
         });
 
         const childPhases = await tx.phases.findMany({

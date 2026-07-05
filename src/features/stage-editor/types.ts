@@ -19,7 +19,7 @@ export interface Module {
 
 export interface Phase {
   phase_id: string;
-  number: number;
+  number: number | null;  // null = soft-deleted; active phases always have a number
   name: string;
   description: string;
   start_date: Date | null;

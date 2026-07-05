@@ -207,9 +207,10 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
                 >
                   <div className="flex items-start pt-7" style={{ minWidth: `${phases.length * 180}px` }}>
                     {phases.map((phase, index) => {
+                      const num = phase.number ?? 0;
                       const isActive = phase.number === activePhase;
-                      const isCompleted = activePhase !== null && phase.number < activePhase;
-                      const isPending = activePhase !== null && phase.number > activePhase;
+                      const isCompleted = activePhase !== null && num < activePhase;
+                      const isPending = activePhase !== null && num > activePhase;
 
                       return (
                         <div 
@@ -230,7 +231,7 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
                           
                           <div className="relative z-10 flex flex-col items-center group">
                             <button
-                              onClick={() => setActivePhase(phase.number)}
+                              onClick={() => phase.number !== null && setActivePhase(phase.number)}
                               className="focus:outline-none"
                             >
                               <div
@@ -262,14 +263,14 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
                                       ${isActive ? "text-white" : isPending ? "text-[#94A3B8]" : "text-[#475569]"}
                                     `}
                                   >
-                                    {phase.number}
+                                    {phase.number ?? ''}
                                   </span>
                                 )}
                               </div>
                             </button>
 
                             <button
-                              onClick={() => confirmDelete(phase.number)}
+                              onClick={() => phase.number !== null && confirmDelete(phase.number)}
                               className="absolute -top-2 -right-8 p-1 opacity-0 group-hover:opacity-100 hover:bg-[#FEE2E2] rounded transition-all"
                               title="Delete phase"
                             >

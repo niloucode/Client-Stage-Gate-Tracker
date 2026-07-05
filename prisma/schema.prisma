@@ -643,7 +643,7 @@ model Permissions {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Phases {
   phase_id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  number        Int
+  number        Int?
   start_date    DateTime? @db.Timestamptz(6)
   end_date      DateTime? @db.Timestamptz(6)
   creation_date DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
@@ -714,7 +714,7 @@ model Roles {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Stages {
   stage_id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  number        Int
+  number        Int?
   start_date    DateTime? @db.Timestamptz(6)
   end_date      DateTime? @db.Timestamptz(6)
   creation_date DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)

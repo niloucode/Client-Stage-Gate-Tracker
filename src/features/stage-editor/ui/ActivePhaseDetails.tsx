@@ -14,7 +14,7 @@ interface ActivePhaseDetailsProps {
 export function ActivePhaseDetails({ activePhase, phases, stageId }: ActivePhaseDetailsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const currentPhase = activePhase !== null ? phases.find(p => p.number === activePhase) : null;
+  const currentPhase = activePhase !== null ? phases.find(p => p.number === activePhase) ?? null : null;
 
   // Local buffer — only synced to server on explicit save
   const [name, setName] = useState("");

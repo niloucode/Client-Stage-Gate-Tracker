@@ -26,7 +26,7 @@ export function ModulesCard({ activePhase, phases, projectId, stageId }: Modules
   const deleteModuleMutation = useDeleteModule();
 
   // Get modules for the current active phase
-  const currentPhase = activePhase !== null ? phases.find(p => p.number === activePhase) : null;
+  const currentPhase = activePhase !== null ? phases.find(p => p.number === activePhase) ?? null : null;
   const modules = currentPhase?.modules || [];
 
   const openCreateModuleModal = () => {

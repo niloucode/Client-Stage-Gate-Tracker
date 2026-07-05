@@ -183,7 +183,7 @@ deleted_at    DateTime?
 
 ```
 stage_id      UUID PK
-number        Int                          @@unique([project_id, number])
+number        Int?                         @@unique([project_id, number]) — nullable; set to null on soft-delete to release the slot
 name          String
 description   String?
 project_id    UUID → Projects
@@ -198,7 +198,7 @@ deleted_at    DateTime?
 
 ```
 phase_id      UUID PK
-number        Int                          @@unique([stage_id, number])
+number        Int?                         @@unique([stage_id, number]) — nullable; set to null on soft-delete to release the slot
 name          String
 description   String?
 stage_id      UUID → Stages
