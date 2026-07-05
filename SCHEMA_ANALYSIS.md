@@ -85,6 +85,8 @@ name    String @unique
 
 Expected roles: `"Project Owner"`, `"Project Team"`, `"Finance"`, `"Client"`.
 
+> **Note**: The `SignupForm` Department field is a `<select>` restricted to the three internal department names (Project Owner, Project Team, Finance Team). See Section 15.
+
 ### `Permissions`
 
 ```
@@ -173,6 +175,8 @@ description   String?
 creation_date DateTime      @default(now() AT UTC)
 start_date    DateTime?
 end_date      DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Stages`
@@ -186,6 +190,8 @@ project_id    UUID → Projects
 creation_date DateTime
 start_date    DateTime?
 end_date      DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Phases`
@@ -199,6 +205,8 @@ stage_id      UUID → Stages
 creation_date DateTime
 start_date    DateTime?
 end_date      DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Modules`
@@ -210,6 +218,8 @@ phase_id      UUID → Phases
 creation_date DateTime
 start_date    DateTime?
 end_date      DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Workflows`
@@ -222,6 +232,8 @@ module_id     UUID → Modules
 creation_date DateTime
 start_date    DateTime?
 end_date      DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Tickets`
@@ -254,6 +266,8 @@ project_id    UUID → Projects
 creation_date DateTime
 start_date    DateTime?
 end_date      DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 Gates are checkpoints within a project where **clients can approve and comment**. By design, gates have **no `name` or `description`** — they are identified by `number` only.
@@ -284,6 +298,8 @@ description   String                (NON-NULLABLE — blank comments are rejecte
 parent_type   CommentParentType    (TICKET_COMMENT | GATE_COMMENT)
 parent_id     UUID                 (ticket_id or gate_id based on parent_type)
 creation_date DateTime
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 Comments attach to either a **Ticket** (work discussion) or a **Gate** (client feedback/approval). The polymorphic pair `(parent_type, parent_id)` determines the target. Referential integrity between `parent_id` and the target table is **not enforced at the DB level** — the application must ensure consistency.
@@ -297,6 +313,8 @@ image_id    UUID PK
 image_src   String @unique       (URL or path to image)
 parent_type ImageParentType      (TICKET | TICKET_COMMENT | GATE_COMMENT | PROFILE)
 parent_id   UUID                 (ticket_id, comment_id, or profile_id)
+is_deleted  Boolean   @default(false)
+deleted_at  DateTime?
 ```
 
 Images can attach to:
@@ -329,6 +347,8 @@ Tags:
   name        String @unique
   description String?
   color       String?
+  is_deleted  Boolean   @default(false)
+  deleted_at  DateTime?
 
 TicketTags:
   ticket_id UUID → Tickets
@@ -362,6 +382,8 @@ client_signature         String?                    (signed by any client profil
 client_signed_at         DateTime?                  (when the client signed)
 project_owner_signature  String?                    (signed by the PO)
 project_owner_signed_at  DateTime?                  (when the PO signed)
+is_deleted               Boolean   @default(false)
+deleted_at               DateTime?
 ```
 
 Contracts are created as a **blank record** when a project is made — only `project_id` and `client_id` are required upfront. `file_path`, signatures, and signed-at timestamps are filled later.
@@ -489,7 +511,8 @@ The permissions matrix references features with no corresponding tables yet:
 - `Comments.(parent_type, parent_id)` and `Images.(parent_type, parent_id)` use Prisma enums for the type discriminator but have no DB-level FK to the target tables. Application code must validate that `parent_id` refers to a real row of the correct type.
 
 ### Gates: no name or description
-- Intentional design decision. Gates are identified by `number` within a project only.
+- Intentional design decision. **Gates** are identified by `number` within a project only.
+- **Stages** DO have both `name` and `description` (unlike Gates).
 
 ### Gate approval model
 - A gate is approved when a `GateSignatures` row exists for it. The row records which client profile signed and when. Only one signature is needed (any client profile of the project's client).
@@ -531,3 +554,136 @@ The permissions matrix references features with no corresponding tables yet:
 | `RolePermissions` | `(role_id, permission_id)` | `@@id` (composite PK) |
 | `TicketAssigned` | `(ticket_id, profile_id)` | `@@id` (composite PK) |
 | `TicketTags` | `(ticket_id, tag_id)` | `@@id` (composite PK) |
+
+---
+
+## 13. Frontend Architecture
+
+### FSD Layer Structure
+
+```
+src/
+├── app/              ← routes (Next.js App Router)
+├── entities/         ← server actions + TanStack Query hooks per DB table
+├── features/         ← UI components grouped by user-facing capability
+└── shared/           ← reusable primitives (schemas, UI kit, query keys)
+```
+
+Layer dependency rule: `app → features → entities → shared`
+
+### Data Flow (TanStack Query + Mutations)
+
+Every CRUD operation follows this chain:
+
+```
+User action (form submit) → mutation.mutateAsync(...)
+  → server action (Prisma create/update/delete)
+    → DB generates UUID (gen_random_uuid())
+      → onSuccess: queryClient.invalidateQueries(stageKeys.tree(stageId))
+        → useQuery auto-refetches fresh data
+          → UI re-renders with real UUIDs
+```
+
+**Key rules:**
+- No client-side ID generation — all UUIDs originate from the DB
+- No `setPhases()` callbacks — data flows one-way from TanStack Query cache
+- Mutations invalidate `stageKeys.tree(stageId)` to trigger a single efficient refetch of the full nested hierarchy
+
+### Query Keys
+
+Query keys follow a hierarchical factory pattern in `shared/query/keys.ts`:
+
+```typescript
+stageKeys.tree(stageId)  // ["stages", "detail", stageId, "tree"] — full nested tree
+phaseKeys.detail(id)     // ["phases", "detail", id]
+moduleKeys.detail(id)    // ["modules", "detail", id]
+workflowKeys.detail(id)  // ["workflows", "detail", id]
+```
+
+### Zod Schemas
+
+All create/update inputs are validated via Zod schemas in `shared/schemas/`. Schemas use **snake_case** field names matching the database columns. UI types in `features/stage-editor/types.ts` also use snake_case for DB-originating fields (`phase_id`, `start_date`, `creation_date`), with only computed UI fields (`ticketCount`, `progress`) in camelCase.
+
+---
+
+## 14. Stage Editor Feature
+
+### Route
+
+`/projects/[projectId]/stages/[stageId]` — renders the stage structure editor.
+
+### Feature Slice
+
+`features/stage-editor/` — Components manage Phases → Modules → Workflows within a single Stage.
+
+### Component Tree
+
+```
+Page (useStageTree → phases)
+  ├── PhaseStepper    ← phase list, add/delete/drag-reorder
+  ├── ActivePhaseDetails ← edit name/description/dates (buffered, explicit Save)
+  └── ModulesCard     ← module list, add/edit/delete, expand to workflows
+       └── WorkflowsList ← workflow list, add/edit/delete/drag
+```
+
+### Server Action Wiring
+
+| Component | Create | Update | Delete | Reorder |
+|---|---|---|---|---|
+| PhaseStepper | `useCreatePhase` | — | `useDeletePhase` | `useSwapPhaseOrder` |
+| ActivePhaseDetails | — | `useUpdatePhase` | `useDeletePhase` | — |
+| ModulesCard | `useCreateModule` | `useUpdateModule` | `useDeleteModule` | — |
+| WorkflowsList | `useCreateWorkflow` | `useUpdateWorkflow` | `useDeleteWorkflow` | visual-only |
+
+### Date Validation
+
+All phase/module/workflow date fields enforce a **1-day minimum gap**: when a user changes a start date and it conflicts with the end date, the end date auto-advances to start + 1 day. When an end date is moved before start, start auto-pulls back to end − 1 day. Applied in:
+- `ActivePhaseDetails` (inline editing)
+- `AddModule` / `EditModule` modals
+- `AddWorkflow` / `EditWorkflow` modals
+
+### Navigation
+
+- Workflow names in `WorkflowsList` are clickable `<Link>` elements navigating to `/projects/[projectId]/workflows/[workflowId]`
+- The `TicketBoard` header on workflow pages shows the workflow name as a clickable link back to `/projects/[projectId]/stages/[stageId]`
+
+### `getStageTree()`
+
+Resides in `entities/stage/stageActions.ts`. Fetches the full hierarchy in 4 batched queries:
+
+1. `stages.findUnique` (the stage)
+2. `phases.findMany` (all phases for the stage)
+3. `modules.findMany` (all modules for those phases, via `{ in: phaseIds }`)
+4. `workflows.findMany` (all workflows for those modules, via `{ in: moduleIds }`)
+
+Results are assembled into a nested object: `{ ...stage, phases: [{ ...phase, modules: [{ ...module, workflows: [...] }] }] }`.
+
+---
+
+## 15. Signup Department Dropdown
+
+The `SignupForm` component (`features/auth/ui/SignupForm.tsx`) restricts the Department field to a `<select>` dropdown with three options:
+
+- `Project Team`
+- `Project Owner`
+- `Finance Team`
+
+Styling matches the shared `Input` component (`px-3.5 py-2.5 rounded-lg border border-gray-300`). Placeholder text is `"Select..."` in gray. This replaces the previous free-text input to prevent misspellings and enforce the three valid internal departments.
+
+---
+
+## 16. updatePhase() — Description Parameter
+
+The `updatePhase()` server action in `entities/phase/phaseActions.ts` now accepts an optional `description` parameter (4th argument):
+
+```typescript
+export async function updatePhase(
+    phaseId: string,
+    phaseName?: string,
+    description?: string | null,
+    startDate?: Date | null,
+    endDate?: Date | null
+)
+```
+
+Previously missing, this aligns the function with the `Phases.description` column in the schema and the `phaseUpdateSchema` Zod schema.
