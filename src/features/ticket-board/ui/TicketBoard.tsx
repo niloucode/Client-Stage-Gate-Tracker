@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import {
 	DndContext,
 	DragEndEvent,
@@ -54,7 +55,17 @@ import { TagsIcon, FilterIcon, PlusIcon } from "@/shared/ui/icons";
  * @param {string} props.workflow_id - Unique container scope identifying the target board sprint layout.
  * @returns {JSX.Element} The fully rendered sprint board panel or a loading skeleton.
  */
-export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
+export default function TicketBoard({
+  workflow_id,
+  workflowName = 'Current Sprint',
+  projectId,
+  stageId,
+}: {
+  workflow_id: string;
+  workflowName?: string;
+  projectId?: string;
+  stageId?: string;
+}) {
 	const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [slideOverOpen, setSlideOverOpen] = useState(false);
@@ -238,7 +249,19 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 
 			<div className="flex items-center justify-between px-6 py-5 shrink-0">
 				<div className="flex items-center gap-3">
-					<h1 className="text-xl font-bold text-gray-900">Current Sprint</h1>
+					{stageId && projectId ? (
+						<Link
+							href={`/projects/${projectId}/stages/${stageId}`}
+							className="flex items-center gap-2 text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors"
+						>
+							<svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+								<path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+							</svg>
+							{workflowName}
+						</Link>
+					) : (
+						<h1 className="text-xl font-bold text-gray-900">{workflowName}</h1>
+					)}
 				</div>
 
 				<div className="flex items-center gap-3">
