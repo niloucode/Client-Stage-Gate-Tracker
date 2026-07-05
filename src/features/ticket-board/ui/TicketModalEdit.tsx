@@ -11,7 +11,8 @@ import { useTicketComments } from "@/entities/comment/queries";
 import { useCreateComment } from "@/entities/comment/mutations";
 import { updateTicket } from "@/entities/ticket/ticketActions";
 import { createClient } from "@/lib/supabase/client";
-import { getInitials } from "@/shared/lib/strings";import TicketHistoryLog from './TicketHistoryLog'
+import { getInitials } from "@/shared/lib/strings";
+import TicketHistoryLog from "./TicketHistoryLog";
 
 
 function statusLabel(status: status) {

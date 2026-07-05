@@ -10,7 +10,10 @@ import {
   StatusChangeIcon,
   PencilIcon,
   MessageIcon,
-} from './assets'
+  UserPlusIcon,
+  UserMinusIcon,
+  TrashIcon,
+} from '@/shared/ui/icons'
 
 const ACTION_META: Record<
   action,
@@ -21,6 +24,9 @@ const ACTION_META: Record<
   [action.RENAMED]: { Icon: PencilIcon, bg: 'bg-amber-100', text: 'text-amber-600' },
   [action.COMMENT_ADDED]: { Icon: MessageIcon, bg: 'bg-gray-100', text: 'text-gray-500' },
   [action.FINISHED]: { Icon: CheckCircleIcon, bg: 'bg-indigo-100', text: 'text-indigo-600' },
+  [action.ASSIGNED]: { Icon: UserPlusIcon, bg: 'bg-teal-100', text: 'text-teal-600' },
+  [action.UNASSIGNED]: { Icon: UserMinusIcon, bg: 'bg-gray-100', text: 'text-gray-500' },
+  [action.DELETE]: { Icon: TrashIcon, bg: 'bg-red-100', text: 'text-red-600' },
 }
 
 /**
