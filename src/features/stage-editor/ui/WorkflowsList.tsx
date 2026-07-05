@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { Workflow } from "../types";
 import { AddWorkflow } from "@/features/stage-editor/ui/modals/AddWorkflow";
 import { EditWorkflow } from "@/features/stage-editor/ui/modals/EditWorkflow";
@@ -21,8 +21,6 @@ export function WorkflowsList({ workflows, moduleId, projectId, stageId }: Workf
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [workflowToDelete, setWorkflowToDelete] = useState<Workflow | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-
-  const router = useRouter();
 
   const createWorkflowMutation = useCreateWorkflow();
   const updateWorkflowMutation = useUpdateWorkflow();
@@ -126,8 +124,7 @@ export function WorkflowsList({ workflows, moduleId, projectId, stageId }: Workf
         {workflows.map((workflow, index) => (
           <div
             key={workflow.workflow_id}
-            onClick={() => router.push(`/projects/${projectId}/workflows/${workflow.workflow_id}`)}
-            className="flex items-center justify-between px-4 py-3 border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors group cursor-pointer"
+            className="flex items-center justify-between px-4 py-3 border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors group cursor-grab active:cursor-grabbing"
             draggable={true}
             onDragStart={(e) => handleDragStart(e, index)}
             onDragEnd={handleDragEnd}
@@ -146,9 +143,12 @@ export function WorkflowsList({ workflows, moduleId, projectId, stageId }: Workf
                 <circle cx="5" cy="11" r="1" fill="currentColor" />
               </svg>
               <div>
-                <span className="font-normal text-sm text-[#0F172A]">
+                <Link
+                  href={`/projects/${projectId}/workflows/${workflow.workflow_id}`}
+                  className="font-normal text-sm text-[#0F172A] hover:text-indigo-600 transition-colors"
+                >
                   {workflow.name}
-                </span>
+                </Link>
                 <p className="text-xs text-[#8392a6] mt-0.5">
                   Created: {formatDate(workflow.creation_date)}
                 </p>

@@ -67,6 +67,23 @@ export function ActivePhaseDetails({ activePhase, phases, stageId }: ActivePhase
     );
   }
 
+  // Enforce start_date < end_date with at least 1 day gap
+  const MIN_GAP_MS = 24 * 60 * 60 * 1000;
+
+  const handleStartDateChange = (d: Date | null) => {
+    setStartDate(d);
+    if (d && endDate && d.getTime() + MIN_GAP_MS > endDate.getTime()) {
+      setEndDate(new Date(d.getTime() + MIN_GAP_MS));
+    }
+  };
+
+  const handleEndDateChange = (d: Date | null) => {
+    setEndDate(d);
+    if (d && startDate && startDate.getTime() + MIN_GAP_MS > d.getTime()) {
+      setStartDate(new Date(d.getTime() - MIN_GAP_MS));
+    }
+  };
+
   const handleSave = async () => {
     if (!isDirty) return;
     await updatePhaseMutation.mutateAsync({
@@ -189,7 +206,7 @@ export function ActivePhaseDetails({ activePhase, phases, stageId }: ActivePhase
                 <input
                   type="datetime-local"
                   value={toDateInput(startDate)}
-                  onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
+                  onChange={(e) => handleStartDateChange(e.target.value ? new Date(e.target.value) : null)}
                   className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -201,7 +218,7 @@ export function ActivePhaseDetails({ activePhase, phases, stageId }: ActivePhase
                 <input
                   type="datetime-local"
                   value={toDateInput(endDate)}
-                  onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+                  onChange={(e) => handleEndDateChange(e.target.value ? new Date(e.target.value) : null)}
                   className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
                   onClick={(e) => e.stopPropagation()}
                 />
