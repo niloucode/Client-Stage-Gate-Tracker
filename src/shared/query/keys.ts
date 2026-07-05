@@ -52,8 +52,10 @@ export const moduleKeys = {
 
 export const stageKeys = {
   all: ["stages"] as const,
+  lists: () => [...stageKeys.all, "list"] as const,
   detail: (id: string) => [...stageKeys.all, "detail", id] as const,
   phases: (stageId: string) => [...stageKeys.detail(stageId), "phases"] as const,
+  tree: (stageId: string) => [...stageKeys.detail(stageId), "tree"] as const,
 };
 
 export const workflowKeys = {

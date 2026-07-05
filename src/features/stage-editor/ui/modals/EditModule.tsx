@@ -5,8 +5,8 @@ import type { Module } from "../../types";
 
 interface EditModuleFormData {
   name: string;
-  startDate: Date | null;
-  endDate: Date | null;
+  start_date: Date | null;
+  end_date: Date | null;
 }
 
 interface EditModuleProps {
@@ -19,8 +19,8 @@ interface EditModuleProps {
 
 const toFormData = (module: Module | null): EditModuleFormData => ({
   name: module?.name ?? "",
-  startDate: module?.startDate ?? null,
-  endDate: module?.endDate ?? null,
+  start_date: module?.start_date ?? null,
+  end_date: module?.end_date ?? null,
 });
 
 export function EditModule({ isOpen, module, onClose, onSave, onDelete }: EditModuleProps) {
@@ -72,8 +72,8 @@ export function EditModule({ isOpen, module, onClose, onSave, onDelete }: EditMo
               </label>
               <input
                 type="datetime-local"
-                value={formData.startDate ? new Date(formData.startDate.getTime() - formData.startDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value ? new Date(e.target.value) : null })}
+                value={formData.start_date ? new Date(formData.start_date.getTime() - formData.start_date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value ? new Date(e.target.value) : null })}
                 className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
               />
             </div>
@@ -83,8 +83,8 @@ export function EditModule({ isOpen, module, onClose, onSave, onDelete }: EditMo
               </label>
               <input
                 type="datetime-local"
-                value={formData.endDate ? new Date(formData.endDate.getTime() - formData.endDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value ? new Date(e.target.value) : null })}
+                value={formData.end_date ? new Date(formData.end_date.getTime() - formData.end_date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value ? new Date(e.target.value) : null })}
                 className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
               />
             </div>

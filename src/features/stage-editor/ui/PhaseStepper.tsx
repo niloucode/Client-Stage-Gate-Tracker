@@ -2,18 +2,19 @@
 
 import { forwardRef, useImperativeHandle, useState, useRef, useEffect } from "react";
 import type { Phase } from "../types";
-import { DeletePhase } from "@/features/project-editor/ui/modals/DeletePhase";
-import { AddPhase } from "@/features/project-editor/ui/modals/AddPhase";
+import { DeletePhase } from "@/features/stage-editor/ui/modals/DeletePhase";
+import { AddPhase } from "@/features/stage-editor/ui/modals/AddPhase";
+import { useCreatePhase, useDeletePhase, useSwapPhaseOrder } from "@/entities/phase/mutations";
 
 interface PhaseStepperProps {
   phases: Phase[];
-  setPhases: (phases: Phase[]) => void;
+  stageId: string;
   activePhase: number | null;
   setActivePhase: (phase: number | null) => void;
 }
 
 export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseStepperProps>(
-  ({ phases, setPhases, activePhase, setActivePhase }, ref) => {
+  ({ phases, stageId, activePhase, setActivePhase }, ref) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [phaseToDelete, setPhaseToDelete] = useState<number | null>(null);
@@ -21,6 +22,10 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
     const [showRightArrow, setShowRightArrow] = useState(true);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    const createPhaseMutation = useCreatePhase();
+    const deletePhaseMutation = useDeletePhase();
+    const swapPhaseOrderMutation = useSwapPhaseOrder();
 
     useImperativeHandle(ref, () => ({
       openCreateModal: () => setIsModalOpen(true)
@@ -52,19 +57,14 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
       });
     };
 
-    const handleAddPhase = (data: { name: string; description: string; startDate: Date | null; endDate: Date | null }) => {
-      const newNumber = phases.length > 0 ? Math.max(...phases.map(p => p.number)) + 1 : 1;
-      const newPhase: Phase = {
-        number: newNumber,
-        name: data.name || `Phase ${newNumber}`,
-        description: data.description || "",
-        startDate: data.startDate || null,
-        endDate: data.endDate || null,
-        createdAt: new Date(),
-        modules: []
-      };
-      setPhases([...phases, newPhase]);
-      setActivePhase(newNumber);
+    const handleAddPhase = async (data: { name: string; description: string; start_date: Date | null; end_date: Date | null }) => {
+      await createPhaseMutation.mutateAsync({
+        stageId,
+        name: data.name,
+        description: data.description,
+        start_date: data.start_date ?? undefined,
+        end_date: data.end_date ?? undefined,
+      });
       setIsModalOpen(false);
     };
 
@@ -78,25 +78,22 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
       setPhaseToDelete(null);
     };
 
-    const handleDeletePhase = () => {
+    const handleDeletePhase = async () => {
       if (phaseToDelete === null) return;
-      
-      // Allow deletion even if it's the last phase
-      const updatedPhases = phases.filter((p) => p.number !== phaseToDelete);
-      const renumberedPhases = updatedPhases.map((p, index) => ({
-        ...p,
-        number: index + 1,
-      }));
-      
-      setPhases(renumberedPhases);
-      
-      // If active phase was deleted, set to null (no active phase)
+      const phase = phases.find(p => p.number === phaseToDelete);
+      if (!phase) return;
+
+      await deletePhaseMutation.mutateAsync({
+        phaseId: phase.phase_id,
+        stageId,
+      });
+
       if (activePhase === phaseToDelete) {
         setActivePhase(null);
       } else if (activePhase !== null && activePhase > phaseToDelete) {
         setActivePhase(activePhase - 1);
       }
-      
+
       setIsDeleteConfirmOpen(false);
       setPhaseToDelete(null);
     };
@@ -136,7 +133,7 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
       (e.currentTarget as HTMLElement).classList.remove('drag-over');
     };
 
-    const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
       e.preventDefault();
       
       const dragIndex = draggedIndex;
@@ -149,27 +146,19 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
         el.classList.remove('drag-over');
       });
 
-      const reorderedPhases = [...phases];
-      const [draggedPhase] = reorderedPhases.splice(dragIndex, 1);
-      reorderedPhases.splice(dropIndex, 0, draggedPhase);
-      
-      const renumberedPhases = reorderedPhases.map((phase, index) => ({
-        ...phase,
-        number: index + 1,
-      }));
-      
-      setPhases(renumberedPhases);
-      
-      if (activePhase !== null) {
-        if (activePhase === dragIndex + 1) {
-          setActivePhase(dropIndex + 1);
-        } else if (activePhase > dragIndex + 1 && activePhase <= dropIndex + 1) {
-          setActivePhase(activePhase - 1);
-        } else if (activePhase < dragIndex + 1 && activePhase >= dropIndex + 1) {
-          setActivePhase(activePhase + 1);
-        }
+      const draggedPhase = phases[dragIndex];
+      const droppedPhase = phases[dropIndex];
+      if (!draggedPhase || !droppedPhase) {
+        setDraggedIndex(null);
+        return;
       }
-      
+
+      await swapPhaseOrderMutation.mutateAsync({
+        phaseId1: draggedPhase.phase_id,
+        phaseId2: droppedPhase.phase_id,
+        stageId,
+      });
+
       setDraggedIndex(null);
     };
 
@@ -213,10 +202,10 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
                 <div 
                   ref={scrollContainerRef}
                   onScroll={checkScroll}
-                  className="overflow-x-auto scroll-smooth hide-scrollbar"
+                  className="relative z-10 overflow-x-auto scroll-smooth hide-scrollbar"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  <div className="flex items-start pt-3" style={{ minWidth: `${phases.length * 180}px` }}>
+                  <div className="flex items-start pt-7" style={{ minWidth: `${phases.length * 180}px` }}>
                     {phases.map((phase, index) => {
                       const isActive = phase.number === activePhase;
                       const isCompleted = activePhase !== null && phase.number < activePhase;
@@ -224,8 +213,8 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
 
                       return (
                         <div 
-                          key={phase.number}
-                          className="relative flex flex-col items-center flex-shrink-0 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-105"
+                          key={phase.phase_id}
+                          className="relative flex flex-col items-center flex-shrink-0 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-105 hover:z-10"
                           style={{ 
                             width: `${100 / phases.length}%`, 
                             minWidth: '140px',
@@ -247,7 +236,7 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
                               <div
                                 className={`
                                   w-10 h-10 rounded-full flex items-center justify-center
-                                  transition-all duration-200 relative
+                                  transition-colors duration-200 relative outline outline-[6px] outline-white
                                   ${isActive 
                                     ? "bg-[#4F46E5] border-2 border-[#4F46E5] shadow-lg" 
                                     : isCompleted
@@ -299,17 +288,9 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
                             >
                               {phase.name}
                             </div>
-                            {/* <div
-                              className={`
-                                text-[11px] mt-0.5 whitespace-nowrap
-                                ${isActive ? "text-[#4F46E5]" : isPending ? "text-[#94A3B8]" : "text-[#64748B]"}
-                              `}
-                            >
-                              Phase {phase.number}
-                            </div> */}
-                            {phase.startDate && phase.endDate && (
+                            {phase.start_date && phase.end_date && (
                               <div className="text-[9px] text-[#94A3B8] mt-0.5 whitespace-nowrap">
-                                {phase.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {phase.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                {phase.start_date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {phase.end_date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                               </div>
                             )}
                           </div>
@@ -320,7 +301,7 @@ export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseSte
                 </div>
 
                 {/* Connecting Line */}
-                <div className="absolute left-[calc(8%+20px)] right-[calc(8%+20px)] top-[calc(50%+4px)] h-0.5 bg-[#E2E8F0] -translate-y-1/2 pointer-events-none" />
+                <div className="z-0 absolute left-[calc(8%+20px)] right-[calc(8%+20px)] top-1/2 h-0.5 bg-[#E2E8F0] -translate-y-1/2 pointer-events-none" />
               </>
             )}
           </div>

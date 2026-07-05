@@ -1,27 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { moduleSchema } from "@/shared/schemas";
+import { phaseCreateSchema } from "@/shared/schemas";
 
-interface AddModuleFormData {
+interface AddPhaseFormData {
   name: string;
-  startDate: Date | null;
-  endDate: Date | null;
+  description: string;
+  start_date: Date | null;
+  end_date: Date | null;
 }
 
-interface AddModuleProps {
+interface AddPhaseProps {
   isOpen: boolean;
-  activePhase: number | null;
   onClose: () => void;
-  onSubmit: (data: AddModuleFormData) => void;
+  onSubmit: (data: AddPhaseFormData) => void;
 }
 
-const emptyFormData: AddModuleFormData = { name: "", startDate: null, endDate: null };
 
-type FieldErrors = Partial<Record<keyof AddModuleFormData, string>>;
 
-export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleProps) {
-  const [formData, setFormData] = useState<AddModuleFormData>(emptyFormData);
+const emptyFormData: AddPhaseFormData = { name: "", description: "", start_date: null, end_date: null };
+
+type FieldErrors = Partial<Record<keyof AddPhaseFormData, string>>;
+
+export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
+  const [formData, setFormData] = useState<AddPhaseFormData>(emptyFormData);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   if (!isOpen) return null;
@@ -33,12 +35,12 @@ export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleP
   };
 
   const handleSubmit = () => {
-    const result = moduleSchema.safeParse(formData);
+    const result = phaseCreateSchema.safeParse(formData);
     if (!result.success) {
       const flattened = result.error.flatten().fieldErrors;
       const mapped: FieldErrors = {};
       for (const [key, msgs] of Object.entries(flattened)) {
-        if (msgs && msgs.length > 0) mapped[key as keyof AddModuleFormData] = msgs[0];
+        if (msgs && msgs.length > 0) mapped[key as keyof AddPhaseFormData] = msgs[0];
       }
       setFieldErrors(mapped);
       return;
@@ -61,27 +63,40 @@ export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleP
         </button>
 
         <h2 className="text-xl font-bold text-[#0F172A] mb-2">
-          Create New Module
+          Create New Phase
         </h2>
         <p className="text-sm text-[#64748B] mb-6">
-          Fill in the details to create a new module for Phase {activePhase}.
+          Fill in the details to create a new phase in the pipeline.
         </p>
 
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-              Module Name *
+              Phase Name *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Authentication & Identity"
+              placeholder="e.g., Discovery"
               className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
             />
             {fieldErrors.name && (
               <p className="text-xs text-red-500 mt-1">{fieldErrors.name}</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe the objectives and scope of this phase..."
+              rows={3}
+              className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -91,8 +106,8 @@ export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleP
               </label>
               <input
                 type="datetime-local"
-                value={formData.startDate ? new Date(formData.startDate.getTime() - formData.startDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value ? new Date(e.target.value) : null })}
+                value={formData.start_date ? new Date(formData.start_date.getTime() - formData.start_date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value ? new Date(e.target.value) : null })}
                 className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
               />
             </div>
@@ -102,8 +117,8 @@ export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleP
               </label>
               <input
                 type="datetime-local"
-                value={formData.endDate ? new Date(formData.endDate.getTime() - formData.endDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value ? new Date(e.target.value) : null })}
+                value={formData.end_date ? new Date(formData.end_date.getTime() - formData.end_date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value ? new Date(e.target.value) : null })}
                 className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
               />
             </div>
@@ -121,7 +136,7 @@ export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleP
             onClick={handleSubmit}
             className="px-4 py-2 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
           >
-            Create Module
+            Create Phase
           </button>
         </div>
       </div>

@@ -11,8 +11,8 @@ export type { TicketCreateInput, TicketUpdateInput, CreateTicketParams, UpdateTi
 export { commentCreateSchema } from "./ticket";
 export type { CommentCreateInput } from "./ticket";
 
-export { phaseSchema, moduleSchema, workflowSchema } from "./project";
-export type { PhaseInput, ModuleInput, WorkflowInput } from "./project";
+export { phaseCreateSchema, phaseUpdateSchema, moduleCreateSchema, moduleUpdateSchema, workflowCreateSchema, workflowUpdateSchema } from "./project";
+export type { PhaseCreateInput, PhaseUpdateInput, ModuleCreateInput, ModuleUpdateInput, WorkflowCreateInput, WorkflowUpdateInput } from "./project";
 
 export { tagSchema, tagCreateSchema, tagUpdateSchema } from "./tag";
 export type { Tag, TagCreateInput, TagUpdateInput } from "./tag";

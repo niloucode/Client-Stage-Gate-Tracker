@@ -1,23 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Workflow } from "../types";
-import { AddWorkflow } from "@/features/project-editor/ui/modals/AddWorkflow";
-import { EditWorkflow } from "@/features/project-editor/ui/modals/EditWorkflow";
-import { DeleteWorkflow } from "@/features/project-editor/ui/modals/DeleteWorkflow";
+import { AddWorkflow } from "@/features/stage-editor/ui/modals/AddWorkflow";
+import { EditWorkflow } from "@/features/stage-editor/ui/modals/EditWorkflow";
+import { DeleteWorkflow } from "@/features/stage-editor/ui/modals/DeleteWorkflow";
+import { useCreateWorkflow, useUpdateWorkflow, useDeleteWorkflow } from "@/entities/workflow/mutations";
 
 interface WorkflowsListProps {
   workflows: Workflow[];
   moduleId: string;
-  onUpdateWorkflows: (workflows: Workflow[]) => void;
+  projectId: string;
+  stageId: string;
 }
 
-export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListProps) {
+export function WorkflowsList({ workflows, moduleId, projectId, stageId }: WorkflowsListProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [workflowToDelete, setWorkflowToDelete] = useState<Workflow | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const router = useRouter();
+
+  const createWorkflowMutation = useCreateWorkflow();
+  const updateWorkflowMutation = useUpdateWorkflow();
+  const deleteWorkflowMutation = useDeleteWorkflow();
 
   const openCreateWorkflowModal = () => setIsAddOpen(true);
   const openEditWorkflowModal = (workflow: Workflow) => setEditingWorkflow(workflow);
@@ -30,32 +39,26 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
     })}`;
   };
 
-  const handleAddWorkflow = (data: { name: string; startDate: Date | null; endDate: Date | null }) => {
-    const newWorkflow: Workflow = {
-      id: Date.now().toString(),
-      name: data.name || "New Workflow",
-      startDate: data.startDate || null,
-      endDate: data.endDate || null,
-      createdAt: new Date(),
-      ticketCount: 0,
-      progress: 0,
-    };
-    onUpdateWorkflows([...workflows, newWorkflow]);
+  const handleAddWorkflow = async (data: { name: string; start_date: Date | null; end_date: Date | null }) => {
+    await createWorkflowMutation.mutateAsync({
+      moduleId,
+      stageId,
+      name: data.name,
+      start_date: data.start_date ?? undefined,
+      end_date: data.end_date ?? undefined,
+    });
     setIsAddOpen(false);
   };
 
-  const handleSaveWorkflow = (data: { name: string; startDate: Date | null; endDate: Date | null }) => {
+  const handleSaveWorkflow = async (data: { name: string; start_date: Date | null; end_date: Date | null }) => {
     if (!editingWorkflow) return;
-    onUpdateWorkflows(workflows.map(w =>
-      w.id === editingWorkflow.id
-        ? { 
-            ...w, 
-            name: data.name || "New Workflow", 
-            startDate: data.startDate || null,
-            endDate: data.endDate || null,
-          }
-        : w
-    ));
+    await updateWorkflowMutation.mutateAsync({
+      workflowId: editingWorkflow.workflow_id,
+      stageId,
+      name: data.name,
+      start_date: data.start_date ?? undefined,
+      end_date: data.end_date ?? undefined,
+    });
     setEditingWorkflow(null);
   };
 
@@ -65,9 +68,12 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
     setEditingWorkflow(null);
   };
 
-  const handleDeleteWorkflow = () => {
+  const handleDeleteWorkflow = async () => {
     if (!workflowToDelete) return;
-    onUpdateWorkflows(workflows.filter(w => w.id !== workflowToDelete.id));
+    await deleteWorkflowMutation.mutateAsync({
+      workflowId: workflowToDelete.workflow_id,
+      stageId,
+    });
     setIsDeleteConfirmOpen(false);
     setWorkflowToDelete(null);
   };
@@ -109,22 +115,7 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
-    const dragIndex = draggedIndex;
-    if (dragIndex === null || dragIndex === dropIndex) {
-      setDraggedIndex(null);
-      return;
-    }
-
-    document.querySelectorAll('.drag-over-workflow').forEach(el => {
-      el.classList.remove('drag-over-workflow');
-    });
-
-    const reorderedWorkflows = [...workflows];
-    const [draggedWorkflow] = reorderedWorkflows.splice(dragIndex, 1);
-    reorderedWorkflows.splice(dropIndex, 0, draggedWorkflow);
-    
-    onUpdateWorkflows(reorderedWorkflows);
+    // Drag-and-drop for workflow ordering is visual-only pending DB-backed reorder.
     setDraggedIndex(null);
   };
 
@@ -134,8 +125,9 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
       <div className="bg-white">
         {workflows.map((workflow, index) => (
           <div
-            key={workflow.id}
-            className="flex items-center justify-between px-4 py-3 border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors group cursor-grab active:cursor-grabbing"
+            key={workflow.workflow_id}
+            onClick={() => router.push(`/projects/${projectId}/workflows/${workflow.workflow_id}`)}
+            className="flex items-center justify-between px-4 py-3 border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors group cursor-pointer"
             draggable={true}
             onDragStart={(e) => handleDragStart(e, index)}
             onDragEnd={handleDragEnd}
@@ -158,17 +150,17 @@ export function WorkflowsList({ workflows, onUpdateWorkflows }: WorkflowsListPro
                   {workflow.name}
                 </span>
                 <p className="text-xs text-[#8392a6] mt-0.5">
-                  Created: {formatDate(workflow.createdAt)}
+                  Created: {formatDate(workflow.creation_date)}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               {/* Date Badge */}
-              {workflow.startDate && workflow.endDate && (
+              {workflow.start_date && workflow.end_date && (
                 <div className="px-3 py-1 bg-[#ffffff] border border-slate-300 rounded-md">
                   <span className="font-medium text-xs text-slate-400">
-                    {formatDate(workflow.startDate)} – {formatDate(workflow.endDate)}
+                    {formatDate(workflow.start_date)} – {formatDate(workflow.end_date)}
                   </span>
                 </div>
               )}

@@ -280,3 +280,65 @@ export async function swapStageOrder(stageId1: string, stageId2: string) {
         return { success: false, error: "Failed to reorder stages." };
     }
 }
+
+/**
+ * Fetches a stage and its full nested tree: Phases → Modules → Workflows.
+ * Returns the stage with a `phases` array — each phase containing its `modules`,
+ * and each module containing its `workflows`.
+ *
+ * @param {string} stageId - The UUID of the stage to load.
+ * @returns {Promise<object | null>} The stage tree object, or null if not found / error.
+ */
+export async function getStageTree(stageId: string) {
+    try {
+        const stage = await prisma.stages.findUnique({
+            where: { stage_id: stageId, is_deleted: false },
+        });
+        if (!stage) return null;
+
+        const phases = await prisma.phases.findMany({
+            where: { stage_id: stageId, is_deleted: false },
+            orderBy: { number: 'asc' },
+        });
+
+        const phaseIds = phases.map(p => p.phase_id);
+        const modules = await prisma.modules.findMany({
+            where: { phase_id: { in: phaseIds }, is_deleted: false },
+            orderBy: { creation_date: 'asc' },
+        });
+
+        const moduleIds = modules.map((m: Record<string, unknown>) => m.module_id as string);
+        const workflows = await prisma.workflows.findMany({
+            where: { module_id: { in: moduleIds }, is_deleted: false },
+            orderBy: { creation_date: 'asc' },
+        });
+
+        // Build nested tree using Record access for FK fields (generated types omit them)
+        const workflowsByModule = new Map<string, typeof workflows>();
+        for (const wf of workflows) {
+            const wfModId = (wf as Record<string, unknown>).module_id as string;
+            const list = workflowsByModule.get(wfModId) ?? [];
+            list.push(wf);
+            workflowsByModule.set(wfModId, list);
+        }
+
+        const modulesByPhase = new Map<string, object[]>();
+        for (const mod of modules) {
+            const modPhaseId = (mod as Record<string, unknown>).phase_id as string;
+            const modId = (mod as Record<string, unknown>).module_id as string;
+            const list = modulesByPhase.get(modPhaseId) ?? [];
+            list.push({ ...mod, workflows: workflowsByModule.get(modId) ?? [] });
+            modulesByPhase.set(modPhaseId, list);
+        }
+
+        const phasesWithModules = phases.map(p => ({
+            ...p,
+            modules: modulesByPhase.get((p as Record<string, unknown>).phase_id as string) ?? [],
+        }));
+
+        return { ...stage, phases: phasesWithModules };
+    } catch (error) {
+        console.error("Failed to fetch stage tree:", error);
+        return null;
+    }
+}

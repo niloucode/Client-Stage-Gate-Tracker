@@ -3,21 +3,27 @@
 import { useState } from "react";
 import type { Module, Phase, Workflow } from "../types";
 import { WorkflowsList } from "./WorkflowsList";
-import { AddModule } from "@/features/project-editor/ui/modals/AddModule";
-import { EditModule } from "@/features/project-editor/ui/modals/EditModule";
+import { AddModule } from "@/features/stage-editor/ui/modals/AddModule";
+import { EditModule } from "@/features/stage-editor/ui/modals/EditModule";
+import { useCreateModule, useUpdateModule, useDeleteModule } from "@/entities/module/mutations";
 
 interface ModulesCardProps {
   activePhase: number | null;
   phases: Phase[];
-  setPhases: (phases: Phase[]) => void;
+  projectId: string;
+  stageId: string;
 }
 
-export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps) {
+export function ModulesCard({ activePhase, phases, projectId, stageId }: ModulesCardProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(["1"]));
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
+
+  const createModuleMutation = useCreateModule();
+  const updateModuleMutation = useUpdateModule();
+  const deleteModuleMutation = useDeleteModule();
 
   // Get modules for the current active phase
   const currentPhase = activePhase !== null ? phases.find(p => p.number === activePhase) : null;
@@ -38,45 +44,33 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
     })}`;
   };
 
-  const handleAddModule = (data: { name: string; startDate: Date | null; endDate: Date | null }) => {
-    if (activePhase === null) return;
-    
-    const newModule: Module = {
-      id: Date.now().toString(),
-      name: data.name || "New Module",
-      startDate: data.startDate || null,
-      endDate: data.endDate || null,
-      createdAt: new Date(),
-      workflows: [],
-    };
-    setPhases(phases.map(phase =>
-      phase.number === activePhase ? { ...phase, modules: [...phase.modules, newModule] } : phase
-    ));
-    setExpandedModules(prev => new Set(prev).add(newModule.id));
+  const handleAddModule = async (data: { name: string; start_date: Date | null; end_date: Date | null }) => {
+    if (activePhase === null || !currentPhase) return;
+    await createModuleMutation.mutateAsync({
+      phaseId: currentPhase.phase_id,
+      stageId,
+      name: data.name,
+      start_date: data.start_date ?? undefined,
+      end_date: data.end_date ?? undefined,
+    });
     setIsAddOpen(false);
   };
 
-  const handleSaveModule = (data: { name: string; startDate: Date | null; endDate: Date | null }) => {
-    if (!editingModule || activePhase === null) return;
-    setPhases(phases.map(phase =>
-      phase.number === activePhase ? {
-        ...phase,
-        modules: phase.modules.map(m =>
-          m.id === editingModule.id ? { 
-            ...m, 
-            name: data.name, 
-            startDate: data.startDate, 
-            endDate: data.endDate
-          } : m
-        ),
-      } : phase
-    ));
+  const handleSaveModule = async (data: { name: string; start_date: Date | null; end_date: Date | null }) => {
+    if (!editingModule) return;
+    await updateModuleMutation.mutateAsync({
+      moduleId: editingModule.module_id,
+      stageId,
+      name: data.name,
+      start_date: data.start_date ?? undefined,
+      end_date: data.end_date ?? undefined,
+    });
     setEditingModule(null);
   };
 
   const handleEditDeleteClick = () => {
     if (!editingModule) return;
-    confirmDelete(editingModule.id);
+    confirmDelete(editingModule.module_id);
     setEditingModule(null);
   };
 
@@ -97,37 +91,14 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
     setIsDeleteConfirmOpen(true);
   };
 
-  const handleDeleteModule = () => {
+  const handleDeleteModule = async () => {
     if (!moduleToDelete || activePhase === null) return;
-    
-    const updatedPhases = phases.map((phase) => {
-      if (phase.number !== activePhase) return phase;
-      return {
-        ...phase,
-        modules: phase.modules.filter((m) => m.id !== moduleToDelete),
-      };
+    await deleteModuleMutation.mutateAsync({
+      moduleId: moduleToDelete,
+      stageId,
     });
-    setPhases(updatedPhases);
-    
     setIsDeleteConfirmOpen(false);
     setModuleToDelete(null);
-  };
-
-  const handleUpdateWorkflows = (moduleId: string, workflows: Workflow[]) => {
-    if (activePhase === null) return;
-    
-    const updatedPhases = phases.map((phase) => {
-      if (phase.number !== activePhase) return phase;
-      return {
-        ...phase,
-        modules: phase.modules.map((m) =>
-          m.id === moduleId
-            ? { ...m, workflows }
-            : m
-        ),
-      };
-    });
-    setPhases(updatedPhases);
   };
 
   return (
@@ -167,11 +138,11 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
           </div>
         ) : (
           modules.map((module) => {
-            const isExpanded = expandedModules.has(module.id);
+            const isExpanded = expandedModules.has(module.module_id);
 
             return (
               <div
-                key={module.id}
+                key={module.module_id}
                 className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden"
               >
                 {/* Module Header */}
@@ -180,7 +151,7 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
                   {/* Left Side Block */}
                   <div
                     className="flex-1 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => toggleModule(module.id)}
+                    onClick={() => toggleModule(module.module_id)}
                   >
                     <svg
                       width="12"
@@ -196,7 +167,7 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
                         {module.name}
                       </h4>
                       <p className="text-xs text-[#64748B] mt-0.5">
-                        Created: {formatDate(module.createdAt)}
+                        Created: {formatDate(module.creation_date)}
                       </p>
                     </div>
                   </div>
@@ -206,7 +177,7 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
                     {module.startDate && module.endDate && (
                       <div className="px-3 py-1 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md">
                         <h4 className="font-semibold text-xs text-[#334155]">
-                          {formatDate(module.startDate)} – {formatDate(module.endDate)}
+                          {formatDate(module.start_date)} – {formatDate(module.end_date)}
                         </h4>
                       </div>
                     )}
@@ -234,8 +205,9 @@ export function ModulesCard({ activePhase, phases, setPhases }: ModulesCardProps
                 {isExpanded && (
                   <WorkflowsList
                     workflows={module.workflows}
-                    moduleId={module.id}
-                    onUpdateWorkflows={(workflows) => handleUpdateWorkflows(module.id, workflows)}
+                    moduleId={module.module_id}
+                    projectId={projectId}
+                    stageId={stageId}
                   />
                 )}
               </div>

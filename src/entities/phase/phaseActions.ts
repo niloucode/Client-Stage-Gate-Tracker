@@ -124,6 +124,7 @@ export async function getModulesByPhaseId(phaseId: string, status: EntityFilterS
  *
  * @param {string} phaseId - The UUID of the phase to update.
  * @param {string} [phaseName] - (Optional) The new name for the phase.
+ * @param {string | null} [description] - (Optional) The new description for the phase.
  * @param {Date | null} [startDate] - (Optional) The new scheduled start date.
  * @param {Date | null} [endDate] - (Optional) The new scheduled end date.
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
@@ -133,6 +134,7 @@ export async function getModulesByPhaseId(phaseId: string, status: EntityFilterS
 export async function updatePhase(
     phaseId: string,
     phaseName?: string,
+    description?: string | null,
     startDate?: Date | null,
     endDate?: Date | null
 ) {
@@ -143,6 +145,7 @@ export async function updatePhase(
             },
             data: {
                 name: phaseName,
+                description: description,
                 start_date: startDate,
                 end_date: endDate,
             },

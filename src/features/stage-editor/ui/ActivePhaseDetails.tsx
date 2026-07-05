@@ -1,19 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Phase } from "../types";
-import { DeletePhase } from "@/features/project-editor/ui/modals/DeletePhase";
+import { DeletePhase } from "@/features/stage-editor/ui/modals/DeletePhase";
+import { useUpdatePhase, useDeletePhase } from "@/entities/phase/mutations";
 
 interface ActivePhaseDetailsProps {
   activePhase: number | null;
   phases: Phase[];
-  setPhases: (phases: Phase[]) => void;
+  stageId: string;
 }
 
-export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePhaseDetailsProps) {
+export function ActivePhaseDetails({ activePhase, phases, stageId }: ActivePhaseDetailsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const currentPhase = activePhase !== null ? phases.find(p => p.number === activePhase) : null;
+
+  // Local buffer — only synced to server on explicit save
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
+  const updatePhaseMutation = useUpdatePhase();
+  const deletePhaseMutation = useDeletePhase();
+
+  // Reset buffer when selected phase changes
+  useEffect(() => {
+    setName(currentPhase?.name ?? "");
+    setDescription(currentPhase?.description ?? "");
+    setStartDate(currentPhase?.start_date ?? null);
+    setEndDate(currentPhase?.end_date ?? null);
+  }, [currentPhase]);
+
+  const isDirty =
+    name !== (currentPhase?.name ?? "") ||
+    description !== (currentPhase?.description ?? "") ||
+    startDate?.getTime() !== (currentPhase?.start_date?.getTime() ?? null) ||
+    endDate?.getTime() !== (currentPhase?.end_date?.getTime() ?? null);
 
   const formatDate = (date: Date | null) => {
     if (!date) return "";
@@ -21,14 +45,6 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
       month: 'long',
       day: 'numeric',
       year: 'numeric'
-    });
-  };
-
-  const formatTime = (date: Date | null) => {
-    if (!date) return "";
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
     });
   };
 
@@ -51,32 +67,29 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
     );
   }
 
-  const updatePhase = (field: keyof Phase, value: string | Date | null) => {
-    setPhases(
-      phases.map(p =>
-        p.number === activePhase
-          ? { ...p, [field]: value }
-          : p
-      )
-    );
+  const handleSave = async () => {
+    if (!isDirty) return;
+    await updatePhaseMutation.mutateAsync({
+      phaseId: currentPhase.phase_id,
+      stageId,
+      name,
+      description,
+      start_date: startDate ?? undefined,
+      end_date: endDate ?? undefined,
+    });
   };
 
-  const handleDeletePhase = () => {
-    if (phases.length <= 1) {
-      alert("Cannot delete the last phase. At least one phase is required.");
-      setIsDeleteConfirmOpen(false);
-      return;
-    }
-
-    const updatedPhases = phases.filter((p) => p.number !== activePhase);
-    const renumberedPhases = updatedPhases.map((p, index) => ({
-      ...p,
-      number: index + 1,
-    }));
-    
-    setPhases(renumberedPhases);
+  const handleDeletePhase = async () => {
+    if (!currentPhase) return;
+    await deletePhaseMutation.mutateAsync({
+      phaseId: currentPhase.phase_id,
+      stageId,
+    });
     setIsDeleteConfirmOpen(false);
   };
+
+  const toDateInput = (d: Date | null) =>
+    d ? new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
 
   return (
     <>
@@ -134,8 +147,8 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
                 <input
                   type="text"
                   placeholder="e.g., Discovery"
-                  value={currentPhase?.name || ""}
-                  onChange={(e) => updatePhase("name", e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -147,8 +160,8 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
                 </label>
                 <textarea
                   placeholder="Describe the objectives and scope of this phase..."
-                  value={currentPhase?.description || ""}
-                  onChange={(e) => updatePhase("description", e.target.value)}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   rows={2}
                   className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
                   onClick={(e) => e.stopPropagation()}
@@ -163,7 +176,7 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
                 </label>
                 <input
                   type="text"
-                  value={formatCreatedAt(currentPhase?.createdAt || new Date())}
+                  value={formatCreatedAt(currentPhase.creation_date || new Date())}
                   disabled
                   className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-[#64748B] cursor-not-allowed"
                   onClick={(e) => e.stopPropagation()}
@@ -175,8 +188,8 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
                 </label>
                 <input
                   type="datetime-local"
-                  value={currentPhase?.startDate ? new Date(currentPhase.startDate.getTime() - currentPhase.startDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
-                  onChange={(e) => updatePhase("startDate", e.target.value ? new Date(e.target.value) : null)}
+                  value={toDateInput(startDate)}
+                  onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
                   className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -187,15 +200,15 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
                 </label>
                 <input
                   type="datetime-local"
-                  value={currentPhase?.endDate ? new Date(currentPhase.endDate.getTime() - currentPhase.endDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
-                  onChange={(e) => updatePhase("endDate", e.target.value ? new Date(e.target.value) : null)}
+                  value={toDateInput(endDate)}
+                  onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
                   className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
             </div>
 
-            <div className="flex justify-end mt-6 pt-4 border-t border-[#F1F5F9]">
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-[#F1F5F9]">
               <button
                 onClick={() => setIsDeleteConfirmOpen(true)}
                 className="px-4 py-2 text-sm font-semibold text-[#EF4444] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center gap-2"
@@ -204,6 +217,18 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
                   <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
                 Delete Phase
+              </button>
+
+              <button
+                onClick={handleSave}
+                disabled={!isDirty}
+                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all shadow-sm ${
+                  isDirty
+                    ? 'bg-[#4F46E5] text-white hover:bg-[#4338CA]'
+                    : 'bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed'
+                }`}
+              >
+                Save Phase
               </button>
             </div>
           </div>
