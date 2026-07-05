@@ -51,6 +51,21 @@ export function AuthProvider({ children }: prop) {
       if (_event === "SIGNED_IN" && onAuthPage && user?.client_id) {
         router.push("/client/" + user.client_id);
       }
+
+      // Project Team
+      if (_event === "SIGNED_IN" && onAuthPage && user?.department_id=="22e9bc4d-394d-4ed5-abff-9e3a06a385aa") {
+        router.push("/projects/8e2492cf-a825-470b-9ab3-ace672b1f0c7/workflows/6db34c78-c4f0-460d-a46e-cf71baaa0b8e/");
+      }
+
+      // Project Owner
+      if (_event === "SIGNED_IN" && onAuthPage && user?.department_id=="527ac29d-a48c-4b03-a3b9-71f7a66d425f") {
+        router.push("/projects/8e2492cf-a825-470b-9ab3-ace672b1f0c7/stages/39bfb76d-7e8e-41c8-bcea-09754989e75a/");
+      }
+
+      // Finance
+      if (_event === "SIGNED_IN" && onAuthPage && user?.department_id=="f8611c71-e593-415f-ba03-96387841a2f7") {
+        router.push("/insert-finance-page-here/");
+      }
     });
 
     return () => subscription.unsubscribe();
