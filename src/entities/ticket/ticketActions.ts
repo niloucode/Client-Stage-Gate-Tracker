@@ -31,9 +31,7 @@ export async function createTicket(data: CreateTicketParams) {
             status: data.status,
             workflow_id: data.workflow_id ?? null,
             watcher_id: data.watcher_id ?? null,
-            description: data.description ?? null,
-            start_date: data.start_date ?? null,
-            end_date: data.end_date ?? null,
+            description: data.description ?? null,            end_date: data.end_date ?? null,
             api_route: data.api_route ?? null,
             api_method: data.api_method ?? null,
 
@@ -51,13 +49,13 @@ export async function createTicket(data: CreateTicketParams) {
         include: ticketInclude,
     });
 
-    if (data.image_url) {
-        await prisma.images.create({
-            data: {
-                image_src: data.image_url,
+    if (data.image_urls && data.image_urls.length > 0) {
+        await prisma.images.createMany({
+            data: data.image_urls.map((url) => ({
+                image_src: url,
                 parent_type: "TICKET",
                 parent_id: ticket.ticket_id,
-            },
+            })),
         });
     }
 
@@ -71,6 +69,7 @@ export async function updateTicket(data: UpdateTicketParams) {
     const existing = await prisma.tickets.findUnique({
         where: { ticket_id: data.ticket_id },
         select: {
+            status: true,
             TicketAssigned: { select: { profile_id: true } },
             TicketTags:      { select: { tag_id: true } },
         },
@@ -84,6 +83,15 @@ export async function updateTicket(data: UpdateTicketParams) {
     const tagsToAdd         = data.tagIds.filter((id: string) => !existingTagIds.includes(id));
     const tagsToRemove      = existingTagIds.filter((id: string) => !data.tagIds.includes(id));
 
+    // Auto-manage end_date based on status transition
+    const oldStatus = existing?.status;
+    const newStatus = data.status;
+    const endDate = newStatus === "FINISHED" && oldStatus !== "FINISHED"
+        ? new Date()
+        : newStatus !== "FINISHED"
+        ? null
+        : data.end_date;
+
     return prisma.tickets.update({
         where: { ticket_id: data.ticket_id },
         data: {
@@ -93,8 +101,7 @@ export async function updateTicket(data: UpdateTicketParams) {
             workflow_id: data.workflow_id ?? null,
             watcher_id: data.watcher_id ?? null,
             description: data.description ?? null,
-            start_date: data.start_date ?? null,
-            end_date: data.end_date ?? null,
+            end_date: endDate,
             api_route: data.api_route ?? null,
             api_method: data.api_method ?? null,
 
@@ -128,7 +135,10 @@ export async function updateTicketStatus(ticketId: string, status: status) {
     z.enum(["PENDING", "IN_PROGRESS", "FINISHED"]).parse(status);
     return prisma.tickets.update({
         where: { ticket_id: ticketId },
-        data: { status },
+        data: {
+            status,
+            end_date: status === "FINISHED" ? new Date() : null,
+        },
         include: ticketInclude,
     });
 }

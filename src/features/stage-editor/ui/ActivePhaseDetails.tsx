@@ -29,14 +29,14 @@ export function ActivePhaseDetails({ activePhase, phases, stageId }: ActivePhase
   useEffect(() => {
     setName(currentPhase?.name ?? "");
     setDescription(currentPhase?.description ?? "");
-    setStartDate(currentPhase?.start_date ?? null);
+    setStartDate(currentPhase?.creation_date ?? null);
     setEndDate(currentPhase?.end_date ?? null);
   }, [currentPhase]);
 
   const isDirty =
     name !== (currentPhase?.name ?? "") ||
     description !== (currentPhase?.description ?? "") ||
-    startDate?.getTime() !== (currentPhase?.start_date?.getTime() ?? null) ||
+    startDate?.getTime() !== (currentPhase?.creation_date?.getTime() ?? null) ||
     endDate?.getTime() !== (currentPhase?.end_date?.getTime() ?? null);
 
   const formatDate = (date: Date | null) => {
@@ -91,7 +91,7 @@ export function ActivePhaseDetails({ activePhase, phases, stageId }: ActivePhase
       stageId,
       name,
       description,
-      start_date: startDate ?? undefined,
+      creation_date: startDate ?? undefined,
       end_date: endDate ?? undefined,
     });
   };

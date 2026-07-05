@@ -35,9 +35,7 @@ export async function createPhase(
         const newPhase = await prisma.phases.create({
             data: {
                 name: phaseName,
-                number: nextPhaseNumber,
-                start_date: startDate,
-                end_date: endDate,
+                number: nextPhaseNumber,                end_date: endDate,
                 stage_id: stageId,
             },
         });
@@ -147,7 +145,6 @@ export async function updatePhase(
             data: {
                 name: phaseName,
                 description: description,
-                start_date: startDate,
                 end_date: endDate,
             },
         });

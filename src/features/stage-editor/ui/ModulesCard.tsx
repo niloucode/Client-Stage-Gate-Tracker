@@ -44,25 +44,25 @@ export function ModulesCard({ activePhase, phases, projectId, stageId }: Modules
     })}`;
   };
 
-  const handleAddModule = async (data: { name: string; start_date: Date | null; end_date: Date | null }) => {
+  const handleAddModule = async (data: { name: string; creation_date: Date | null; end_date: Date | null }) => {
     if (activePhase === null || !currentPhase) return;
     await createModuleMutation.mutateAsync({
       phaseId: currentPhase.phase_id,
       stageId,
       name: data.name,
-      start_date: data.start_date ?? undefined,
+      creation_date: data.creation_date ?? undefined,
       end_date: data.end_date ?? undefined,
     });
     setIsAddOpen(false);
   };
 
-  const handleSaveModule = async (data: { name: string; start_date: Date | null; end_date: Date | null }) => {
+  const handleSaveModule = async (data: { name: string; creation_date: Date | null; end_date: Date | null }) => {
     if (!editingModule) return;
     await updateModuleMutation.mutateAsync({
       moduleId: editingModule.module_id,
       stageId,
       name: data.name,
-      start_date: data.start_date ?? undefined,
+      creation_date: data.creation_date ?? undefined,
       end_date: data.end_date ?? undefined,
     });
     setEditingModule(null);
@@ -174,16 +174,16 @@ export function ModulesCard({ activePhase, phases, projectId, stageId }: Modules
 
                   <div className="flex items-center gap-3">
                     {/* Date Badge */}
-                    {module.start_date && module.end_date && (
+                    {module.creation_date && module.end_date && (
                       <div className="px-3 py-1 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md">
                         <h4 className="font-semibold text-xs text-[#334155]">
-                          {formatDate(module.start_date)} – {formatDate(module.end_date)}
+                          {formatDate(module.creation_date)} – {formatDate(module.end_date)}
                         </h4>
                       </div>
                     )}
                     
                     {/* Vertical Divider */}
-                    {module.start_date && module.end_date && (
+                    {module.creation_date && module.end_date && (
                       <div className="w-px h-5 bg-[#E2E8F0] mx-1"></div>
                     )}
 

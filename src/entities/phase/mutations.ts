@@ -11,7 +11,7 @@ export function useCreatePhase() {
 
   return useMutation({
     mutationFn: (params: { stageId: string } & PhaseCreateInput) =>
-      createPhase(params.stageId, params.name, params.start_date, params.end_date),
+      createPhase(params.stageId, params.name, params.creation_date, params.end_date),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: stageKeys.tree(variables.stageId) });
     },
@@ -27,7 +27,7 @@ export function useUpdatePhase() {
         params.phaseId,
         params.name,
         params.description,
-        params.start_date,
+        params.creation_date,
         params.end_date,
       ),
     onSuccess: (_data, variables) => {

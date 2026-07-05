@@ -5,7 +5,7 @@ import { workflowCreateSchema } from "@/shared/schemas";
 
 interface AddWorkflowFormData {
   name: string;
-  start_date: Date | null;
+  creation_date: Date | null;
   end_date: Date | null;
 }
 
@@ -15,7 +15,7 @@ interface AddWorkflowProps {
   onSubmit: (data: AddWorkflowFormData) => void;
 }
 
-const emptyFormData: AddWorkflowFormData = { name: "", start_date: null, end_date: null };
+const emptyFormData: AddWorkflowFormData = { name: "", creation_date: null, end_date: null };
 
 type FieldErrors = Partial<Record<keyof AddWorkflowFormData, string>>;
 
@@ -29,17 +29,17 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
     const next = d ? new Date(d) : null;
     setFormData(prev => {
       if (next && prev.end_date && next.getTime() + MIN_GAP_MS > prev.end_date.getTime()) {
-        return { ...prev, start_date: next, end_date: new Date(next.getTime() + MIN_GAP_MS) };
+        return { ...prev, creation_date: next, end_date: new Date(next.getTime() + MIN_GAP_MS) };
       }
-      return { ...prev, start_date: next };
+      return { ...prev, creation_date: next };
     });
   };
 
   const handleEndDate = (d: Date | null) => {
     const next = d ? new Date(d) : null;
     setFormData(prev => {
-      if (next && prev.start_date && prev.start_date.getTime() + MIN_GAP_MS > next.getTime()) {
-        return { ...prev, end_date: next, start_date: new Date(next.getTime() - MIN_GAP_MS) };
+      if (next && prev.creation_date && prev.creation_date.getTime() + MIN_GAP_MS > next.getTime()) {
+        return { ...prev, end_date: next, creation_date: new Date(next.getTime() - MIN_GAP_MS) };
       }
       return { ...prev, end_date: next };
     });
@@ -112,7 +112,8 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
               </label>
               <input
                 type="datetime-local"
-                value={formData.start_date ? new Date(formData.start_date.getTime() - formData.start_date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                value={formData.creation_date ? new Date(formData.creation_date.getTime() - formData.creation_date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+					readOnly
                 onChange={(e) => handleStartDate(e.target.value ? new Date(e.target.value) : null)}
                 className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
               />

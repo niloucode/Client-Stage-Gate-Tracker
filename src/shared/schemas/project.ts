@@ -5,7 +5,7 @@ import { z } from "zod";
 export const phaseCreateSchema = z.object({
   name: z.string().min(1, "Phase name is required"),
   description: z.string().optional().default(""),
-  start_date: z.date().optional().nullable(),
+  creation_date: z.date().optional().nullable(),
   end_date: z.date().optional().nullable(),
 });
 
@@ -18,7 +18,7 @@ export type PhaseUpdateInput = z.infer<typeof phaseUpdateSchema>;
 
 export const moduleCreateSchema = z.object({
   name: z.string().min(1, "Module name is required"),
-  start_date: z.date().optional().nullable(),
+  creation_date: z.date().optional().nullable(),
   end_date: z.date().optional().nullable(),
 });
 
@@ -31,7 +31,7 @@ export type ModuleUpdateInput = z.infer<typeof moduleUpdateSchema>;
 
 export const workflowCreateSchema = z.object({
   name: z.string().min(1, "Workflow name is required"),
-  start_date: z.date().optional().nullable(),
+  creation_date: z.date().optional().nullable(),
   end_date: z.date().optional().nullable(),
 });
 

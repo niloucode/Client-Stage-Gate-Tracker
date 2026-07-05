@@ -27,9 +27,7 @@ export async function createWorkflow(
     try {
         const newWorkflow = await prisma.workflows.create({
             data: {
-                name: workflowName,
-                start_date: startDate,
-                end_date: endDate,
+                name: workflowName,                end_date: endDate,
                 is_approved: isApproved,
                 module_id: moduleId,
             },
@@ -140,9 +138,7 @@ export async function updateWorkflow(
                 workflow_id: workflowId,
             },
             data: {
-                name: workflowName,
-                start_date: startDate,
-                end_date: endDate,
+                name: workflowName,                end_date: endDate,
                 is_approved: isApproved,
             },
         });

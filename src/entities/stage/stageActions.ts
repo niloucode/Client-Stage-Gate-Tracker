@@ -35,9 +35,7 @@ export async function createStage(
         const newStage = await prisma.stages.create({
             data: {
                 name: stageName,
-                number: nextStageNumber,
-                start_date: startDate,
-                end_date: endDate,
+                number: nextStageNumber,                end_date: endDate,
                 project_id: projectId,
             },
         });
@@ -146,9 +144,7 @@ export async function updateStage(
                 stage_id: stageId,
             },
             data: {
-                name: stageName,
-                start_date: startDate,
-                end_date: endDate,
+                name: stageName,                end_date: endDate,
             },
         });
         return { success: true, data: updatedStage };

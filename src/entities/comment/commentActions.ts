@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 import { commentCreateSchema, type CommentCreateInput } from "@/shared/schemas";
 
+export async function selectImagesByParent(parentType: ImageParentType, parentId: string) {
+	return prisma.images.findMany({
+		where: { parent_type: parentType, parent_id: parentId, is_deleted: false },
+	});
+}
+
 export type EntityFilterStatus = 'active' | 'deleted' | 'all';
 
 export async function selectComment() {

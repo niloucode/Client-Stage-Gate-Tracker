@@ -26,9 +26,7 @@ export async function createModule(
     try {
         const newModule = await prisma.modules.create({
             data: {
-                name: moduleName,
-                start_date: startDate,
-                end_date: endDate,
+                name: moduleName,                end_date: endDate,
                 phase_id: phaseId,
             },
         });
@@ -137,9 +135,7 @@ export async function updateModule(
                 module_id: moduleId,
             },
             data: {
-                name: moduleName,
-                start_date: startDate,
-                end_date: endDate,
+                name: moduleName,                end_date: endDate,
             },
         });
         return { success: true, data: updatedModule };

@@ -43,7 +43,7 @@ import type { CreateTicketParams } from "@/shared/schemas";
 type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
 
 // Icons
-import { TagsIcon, FilterIcon, PlusIcon } from "@/shared/ui/icons";
+import { TagsIcon, PlusIcon } from "@/shared/ui/icons";
 
 // ── Main board ────────────────────────────────────────────────────────────────
 
@@ -166,7 +166,7 @@ export default function TicketBoard({
 	 * @param {string | null} [color] - Optional Hex code, Tailwind class, or color variant identifier for UI styling.
 	 * @returns {Promise<void>} Resolves when the database mutations complete and React component state is successfully reconciled.
 	 */
-	function handleSaveTag({
+	async function handleSaveTag({
 		name,
 		tag_id,
 		description,
@@ -176,11 +176,16 @@ export default function TicketBoard({
 		tag_id?: string;
 		description?: string | null;
 		color?: string | null;
-	}): void {
-		if (tag_id) {
-			updateTagMutation.mutate({ tag_id, name, description, color });
-		} else {
-			createTagMutation.mutate({ name, description, color });
+	}): Promise<{ error?: string }> {
+		try {
+			if (tag_id) {
+				await updateTagMutation.mutateAsync({ tag_id, name, description, color });
+			} else {
+				await createTagMutation.mutateAsync({ name, description, color });
+			}
+			return {};
+		} catch (err: any) {
+			return { error: err?.message ?? "Failed to save tag" };
 		}
 	}
 
@@ -273,10 +278,6 @@ export default function TicketBoard({
 						Tags
 					</button>
 
-					<button className="flex items-center gap-1.5 text-sm font-medium text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-						<FilterIcon />
-						Filter
-					</button>
 					<button
 						onClick={() => setModalOpen(true)}
 						className="flex items-center gap-1.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"

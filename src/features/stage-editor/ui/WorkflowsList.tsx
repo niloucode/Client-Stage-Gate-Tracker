@@ -37,24 +37,24 @@ export function WorkflowsList({ workflows, moduleId, projectId, stageId }: Workf
     })}`;
   };
 
-  const handleAddWorkflow = async (data: { name: string; start_date: Date | null; end_date: Date | null }) => {
+  const handleAddWorkflow = async (data: { name: string; creation_date: Date | null; end_date: Date | null }) => {
     await createWorkflowMutation.mutateAsync({
       moduleId,
       stageId,
       name: data.name,
-      start_date: data.start_date ?? undefined,
+      creation_date: data.creation_date ?? undefined,
       end_date: data.end_date ?? undefined,
     });
     setIsAddOpen(false);
   };
 
-  const handleSaveWorkflow = async (data: { name: string; start_date: Date | null; end_date: Date | null }) => {
+  const handleSaveWorkflow = async (data: { name: string; creation_date: Date | null; end_date: Date | null }) => {
     if (!editingWorkflow) return;
     await updateWorkflowMutation.mutateAsync({
       workflowId: editingWorkflow.workflow_id,
       stageId,
       name: data.name,
-      start_date: data.start_date ?? undefined,
+      creation_date: data.creation_date ?? undefined,
       end_date: data.end_date ?? undefined,
     });
     setEditingWorkflow(null);
@@ -157,10 +157,10 @@ export function WorkflowsList({ workflows, moduleId, projectId, stageId }: Workf
 
             <div className="flex items-center gap-4">
               {/* Date Badge */}
-              {workflow.start_date && workflow.end_date && (
+              {workflow.creation_date && workflow.end_date && (
                 <div className="px-3 py-1 bg-[#ffffff] border border-slate-300 rounded-md">
                   <span className="font-medium text-xs text-slate-400">
-                    {formatDate(workflow.start_date)} – {formatDate(workflow.end_date)}
+                    {formatDate(workflow.creation_date)} – {formatDate(workflow.end_date)}
                   </span>
                 </div>
               )}

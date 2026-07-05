@@ -10,7 +10,7 @@ export function useCreateWorkflow() {
 
   return useMutation({
     mutationFn: (params: { moduleId: string; stageId: string } & WorkflowCreateInput) =>
-      createWorkflow(params.moduleId, params.name, params.start_date, params.end_date),
+      createWorkflow(params.moduleId, params.name, params.creation_date, params.end_date),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: stageKeys.tree(variables.stageId) });
     },
@@ -22,7 +22,7 @@ export function useUpdateWorkflow() {
 
   return useMutation({
     mutationFn: (params: { workflowId: string; stageId: string } & WorkflowUpdateInput) =>
-      updateWorkflow(params.workflowId, params.name, params.start_date, params.end_date),
+      updateWorkflow(params.workflowId, params.name, params.creation_date, params.end_date),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: stageKeys.tree(variables.stageId) });
     },

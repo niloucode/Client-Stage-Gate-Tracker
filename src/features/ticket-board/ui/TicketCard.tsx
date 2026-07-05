@@ -64,7 +64,7 @@ export function TicketCardContent({
 			<div className="flex items-center justify-center mb-2.5 gap-1">
 				{/* Title */}
 				<p className="text-sm font-medium text-gray-900 leading-snug    line-clamp-2">
-					{ticket.name}
+					{ticket.name.length > 15 ? ticket.name.slice(0, 15) + "..." : ticket.name}
 				</p>
 				{/* <span className="text-xs font-semibold text-indigo-600 shrink-0">{ticket.ticket_id}</span> */}
 				<div className="flex items-center gap-1.5 ml-auto relative" ref={menuRef}>

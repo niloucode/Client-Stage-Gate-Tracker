@@ -173,7 +173,6 @@ project_id    UUID PK
 name          String
 description   String?
 creation_date DateTime      @default(now() AT UTC)
-start_date    DateTime?
 end_date      DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -188,7 +187,6 @@ name          String
 description   String?
 project_id    UUID → Projects
 creation_date DateTime
-start_date    DateTime?
 end_date      DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -203,7 +201,6 @@ name          String
 description   String?
 stage_id      UUID → Stages
 creation_date DateTime
-start_date    DateTime?
 end_date      DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -216,7 +213,6 @@ module_id     UUID PK
 name          String
 phase_id      UUID → Phases
 creation_date DateTime
-start_date    DateTime?
 end_date      DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -230,7 +226,6 @@ name          String
 is_approved   Boolean   @default(false)
 module_id     UUID → Modules
 creation_date DateTime
-start_date    DateTime?
 end_date      DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -245,10 +240,10 @@ description     String?
 status          status    @default(PENDING)   (PENDING | IN_PROGRESS | FINISHED)
 workflow_id     UUID? → Workflows             (nullable — can exist outside a workflow)
 watcher_id      UUID? → Profiles              (single watcher, informational)
-api_route       String?                       (optional, for API-tagged tickets)
+api_route       String?                       (optional API endpoint path)
+api_method      ApiMethod?                    (GET | POST | PUT | DELETE)
 assignment_date DateTime
 creation_date   DateTime
-start_date      DateTime?
 end_date        DateTime?
 deadline_date   DateTime
 ```
@@ -264,8 +259,6 @@ gate_id       UUID PK
 number        Int                          @@unique([project_id, number])
 project_id    UUID → Projects
 creation_date DateTime
-start_date    DateTime?
-end_date      DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
 ```
@@ -369,7 +362,7 @@ PK: (ticket_id, profile_id)
 
 A ticket can have **0+ assignees**. This is distinct from `Tickets.watcher_id` (a single watcher — informal visibility). Removing an assignee hard-deletes the `TicketAssigned` row.
 
-> **IMPORTANT — code note**: The current `updateTicket()` in `src/entities/ticket/ticketActions.ts` uses a **nuke-it-all** approach (`deleteMany: {}` then `create`) for `TicketAssigned` and `TicketTags`. This destroys the original `assigned_date` on every update. This needs to be replaced with a **diff-ing approach**: compute which profiles/tags to add vs. remove, then only `create` the additions and `deleteMany` the removals. This preserves the original dates on unchanged assignments.
+> **Code note**: `updateTicket()` uses a **diff-ing approach** for `TicketAssigned` and `TicketTags` — it fetches existing assignments, computes which profiles/tags to add vs. remove, and only creates/deletes the differences. This preserves the original `assigned_date` on unchanged entries.
 
 ### `Contracts` — 1:1 with Projects
 
@@ -423,6 +416,7 @@ We do not currently plan to implement soft-delete for profiles, but if/when it i
 | `action` | `CREATED`, `FINISHED`, `UPDATED_STATUS`, `RENAMED`, `COMMENT_ADDED`, `ASSIGNED`, `UNASSIGNED`, `DELETE` | `HistoryEvent.action` |
 | `CommentParentType` | `TICKET_COMMENT`, `GATE_COMMENT` | `Comments.parent_type` |
 | `ImageParentType` | `TICKET`, `TICKET_COMMENT`, `GATE_COMMENT`, `PROFILE` | `Images.parent_type` |
+| `ApiMethod` | `GET`, `POST`, `PUT`, `DELETE` | `Tickets.api_method` |
 
 ---
 
@@ -520,8 +514,8 @@ The permissions matrix references features with no corresponding tables yet:
 ### Contracts: blank-on-creation + 1:1
 - `project_id` and `client_id` are required; `file_path`, signatures, and signed-at timestamps are filled later. `project_id` is unique — one contract per project. Dual signatures: PO signs with `project_owner_signature`/`project_owner_signed_at`, client signs with `client_signature`/`client_signed_at`.
 
-### ticketActions.ts needs refactoring
-- `updateTicket()` currently nukes and recreates all `TicketAssigned` and `TicketTags` rows on every update (`deleteMany: {}` + `create`). This destroys the original `assigned_date` values. Must be replaced with a diff-ing approach: compute `toAdd` (in new list, not in existing) and `toRemove` (in existing, not in new list), then only `create` additions and `deleteMany` removals.
+### ticketActions.ts — diff-ing implemented
+- `updateTicket()` uses a diff-ing approach: fetches existing `TicketAssigned` and `TicketTags`, computes `toAdd` / `toRemove`, and applies only the needed creates and deletes. The original `assigned_date` is preserved for unchanged entries.
 
 ### Profiles soft-delete (not yet implemented)
 - Behavior documented in Section 7. Currently `Profiles` has `is_deleted` and `deleted_at` columns but no soft-delete workflow is built.
@@ -558,6 +552,8 @@ The permissions matrix references features with no corresponding tables yet:
 ---
 
 ## 13. Frontend Architecture
+
+> **⚠️ Branch note**: Sections 13–16 describe features from the `stage-editor` branch that are not yet merged into `main`. The current `src/` may not contain `stage-editor/`, `getStageTree()`, or the SignupForm dropdown described here. Treat as reference for upcoming work.
 
 ### FSD Layer Structure
 

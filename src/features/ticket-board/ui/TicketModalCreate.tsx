@@ -44,10 +44,12 @@ export default function TicketModalCreate({
 	const [assignedOpen, setAssignedOpen] = useState(false);
 	const [assignedIds, setAssignedIds] = useState<string[]>([]);
 	const [watcherId, setWatcherId] = useState("");
+	const [watcherOpen, setWatcherOpen] = useState(false);
 	const assignedRef = useRef<HTMLDivElement>(null);
+	const watcherRef = useRef<HTMLDivElement>(null);
 
-	const [imageFile, setImageFile] = useState<File | null>(null);
-	const [imagePreview, setImagePreview] = useState<string | null>(null);
+	const [imageFiles, setImageFiles] = useState<File[]>([]);
+	const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
 	const [apiMethod, setApiMethod] = useState<"GET" | "POST" | "PUT" | "DELETE">(
 		"GET",
@@ -61,6 +63,9 @@ export default function TicketModalCreate({
 			}
 			if (assignedRef.current && !assignedRef.current.contains(e.target as Node)) {
 				setAssignedOpen(false);
+			}
+			if (watcherRef.current && !watcherRef.current.contains(e.target as Node)) {
+				setWatcherOpen(false);
 			}
 		}
 		document.addEventListener("mousedown", handleClickOutside);
@@ -87,45 +92,61 @@ export default function TicketModalCreate({
 	);
 
 	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-		const file = e.target.files?.[0];
-		if (!file) return;
-		if (file.size > 5 * 1024 * 1024) {
-			alert("Image must be under 5MB.");
-			e.target.value = "";
-			return;
+		const files = e.target.files;
+		if (!files || files.length === 0) return;
+		const newFiles: File[] = [];
+		const newPreviews: string[] = [];
+		for (const file of Array.from(files)) {
+			if (file.size > 5 * 1024 * 1024) {
+				alert(`Image "${file.name}" must be under 5MB.`);
+				continue;
+			}
+			newFiles.push(file);
+			newPreviews.push(URL.createObjectURL(file));
 		}
-		setImageFile(file);
-		setImagePreview(URL.createObjectURL(file));
+		if (newFiles.length > 0) {
+			setImageFiles((prev) => [...prev, ...newFiles]);
+			setImagePreviews((prev) => [...prev, ...newPreviews]);
+		}
+		e.target.value = "";
 	}
 
-	async function handleSubmit(e: React.FormEvent) {
+	function removeCreateImage(index: number) {
+		URL.revokeObjectURL(imagePreviews[index]);
+		setImageFiles((prev) => prev.filter((_, i) => i !== index));
+		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+	}
+
+		async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		if (!title.trim()) return;
 
-		let imageUrl: string | null = null;
+		const imageUrls: string[] = [];
 
-		// Upload image to Supabase if one was selected
-		if (imageFile) {
+		// Upload images to Supabase
+		if (imageFiles.length > 0) {
 			try {
 				const supabase = createClient();
-				const fileExt = imageFile.name.split(".").pop();
-				const fileName = `${crypto.randomUUID()}.${fileExt}`;
-				const filePath = `tickets/${fileName}`;
+				for (const file of imageFiles) {
+					const fileExt = file.name.split(".").pop();
+					const fileName = `${crypto.randomUUID()}.${fileExt}`;
+					const filePath = `tickets/${fileName}`;
 
-				const { error } = await supabase.storage
-					.from("images")
-					.upload(filePath, imageFile, {
-						cacheControl: "3600",
-						upsert: false,
-					});
+					const { error } = await supabase.storage
+						.from("images")
+						.upload(filePath, file, {
+							cacheControl: "3600",
+							upsert: false,
+						});
 
-				if (error) throw new Error(`Failed to upload image: ${error.message}`);
+					if (error) throw new Error(`Failed to upload image: ${error.message}`);
 
-				const {
-					data: { publicUrl },
-				} = supabase.storage.from("images").getPublicUrl(filePath);
+					const {
+						data: { publicUrl },
+					} = supabase.storage.from("images").getPublicUrl(filePath);
 
-				imageUrl = publicUrl;
+					imageUrls.push(publicUrl);
+				}
 			} catch (err) {
 				console.error("Image upload failed:", err);
 			}
@@ -140,7 +161,7 @@ export default function TicketModalCreate({
 			description: description.trim() || null,
 			api_route: apiRoute || null,
 			api_method: apiMethod || null,
-			image_url: imageUrl,
+			image_urls: imageUrls,
 		});
 
 		setTitle("");
@@ -149,8 +170,8 @@ export default function TicketModalCreate({
 		setWatcherId("");
 		setSelectedTags([]);
 		setAssignedIds([]);
-		setImageFile(null);
-		setImagePreview(null);
+		setImageFiles([]);
+		setImagePreviews([]);
 		setApiMethod("GET");
 		setApiRoute("");
 		onClose();
@@ -206,10 +227,10 @@ export default function TicketModalCreate({
 							placeholder="e.g., Update Landing Page Hero"
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
-							maxLength={25}
+							maxLength={50}
 							required
 						/>
-						<p className="text-xs text-gray-500 text-right">{title.length}/25</p>
+						<p className="text-xs text-gray-500 text-right">{title.length}/50</p>
 					</div>
 
 					{/* Description */}
@@ -265,7 +286,7 @@ export default function TicketModalCreate({
 								</button>
 
 								{assignedOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
 										{profiles.map((profile) => (
 											<div
 												key={profile.profile_id}
@@ -273,7 +294,7 @@ export default function TicketModalCreate({
 												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
 											>
 												<div
-													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
 														assignedIds.includes(profile.profile_id)
 															? "bg-indigo-600 border-indigo-600"
 															: "border-gray-300"
@@ -281,15 +302,12 @@ export default function TicketModalCreate({
 												>
 													{assignedIds.includes(profile.profile_id) && (
 														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline
-																points="2 6 5 9 10 3"
-																stroke="white"
-																strokeWidth="1.8"
-																strokeLinecap="round"
-																strokeLinejoin="round"
-															/>
+															<polyline points="2 6 5 9 10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
 														</svg>
 													)}
+												</div>
+												<div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+													{(profile.first_name + " " + profile.last_name).split(" ").map((n) => n[0]).join("")}
 												</div>
 												{profile?.first_name + " " + profile?.last_name}
 											</div>
@@ -300,27 +318,46 @@ export default function TicketModalCreate({
 						</div>
 
 						{/* Watcher */}
-						<div className="space-y-1.5">
+						<div className="space-y-1.5" ref={watcherRef}>
 							<Label>Watcher</Label>
 							<div className="relative">
-								<div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-									<EyeIcon />
-								</div>
-								<select
-									value={watcherId}
-									onChange={(e) => setWatcherId(e.target.value)}
-									className="w-full appearance-none rounded-lg border border-gray-200 bg-white pl-9 pr-9 py-2.5 text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+								<button
+									type="button"
+									onClick={() => setWatcherOpen((o) => !o)}
+									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-9.5"
 								>
-									<option value="">Add watchers...</option>
-									{profiles.map((u) => (
-										<option key={u.profile_id} value={u.profile_id}>
-											{u?.first_name + " " + u?.last_name}
-										</option>
-									))}
-								</select>
-								<div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
+									<span className="text-gray-400">
+										{watcherId
+											? profiles.find((p) => p.profile_id === watcherId)?.first_name + " " + profiles.find((p) => p.profile_id === watcherId)?.last_name
+											: "Add watchers..."}
+									</span>
 									<ChevronDownIcon />
-								</div>
+								</button>
+								{watcherOpen && (
+									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+										<div
+											onClick={() => { setWatcherId(""); setWatcherOpen(false); }}
+											className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+										>
+											<span className="text-gray-400">None</span>
+										</div>
+										{profiles.map((profile) => (
+											<div
+												key={profile.profile_id}
+												onClick={() => { setWatcherId(profile.profile_id); setWatcherOpen(false); }}
+												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+											>
+												<div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+													{(profile.first_name + " " + profile.last_name)
+														.split(" ")
+														.map((n) => n[0])
+														.join("")}
+												</div>
+												{profile?.first_name + " " + profile?.last_name}
+											</div>
+										))}
+									</div>
+								)}
 							</div>
 						</div>
 					</div>
@@ -370,7 +407,7 @@ export default function TicketModalCreate({
 								</button>
 
 								{tagsOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
 										{tags.map((tag) => (
 											<div
 												key={tag.tag_id}
@@ -378,7 +415,7 @@ export default function TicketModalCreate({
 												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
 											>
 												<div
-													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
 														selectedTags.includes(tag.tag_id)
 															? "bg-indigo-600 border-indigo-600"
 															: "border-gray-300"
@@ -386,13 +423,7 @@ export default function TicketModalCreate({
 												>
 													{selectedTags.includes(tag.tag_id) && (
 														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline
-																points="2 6 5 9 10 3"
-																stroke="white"
-																strokeWidth="1.8"
-																strokeLinecap="round"
-																strokeLinejoin="round"
-															/>
+															<polyline points="2 6 5 9 10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
 														</svg>
 													)}
 												</div>
@@ -408,7 +439,7 @@ export default function TicketModalCreate({
 						<div className="space-y-1.5">
 							<Label>Deadline</Label>
 							<Input
-								type="date"
+								type="datetime-local"
 								value={deadline}
 								onChange={(e) => setDeadline(e.target.value)}
 								min={today}
@@ -438,7 +469,7 @@ export default function TicketModalCreate({
 							>
 								<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
 							</svg>
-							<span>{imageFile ? imageFile.name : "Click to attach an image..."}</span>
+							<span>{imageFiles.length > 0 ? `${imageFiles.length} file(s) selected` : "Click to attach images..."}</span>
 							<input
 								type="file"
 								accept="image/jpeg,image/png"
@@ -446,23 +477,24 @@ export default function TicketModalCreate({
 								className="sr-only"
 							/>
 						</label>
-						{imagePreview && (
-							<div className="relative inline-block mt-1">
-								<img
-									src={imagePreview}
-									alt="Preview"
-									className="h-20 w-auto rounded-lg border border-gray-200 object-cover"
-								/>
-								<button
-									type="button"
-									onClick={() => {
-										setImageFile(null);
-										setImagePreview(null);
-									}}
-									className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
-								>
-									×
-								</button>
+						{imagePreviews.length > 0 && (
+							<div className="flex flex-wrap gap-2 mt-1">
+								{imagePreviews.map((preview, idx) => (
+									<div key={idx} className="relative inline-block">
+										<img
+											src={preview}
+											alt={`Preview ${idx + 1}`}
+											className="h-20 w-auto rounded-lg border border-gray-200 object-cover"
+										/>
+										<button
+											type="button"
+											onClick={() => removeCreateImage(idx)}
+											className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
+										>
+											×
+										</button>
+									</div>
+								))}
 							</div>
 						)}
 					</div>
@@ -473,7 +505,6 @@ export default function TicketModalCreate({
 							<p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
 								API Details
 							</p>
-							{/* TODO: save apiMethod and apiRoute to ticket record on backend */}
 							<div className="grid grid-cols-[110px_1fr] gap-3 items-end">
 								<div className="space-y-1.5">
 									<Label>Method</Label>

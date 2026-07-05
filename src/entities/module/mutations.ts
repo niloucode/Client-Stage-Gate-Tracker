@@ -10,7 +10,7 @@ export function useCreateModule() {
 
   return useMutation({
     mutationFn: (params: { phaseId: string; stageId: string } & ModuleCreateInput) =>
-      createModule(params.phaseId, params.name, params.start_date, params.end_date),
+      createModule(params.phaseId, params.name, params.creation_date, params.end_date),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: stageKeys.tree(variables.stageId) });
     },
@@ -22,7 +22,7 @@ export function useUpdateModule() {
 
   return useMutation({
     mutationFn: (params: { moduleId: string; stageId: string } & ModuleUpdateInput) =>
-      updateModule(params.moduleId, params.name, params.start_date, params.end_date),
+      updateModule(params.moduleId, params.name, params.creation_date, params.end_date),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: stageKeys.tree(variables.stageId) });
     },

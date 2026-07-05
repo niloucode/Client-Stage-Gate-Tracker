@@ -113,7 +113,7 @@ export function TagManager({
 		tag_id?: string;
 		description?: string;
 		color?: string;
-	}) => void;
+	}) => Promise<{ error?: string }>;
 	onDelete: (tag_id: string) => void;
 	tags: Tag[];
 }) {
@@ -121,6 +121,7 @@ export function TagManager({
 		"list",
 	);
 	const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+	const [formError, setFormError] = useState<string | null>(null);
 
 	if (!isOpen) return null;
 
@@ -135,7 +136,7 @@ export function TagManager({
 		setView("edit");
 	}
 
-	function handleSaveTag({
+	async function handleSaveTag({
 		name,
 		tag_id,
 		description,
@@ -145,16 +146,22 @@ export function TagManager({
 		tag_id?: string;
 		description?: string;
 		color?: string;
-	}) {
-		if (!name.trim()) return;
-		onSave({
+	}): Promise<{ error?: string }> {
+		if (!name.trim()) return {};
+		const result = await onSave({
 			name: name.trim(),
 			description: description?.trim() ?? "",
 			color: color,
 			tag_id: tag_id ?? "",
 		});
+		if (result?.error) {
+			setFormError(result.error);
+			return result;
+		}
+		setFormError(null);
 		setView("list");
 		setSelectedTag(null);
+		return {};
 	}
 
 	function handleConfirmDelete(tag_id: string) {
@@ -184,7 +191,8 @@ export function TagManager({
 		return (
 			<TagFormModal
 				mode="create"
-				onClose={() => setView("list")}
+				error={formError}
+				onClose={() => { setView("list"); setFormError(null); }}
 				onSubmit={handleSaveTag}
 			/>
 		);
@@ -195,7 +203,8 @@ export function TagManager({
 			<TagFormModal
 				mode="edit"
 				initial={selectedTag}
-				onClose={() => setView("list")}
+				error={formError}
+				onClose={() => { setView("list"); setFormError(null); }}
 				onSubmit={handleSaveTag}
 			/>
 		);

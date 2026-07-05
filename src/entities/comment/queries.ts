@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { commentKeys } from "@/shared/query/keys";
-import { selectComment } from "./commentActions";
-import { CommentParentType } from "@/lib/generated/prisma";
+import { selectComment, selectImagesByParent } from "./commentActions";
+import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 
 export function useTicketComments(ticketId: string | undefined) {
 	return useQuery({
@@ -16,6 +16,14 @@ export function useTicketComments(ticketId: string | undefined) {
 					c.parent_id === ticketId,
 			);
 		},
+		enabled: !!ticketId,
+	});
+}
+
+export function useTicketImages(ticketId: string | undefined) {
+	return useQuery({
+		queryKey: ["ticket-images", ticketId],
+		queryFn: () => selectImagesByParent(ImageParentType.TICKET, ticketId!),
 		enabled: !!ticketId,
 	});
 }
