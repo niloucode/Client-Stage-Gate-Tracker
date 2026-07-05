@@ -174,7 +174,7 @@ export function ModulesCard({ activePhase, phases, projectId, stageId }: Modules
 
                   <div className="flex items-center gap-3">
                     {/* Date Badge */}
-                    {module.startDate && module.endDate && (
+                    {module.start_date && module.end_date && (
                       <div className="px-3 py-1 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md">
                         <h4 className="font-semibold text-xs text-[#334155]">
                           {formatDate(module.start_date)} – {formatDate(module.end_date)}
@@ -183,7 +183,7 @@ export function ModulesCard({ activePhase, phases, projectId, stageId }: Modules
                     )}
                     
                     {/* Vertical Divider */}
-                    {module.startDate && module.endDate && (
+                    {module.start_date && module.end_date && (
                       <div className="w-px h-5 bg-[#E2E8F0] mx-1"></div>
                     )}
 
