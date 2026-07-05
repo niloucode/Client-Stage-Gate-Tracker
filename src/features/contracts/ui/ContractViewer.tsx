@@ -12,12 +12,17 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
+import { uploadContract, getContractUrl, deleteContract } from "@/entities/contract";
 
 interface PDFViewerProps {
   className?: string;
+  contractId: string;
+  projectId: string;
+  initialFilePath?: string | null //null if contract DOESN'T exist yet
+
 }
 
-export function ContractViewer({ className = "" }: PDFViewerProps) {
+export function ContractViewer({ className = "", contractId, projectId, initialFilePath }: PDFViewerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -27,12 +32,13 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
   const [zoom, setZoom] = useState(100);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Revoke the object URL whenever it changes or the component unmounts
   useEffect(() => {
-    return () => {
-      if (fileUrl) URL.revokeObjectURL(fileUrl);
-    };
+    if (initialFilePath) //check if contract exists
+      //if yes, load into program
+      getContractUrl(initialFilePath).then(url => setFileUrl(url)) 
   }, [fileUrl]);
 
   const isPdfFile = (f: File) =>
@@ -50,13 +56,29 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
     setPendingFile(next);
   };
 
-  const confirmUpload = () => {
+  const confirmUpload = async () => {
     if (!pendingFile) return;
-    if (fileUrl) URL.revokeObjectURL(fileUrl);
-    setFile(pendingFile);
-    setFileUrl(URL.createObjectURL(pendingFile));
-    setZoom(100);
-    setPendingFile(null);
+    if(!projectId) return
+    //start uploading process
+    setIsUploading(true)
+
+    try {
+      //put contract in Supabase storage
+      await uploadContract(contractId, projectId, pendingFile)
+      //clear url since we don't need it anymore
+      if (fileUrl) URL.revokeObjectURL(fileUrl)
+        
+      //store uploaded file for easier access
+      setFile(pendingFile)
+      //local preview while signed URL loads
+      setFileUrl(URL.createObjectURL(pendingFile)) 
+      setZoom(100)
+      setPendingFile(null)
+    } catch (err) {
+      setFileError('Upload failed. Please try again.')
+    } finally {
+      setIsUploading(false)
+    }
   };
 
   const cancelUpload = () => {
@@ -84,13 +106,20 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
     setRemoveConfirmText("");
   };
 
-  const confirmRemove = () => {
-    if (!file || removeConfirmText !== file.name) return;
-    if (fileUrl) URL.revokeObjectURL(fileUrl);
-    setFile(null);
-    setFileUrl(null);
-    setRemoveRequested(false);
-    setRemoveConfirmText("");
+  const confirmRemove = async() => {
+    if (!file || removeConfirmText !== file.name
+        || !initialFilePath || !contractId || !projectId) return;
+    try {
+      //soft-delete contract from database
+      await deleteContract(contractId, initialFilePath)
+      if (fileUrl) URL.revokeObjectURL(fileUrl)
+      setFile(null)
+      setFileUrl(null)
+      setRemoveRequested(false)
+      setRemoveConfirmText('')
+    } catch (err) {
+      setFileError('Deletion failed. Please try again.')
+    }
   };
 
   const handlePrint = () => {

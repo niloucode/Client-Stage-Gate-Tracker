@@ -71,3 +71,13 @@ export async function getContract(contractId: string) {
     }
   })
 }
+
+export async function changeContractName(contractId: string, contractName: string){
+  return prisma.contracts.update({
+    where: { contract_id: contractId},
+    data:
+    {
+      contract_name: contractName
+    }
+  })
+}

@@ -530,6 +530,7 @@ model Comments {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Contracts {
   contract_id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contract_name           String?   @unique
   project_id              String    @unique @db.Uuid
   client_id               String    @db.Uuid
   file_path               String?   @unique
