@@ -7,7 +7,9 @@ export {
 export type { LoginInput, SignupInput, ClientSignupInput, OtpInput } from "./auth";
 
 export { ticketCreateSchema, ticketUpdateSchema } from "./ticket";
-export type { TicketCreateInput, TicketUpdateInput } from "./ticket";
+export type { TicketCreateInput, TicketUpdateInput, CreateTicketParams, UpdateTicketParams } from "./ticket";
+export { commentCreateSchema } from "./ticket";
+export type { CommentCreateInput } from "./ticket";
 
 export { phaseSchema, moduleSchema, workflowSchema } from "./project";
 export type { PhaseInput, ModuleInput, WorkflowInput } from "./project";

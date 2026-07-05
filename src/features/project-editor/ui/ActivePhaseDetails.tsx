@@ -5,7 +5,7 @@ import type { Phase } from "../types";
 import { DeletePhase } from "@/features/project-editor/ui/modals/DeletePhase";
 
 interface ActivePhaseDetailsProps {
-  activePhase: number;
+  activePhase: number | null;
   phases: Phase[];
   setPhases: (phases: Phase[]) => void;
 }
@@ -13,9 +13,45 @@ interface ActivePhaseDetailsProps {
 export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePhaseDetailsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const currentPhase = phases.find(p => p.number === activePhase) || phases[0];
+  const currentPhase = activePhase !== null ? phases.find(p => p.number === activePhase) : null;
 
-  const updatePhase = (field: keyof Phase, value: string) => {
+  const formatDate = (date: Date | null) => {
+    if (!date) return "";
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (date: Date | null) => {
+    if (!date) return "";
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatCreatedAt = (date: Date) => {
+    return `${date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    })}`;
+  };
+
+  if (activePhase === null || !currentPhase) {
+    return (
+      <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8 relative overflow-hidden">
+        <div className="p-6 text-center">
+          <p className="text-sm text-[#64748B]">No phase selected</p>
+          <p className="text-xs text-[#94A3B8] mt-1">Select a phase from the stepper above or create a new one</p>
+        </div>
+      </div>
+    );
+  }
+
+  const updatePhase = (field: keyof Phase, value: string | Date | null) => {
     setPhases(
       phases.map(p =>
         p.number === activePhase
@@ -45,12 +81,10 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
   return (
     <>
       <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8 relative overflow-hidden">
-        {/* Left accent bar - only visible when expanded */}
         {isExpanded && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#4F46E5] rounded-l-xl" />
         )}
 
-        {/* Header - always visible, clickable to toggle */}
         <div 
           className={`flex justify-between items-center px-6 py-4 cursor-pointer hover:bg-[#F8FAFC] transition-colors ${isExpanded ? 'border-b border-[#E2E8F0]' : ''}`}
           onClick={() => setIsExpanded(!isExpanded)}
@@ -66,7 +100,6 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
               <path d="M1 1L6 6L11 1" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <div className="flex items-center gap-2">
-              {/* Clipboard/list icon */}
               <svg width="18" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="4" width="18" height="22" rx="2" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M8 2V6M16 2V6" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -91,18 +124,16 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
           </div>
         </div>
 
-        {/* Content - conditionally rendered */}
         {isExpanded && (
           <div className="p-6 pl-7">
-            {/* Form Fields */}
-            <div className="grid grid-cols-[1fr,1fr,2fr] gap-6">
-              {/* Phase name form */}
+            <div className="grid grid-cols-1 gap-6">
               <div>
                 <label className="block text-xs font-semibold text-[#475569] mb-1.5">
                   Phase Name
                 </label>
                 <input
                   type="text"
+                  placeholder="e.g., Discovery"
                   value={currentPhase?.name || ""}
                   onChange={(e) => updatePhase("name", e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
@@ -110,26 +141,12 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
                 />
               </div>
 
-              {/* Phase subtitle form */}
-              <div>
-                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-                  Subtitle
-                </label>
-                <input
-                  type="text"
-                  value={currentPhase?.subtitle || ""}
-                  onChange={(e) => updatePhase("subtitle", e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-
-              {/* Phase description form */}
               <div>
                 <label className="block text-xs font-semibold text-[#475569] mb-1.5">
                   Description
                 </label>
                 <textarea
+                  placeholder="Describe the objectives and scope of this phase..."
                   value={currentPhase?.description || ""}
                   onChange={(e) => updatePhase("description", e.target.value)}
                   rows={2}
@@ -139,7 +156,45 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
               </div>
             </div>
 
-            {/* Delete Phase Button */}
+            <div className="grid grid-cols-3 gap-6 mt-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                  Created
+                </label>
+                <input
+                  type="text"
+                  value={formatCreatedAt(currentPhase?.createdAt || new Date())}
+                  disabled
+                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-[#64748B] cursor-not-allowed"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                  Start Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={currentPhase?.startDate ? new Date(currentPhase.startDate.getTime() - currentPhase.startDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                  onChange={(e) => updatePhase("startDate", e.target.value ? new Date(e.target.value) : null)}
+                  className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                  End Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={currentPhase?.endDate ? new Date(currentPhase.endDate.getTime() - currentPhase.endDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                  onChange={(e) => updatePhase("endDate", e.target.value ? new Date(e.target.value) : null)}
+                  className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+
             <div className="flex justify-end mt-6 pt-4 border-t border-[#F1F5F9]">
               <button
                 onClick={() => setIsDeleteConfirmOpen(true)}
@@ -155,7 +210,6 @@ export function ActivePhaseDetails({ activePhase, phases, setPhases }: ActivePha
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
       <DeletePhase
         isOpen={isDeleteConfirmOpen}
         phaseLabel={`Phase ${activePhase}`}

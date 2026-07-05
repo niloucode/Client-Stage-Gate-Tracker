@@ -20,7 +20,6 @@ export type EntityFilterStatus = 'active' | 'deleted' | 'all';
 export async function createModule(
     phaseId: string,
     moduleName: string,
-    description?: string | null,
     startDate?: Date | null,
     endDate?: Date | null
 ) {
@@ -28,7 +27,6 @@ export async function createModule(
         const newModule = await prisma.modules.create({
             data: {
                 name: moduleName,
-                description: description,
                 start_date: startDate,
                 end_date: endDate,
                 phase_id: phaseId,
@@ -130,7 +128,6 @@ export async function getWorkflowsByModuleId(moduleId: string, status: EntityFil
 export async function updateModule(
     moduleId: string,
     moduleName?: string,
-    description?: string | null,
     startDate?: Date | null,
     endDate?: Date | null
 ) {
@@ -141,7 +138,6 @@ export async function updateModule(
             },
             data: {
                 name: moduleName,
-                description: description,
                 start_date: startDate,
                 end_date: endDate,
             },

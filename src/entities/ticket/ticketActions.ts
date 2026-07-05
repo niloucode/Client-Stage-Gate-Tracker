@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { Prisma, status } from "@/lib/generated/prisma";
-import { ticketCreateSchema, ticketUpdateSchema } from "@/shared/schemas";
+import { ticketCreateSchema, ticketUpdateSchema, type CreateTicketParams, type UpdateTicketParams } from "@/shared/schemas";
+import { ticketInclude } from "./types";
 import { z } from "zod";
 
 export type EntityFilterStatus = 'active' | 'deleted' | 'all';
@@ -12,32 +13,7 @@ export async function selectTicket() {
     try {
         return await prisma.tickets.findMany({
             where: { is_deleted: false },
-            include: {
-                TicketTags: true,
-                TicketSubtasks_TicketSubtasks_ticket_idToTickets: true,
-                TicketAssigned: {
-                    include: {
-                        Profiles: {
-                            select: {
-                                first_name:true,
-                                last_name:true
-                            }
-                        }
-                    }
-                },
-                Profiles_Tickets_assigner_idToProfiles: {
-                    select: {
-                        first_name:true,
-                        last_name:true
-                    }
-                },
-                Profiles_Tickets_watcher_idToProfiles: {
-                    select: {
-                        first_name:true,
-                        last_name:true
-                    }
-                }
-            },
+            include: ticketInclude,
         });
     } catch (error) {
         console.error("Error fetching tickets:", error);
@@ -45,130 +21,105 @@ export async function selectTicket() {
     }
 }
 
-export async function createTicket({
-                                       workflow_id,
-                                       name,
-                                       deadline_date,
-                                       status,
-                                       watcher_id,
-                                       TicketAssigned,
-                                       tagIds,
-                                       description,
-                                       start_date,
-                                       end_date,
-                                   }: {
-    workflow_id: string | null;
-    name: string;
-    deadline_date: Date;
-    status: status;
-    watcher_id: string | null;
-    TicketAssigned: string[] | null;
-    tagIds: string[] | null;
-    description?: string | null;
-    start_date?: Date | null;
-    end_date?: Date | null;
-}) {
-    ticketCreateSchema.parse({ name, deadline_date, watcher_id, tagIds, description, start_date, end_date });
+export async function createTicket(data: CreateTicketParams) {
+    ticketCreateSchema.parse(data);
 
-    console.log(tagIds)
-
-    return prisma.tickets.create({
+    const ticket = await prisma.tickets.create({
         data: {
-            name,
-            deadline_date,
-            status: status,
-            workflow_id: workflow_id ?? null,
-            watcher_id: watcher_id ?? null,
-            description: description ?? null,
-            start_date: start_date ?? null,
-            end_date: end_date ?? null,
+            name: data.name,
+            deadline_date: data.deadline_date,
+            status: data.status,
+            workflow_id: data.workflow_id ?? null,
+            watcher_id: data.watcher_id ?? null,
+            description: data.description ?? null,
+            start_date: data.start_date ?? null,
+            end_date: data.end_date ?? null,
+            api_route: data.api_route ?? null,
+            api_method: data.api_method ?? null,
 
             TicketAssigned: {
-                create: TicketAssigned?.map((id) => ({
+                create: data.TicketAssigned?.map((id: string) => ({
                     profile_id: id,
                 })),
             },
             TicketTags: {
-                create: tagIds?.map((id): { tag_id: string } => ({
+                create: data.tagIds?.map((id: string): { tag_id: string } => ({
                     tag_id: id,
                 }))
-                // create: tagIds?.map((id) => ({
-                //     tag_id: id,
-                // })),
             },
         },
-        include: {
-            TicketTags: true,
-            TicketAssigned: true,
-            Profiles_Tickets_assigner_idToProfiles: true,
-            Profiles_Tickets_watcher_idToProfiles: true,
-        },
+        include: ticketInclude,
     });
+
+    if (data.image_url) {
+        await prisma.images.create({
+            data: {
+                image_src: data.image_url,
+                parent_type: "TICKET",
+                parent_id: ticket.ticket_id,
+            },
+        });
+    }
+
+    return ticket;
 }
 
-export async function updateTicket({
-                                       ticket_id,
-                                       workflow_id,
-                                       name,
-                                       deadline_date,
-                                       status,
-                                       watcher_id,
-                                       TicketAssigned,
-                                       tagIds,
-                                       description,
-                                       start_date,
-                                       end_date,
-                                   }: {
-    ticket_id: string;
-    workflow_id: string | null;
-    name: string;
-    deadline_date: Date;
-    status: status;
-    watcher_id: string | null;
-    TicketAssigned: string[];
-    tagIds: string[];
-    description?: string | null;
-    start_date?: Date | null;
-    end_date?: Date | null;
-}) {
-    ticketUpdateSchema.parse({ name, deadline_date, status, watcher_id, tagIds, description, start_date, end_date });
+export async function updateTicket(data: UpdateTicketParams) {
+    ticketUpdateSchema.parse(data);
+
+    // ── Diff existing assignments & tags to preserve assigned_date ──────────
+    const existing = await prisma.tickets.findUnique({
+        where: { ticket_id: data.ticket_id },
+        select: {
+            TicketAssigned: { select: { profile_id: true } },
+            TicketTags:      { select: { tag_id: true } },
+        },
+    });
+
+    const existingAssigneeIds = existing?.TicketAssigned.map((a: { profile_id: string }) => a.profile_id) ?? [];
+    const existingTagIds      = existing?.TicketTags.map((t: { tag_id: string }) => t.tag_id) ?? [];
+
+    const assigneesToAdd    = data.TicketAssigned.filter((id: string) => !existingAssigneeIds.includes(id));
+    const assigneesToRemove = existingAssigneeIds.filter((id: string) => !data.TicketAssigned.includes(id));
+    const tagsToAdd         = data.tagIds.filter((id: string) => !existingTagIds.includes(id));
+    const tagsToRemove      = existingTagIds.filter((id: string) => !data.tagIds.includes(id));
 
     return prisma.tickets.update({
-        where: { ticket_id },
+        where: { ticket_id: data.ticket_id },
         data: {
-            name,
-            deadline_date,
-            status: status,
-            workflow_id: workflow_id ?? null,
-            watcher_id: watcher_id ?? null,
+            name: data.name,
+            deadline_date: data.deadline_date,
+            status: data.status,
+            workflow_id: data.workflow_id ?? null,
+            watcher_id: data.watcher_id ?? null,
+            description: data.description ?? null,
+            start_date: data.start_date ?? null,
+            end_date: data.end_date ?? null,
+            api_route: data.api_route ?? null,
+            api_method: data.api_method ?? null,
 
-            description: description ?? null,
-            start_date: start_date ?? null,
-            end_date: end_date ?? null,
-
-            TicketAssigned: {
-                deleteMany: {},
-                create: TicketAssigned.map((profile_id) => ({
-                    profile_id,
-                })),
-            },
-            TicketTags: {
-                deleteMany: {},
-                create: tagIds.map((tag_id) => ({
-                    tag_id,
-                })),
-            },
+            ...((assigneesToRemove.length > 0 || assigneesToAdd.length > 0) && {
+                TicketAssigned: {
+                    ...(assigneesToRemove.length > 0 && {
+                        deleteMany: { profile_id: { in: assigneesToRemove } },
+                    }),
+                    ...(assigneesToAdd.length > 0 && {
+                        create: assigneesToAdd.map((profile_id: string) => ({ profile_id })),
+                    }),
+                },
+            }),
+            ...((tagsToRemove.length > 0 || tagsToAdd.length > 0) && {
+                TicketTags: {
+                    ...(tagsToRemove.length > 0 && {
+                        deleteMany: { tag_id: { in: tagsToRemove } },
+                    }),
+                    ...(tagsToAdd.length > 0 && {
+                        create: tagsToAdd.map((tag_id: string) => ({ tag_id })),
+                    }),
+                },
+            }),
         },
-        include: {
-            TicketTags: true,
-            TicketAssigned: {
-                include: {
-                    Profiles: true
-                }
-            },
-            Profiles_Tickets_assigner_idToProfiles: true,
-            Profiles_Tickets_watcher_idToProfiles: true,
-        },
+        include: ticketInclude,
     });
 }
 
@@ -178,31 +129,8 @@ export async function updateTicketStatus(ticketId: string, status: status) {
     return prisma.tickets.update({
         where: { ticket_id: ticketId },
         data: { status },
-        include: {
-            TicketTags: true,
-            TicketAssigned: true,
-            TicketSubtasks_TicketSubtasks_ticket_idToTickets: true,
-            Profiles_Tickets_assigner_idToProfiles: true,
-            Profiles_Tickets_watcher_idToProfiles: true,
-        },
+        include: ticketInclude,
     });
-}
-
-export async function getSubtasksByTicketId(ticketId: string) {
-    try {
-        const subtasks = await prisma.ticketSubtasks.findMany({
-            where: {
-                ticket_id: ticketId,
-            },
-            orderBy: {
-                subtask_id: 'asc',
-            },
-        });
-        return { success: true, data: subtasks };
-    } catch (error) {
-        console.error(error);
-        return { success: false, error: "Failed to fetch subtasks" };
-    }
 }
 
 /**
@@ -229,5 +157,18 @@ export async function cascadeSoftDeleteTicket(ticketId: string, _txClient?: Pris
     } catch (error) {
         console.error("Failed to soft delete ticket:", error);
         return { success: false, error: "Failed to delete the ticket due to a database error." };
+    }
+}
+
+export async function selectTicketsByWorkflow(workflow_id: string) {
+    z.string().uuid().parse(workflow_id);
+    try {
+        return await prisma.tickets.findMany({
+            where: { is_deleted: false, workflow_id },
+            include: ticketInclude,
+        });
+    } catch (error) {
+        console.error("Error fetching tickets by workflow:", error);
+        return [];
     }
 }

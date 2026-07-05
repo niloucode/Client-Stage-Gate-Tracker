@@ -514,30 +514,33 @@ model Clients {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Comments {
-  comment_id    String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creation_date DateTime           @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  profile_id    String             @db.Uuid
-  description   String?
-  parent_type   CommentParentType?
-  parent_id     String             @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  is_deleted    Boolean            @default(false)
-  deleted_at    DateTime?          @db.Timestamptz(6)
-  Profiles      Profiles           @relation(fields: [profile_id], references: [profile_id], onDelete: SetNull)
+  comment_id    String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creation_date DateTime          @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  profile_id    String            @db.Uuid
+  description   String
+  parent_type   CommentParentType
+  parent_id     String            @db.Uuid
+  is_deleted    Boolean           @default(false)
+  deleted_at    DateTime?         @db.Timestamptz(6)
+  Profiles      Profiles          @relation(fields: [profile_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Contracts {
-  contract_id String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  project_id  String?   @db.Uuid
-  client_id   String?   @db.Uuid
-  file_path   String?
-  signature   String?
-  is_deleted  Boolean   @default(false)
-  deleted_at  DateTime? @db.Timestamptz(6)
-  Clients     Clients?  @relation(fields: [client_id], references: [client_id])
-  Projects    Projects? @relation(fields: [project_id], references: [project_id])
+  contract_id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id              String    @unique @db.Uuid
+  client_id               String    @db.Uuid
+  file_path               String?   @unique
+  client_signature        String?
+  is_deleted              Boolean   @default(false)
+  deleted_at              DateTime? @db.Timestamptz(6)
+  project_owner_signature String?
+  client_signed_at        DateTime? @db.Timestamptz(6)
+  project_owner_signed_at DateTime? @db.Timestamptz(6)
+  Clients                 Clients   @relation(fields: [client_id], references: [client_id], onDelete: NoAction, onUpdate: NoAction)
+  Projects                Projects  @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
@@ -545,7 +548,7 @@ model Contracts {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Department {
   department_id String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String
+  name          String     @unique
   is_deleted    Boolean    @default(false)
   deleted_at    DateTime?  @db.Timestamptz(6)
   Profiles      Profiles[]
@@ -555,26 +558,44 @@ model Department {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Gates {
-  gate_id       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creation_date DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  start_date    DateTime? @db.Timestamptz(6)
-  end_date      DateTime? @db.Timestamptz(6)
-  project_id    String    @db.Uuid
-  is_deleted    Boolean   @default(false)
-  deleted_at    DateTime? @db.Timestamptz(6)
-  Projects      Projects  @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
+  gate_id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creation_date  DateTime        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  start_date     DateTime?       @db.Timestamptz(6)
+  end_date       DateTime?       @db.Timestamptz(6)
+  project_id     String          @db.Uuid
+  is_deleted     Boolean         @default(false)
+  deleted_at     DateTime?       @db.Timestamptz(6)
+  number         Int
+  GateSignatures GateSignatures?
+  Projects       Projects        @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([project_id, number])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model GateSignatures {
+  gate_id    String   @id @db.Uuid
+  profile_id String   @db.Uuid
+  signature  String
+  signed_at  DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  Gates      Gates    @relation(fields: [gate_id], references: [gate_id], onDelete: NoAction, onUpdate: NoAction)
+  Profiles   Profiles @relation(fields: [profile_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model HistoryEvent {
-  history_event_id String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  performed_by     String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  action           action
-  date_performed   DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  ticket_id        String   @db.Uuid
-  Tickets          Tickets  @relation(fields: [ticket_id], references: [ticket_id], onDelete: NoAction, onUpdate: NoAction)
+  history_event_id                             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action                                       action
+  date_performed                               DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  ticket_id                                    String    @db.Uuid
+  target_profile_id                            String?   @db.Uuid
+  performed_by                                 String    @db.Uuid
+  Profiles_HistoryEvent_performed_byToProfiles Profiles  @relation("HistoryEvent_performed_byToProfiles", fields: [performed_by], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
+  Profiles                                     Profiles? @relation(fields: [target_profile_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
+  Tickets                                      Tickets   @relation(fields: [ticket_id], references: [ticket_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
@@ -584,7 +605,7 @@ model Images {
   image_id    String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   image_src   String          @unique
   parent_type ImageParentType
-  parent_id   String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parent_id   String          @db.Uuid
   is_deleted  Boolean         @default(false)
   deleted_at  DateTime?       @db.Timestamptz(6)
   Profiles    Profiles[]
@@ -596,7 +617,6 @@ model Images {
 model Modules {
   module_id     String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String
-  description   String?
   creation_date DateTime    @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   start_date    DateTime?   @db.Timestamptz(6)
   end_date      DateTime?   @db.Timestamptz(6)
@@ -616,6 +636,7 @@ model Permissions {
   action          String
   RolePermissions RolePermissions[]
 
+  @@unique([resource, action])
   @@schema("public")
 }
 
@@ -627,23 +648,28 @@ model Phases {
   end_date      DateTime? @db.Timestamptz(6)
   creation_date DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   name          String
-  stage_id      String    @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stage_id      String    @db.Uuid
   is_deleted    Boolean   @default(false)
   deleted_at    DateTime? @db.Timestamptz(6)
+  description   String?
   Modules       Modules[]
+  Stages        Stages    @relation(fields: [stage_id], references: [stage_id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([stage_id, number])
   @@schema("public")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Projects {
   project_id      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creation_date   DateTime?         @db.Timestamptz(6)
+  creation_date   DateTime          @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   start_date      DateTime?         @db.Timestamptz(6)
   end_date        DateTime?         @db.Timestamptz(6)
   is_deleted      Boolean           @default(false)
   deleted_at      DateTime?         @db.Timestamptz(6)
-  Contracts       Contracts[]
+  name            String
+  description     String?
+  Contracts       Contracts?
   Gates           Gates[]
   RoleAssignments RoleAssignments[]
   Stages          Stages[]
@@ -656,9 +682,9 @@ model RoleAssignments {
   role_id    String   @db.Uuid
   user_id    String   @db.Uuid
   project_id String   @db.Uuid
-  Projects   Projects @relation(fields: [project_id], references: [project_id], onDelete: SetNull)
-  Roles      Roles    @relation(fields: [role_id], references: [role_id], onDelete: SetNull)
-  Users      Profiles @relation(fields: [user_id], references: [profile_id], onDelete: SetNull)
+  Projects   Projects @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
+  Roles      Roles    @relation(fields: [role_id], references: [role_id], onDelete: NoAction, onUpdate: NoAction)
+  Users      Profiles @relation(fields: [user_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([role_id, user_id, project_id])
   @@schema("public")
@@ -668,8 +694,8 @@ model RoleAssignments {
 model RolePermissions {
   role_id       String      @db.Uuid
   permission_id String      @db.Uuid
-  Permissions   Permissions @relation(fields: [permission_id], references: [permission_id], onDelete: SetNull)
-  Roles         Roles       @relation(fields: [role_id], references: [role_id], onDelete: SetNull)
+  Permissions   Permissions @relation(fields: [permission_id], references: [permission_id], onDelete: NoAction, onUpdate: NoAction)
+  Roles         Roles       @relation(fields: [role_id], references: [role_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([role_id, permission_id])
   @@schema("public")
@@ -678,8 +704,7 @@ model RolePermissions {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Roles {
   role_id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name            String
-  permission_id   String            @db.Uuid
+  name            String            @unique
   RoleAssignments RoleAssignments[]
   RolePermissions RolePermissions[]
 
@@ -689,7 +714,7 @@ model Roles {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Stages {
   stage_id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  number        Int       @db.SmallInt
+  number        Int
   start_date    DateTime? @db.Timestamptz(6)
   end_date      DateTime? @db.Timestamptz(6)
   creation_date DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
@@ -697,8 +722,11 @@ model Stages {
   project_id    String    @db.Uuid
   is_deleted    Boolean   @default(false)
   deleted_at    DateTime? @db.Timestamptz(6)
+  description   String?
+  Phases        Phases[]
   Projects      Projects  @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([project_id, number])
   @@schema("public")
 }
 
@@ -720,30 +748,19 @@ model TicketAssigned {
   ticket_id     String   @db.Uuid
   profile_id    String   @db.Uuid
   assigned_date DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  Tickets       Tickets  @relation(fields: [ticket_id], references: [ticket_id], onDelete: SetNull)
-  Profiles      Profiles @relation(fields: [profile_id], references: [profile_id], onDelete: SetNull, map: "TicketAssigned_user_id_fkey")
+  Tickets       Tickets  @relation(fields: [ticket_id], references: [ticket_id], onDelete: NoAction, onUpdate: NoAction)
+  Profiles      Profiles @relation(fields: [profile_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction, map: "TicketAssigned_user_id_fkey")
 
   @@id([ticket_id, profile_id])
   @@schema("public")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model TicketSubtasks {
-  ticket_id                                  String  @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  subtask_id                                 String  @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  Tickets_TicketSubtasks_subtask_idToTickets Tickets @relation("TicketSubtasks_subtask_idToTickets", fields: [subtask_id], references: [ticket_id], onDelete: SetNull)
-  Tickets_TicketSubtasks_ticket_idToTickets  Tickets @relation("TicketSubtasks_ticket_idToTickets", fields: [ticket_id], references: [ticket_id], onDelete: SetNull)
-
-  @@id([ticket_id, subtask_id])
-  @@schema("public")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model TicketTags {
-  ticket_id String  @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tag_id    String  @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  Tags      Tags    @relation(fields: [tag_id], references: [tag_id], onDelete: SetNull)
-  Tickets   Tickets @relation(fields: [ticket_id], references: [ticket_id], onDelete: SetNull)
+  ticket_id String  @db.Uuid
+  tag_id    String  @db.Uuid
+  Tags      Tags    @relation(fields: [tag_id], references: [tag_id], onDelete: NoAction, onUpdate: NoAction)
+  Tickets   Tickets @relation(fields: [ticket_id], references: [ticket_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([ticket_id, tag_id])
   @@schema("public")
@@ -751,28 +768,26 @@ model TicketTags {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Tickets {
-  ticket_id                                         String           @id(map: "TIckets_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  assigner_id                                       String?          @db.Uuid
-  watcher_id                                        String?          @db.Uuid
-  assignment_date                                   DateTime         @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  creation_date                                     DateTime         @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  start_date                                        DateTime?        @db.Timestamptz(6)
-  end_date                                          DateTime?        @db.Timestamptz(6)
-  deadline_date                                     DateTime         @db.Timestamptz(6)
-  name                                              String
-  description                                       String?
-  status                                            status           @default(PENDING)
-  workflow_id                                       String?          @db.Uuid
-  is_deleted                                        Boolean          @default(false)
-  deleted_at                                        DateTime?        @db.Timestamptz(6)
-  HistoryEvent                                      HistoryEvent[]
-  TicketAssigned                                    TicketAssigned[]
-  TicketSubtasks_TicketSubtasks_subtask_idToTickets TicketSubtasks[] @relation("TicketSubtasks_subtask_idToTickets")
-  TicketSubtasks_TicketSubtasks_ticket_idToTickets  TicketSubtasks[] @relation("TicketSubtasks_ticket_idToTickets")
-  TicketTags                                        TicketTags[]
-  Profiles_Tickets_assigner_idToProfiles            Profiles?        @relation("Tickets_assigner_idToUsers", fields: [assigner_id], references: [profile_id])
-  Profiles_Tickets_watcher_idToProfiles             Profiles?        @relation("Tickets_watcher_idToUsers", fields: [watcher_id], references: [profile_id])
-  Workflows                                         Workflows?       @relation(fields: [workflow_id], references: [workflow_id], onDelete: NoAction, onUpdate: NoAction)
+  ticket_id       String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignment_date DateTime         @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  creation_date   DateTime         @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  start_date      DateTime?        @db.Timestamptz(6)
+  end_date        DateTime?        @db.Timestamptz(6)
+  deadline_date   DateTime         @db.Timestamptz(6)
+  name            String
+  description     String?
+  status          status           @default(PENDING)
+  workflow_id     String?          @db.Uuid
+  is_deleted      Boolean          @default(false)
+  deleted_at      DateTime?        @db.Timestamptz(6)
+  watcher_id      String?          @db.Uuid
+  api_route       String?
+  api_method      ApiMethod?
+  HistoryEvent    HistoryEvent[]
+  TicketAssigned  TicketAssigned[]
+  TicketTags      TicketTags[]
+  Profiles        Profiles?        @relation(fields: [watcher_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
+  Workflows       Workflows?       @relation(fields: [workflow_id], references: [workflow_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
@@ -781,7 +796,6 @@ model Tickets {
 model Workflows {
   workflow_id   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String
-  description   String?
   creation_date DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   start_date    DateTime? @db.Timestamptz(6)
   end_date      DateTime? @db.Timestamptz(6)
@@ -797,26 +811,28 @@ model Workflows {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Profiles {
-  profile_id                            String            @id(map: "Users_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  image_id                              String?           @db.Uuid
-  client_id                             String?           @db.Uuid
-  department_id                         String?           @db.Uuid
-  email                                 String            @unique(map: "Users_email_key")
-  phone                                 String            @unique(map: "Users_phone_key")
-  first_name                            String
-  last_name                             String
-  job_title                             String?
-  is_deleted                            Boolean           @default(false)
-  deleted_at                            DateTime?         @db.Timestamptz(6)
-  Comments                              Comments[]
-  Clients                               Clients?          @relation(fields: [client_id], references: [client_id], map: "Users_client_id_fkey")
-  Department                            Department?       @relation(fields: [department_id], references: [department_id], onDelete: NoAction, map: "Users_department_id_fkey")
-  Images                                Images?           @relation(fields: [image_id], references: [image_id], map: "Users_image_id_fkey")
-  users                                 users             @relation(fields: [profile_id], references: [id], onDelete: Cascade, map: "Users_user_id_fkey")
-  RoleAssignments                       RoleAssignments[]
-  TicketAssigned                        TicketAssigned[]
-  Tickets_Tickets_assigner_idToProfiles Tickets[]         @relation("Tickets_assigner_idToUsers")
-  Tickets_Tickets_watcher_idToProfiles  Tickets[]         @relation("Tickets_watcher_idToUsers")
+  profile_id                                       String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  image_id                                         String?           @db.Uuid
+  client_id                                        String?           @db.Uuid
+  department_id                                    String?           @db.Uuid
+  email                                            String            @unique(map: "Users_email_key")
+  phone                                            String            @unique(map: "Users_phone_key")
+  first_name                                       String
+  last_name                                        String
+  job_title                                        String?
+  is_deleted                                       Boolean           @default(false)
+  deleted_at                                       DateTime?         @db.Timestamptz(6)
+  Comments                                         Comments[]
+  GateSignatures                                   GateSignatures[]
+  HistoryEvent_HistoryEvent_performed_byToProfiles HistoryEvent[]    @relation("HistoryEvent_performed_byToProfiles")
+  HistoryEvent                                     HistoryEvent[]
+  Clients                                          Clients?          @relation(fields: [client_id], references: [client_id], onDelete: NoAction, onUpdate: NoAction, map: "Users_client_id_fkey")
+  Department                                       Department?       @relation(fields: [department_id], references: [department_id], onDelete: NoAction, onUpdate: NoAction, map: "Users_department_id_fkey")
+  Images                                           Images?           @relation(fields: [image_id], references: [image_id], onDelete: NoAction, onUpdate: NoAction, map: "Users_image_id_fkey")
+  users                                            users             @relation(fields: [profile_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Users_user_id_fkey")
+  RoleAssignments                                  RoleAssignments[]
+  TicketAssigned                                   TicketAssigned[]
+  Tickets                                          Tickets[]
 
   @@schema("public")
 }
@@ -897,6 +913,9 @@ enum action {
   UPDATED_STATUS
   RENAMED
   COMMENT_ADDED
+  ASSIGNED
+  UNASSIGNED
+  DELETE
 
   @@schema("public")
 }
@@ -911,15 +930,26 @@ enum status {
 
 /// This enum is commented in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 enum CommentParentType {
-  TICKET
-  GATE
+  TICKET_COMMENT
+  GATE_COMMENT
 
   @@schema("public")
 }
 
 enum ImageParentType {
   TICKET
-  COMMENT
+  TICKET_COMMENT
+  GATE_COMMENT
+  PROFILE
+
+  @@schema("public")
+}
+
+enum ApiMethod {
+  GET
+  POST
+  PUT
+  DELETE
 
   @@schema("public")
 }

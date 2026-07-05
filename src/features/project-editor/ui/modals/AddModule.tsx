@@ -5,18 +5,18 @@ import { moduleSchema } from "@/shared/schemas";
 
 interface AddModuleFormData {
   name: string;
-  description: string;
-  roles: string;
+  startDate: Date | null;
+  endDate: Date | null;
 }
 
 interface AddModuleProps {
   isOpen: boolean;
-  activePhase: number;
+  activePhase: number | null;
   onClose: () => void;
   onSubmit: (data: AddModuleFormData) => void;
 }
 
-const emptyFormData: AddModuleFormData = { name: "", description: "", roles: "" };
+const emptyFormData: AddModuleFormData = { name: "", startDate: null, endDate: null };
 
 type FieldErrors = Partial<Record<keyof AddModuleFormData, string>>;
 
@@ -84,17 +84,29 @@ export function AddModule({ isOpen, activePhase, onClose, onSubmit }: AddModuleP
             )}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-[#475569] mb-1.5">
-              Description
-            </label>
-            <input
-              type="text"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="e.g., Implementation of security features"
-              className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                Start Date
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.startDate ? new Date(formData.startDate.getTime() - formData.startDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value ? new Date(e.target.value) : null })}
+                className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
+                End Date
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.endDate ? new Date(formData.endDate.getTime() - formData.endDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value ? new Date(e.target.value) : null })}
+                className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+              />
+            </div>
           </div>
         </div>
 

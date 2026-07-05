@@ -33,9 +33,9 @@ export async function getProfileById(userId: string, status: EntityFilterStatus 
   try {
     const isDeletedFilter = status === 'active' ? false : status === 'deleted' ? true : undefined;
 
-    const userData = await prisma.users.findUnique({
+    const userData = await prisma.profiles.findUnique({
       where: {
-        id: userId,
+        profile_id: userId,
         // is_deleted: isDeletedFilter,
       },
     });
@@ -104,11 +104,11 @@ export async function softDeleteProfile(profile_id: string) {
       };
     }
 
-    await prisma.users.update({
-      where: { id: profile_id },
+    await prisma.profiles.update({
+      where: { profile_id: profile_id },
       data: {
-        // is_deleted: true,
-        // deleted_at: new Date(),
+        is_deleted: true,
+        deleted_at: new Date(),
       },
     });
     return { success: true };

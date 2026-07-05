@@ -14,7 +14,7 @@ import { defaultPhases } from "@/features/project-editor/defaults";
 
 export default function EditorPage() {
   const [phases, setPhases] = useState<Phase[]>(defaultPhases);
-  const [activePhase, setActivePhase] = useState(2);
+  const [activePhase, setActivePhase] = useState<number | null>(2);
   const stepperRef = useRef<{ openCreateModal: () => void } | null>(null);
 
   return (

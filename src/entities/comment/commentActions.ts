@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
+import { commentCreateSchema, type CommentCreateInput } from "@/shared/schemas";
 
 export type EntityFilterStatus = 'active' | 'deleted' | 'all';
 
@@ -26,7 +27,7 @@ export async function selectComment() {
         const images = await prisma.images.findMany({
             where: {
                 parent_id: { in: commentIds },
-                parent_type: ImageParentType.COMMENT
+                parent_type: ImageParentType.TICKET_COMMENT
             }
         });
 
@@ -55,34 +56,24 @@ export async function selectTicketComment() {
     }
 }
 
-export async function createCommentWithImages({
-  profile_id,
-  description,
-  parent_type,
-  parent_id,
-  imageUrls = [],
-}: {
-    profile_id: string;
-    description: string;
-    parent_type: CommentParentType;
-    parent_id: string;
-    imageUrls?: string[];
-}) {
+export async function createCommentWithImages(data: CommentCreateInput) {
+    commentCreateSchema.parse(data);
+
     return await prisma.$transaction(async (tx) => {
         const comment = await tx.comments.create({
             data: {
-                profile_id,
-                description,
-                parent_type,
-                parent_id,
+                profile_id: data.profile_id,
+                description: data.description,
+                parent_type: data.parent_type,
+                parent_id: data.parent_id,
             },
         });
 
-        if (imageUrls.length > 0) {
-            const imageData = imageUrls.map((url) => ({
+        if (data.imageUrls.length > 0) {
+            const imageData = data.imageUrls.map((url: string) => ({
                 image_src: url,
                 parent_id: comment.comment_id,
-                parent_type: ImageParentType.COMMENT,
+                parent_type: ImageParentType.TICKET_COMMENT,
             }));
 
             await tx.images.createMany({

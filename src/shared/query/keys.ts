@@ -5,8 +5,6 @@ export const ticketKeys = {
     [...ticketKeys.lists(), filters] as const,
   details: () => [...ticketKeys.all, "detail"] as const,
   detail: (id: string) => [...ticketKeys.details(), id] as const,
-  subtasks: (ticketId: string) =>
-    [...ticketKeys.detail(ticketId), "subtasks"] as const,
 };
 
 export const tagKeys = {

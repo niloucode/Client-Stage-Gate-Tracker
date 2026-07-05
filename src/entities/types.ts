@@ -1,5 +1,5 @@
-import { selectTicket } from "@/entities/ticket/ticketActions";
-import { selectComment } from "@/entities/comment/commentActions";
+export type { TicketPayload as Ticket } from "@/entities/ticket/types";
+export type { CommentWithImages as Comment } from "@/entities/comment/types";
 
 export interface Profile {
 	profile_id: string;
@@ -8,10 +8,6 @@ export interface Profile {
 	email?: string | null;
 }
 
-export type Comment = Awaited<ReturnType<typeof selectComment>>[number];
-
-export type Ticket = Awaited<ReturnType<typeof selectTicket>>[number];
-
 export interface TicketTag {
 	tag_id: string;
 	ticket_id: string;
@@ -19,20 +15,9 @@ export interface TicketTag {
 
 export type { Tag } from "@/shared/schemas";
 
-export interface Subtask {
-	id: string;
-	title: string;
-	completed: boolean;
-}
-
 export interface TicketAssigned {
 	ticket_id: string;
 	profile_id: string;
 	assigned_date: Date;
 	Profiles?: Profile | null;
-}
-
-export interface TicketSubtask {
-	subtask_id: string;
-	ticket_id: string;
 }

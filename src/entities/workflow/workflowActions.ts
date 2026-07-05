@@ -10,7 +10,6 @@ export type EntityFilterStatus = 'active' | 'deleted' | 'all';
  *
  * @param {string} moduleId - The UUID of the parent module this workflow belongs to.
  * @param {string} workflowName - The display name of the workflow (e.g., "Workflow 1").
- * @param {string | null} [description] - (Optional) A brief description of the workflow.
  * @param {Date | null} [startDate] - (Optional) The scheduled start date of the workflow.
  * @param {Date | null} [endDate] - (Optional) The scheduled end date of the workflow.
  * @param {boolean} [isApproved=false] - (Optional) The approval status of the workflow.
@@ -21,7 +20,6 @@ export type EntityFilterStatus = 'active' | 'deleted' | 'all';
 export async function createWorkflow(
     moduleId: string,
     workflowName: string,
-    description?: string | null,
     startDate?: Date | null,
     endDate?: Date | null,
     isApproved: boolean = false
@@ -30,7 +28,6 @@ export async function createWorkflow(
         const newWorkflow = await prisma.workflows.create({
             data: {
                 name: workflowName,
-                description: description,
                 start_date: startDate,
                 end_date: endDate,
                 is_approved: isApproved,
@@ -123,7 +120,6 @@ export async function getTicketsByWorkflowId(workflowId: string, status: EntityF
  *
  * @param {string} workflowId - The UUID of the workflow to update.
  * @param {string} [workflowName] - (Optional) The new name for the workflow.
- * @param {string | null} [description] - (Optional) The new description for the workflow.
  * @param {Date | null} [startDate] - (Optional) The new scheduled start date.
  * @param {Date | null} [endDate] - (Optional) The new scheduled end date.
  * @param {boolean} [isApproved] - (Optional) The new approval status.
@@ -134,7 +130,6 @@ export async function getTicketsByWorkflowId(workflowId: string, status: EntityF
 export async function updateWorkflow(
     workflowId: string,
     workflowName?: string,
-    description?: string | null,
     startDate?: Date | null,
     endDate?: Date | null,
     isApproved?: boolean
@@ -146,7 +141,6 @@ export async function updateWorkflow(
             },
             data: {
                 name: workflowName,
-                description: description,
                 start_date: startDate,
                 end_date: endDate,
                 is_approved: isApproved,

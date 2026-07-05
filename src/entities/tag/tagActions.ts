@@ -1,6 +1,6 @@
 "use server";
 import {prisma} from "@/lib/prisma";
-import { tagCreateSchema } from "@/shared/schemas";
+import { tagCreateSchema, type TagCreateInput, type TagUpdateInput } from "@/shared/schemas";
 import { z } from "zod";
 
 /**
@@ -18,36 +18,32 @@ export async function selectTag() {
         },);
 }
 
-export async function createTag(
-    name: string,
-    description?: string | null,
-    color?: string | null
-) {
-    tagCreateSchema.parse({ name, description, color });
+export async function createTag(data: TagCreateInput) {
+    tagCreateSchema.parse(data);
     try {
-        const newTicket = await prisma.tags.create({
+        const newTag = await prisma.tags.create({
             data: {
-                name,
-                description,
-                color
+                name: data.name,
+                description: data.description ?? null,
+                color: data.color ?? null,
             }
         });
-        return { success: true, data: newTicket };
+        return { success: true, data: newTag };
     } catch (error) {
         console.error("Create tag error:", error);
         return { success: false, error: "Failed to create tag" };
     }
 }
 
-export async function updateTag(id: string, name:string, description?: string | null, color?: string | null) {
-    z.string().uuid().parse(id);
-    tagCreateSchema.parse({ name, description, color });
+export async function updateTag(data: TagUpdateInput) {
+    z.string().uuid().parse(data.tag_id);
+    tagCreateSchema.parse({ name: data.name, description: data.description, color: data.color });
     return prisma.tags.update({
-        where: { tag_id: id },
+        where: { tag_id: data.tag_id },
         data: {
-            name:name,
-            description:description ?? null,
-            color:color ?? null
+            name: data.name,
+            description: data.description ?? null,
+            color: data.color ?? null,
         },
     });
 }
