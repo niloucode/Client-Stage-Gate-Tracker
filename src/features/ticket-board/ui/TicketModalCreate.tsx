@@ -1,40 +1,39 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Input } from '@/shared/ui/input';
-import { Label } from '@/shared/ui/label';
-import { Tag } from '@/entities/types';
+import { useState, useRef, useEffect } from "react";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import { Tag } from "@/entities/types";
 
-import { XIcon, ChevronDownIcon, EyeIcon } from './assets';
+import { XIcon, ChevronDownIcon, EyeIcon } from "@/shared/ui/icons";
 import { useProfiles } from "@/entities/profile/queries";
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
+import { createClient } from "@/lib/supabase/client";
+import type { CreateTicketParams } from "@/shared/schemas";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+/** Fields the modal collects — everything except workflow_id and status (added by TicketBoard). */
+type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
 
 interface CreateTicketModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onCreateTicket: (data: {
-		name: string;
-		deadline_date: Date;
-		watcher_id?: string | null;
-		TicketAssigned?: string[] | null;
-		tagIds?: string[] | null;
-		description?: string | null;
-		start_date?: Date | null;
-		end_date?: Date | null;
-	}) => Promise<void>;
+	onCreateTicket: (data: CreateTicketFormData) => Promise<void>;
 	tags: Tag[];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tags }: CreateTicketModalProps) {
-	const [title, setTitle] = useState('');
-	const [description, setDescription] = useState('');
-	const [deadline, setDeadline] = useState('');
-	const today = new Date().toISOString().split('T')[0];
+export default function TicketModalCreate({
+	isOpen,
+	onClose,
+	onCreateTicket,
+	tags,
+}: CreateTicketModalProps) {
+	const [title, setTitle] = useState("");
+	const [description, setDescription] = useState("");
+	const [deadline, setDeadline] = useState("");
+	const today = new Date().toISOString().split("T")[0];
 
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);
 	const [tagsOpen, setTagsOpen] = useState(false);
@@ -44,14 +43,16 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 
 	const [assignedOpen, setAssignedOpen] = useState(false);
 	const [assignedIds, setAssignedIds] = useState<string[]>([]);
-	const [watcherId, setWatcherId] = useState('');
+	const [watcherId, setWatcherId] = useState("");
 	const assignedRef = useRef<HTMLDivElement>(null);
 
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-	const [apiMethod, setApiMethod] = useState('GET');
-	const [apiRoute, setApiRoute] = useState('');
+	const [apiMethod, setApiMethod] = useState<"GET" | "POST" | "PUT" | "DELETE">(
+		"GET",
+	);
+	const [apiRoute, setApiRoute] = useState("");
 
 	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
@@ -62,61 +63,96 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 				setAssignedOpen(false);
 			}
 		}
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => document.removeEventListener('mousedown', handleClickOutside);
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
 	function toggleTag(tagId: string) {
-		setSelectedTags(prev => prev.includes(tagId) ? prev.filter(t => t !== tagId) : [...prev, tagId]);
+		setSelectedTags((prev) =>
+			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId],
+		);
 	}
 
 	function toggleAssigned(profileId: string) {
-		setAssignedIds(prev =>
+		setAssignedIds((prev) =>
 			prev.includes(profileId)
-				? prev.filter(id => id !== profileId)
-				: [...prev, profileId]
+				? prev.filter((id) => id !== profileId)
+				: [...prev, profileId],
 		);
 	}
 
 	const isApiTagSelected = selectedTags.some(
-		tagId => tags.find(t => t.tag_id === tagId)?.name?.toLowerCase() === 'api'
+		(tagId) =>
+			tags.find((t) => t.tag_id === tagId)?.name?.toLowerCase() === "api",
 	);
 
 	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
 		const file = e.target.files?.[0];
 		if (!file) return;
 		if (file.size > 5 * 1024 * 1024) {
-			alert('Image must be under 5MB.');
-			e.target.value = '';
+			alert("Image must be under 5MB.");
+			e.target.value = "";
 			return;
 		}
 		setImageFile(file);
 		setImagePreview(URL.createObjectURL(file));
 	}
 
-	function handleSubmit(e: React.FormEvent) {
+	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		if (!title.trim()) return;
+
+		let imageUrl: string | null = null;
+
+		// Upload image to Supabase if one was selected
+		if (imageFile) {
+			try {
+				const supabase = createClient();
+				const fileExt = imageFile.name.split(".").pop();
+				const fileName = `${crypto.randomUUID()}.${fileExt}`;
+				const filePath = `tickets/${fileName}`;
+
+				const { error } = await supabase.storage
+					.from("images")
+					.upload(filePath, imageFile, {
+						cacheControl: "3600",
+						upsert: false,
+					});
+
+				if (error) throw new Error(`Failed to upload image: ${error.message}`);
+
+				const {
+					data: { publicUrl },
+				} = supabase.storage.from("images").getPublicUrl(filePath);
+
+				imageUrl = publicUrl;
+			} catch (err) {
+				console.error("Image upload failed:", err);
+			}
+		}
 
 		onCreateTicket({
 			name: title.trim(),
 			deadline_date: deadline ? new Date(deadline) : new Date(),
 			watcher_id: watcherId || null,
-			TicketAssigned: [], // Replaced trailing ? with short-circuit fallback
-			tagIds: selectedTags || [],        // Replaced trailing ? with short-circuit fallback
+			TicketAssigned: assignedIds,
+			tagIds: selectedTags,
 			description: description.trim() || null,
+			api_route: apiRoute || null,
+			api_method: apiMethod || null,
+			image_url: imageUrl,
 		});
 
-		setTitle('');
-		setDescription('');
-		setDeadline('');
-		setWatcherId('');
+		setTitle("");
+		setDescription("");
+		setDeadline("");
+		setWatcherId("");
 		setSelectedTags([]);
 		setAssignedIds([]);
 		setImageFile(null);
 		setImagePreview(null);
-		setApiMethod('GET');
-		setApiRoute('');
+		setApiMethod("GET");
+		setApiRoute("");
 		onClose();
 	}
 
@@ -128,13 +164,13 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 
 	const colorClasses = {
 		indigo: "bg-indigo-50 text-indigo-700",
-		red:    "bg-red-50 text-red-700",
-		green:  "bg-green-50 text-green-700",
-		blue:   "bg-blue-50 text-blue-700",
+		red: "bg-red-50 text-red-700",
+		green: "bg-green-50 text-green-700",
+		blue: "bg-blue-50 text-blue-700",
 		yellow: "bg-yellow-50 text-yellow-700",
 		purple: "bg-purple-50 text-purple-700",
-		pink:   "bg-pink-50 text-pink-700",
-		gray:   "bg-gray-50 text-gray-700",
+		pink: "bg-pink-50 text-pink-700",
+		gray: "bg-gray-50 text-gray-700",
 	};
 
 	return (
@@ -157,7 +193,10 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 				<div className="h-px bg-gray-100 shrink-0" />
 
 				{/* Form */}
-				<form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+				<form
+					onSubmit={handleSubmit}
+					className="flex-1 overflow-y-auto px-6 py-5 space-y-5"
+				>
 					{/* Ticket Name */}
 					<div className="space-y-1.5">
 						<Label>
@@ -170,9 +209,7 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 							maxLength={25}
 							required
 						/>
-						<p className="text-xs text-gray-500 text-right">
-							{title.length}/25
-						</p>
+						<p className="text-xs text-gray-500 text-right">{title.length}/25</p>
 					</div>
 
 					{/* Description */}
@@ -195,28 +232,31 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 							<div className="relative">
 								<button
 									type="button"
-									onClick={() => setAssignedOpen(o => !o)}
+									onClick={() => setAssignedOpen((o) => !o)}
 									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-9.5"
 								>
 									<div className="flex flex-wrap gap-1 flex-1">
 										{assignedIds.length === 0 ? (
 											<span className="text-gray-400">Assign to...</span>
 										) : (
-											assignedIds.map(profileId => {
-												const profile = profiles.find(p => p.profile_id === profileId);
+											assignedIds.map((profileId) => {
+												const profile = profiles.find((p) => p.profile_id === profileId);
 												return (
 													<span
 														key={profileId}
 														className="inline-flex items-center gap-1 rounded bg-indigo-50 text-indigo-700 px-1.5 py-0.5 text-xs font-medium"
 													>
-                                      				{profile?.first_name+" "+profile?.last_name}
+														{profile?.first_name + " " + profile?.last_name}
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
-															onClick={e => { e.stopPropagation(); toggleAssigned(profileId); }}
+															onClick={(e) => {
+																e.stopPropagation();
+																toggleAssigned(profileId);
+															}}
 														>
-                                         ×
-                                      </span>
-                                   </span>
+															×
+														</span>
+													</span>
 												);
 											})
 										)}
@@ -226,24 +266,32 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 
 								{assignedOpen && (
 									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-										{profiles.map(profile => (
+										{profiles.map((profile) => (
 											<div
 												key={profile.profile_id}
 												onClick={() => toggleAssigned(profile.profile_id)}
 												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
 											>
-												<div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
-													assignedIds.includes(profile.profile_id)
-														? 'bg-indigo-600 border-indigo-600'
-														: 'border-gray-300'
-												}`}>
+												<div
+													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+														assignedIds.includes(profile.profile_id)
+															? "bg-indigo-600 border-indigo-600"
+															: "border-gray-300"
+													}`}
+												>
 													{assignedIds.includes(profile.profile_id) && (
 														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline points="2 6 5 9 10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+															<polyline
+																points="2 6 5 9 10 3"
+																stroke="white"
+																strokeWidth="1.8"
+																strokeLinecap="round"
+																strokeLinejoin="round"
+															/>
 														</svg>
 													)}
 												</div>
-												{profile?.first_name+" "+profile?.last_name}
+												{profile?.first_name + " " + profile?.last_name}
 											</div>
 										))}
 									</div>
@@ -265,7 +313,9 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 								>
 									<option value="">Add watchers...</option>
 									{profiles.map((u) => (
-										<option key={u.profile_id} value={u.profile_id}>{u?.first_name+" "+u?.last_name}</option>
+										<option key={u.profile_id} value={u.profile_id}>
+											{u?.first_name + " " + u?.last_name}
+										</option>
 									))}
 								</select>
 								<div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
@@ -283,31 +333,35 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 							<div className="relative">
 								<button
 									type="button"
-									onClick={() => setTagsOpen(o => !o)}
+									onClick={() => setTagsOpen((o) => !o)}
 									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-9.5"
 								>
 									<div className="flex flex-wrap gap-1 flex-1">
 										{selectedTags.length === 0 ? (
 											<span className="text-gray-400">Select tags...</span>
 										) : (
-											selectedTags.map(tag_id => {
-												const tag = tags.find(t => t.tag_id === tag_id);
+											selectedTags.map((tag_id) => {
+												const tag = tags.find((t) => t.tag_id === tag_id);
 												return (
 													<span
 														key={tag_id}
 														className={
-															(colorClasses[tag?.color as keyof typeof colorClasses] ?? colorClasses.indigo) +
+															(colorClasses[tag?.color as keyof typeof colorClasses] ??
+																colorClasses.indigo) +
 															" inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
 														}
 													>
-                                     {tag?.name}
+														{tag?.name}
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
-															onClick={e => { e.stopPropagation(); toggleTag(tag_id); }}
+															onClick={(e) => {
+																e.stopPropagation();
+																toggleTag(tag_id);
+															}}
 														>
-                                        ×
-                                     </span>
-                                  </span>
+															×
+														</span>
+													</span>
 												);
 											})
 										)}
@@ -317,20 +371,28 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 
 								{tagsOpen && (
 									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-										{tags.map(tag => (
+										{tags.map((tag) => (
 											<div
 												key={tag.tag_id}
 												onClick={() => toggleTag(tag.tag_id)}
 												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
 											>
-												<div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
-													selectedTags.includes(tag.tag_id)
-														? 'bg-indigo-600 border-indigo-600'
-														: 'border-gray-300'
-												}`}>
+												<div
+													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+														selectedTags.includes(tag.tag_id)
+															? "bg-indigo-600 border-indigo-600"
+															: "border-gray-300"
+													}`}
+												>
 													{selectedTags.includes(tag.tag_id) && (
 														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline points="2 6 5 9 10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+															<polyline
+																points="2 6 5 9 10 3"
+																stroke="white"
+																strokeWidth="1.8"
+																strokeLinecap="round"
+																strokeLinejoin="round"
+															/>
 														</svg>
 													)}
 												</div>
@@ -358,14 +420,25 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 					{/* Image Attachment */}
 					<div className="space-y-1.5">
 						<Label>
-							Attachment{' '}
-							<span className="text-xs text-gray-400 font-normal">(jpg, png · Max 5MB)</span>
+							Attachment{" "}
+							<span className="text-xs text-gray-400 font-normal">
+								(jpg, png · Max 5MB)
+							</span>
 						</Label>
 						<label className="flex items-center gap-2.5 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
-							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+							<svg
+								width="15"
+								height="15"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={2}
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
 								<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
 							</svg>
-							<span>{imageFile ? imageFile.name : 'Click to attach an image...'}</span>
+							<span>{imageFile ? imageFile.name : "Click to attach an image..."}</span>
 							<input
 								type="file"
 								accept="image/jpeg,image/png"
@@ -375,10 +448,17 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 						</label>
 						{imagePreview && (
 							<div className="relative inline-block mt-1">
-								<img src={imagePreview} alt="Preview" className="h-20 w-auto rounded-lg border border-gray-200 object-cover"/>
+								<img
+									src={imagePreview}
+									alt="Preview"
+									className="h-20 w-auto rounded-lg border border-gray-200 object-cover"
+								/>
 								<button
 									type="button"
-									onClick={() => { setImageFile(null); setImagePreview(null); }}
+									onClick={() => {
+										setImageFile(null);
+										setImagePreview(null);
+									}}
 									className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
 								>
 									×
@@ -390,17 +470,21 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 					{/* API Details — shown only when the "API" tag is applied */}
 					{isApiTagSelected && (
 						<div className="space-y-3 rounded-lg border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
-							<p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">API Details</p>
+							<p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
+								API Details
+							</p>
 							{/* TODO: save apiMethod and apiRoute to ticket record on backend */}
 							<div className="grid grid-cols-[110px_1fr] gap-3 items-end">
 								<div className="space-y-1.5">
 									<Label>Method</Label>
 									<select
 										value={apiMethod}
-										onChange={e => setApiMethod(e.target.value)}
+										onChange={(e) =>
+											setApiMethod(e.target.value as "GET" | "POST" | "PUT" | "DELETE")
+										}
 										className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 									>
-										{['GET', 'POST', 'PUT', 'DELETE'].map(m => (
+										{["GET", "POST", "PUT", "DELETE"].map((m) => (
 											<option key={m}>{m}</option>
 										))}
 									</select>
@@ -410,7 +494,7 @@ export default function TicketModalCreate({ isOpen, onClose, onCreateTicket, tag
 									<Input
 										placeholder="/api/v1/resource"
 										value={apiRoute}
-										onChange={e => setApiRoute(e.target.value)}
+										onChange={(e) => setApiRoute(e.target.value)}
 									/>
 								</div>
 							</div>

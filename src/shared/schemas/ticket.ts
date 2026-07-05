@@ -10,9 +10,21 @@ export const ticketCreateSchema = z.object({
   tagIds: z.array(z.string().uuid()).optional().nullable(),
   start_date: z.date().optional().nullable(),
   end_date: z.date().optional().nullable(),
+  api_route: z.string().optional().nullable(),
+  api_method: z.enum(["GET", "POST", "PUT", "DELETE"]).optional().nullable(),
 });
 
 export type TicketCreateInput = z.infer<typeof ticketCreateSchema>;
+
+// ── Create ticket (full server-action params) ────────────────────────────────
+
+export type CreateTicketParams = TicketCreateInput & {
+  workflow_id: string | null;
+  status: import("@/lib/generated/prisma").status;
+  TicketAssigned: string[] | null;
+  tagIds: string[] | null;
+  image_url?: string | null;
+};
 
 // ── Update ticket ────────────────────────────────────────────────────────────
 
@@ -21,3 +33,24 @@ export const ticketUpdateSchema = ticketCreateSchema.partial().extend({
 });
 
 export type TicketUpdateInput = z.infer<typeof ticketUpdateSchema>;
+
+// ── Comment ──────────────────────────────────────────────────────────────────
+
+export const commentCreateSchema = z.object({
+	profile_id: z.string().uuid(),
+	description: z.string().min(1, "Comment cannot be empty"),
+	parent_type: z.enum(["TICKET_COMMENT", "GATE_COMMENT"]),
+	parent_id: z.string().uuid(),
+	imageUrls: z.array(z.string()).optional().default([]),
+});
+
+export type CommentCreateInput = z.infer<typeof commentCreateSchema>;
+
+// ── Update ticket (full server-action params) ────────────────────────────────
+
+export type UpdateTicketParams = TicketUpdateInput & {
+  ticket_id: string;
+  workflow_id: string | null;
+  TicketAssigned: string[];
+  tagIds: string[];
+};

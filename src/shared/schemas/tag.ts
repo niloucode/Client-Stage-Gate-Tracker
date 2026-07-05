@@ -5,10 +5,10 @@ import { z } from "zod";
 export const tagSchema = z.object({
   tag_id: z.string().uuid(),
   name: z.string().min(1, "Tag name is required"),
-  description: z.string().optional().nullable(),
-  color: z.string().optional().nullable(),
+  description: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
   is_deleted: z.boolean().default(false),
-  deleted_at: z.date().optional().nullable(),
+  deleted_at: z.date().nullable().optional(),
 });
 
 export type Tag = z.infer<typeof tagSchema>;
@@ -17,8 +17,8 @@ export type Tag = z.infer<typeof tagSchema>;
 
 export const tagCreateSchema = z.object({
   name: z.string().min(1, "Tag name is required"),
-  description: z.string().optional(),
-  color: z.string().optional(),
+  description: z.string().optional().nullable(),
+  color: z.string().optional().nullable(),
   tag_id: z.string().optional(),
 });
 

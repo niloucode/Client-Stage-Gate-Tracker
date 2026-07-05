@@ -217,7 +217,6 @@ end_date      DateTime?
 ```
 workflow_id   UUID PK
 name          String
-description   String?
 is_approved   Boolean   @default(false)
 module_id     UUID → Modules
 creation_date DateTime
@@ -234,6 +233,7 @@ description     String?
 status          status    @default(PENDING)   (PENDING | IN_PROGRESS | FINISHED)
 workflow_id     UUID? → Workflows             (nullable — can exist outside a workflow)
 watcher_id      UUID? → Profiles              (single watcher, informational)
+api_route       String?                       (optional, for API-tagged tickets)
 assignment_date DateTime
 creation_date   DateTime
 start_date      DateTime?
