@@ -51,6 +51,9 @@ export function AuthProvider({ children }: prop) {
       if (_event === "SIGNED_IN" && onAuthPage && user?.client_id) {
         router.push("/client/" + user.client_id);
       }
+      else if(_event === "SIGNED_IN" && onAuthPage && user?.department_id) {
+        router.push("/department/" + user.department_id);
+      }
     });
 
     return () => subscription.unsubscribe();
