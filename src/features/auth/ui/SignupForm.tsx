@@ -202,13 +202,19 @@ export function SignupForm() {
           <Label htmlFor="department" className="mb-1.5">
             Department
           </Label>
-          <Input
+          <select
             id="department"
-            type="text"
-            placeholder="e.g. Engineering"
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-          />
+            className={`w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${department ? 'text-gray-900' : 'text-gray-400'}`}
+          >
+            <option value="" disabled>
+              Select...
+            </option>
+            <option value="Project Team">Project Team</option>
+            <option value="Project Owner">Project Owner</option>
+            <option value="Finance Team">Finance Team</option>
+          </select>
           {fieldErrors.department && (
             <p className="text-xs text-red-500 mt-1">{fieldErrors.department}</p>
           )}
