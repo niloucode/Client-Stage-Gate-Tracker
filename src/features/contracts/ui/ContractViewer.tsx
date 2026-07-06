@@ -20,6 +20,7 @@ interface PDFViewerProps {
   className?: string;
   projectId: string;
   clientId: string;
+  profileId?: string | null;
   initialFilePath?: string | null //null if contract DOESN'T exist yet
   setContract: Dispatch<SetStateAction<Contract | null>> //pass setter function of contract in page
 }
@@ -40,10 +41,23 @@ export function ContractViewer({ className = "", projectId, clientId, setContrac
 
   // Revoke the object URL whenever it changes or the component unmounts
   useEffect(() => {
-    if (initialFilePath) //check if contract exists
-      //if yes, load into program
-      getContractUrl(initialFilePath).then(url => setFileUrl(url)) 
-  }, [initialFilePath]);
+  if (initialFilePath) {
+    let revoked = false;
+    getContractUrl(initialFilePath)
+      .then((url) => {
+        if (!revoked && url) setFileUrl(url);
+      })
+      .catch((err) => {
+        if (!revoked) {
+          console.error(err);
+          setFileError(err.message || 'Failed to load contract');
+        }
+      });
+    return () => {
+      revoked = true;
+    };
+  }
+}, [initialFilePath]);
 
   const isPdfFile = (f: File) =>
     f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
@@ -74,7 +88,7 @@ export function ContractViewer({ className = "", projectId, clientId, setContrac
 
     try {
       //put contract in Supabase storage
-      const {contract} = await uploadContract(clientId, projectId, pendingFile)
+      const {contract} = await uploadContract(clientId, projectId, pendingFile, contractName)
       //clear url since we don't need it anymore
       if (fileUrl) URL.revokeObjectURL(fileUrl)
         
@@ -153,7 +167,7 @@ export function ContractViewer({ className = "", projectId, clientId, setContrac
         <div className="flex min-w-0 items-center gap-2">
           <FileText className="h-4 w-4 shrink-0 text-[#4338CA]" />
           <span className="truncate text-sm font-medium text-[#181724]">
-            {file ? file.name : "No document loaded"}
+            {file && fileUrl ? file.name : "Untitled.pdf"}
           </span>
         </div>
 

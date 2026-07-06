@@ -12,26 +12,9 @@ import { getContractByProjectId } from "@/entities/contract";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Contract } from "@/entities/types";
-
-const signatories: Signatory[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    role: "Asceoft Director",
-    status: "signed",
-    timestamp: "Oct 24, 2023, 5:07 PM",
-    device: "IPhone 16",
-    location: "Ugong, Valenzuela City",
-  },
-  {
-    id: "2",
-    name: "Alex Mercer",
-    role: "Client Representative",
-    status: "pending",
-  },
-];
-
-const allSigned = signatories.every((s) => s.status === "signed");
+import { useAuth } from "@/features/auth";
+import { getProjectOwnerByProjectId } from "@/entities/roleAssignment";
+import { getProfileByClientId } from "@/entities/profile";
 
 //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 // export default function ContractPage({
@@ -42,25 +25,70 @@ const allSigned = signatories.every((s) => s.status === "signed");
 
 export default function ContractPage() {
   const [contract, setContract] = useState<Contract | null>(null)
+  const [signatories, setSignatories] = useState<Signatory[]>([])
+  const [allSigned, setAllSigned] = useState(false)
   const searchParams = useSearchParams()
+  const {user} = useAuth()
+  
 
   //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
   //const {projectId} = params 
   const projectId = searchParams.get('projectId') ?? ''
   const clientId = contract?.client_id ?? searchParams.get('clientId') ?? ''
 
-  const get_contract = async () => {
-    if (!projectId){
-      return
-    }
-    getContractByProjectId(projectId).then(res => setContract(res ?? null))
-  }
-
   useEffect(() => {
-    get_contract()
-    console.log(`Client Id: ${clientId}`)
-    console.log(`Project Id: ${projectId}`)
+    if (!projectId) return
+    getContractByProjectId(projectId).then(res => setContract(res ?? null))
   }, [projectId])
+
+  // step 2: fetch signatories only after contract is loaded
+  useEffect(() => {
+    if (!contract || !projectId) return
+    get_signatories()
+  }, [contract?.contract_id]) // runs when contract first loads
+
+  const get_signatories = async () => {
+    try {
+      const temp: Signatory[] = []
+
+      // --- CLIENT SIGNATORY ---
+      if (contract?.client_id) {
+        const { data: clientProfile } = await getProfileByClientId(contract.client_id)
+
+        if (clientProfile) {
+          const clientSigned = !!contract.client_signed_at
+          temp.push({
+            id: '1',
+            name: `${clientProfile.first_name} ${clientProfile.last_name}`,
+            role: 'Client Representative',
+            status: clientSigned ? 'signed' : 'pending',
+            timestamp: contract.client_signed_at?.toDateString(),
+          })
+        }
+      }
+
+      // --- PROJECT OWNER SIGNATORY ---
+      const ownerAssignment = await getProjectOwnerByProjectId(projectId)
+
+      if (ownerAssignment?.Users) {
+        const ownerProfile = ownerAssignment.Users
+        const ownerSigned = !!contract?.project_owner_signed_at
+        temp.push({
+          id: '2',
+          name: `${ownerProfile.first_name} ${ownerProfile.last_name}`,
+          role: 'Project Owner',
+          status: ownerSigned ? 'signed' : 'pending',
+          timestamp: contract?.project_owner_signed_at?.toDateString(),
+        })
+      }
+
+      setSignatories(temp)
+      setAllSigned(temp.length > 0 && temp.every(s => s.status === 'signed'))
+
+    } catch (err) {
+      console.error('Failed to load signatories:', err)
+    }
+  }
   
 
   return (
@@ -88,6 +116,7 @@ export default function ContractPage() {
           <ContractViewer className="h-[80vh] min-h-[600px]" 
           clientId = {clientId}
           projectId = {projectId} setContract={setContract}
+          profileId = {user?.profile_id ?? null}
           initialFilePath = {contract?.file_path ?? null}/>
 
           <div className="flex flex-col gap-6">
