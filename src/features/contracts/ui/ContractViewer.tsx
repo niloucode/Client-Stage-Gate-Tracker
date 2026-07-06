@@ -34,7 +34,9 @@ export function ContractViewer({ className = "", projectId, clientId, setContrac
   const [zoom, setZoom] = useState(100);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false); 
+  const [contractName, setContractName] = useState(""); //ADDED THISSS
+
 
   // Revoke the object URL whenever it changes or the component unmounts
   useEffect(() => {
@@ -289,6 +291,18 @@ export function ContractViewer({ className = "", projectId, clientId, setContrac
               will become the active contract between you and the client.
               The client will be able to see this document right away.
             </p>
+
+            <label className="mt-4 block text-xs font-medium text-[#6E6B82]"> { /* ALSO ADDED THIS */}
+              Contract name
+            </label>
+            <input
+              value={contractName}
+              onChange={(e) => setContractName(e.target.value)}
+              placeholder="e.g. Input Contract Name here"
+              autoFocus
+              className="mt-1.5 w-full rounded-lg border border-[#E6E4F0] px-3 py-2 text-sm text-[#181724] outline-none focus:border-[#4338CA]"
+            />
+
             <div className="mt-5 flex gap-2">
               <button
                 onClick={cancelUpload}
@@ -298,7 +312,8 @@ export function ContractViewer({ className = "", projectId, clientId, setContrac
               </button>
               <button
                 onClick={confirmUpload}
-                className="flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-white hover:bg-[#3730A3]"
+                disabled={!contractName.trim()}
+                className="flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-white hover:bg-[#3730A3] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Yes, upload
               </button>

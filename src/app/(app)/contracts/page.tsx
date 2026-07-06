@@ -77,7 +77,7 @@ export default function ContractPage() {
 
         <header className="mb-6">
           <h1 className="text-xl font-semibold text-[#181724]">
-            {contract?.contract_name ?? 'Untitled contract'}
+            {contract?.contract_name ?? 'Untitled contract'} {/* INPUT contract_name HERE */}
           </h1>
           <p className="text-sm text-[#6E6B82]">
             Review the document and complete signing below.
