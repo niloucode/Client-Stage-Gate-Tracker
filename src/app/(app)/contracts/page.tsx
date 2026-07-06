@@ -44,10 +44,11 @@ export default function ContractPage({
   const clientId = contract?.client_id ?? searchParams.get('clientId') ?? ''
 
   const get_contract = async () => {
-    if (!projectId) return
+    if (!projectId){
+      return
+    }
     getContractByProjectId(projectId).then(res => setContract(res ?? null))
   }
-  
 
   useEffect(() => {
     get_contract()
@@ -77,6 +78,7 @@ export default function ContractPage({
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
           <ContractViewer className="h-[80vh] min-h-[600px]" 
+          clientId = {clientId}
           projectId = {projectId} setContract={setContract}
           initialFilePath = {contract?.file_path ?? null}/>
 

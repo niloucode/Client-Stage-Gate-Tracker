@@ -18,14 +18,13 @@ import { Contract } from "@/entities/types";
 
 interface PDFViewerProps {
   className?: string;
-  contractId?: string;
   projectId: string;
   clientId: string;
   initialFilePath?: string | null //null if contract DOESN'T exist yet
   setContract: Dispatch<SetStateAction<Contract | null>> //pass setter function of contract in page
 }
 
-export function ContractViewer({ className = "", contractId, projectId, clientId, setContract, initialFilePath }: PDFViewerProps) {
+export function ContractViewer({ className = "", projectId, clientId, setContract, initialFilePath }: PDFViewerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -60,8 +59,14 @@ export function ContractViewer({ className = "", contractId, projectId, clientId
   };
 
   const confirmUpload = async () => {
-    if (!pendingFile) return;
-    if(!projectId) return
+    if (!pendingFile) {
+      console.log("no pending file")
+      return;
+    }
+    if(!projectId) {
+      console.log("no projectId")
+      return;
+    }
     //start uploading process
     setIsUploading(true)
 
@@ -112,10 +117,10 @@ export function ContractViewer({ className = "", contractId, projectId, clientId
 
   const confirmRemove = async() => {
     if (!file || removeConfirmText !== file.name
-        || !initialFilePath || !contractId || !projectId) return;
+        || !initialFilePath || !projectId) return;
     try {
       //soft-delete contract from database
-      await deleteContract(contractId, initialFilePath)
+      await deleteContract(projectId, initialFilePath)
       if (fileUrl) URL.revokeObjectURL(fileUrl)
       setFile(null)
       setFileUrl(null)
