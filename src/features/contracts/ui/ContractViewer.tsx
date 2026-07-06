@@ -13,16 +13,19 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { uploadContract, getContractUrl, deleteContract } from "@/entities/contract";
+import { type Dispatch, SetStateAction } from "react";
+import { Contract } from "@/entities/types";
 
 interface PDFViewerProps {
   className?: string;
-  contractId: string;
+  contractId?: string;
   projectId: string;
+  clientId: string;
   initialFilePath?: string | null //null if contract DOESN'T exist yet
-
+  setContract: Dispatch<SetStateAction<Contract | null>> //pass setter function of contract in page
 }
 
-export function ContractViewer({ className = "", contractId, projectId, initialFilePath }: PDFViewerProps) {
+export function ContractViewer({ className = "", contractId, projectId, clientId, setContract, initialFilePath }: PDFViewerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -39,7 +42,7 @@ export function ContractViewer({ className = "", contractId, projectId, initialF
     if (initialFilePath) //check if contract exists
       //if yes, load into program
       getContractUrl(initialFilePath).then(url => setFileUrl(url)) 
-  }, [fileUrl]);
+  }, [initialFilePath]);
 
   const isPdfFile = (f: File) =>
     f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
@@ -64,12 +67,13 @@ export function ContractViewer({ className = "", contractId, projectId, initialF
 
     try {
       //put contract in Supabase storage
-      await uploadContract(contractId, projectId, pendingFile)
+      const {contract} = await uploadContract(clientId, projectId, pendingFile)
       //clear url since we don't need it anymore
       if (fileUrl) URL.revokeObjectURL(fileUrl)
         
       //store uploaded file for easier access
       setFile(pendingFile)
+      setContract(contract)
       //local preview while signed URL loads
       setFileUrl(URL.createObjectURL(pendingFile)) 
       setZoom(100)

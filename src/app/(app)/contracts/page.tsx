@@ -8,8 +8,9 @@ import ExecuteAgreementCard from "@/features/contracts/ui/ExecuteAgreementCard";
 import { ExecutedBanner } from "@/features/contracts/ui/ExecutedBanner";
 import Sidebar from '@/shared/ui/sidebar';
 import TopNav from "@/shared/ui/TopNav";
-import { getContract } from "@/entities/contract";
+import { getContractByProjectId } from "@/entities/contract";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Contract } from "@/entities/types";
 
 const signatories: Signatory[] = [
@@ -35,30 +36,22 @@ const allSigned = signatories.every((s) => s.status === "signed");
 export default function ContractPage({
   params,
 }: {
-  params: { projectId: string; contractId: string };
+  params: { projectId: string };
 }) {
-  const { projectId, contractId} = params
   const [contract, setContract] = useState<Contract | null>(null)
-  
-  const get_contract = async () =>{
-    if (contractId){
-      const res = await getContract(contractId)
-      if (res){
-        setContract(res)
-      }
-      else{
-        setContract(null)
-      }
+  const {projectId} = params
+  const searchParams = useSearchParams()
+  const clientId = contract?.client_id ?? searchParams.get('clientId') ?? ''
 
-    }
-    else{
-      setContract(null)
-    }
+  const get_contract = async () => {
+    if (!projectId) return
+    getContractByProjectId(projectId).then(res => setContract(res ?? null))
   }
+  
 
   useEffect(() => {
     get_contract()
-  }, [])
+  }, [projectId])
   
 
   return (
@@ -84,7 +77,7 @@ export default function ContractPage({
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
           <ContractViewer className="h-[80vh] min-h-[600px]" 
-          contractId = {contractId} projectId = {projectId}
+          projectId = {projectId} setContract={setContract}
           initialFilePath = {contract?.file_path ?? null}/>
 
           <div className="flex flex-col gap-6">
