@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 // UPLOAD — stores file in Supabase, saves path in Prisma
-export async function uploadContract(clientId: string, projectId: string, file: File) {
+export async function uploadContract(clientId: string, projectId: string, file: File, contractName: string) {
   const supabase = await createClient()
 
   //upsert if contract exists
@@ -22,7 +22,8 @@ export async function uploadContract(clientId: string, projectId: string, file: 
     }
   })
 
-  const filePath = `${projectId}/${updated_contract.contract_id}.pdf`
+  const fileName = contractName.trim() == '' ? updated_contract.contract_id : contractName
+  const filePath = `${projectId}/${fileName}.pdf`
 
   const { error: uploadError } = await supabase.storage
     .from('contracts')
@@ -56,13 +57,12 @@ export async function uploadContract(clientId: string, projectId: string, file: 
 
 // GET SIGNED URL — for viewing/downloading (expires in 1 hour)
 export async function getContractUrl(filePath: string) {
-  const supabase = await createClient()
+  console.log('🔍 Requesting signed URL for path:', filePath);
+  const supabase = await createClient();
+  // const { data, error } = await supabase.storage.from('contracts').createSignedUrl(filePath, 3600);
+  const { data } = await supabase.storage.from('contracts').getPublicUrl(filePath)
 
-  const { data, error } = await supabase.storage.from('contracts').createSignedUrl(filePath, 3600) 
-  // expires in 3600 seconds (1 hour)
-
-  if (error) throw new Error(error.message)
-  return data.signedUrl
+  return data.publicUrl;
 }
 
 // SOFT DELETE — marks as deleted in Prisma, removes from Storage

@@ -50,6 +50,26 @@ export async function getProfileById(userId: string, status: EntityFilterStatus 
   }
 }
 
+export async function getProfileByClientId(clientId: string) {
+  try {
+
+    const userData = await prisma.profiles.findUnique({
+      where: {
+        client_id: clientId,
+        // is_deleted: isDeletedFilter,
+      },
+    });
+
+    if (!userData) {
+      return { success: false, error: "User not found or does not match the requested status." };
+    }
+    return { success: true, data: userData };
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+    return { success: false, error: "Failed to fetch user details." };
+  }
+}
+
 /**
  * Updates an existing user's details in the database.
  *
