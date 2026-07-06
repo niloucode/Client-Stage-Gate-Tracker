@@ -21,6 +21,7 @@ import { ProfileType } from "@/shared/types";
 import { createClient } from "@/lib/supabase/client";
 import { signupSchema } from "@/shared/schemas";
 import { profileKeys } from "@/shared/query/keys";
+import { getProfileByEmail } from "@/entities/profile/profileActions";
 
 export function StaffSignupForm() {
 	const router = useRouter();
@@ -57,7 +58,7 @@ export function StaffSignupForm() {
 					is_deleted: user.is_deleted,
 					deleted_at: user.deleted_at,
 				},
-				emailRedirectTo: "http://localhost:3000/login",
+				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
 			},
 		});
 	}
@@ -90,6 +91,14 @@ export function StaffSignupForm() {
 		}
 
 		setLoading(true);
+
+		// ── Duplicate email check ──────────────────────────────────────
+		const { success, data: existingProfile } = await getProfileByEmail(email);
+		if (success && existingProfile) {
+			setError("An account with this email already exists.");
+			setLoading(false);
+			return;
+		}
 
 		const user: ProfileType = {
 			profile_id: "",

@@ -196,7 +196,7 @@ export default function TicketModalEdit({
 			ticket_id: ticket.ticket_id,
 			workflow_id: ticket.workflow_id,
 			name: ticket.name,
-			deadline_date: ticket.deadline_date,
+			deadline_date: ticket.deadline_date ?? undefined,
 			status: ticket.status,
 			watcher_id: ticket.watcher_id,
 			TicketAssigned: ticket.TicketAssigned.map(

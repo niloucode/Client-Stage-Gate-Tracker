@@ -1,330 +1,400 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState, useRef, useEffect } from "react";
+import {
+	forwardRef,
+	useImperativeHandle,
+	useState,
+	useRef,
+	useEffect,
+} from "react";
 import type { Phase } from "../types";
 import { DeletePhase } from "@/features/stage-editor/ui/modals/DeletePhase";
 import { AddPhase } from "@/features/stage-editor/ui/modals/AddPhase";
-import { useCreatePhase, useDeletePhase, useSwapPhaseOrder } from "@/entities/phase/mutations";
+import {
+	useCreatePhase,
+	useDeletePhase,
+	useSwapPhaseOrder,
+} from "@/entities/phase/mutations";
 
 interface PhaseStepperProps {
-  phases: Phase[];
-  stageId: string;
-  activePhase: number | null;
-  setActivePhase: (phase: number | null) => void;
+	phases: Phase[];
+	stageId: string;
+	activePhase: number | null;
+	setActivePhase: (phase: number | null) => void;
 }
 
-export const PhaseStepper = forwardRef<{ openCreateModal: () => void }, PhaseStepperProps>(
-  ({ phases, stageId, activePhase, setActivePhase }, ref) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [phaseToDelete, setPhaseToDelete] = useState<number | null>(null);
-    const [showLeftArrow, setShowLeftArrow] = useState(false);
-    const [showRightArrow, setShowRightArrow] = useState(true);
-    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+export const PhaseStepper = forwardRef<
+	{ openCreateModal: () => void },
+	PhaseStepperProps
+>(({ phases, stageId, activePhase, setActivePhase }, ref) => {
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+	const [phaseToDelete, setPhaseToDelete] = useState<number | null>(null);
+	const [showLeftArrow, setShowLeftArrow] = useState(false);
+	const [showRightArrow, setShowRightArrow] = useState(true);
+	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const createPhaseMutation = useCreatePhase();
-    const deletePhaseMutation = useDeletePhase();
-    const swapPhaseOrderMutation = useSwapPhaseOrder();
+	const createPhaseMutation = useCreatePhase();
+	const deletePhaseMutation = useDeletePhase();
+	const swapPhaseOrderMutation = useSwapPhaseOrder();
 
-    useImperativeHandle(ref, () => ({
-      openCreateModal: () => setIsModalOpen(true)
-    }));
+	useImperativeHandle(ref, () => ({
+		openCreateModal: () => setIsModalOpen(true),
+	}));
 
-    const checkScroll = () => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
+	const checkScroll = () => {
+		const container = scrollContainerRef.current;
+		if (!container) return;
 
-      const { scrollLeft, scrollWidth, clientWidth } = container;
-      setShowLeftArrow(scrollLeft > 10);
-      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
-    };
+		const { scrollLeft, scrollWidth, clientWidth } = container;
+		setShowLeftArrow(scrollLeft > 10);
+		setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+	};
 
-    useEffect(() => {
-      checkScroll();
-      window.addEventListener('resize', checkScroll);
-      return () => window.removeEventListener('resize', checkScroll);
-    }, [phases]);
+	useEffect(() => {
+		checkScroll();
+		window.addEventListener("resize", checkScroll);
+		return () => window.removeEventListener("resize", checkScroll);
+	}, [phases]);
 
-    const scroll = (direction: 'left' | 'right') => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
+	const scroll = (direction: "left" | "right") => {
+		const container = scrollContainerRef.current;
+		if (!container) return;
 
-      const scrollAmount = container.clientWidth * 0.6;
-      container.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    };
+		const scrollAmount = container.clientWidth * 0.6;
+		container.scrollBy({
+			left: direction === "left" ? -scrollAmount : scrollAmount,
+			behavior: "smooth",
+		});
+	};
 
-    const handleAddPhase = async (data: { name: string; description: string; creation_date: Date | null; end_date: Date | null }) => {
-      await createPhaseMutation.mutateAsync({
-        stageId,
-        name: data.name,
-        description: data.description,
-        creation_date: data.creation_date ?? undefined,
-        end_date: data.end_date ?? undefined,
-      });
-      setIsModalOpen(false);
-    };
+	const handleAddPhase = async (data: {
+		name: string;
+		description: string;
+		creation_date: Date | null;
+		deadline_date: Date | null;
+		end_date: Date | null;
+	}) => {
+		await createPhaseMutation.mutateAsync({
+			stageId,
+			name: data.name,
+			description: data.description,
+			creation_date: data.creation_date ?? undefined,
+			deadline_date: data.deadline_date ?? undefined,
+			end_date: data.end_date ?? undefined,
+		});
+		setIsModalOpen(false);
+	};
 
-    const confirmDelete = (phaseNumber: number) => {
-      setPhaseToDelete(phaseNumber);
-      setIsDeleteConfirmOpen(true);
-    };
+	const confirmDelete = (phaseNumber: number) => {
+		setPhaseToDelete(phaseNumber);
+		setIsDeleteConfirmOpen(true);
+	};
 
-    const closeDeleteModal = () => {
-      setIsDeleteConfirmOpen(false);
-      setPhaseToDelete(null);
-    };
+	const closeDeleteModal = () => {
+		setIsDeleteConfirmOpen(false);
+		setPhaseToDelete(null);
+	};
 
-    const handleDeletePhase = async () => {
-      if (phaseToDelete === null) return;
-      const phase = phases.find(p => p.number === phaseToDelete);
-      if (!phase) return;
+	const handleDeletePhase = async () => {
+		if (phaseToDelete === null) return;
+		const phase = phases.find((p) => p.number === phaseToDelete);
+		if (!phase) return;
 
-      await deletePhaseMutation.mutateAsync({
-        phaseId: phase.phase_id,
-        stageId,
-      });
+		await deletePhaseMutation.mutateAsync({
+			phaseId: phase.phase_id,
+			stageId,
+		});
 
-      if (activePhase === phaseToDelete) {
-        setActivePhase(null);
-      } else if (activePhase !== null && activePhase > phaseToDelete) {
-        setActivePhase(activePhase - 1);
-      }
+		if (activePhase === phaseToDelete) {
+			setActivePhase(null);
+		} else if (activePhase !== null && activePhase > phaseToDelete) {
+			setActivePhase(activePhase - 1);
+		}
 
-      setIsDeleteConfirmOpen(false);
-      setPhaseToDelete(null);
-    };
+		setIsDeleteConfirmOpen(false);
+		setPhaseToDelete(null);
+	};
 
-    // Drag and Drop Handlers
-    const handleDragStart = (e: React.DragEvent, index: number) => {
-      setDraggedIndex(index);
-      e.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => {
-        (e.target as HTMLElement).style.opacity = '0.5';
-      }, 0);
-    };
+	// Drag and Drop Handlers
+	const handleDragStart = (e: React.DragEvent, index: number) => {
+		setDraggedIndex(index);
+		e.dataTransfer.effectAllowed = "move";
+		setTimeout(() => {
+			(e.target as HTMLElement).style.opacity = "0.5";
+		}, 0);
+	};
 
-    const handleDragEnd = (e: React.DragEvent) => {
-      (e.target as HTMLElement).style.opacity = '1';
-      setDraggedIndex(null);
-      document.querySelectorAll('.drag-over').forEach(el => {
-        el.classList.remove('drag-over');
-      });
-    };
+	const handleDragEnd = (e: React.DragEvent) => {
+		(e.target as HTMLElement).style.opacity = "1";
+		setDraggedIndex(null);
+		document.querySelectorAll(".drag-over").forEach((el) => {
+			el.classList.remove("drag-over");
+		});
+	};
 
-    const handleDragOver = (e: React.DragEvent, index: number) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      
-      if (draggedIndex === null || draggedIndex === index) return;
-      
-      document.querySelectorAll('.drag-over').forEach(el => {
-        el.classList.remove('drag-over');
-      });
-      
-      const target = e.currentTarget as HTMLElement;
-      target.classList.add('drag-over');
-    };
+	const handleDragOver = (e: React.DragEvent, index: number) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = "move";
 
-    const handleDragLeave = (e: React.DragEvent) => {
-      (e.currentTarget as HTMLElement).classList.remove('drag-over');
-    };
+		if (draggedIndex === null || draggedIndex === index) return;
 
-    const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
-      e.preventDefault();
-      
-      const dragIndex = draggedIndex;
-      if (dragIndex === null || dragIndex === dropIndex) {
-        setDraggedIndex(null);
-        return;
-      }
+		document.querySelectorAll(".drag-over").forEach((el) => {
+			el.classList.remove("drag-over");
+		});
 
-      document.querySelectorAll('.drag-over').forEach(el => {
-        el.classList.remove('drag-over');
-      });
+		const target = e.currentTarget as HTMLElement;
+		target.classList.add("drag-over");
+	};
 
-      const draggedPhase = phases[dragIndex];
-      const droppedPhase = phases[dropIndex];
-      if (!draggedPhase || !droppedPhase) {
-        setDraggedIndex(null);
-        return;
-      }
+	const handleDragLeave = (e: React.DragEvent) => {
+		(e.currentTarget as HTMLElement).classList.remove("drag-over");
+	};
 
-      await swapPhaseOrderMutation.mutateAsync({
-        phaseId1: draggedPhase.phase_id,
-        phaseId2: droppedPhase.phase_id,
-        stageId,
-      });
+	const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+		e.preventDefault();
 
-      setDraggedIndex(null);
-    };
+		const dragIndex = draggedIndex;
+		if (dragIndex === null || dragIndex === dropIndex) {
+			setDraggedIndex(null);
+			return;
+		}
 
-    return (
-      <>
-        <div className="relative bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8">
-          <div className="px-8 py-8 relative">
-            {/* Empty State */}
-            {phases.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <p className="text-sm text-[#64748B]">No phases yet</p>
-                <p className="text-xs text-[#94A3B8] mt-1">Click Add Phase to create your first phase</p>
-              </div>
-            ) : (
-              <>
-                {/* Left Scroll Arrow */}
-                {showLeftArrow && (
-                  <button
-                    onClick={() => scroll('left')}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-[#4F46E5] transition-all flex items-center justify-center"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M10 12L6 8L10 4" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                )}
+		document.querySelectorAll(".drag-over").forEach((el) => {
+			el.classList.remove("drag-over");
+		});
 
-                {/* Right Scroll Arrow */}
-                {showRightArrow && (
-                  <button
-                    onClick={() => scroll('right')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-[#4F46E5] transition-all flex items-center justify-center"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M6 12L10 8L6 4" stroke="#64748B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                )}
+		const draggedPhase = phases[dragIndex];
+		const droppedPhase = phases[dropIndex];
+		if (!draggedPhase || !droppedPhase) {
+			setDraggedIndex(null);
+			return;
+		}
 
-                {/* Scrollable Container */}
-                <div 
-                  ref={scrollContainerRef}
-                  onScroll={checkScroll}
-                  className="relative z-10 overflow-x-auto scroll-smooth hide-scrollbar"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  <div className="flex items-start pt-7" style={{ minWidth: `${phases.length * 180}px` }}>
-                    {phases.map((phase, index) => {
-                      const num = phase.number ?? 0;
-                      const isActive = phase.number === activePhase;
-                      const isCompleted = activePhase !== null && num < activePhase;
-                      const isPending = activePhase !== null && num > activePhase;
+		await swapPhaseOrderMutation.mutateAsync({
+			phaseId1: draggedPhase.phase_id,
+			phaseId2: droppedPhase.phase_id,
+			stageId,
+		});
 
-                      return (
-                        <div 
-                          key={phase.phase_id}
-                          className="relative flex flex-col items-center flex-shrink-0 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-105 hover:z-10"
-                          style={{ 
-                            width: `${100 / phases.length}%`, 
-                            minWidth: '140px',
-                          }}
-                          draggable={true}
-                          onDragStart={(e) => handleDragStart(e, index)}
-                          onDragEnd={handleDragEnd}
-                          onDragOver={(e) => handleDragOver(e, index)}
-                          onDragLeave={handleDragLeave}
-                          onDrop={(e) => handleDrop(e, index)}
-                        >
-                          <div className="absolute inset-0 rounded-xl border-2 border-transparent transition-all duration-200 pointer-events-none group-hover:border-[#4F46E5]/20" />
-                          
-                          <div className="relative z-10 flex flex-col items-center group">
-                            <button
-                              onClick={() => phase.number !== null && setActivePhase(phase.number)}
-                              className="focus:outline-none"
-                            >
-                              <div
-                                className={`
+		setDraggedIndex(null);
+	};
+
+	return (
+		<>
+			<div className="relative bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8">
+				<div className="px-8 py-8 relative">
+					{/* Empty State */}
+					{phases.length === 0 ? (
+						<div className="flex flex-col items-center justify-center py-8 text-center">
+							<p className="text-sm text-[#64748B]">No phases yet</p>
+							<p className="text-xs text-[#94A3B8] mt-1">
+								Click Add Phase to create your first phase
+							</p>
+						</div>
+					) : (
+						<>
+							{/* Left Scroll Arrow */}
+							{showLeftArrow && (
+								<button
+									onClick={() => scroll("left")}
+									className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-[#4F46E5] transition-all flex items-center justify-center"
+								>
+									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+										<path
+											d="M10 12L6 8L10 4"
+											stroke="#64748B"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+									</svg>
+								</button>
+							)}
+
+							{/* Right Scroll Arrow */}
+							{showRightArrow && (
+								<button
+									onClick={() => scroll("right")}
+									className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-[#4F46E5] transition-all flex items-center justify-center"
+								>
+									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+										<path
+											d="M6 12L10 8L6 4"
+											stroke="#64748B"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+									</svg>
+								</button>
+							)}
+
+							{/* Scrollable Container */}
+							<div
+								ref={scrollContainerRef}
+								onScroll={checkScroll}
+								className="relative z-10 overflow-x-auto scroll-smooth hide-scrollbar"
+								style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+							>
+								<div
+									className="flex items-start pt-7"
+									style={{ minWidth: `${phases.length * 180}px` }}
+								>
+									{phases.map((phase, index) => {
+										const num = phase.number ?? 0;
+										const isActive = phase.number === activePhase;
+										const isCompleted =
+											activePhase !== null && num < activePhase;
+										const isPending = activePhase !== null && num > activePhase;
+
+										return (
+											<div
+												key={phase.phase_id}
+												className="relative flex flex-col items-center flex-shrink-0 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-105 hover:z-10"
+												style={{
+													width: `${100 / phases.length}%`,
+													minWidth: "140px",
+												}}
+												draggable={true}
+												onDragStart={(e) => handleDragStart(e, index)}
+												onDragEnd={handleDragEnd}
+												onDragOver={(e) => handleDragOver(e, index)}
+												onDragLeave={handleDragLeave}
+												onDrop={(e) => handleDrop(e, index)}
+											>
+												<div className="absolute inset-0 rounded-xl border-2 border-transparent transition-all duration-200 pointer-events-none group-hover:border-[#4F46E5]/20" />
+
+												<div className="relative z-10 flex flex-col items-center group">
+													<button
+														onClick={() =>
+															phase.number !== null &&
+															setActivePhase(phase.number)
+														}
+														className="focus:outline-none"
+													>
+														<div
+															className={`
                                   w-10 h-10 rounded-full flex items-center justify-center
                                   transition-colors duration-200 relative outline outline-[6px] outline-white
-                                  ${isActive 
-                                    ? "bg-[#4F46E5] border-2 border-[#4F46E5] shadow-lg" 
-                                    : isCompleted
-                                    ? "bg-[#3525CD] border-2 border-white shadow-md"
-                                    : "bg-white border-2 border-[#E2E8F0] group-hover:border-[#4F46E5]"
-                                  }
+                                  ${
+																		isActive
+																			? "bg-[#4F46E5] border-2 border-[#4F46E5] shadow-lg"
+																			: isCompleted
+																				? "bg-[#3525CD] border-2 border-white shadow-md"
+																				: "bg-white border-2 border-[#E2E8F0] group-hover:border-[#4F46E5]"
+																	}
                                 `}
-                              >
-                                {isCompleted ? (
-                                  <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
-                                    <path
-                                      d="M1 6L5.5 10.5L15 1"
-                                      stroke="white"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    />
-                                  </svg>
-                                ) : (
-                                  <span
-                                    className={`
+														>
+															{isCompleted ? (
+																<svg
+																	width="16"
+																	height="12"
+																	viewBox="0 0 16 12"
+																	fill="none"
+																>
+																	<path
+																		d="M1 6L5.5 10.5L15 1"
+																		stroke="white"
+																		strokeWidth="2"
+																		strokeLinecap="round"
+																		strokeLinejoin="round"
+																	/>
+																</svg>
+															) : (
+																<span
+																	className={`
                                       font-semibold text-sm
                                       ${isActive ? "text-white" : isPending ? "text-[#94A3B8]" : "text-[#475569]"}
                                     `}
-                                  >
-                                    {phase.number ?? ''}
-                                  </span>
-                                )}
-                              </div>
-                            </button>
+																>
+																	{phase.number ?? ""}
+																</span>
+															)}
+														</div>
+													</button>
 
-                            <button
-                              onClick={() => phase.number !== null && confirmDelete(phase.number)}
-                              className="absolute -top-2 -right-8 p-1 opacity-0 group-hover:opacity-100 hover:bg-[#FEE2E2] rounded transition-all"
-                              title="Delete phase"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
-                              </svg>
-                            </button>
-                          </div>
-                          {/* Phase Labels */}
-                          <div className="mt-3 text-center">
-                            <div
-                              className={`
-                                text-xs font-semibold tracking-wide whitespace-nowrap
+													<button
+														onClick={() =>
+															phase.number !== null &&
+															confirmDelete(phase.number)
+														}
+														className="absolute -top-2 -right-8 p-1 opacity-0 group-hover:opacity-100 hover:bg-[#FEE2E2] rounded transition-all"
+														title="Delete phase"
+													>
+														<svg
+															width="14"
+															height="14"
+															viewBox="0 0 14 14"
+															fill="none"
+														>
+															<path
+																d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5"
+																stroke="#94A3B8"
+																strokeWidth="1.5"
+																strokeLinecap="round"
+															/>
+														</svg>
+													</button>
+												</div>
+												{/* Phase Labels */}
+												<div className="mt-3 text-center">
+													<div
+														className={`
+                                text-xs font-semibold tracking-wide
+                                max-w-[80px] truncate
                                 ${isActive ? "text-[#4F46E5]" : isPending ? "text-[#94A3B8]" : "text-[#475569]"}
                               `}
-                            >
-                              {phase.name}
-                            </div>
-                            {phase.creation_date && phase.end_date && (
-                              <div className="text-[9px] text-[#94A3B8] mt-0.5 whitespace-nowrap">
-                                {phase.creation_date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {phase.end_date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+														title={phase.name}
+													>
+														{phase.name}
+													</div>
+													{phase.creation_date && phase.end_date && (
+														<div className="text-[9px] text-[#94A3B8] mt-0.5 whitespace-nowrap">
+															{phase.creation_date.toLocaleDateString("en-US", {
+																month: "short",
+																day: "numeric",
+															})}{" "}
+															–{" "}
+															{phase.end_date.toLocaleDateString("en-US", {
+																month: "short",
+																day: "numeric",
+															})}
+														</div>
+													)}
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							</div>
 
-                {/* Connecting Line */}
-                <div className="z-0 absolute left-[calc(8%+20px)] right-[calc(8%+20px)] top-1/2 h-0.5 bg-[#E2E8F0] -translate-y-1/2 pointer-events-none" />
-              </>
-            )}
-          </div>
-        </div>
+							{/* Connecting Line */}
+							<div className="z-0 absolute left-[calc(8%+20px)] right-[calc(8%+20px)] top-1/2 h-0.5 bg-[#E2E8F0] -translate-y-1/2 pointer-events-none" />
+						</>
+					)}
+				</div>
+			</div>
 
-        {/* Add Phase Modal */}
-        <AddPhase
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={handleAddPhase}
-        />
+			{/* Add Phase Modal */}
+			<AddPhase
+				isOpen={isModalOpen}
+				onClose={() => setIsModalOpen(false)}
+				onSubmit={handleAddPhase}
+			/>
 
-        {/* Delete Confirmation Modal */}
-        <DeletePhase
-          isOpen={isDeleteConfirmOpen}
-          phaseLabel={phaseToDelete !== null ? `Phase ${phaseToDelete}` : undefined}
-          onConfirm={handleDeletePhase}
-          onCancel={closeDeleteModal}
-        />
-      </>
-    );
-  }
-);
+			{/* Delete Confirmation Modal */}
+			<DeletePhase
+				isOpen={isDeleteConfirmOpen}
+				phaseLabel={
+					phaseToDelete !== null ? `Phase ${phaseToDelete}` : undefined
+				}
+				onConfirm={handleDeletePhase}
+				onCancel={closeDeleteModal}
+			/>
+		</>
+	);
+});
 
-PhaseStepper.displayName = 'PhaseStepper';
+PhaseStepper.displayName = "PhaseStepper";

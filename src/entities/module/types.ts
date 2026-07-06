@@ -5,5 +5,5 @@ export const moduleInclude = {} as const;
 
 /** Full module payload returned by module queries. */
 export type ModulePayload = Prisma.ModulesGetPayload<{
-  include: typeof moduleInclude;
+	include: typeof moduleInclude;
 }>;

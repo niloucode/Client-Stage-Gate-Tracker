@@ -1,6 +1,7 @@
 "use client";
 
-import { use, useState, useRef } from "react";
+import { use, useState, useRef, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	PhaseStepper,
 	ActivePhaseDetails,
@@ -16,11 +17,57 @@ interface PageParams {
 	stageId: string;
 }
 
-function EditorContent({ projectId, stageId }: { projectId: string; stageId: string }) {
+function EditorContent({
+	projectId,
+	stageId,
+}: {
+	projectId: string;
+	stageId: string;
+}) {
+	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { data: stageTree, isLoading, error } = useStageTree(stageId);
-	const phases = (stageTree?.phases ?? []) as Phase[];
-	const [activePhase, setActivePhase] = useState<number | null>(null);
+	const phases = (stageTree?.phases ?? []) as unknown as Phase[];
+
+	// Restore phase: sessionStorage → URL param → null
+	const initialPhase = (() => {
+		const stored =
+			typeof window !== "undefined"
+				? sessionStorage.getItem("stageEditorPhase")
+				: null;
+		if (stored) return Number(stored);
+		const param = searchParams.get("phase");
+		return param ? Number(param) : null;
+	})();
+	const [activePhase, setActivePhaseState] = useState<number | null>(
+		initialPhase,
+	);
 	const stepperRef = useRef<{ openCreateModal: () => void } | null>(null);
+
+	// Wrap setActivePhase: state + sessionStorage + URL (no effect loop)
+	const setActivePhase = useCallback(
+		(phase: number | null) => {
+			setActivePhaseState(phase);
+			if (typeof window !== "undefined") {
+				if (phase !== null) {
+					sessionStorage.setItem("stageEditorPhase", String(phase));
+				} else {
+					sessionStorage.removeItem("stageEditorPhase");
+				}
+			}
+			const params = new URLSearchParams(searchParams.toString());
+			if (phase !== null) {
+				params.set("phase", String(phase));
+			} else {
+				params.delete("phase");
+			}
+			const newUrl = params.toString()
+				? `?${params.toString()}`
+				: window.location.pathname;
+			router.replace(newUrl, { scroll: false });
+		},
+		[router, searchParams],
+	);
 
 	if (isLoading) {
 		return (
@@ -45,15 +92,24 @@ function EditorContent({ projectId, stageId }: { projectId: string; stageId: str
 				<div className="max-w-[1400px] mx-auto p-8">
 					<div className="flex justify-between items-end pb-6 mb-6 border-b border-[#E2E8F0]">
 						<div>
-							<h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">Structure Editor</h1>
-							<p className="text-sm text-[#64748B] mt-1">Define project phases, modules, and workflows.</p>
+							<h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
+								Structure Editor
+							</h1>
+							<p className="text-sm text-[#64748B] mt-1">
+								Define project phases, modules, and workflows.
+							</p>
 						</div>
 						<button
 							onClick={() => stepperRef.current?.openCreateModal()}
 							className="flex items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 						>
 							<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-								<path d="M7 1V13M1 7H13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+								<path
+									d="M7 1V13M1 7H13"
+									stroke="white"
+									strokeWidth="1.5"
+									strokeLinecap="round"
+								/>
 							</svg>
 							<span className="font-semibold text-sm">Add Phase</span>
 						</button>
@@ -85,7 +141,11 @@ function EditorContent({ projectId, stageId }: { projectId: string; stageId: str
 	);
 }
 
-export default function EditorPage({ params }: { params: Promise<PageParams> }) {
+export default function EditorPage({
+	params,
+}: {
+	params: Promise<PageParams>;
+}) {
 	const { projectId, stageId } = use(params);
 	return <EditorContent projectId={projectId} stageId={stageId} />;
 }

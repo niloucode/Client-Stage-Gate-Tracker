@@ -93,7 +93,7 @@ export function ClientSignupForm() {
 					is_deleted: user.is_deleted,
 					deleted_at: user.deleted_at,
 				},
-				emailRedirectTo: "http://localhost:3000/signup-callback",
+				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
 			},
 		});
 
@@ -204,7 +204,7 @@ export function ClientSignupForm() {
 			type: "signup",
 			email: fields.email,
 			options: {
-				emailRedirectTo: "http://localhost:3000/signup-callback",
+				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
 			},
 		});
 		setResendLoading(false);

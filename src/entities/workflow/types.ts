@@ -5,5 +5,5 @@ export const workflowInclude = {} as const;
 
 /** Full workflow payload returned by workflow queries. */
 export type WorkflowPayload = Prisma.WorkflowsGetPayload<{
-  include: typeof workflowInclude;
+	include: typeof workflowInclude;
 }>;

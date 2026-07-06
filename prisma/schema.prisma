@@ -622,6 +622,7 @@ model Modules {
   phase_id      String      @db.Uuid
   is_deleted    Boolean     @default(false)
   deleted_at    DateTime?   @db.Timestamptz(6)
+  deadline_date DateTime?   @db.Timestamptz(6)
   Phases        Phases      @relation(fields: [phase_id], references: [phase_id], onDelete: NoAction, onUpdate: NoAction)
   Workflows     Workflows[]
 
@@ -650,6 +651,7 @@ model Phases {
   is_deleted    Boolean   @default(false)
   deleted_at    DateTime? @db.Timestamptz(6)
   description   String?
+  deadline_date DateTime? @db.Timestamptz(6)
   Modules       Modules[]
   Stages        Stages    @relation(fields: [stage_id], references: [stage_id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -666,6 +668,7 @@ model Projects {
   deleted_at      DateTime?         @db.Timestamptz(6)
   name            String
   description     String?
+  deadline_date   DateTime?         @db.Timestamptz(6)
   Contracts       Contracts?
   Gates           Gates[]
   RoleAssignments RoleAssignments[]
@@ -719,6 +722,7 @@ model Stages {
   is_deleted    Boolean   @default(false)
   deleted_at    DateTime? @db.Timestamptz(6)
   description   String?
+  deadline_date DateTime? @db.Timestamptz(6)
   Phases        Phases[]
   Projects      Projects  @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -768,7 +772,7 @@ model Tickets {
   assignment_date DateTime         @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   creation_date   DateTime         @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   end_date        DateTime?        @db.Timestamptz(6)
-  deadline_date   DateTime         @db.Timestamptz(6)
+  deadline_date   DateTime?        @db.Timestamptz(6)
   name            String
   description     String?
   status          status           @default(PENDING)
@@ -797,9 +801,12 @@ model Workflows {
   module_id     String    @db.Uuid
   is_deleted    Boolean   @default(false)
   deleted_at    DateTime? @db.Timestamptz(6)
+  number        Int?
+  deadline_date DateTime? @db.Timestamptz(6)
   Tickets       Tickets[]
   Modules       Modules   @relation(fields: [module_id], references: [module_id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([number, module_id], map: "unique_workflow_number_module")
   @@schema("public")
 }
 
@@ -907,10 +914,10 @@ enum action {
   UPDATED_STATUS
   RENAMED
   COMMENT_ADDED
+  WATCHER_CHANGED
   ASSIGNED
   UNASSIGNED
   DELETE
-  WATCHER_CHANGED
 
   @@schema("public")
 }

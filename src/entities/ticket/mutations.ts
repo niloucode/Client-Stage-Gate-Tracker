@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ticketKeys, historyKeys } from "@/shared/query/keys";
+import { ticketKeys, historyKeys, stageKeys } from "@/shared/query/keys";
 import {
 	createTicket,
 	updateTicket,
@@ -57,6 +57,7 @@ export function useUpdateTicketStatus() {
 		}) => updateTicketStatus(ticketId, status, performed_by),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
+			queryClient.invalidateQueries({ queryKey: stageKeys.all });
 			if (variables.performed_by) {
 				queryClient.invalidateQueries({
 					queryKey: historyKeys.list(variables.ticketId),

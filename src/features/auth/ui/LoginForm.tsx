@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -21,13 +22,19 @@ import { profileKeys } from "@/shared/query/keys";
 
 /** Renders the login form — email, password, submit, and signup links. */
 export function LoginForm() {
+	const router = useRouter();
 	const queryClient = useQueryClient();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+	const [loading, setLoading] = useState(false);
 	const supabase = createClient();
 	useAuth();
+
+	function fieldErrClass(key: string) {
+		return fieldErrors[key] ? "border-red-400 focus:ring-red-400" : "";
+	}
 
 	const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -45,6 +52,8 @@ export function LoginForm() {
 			return;
 		}
 
+		setLoading(true);
+
 		const { error: supabaseError } = await supabase.auth.signInWithPassword({
 			email,
 			password,
@@ -52,10 +61,12 @@ export function LoginForm() {
 
 		if (supabaseError) {
 			setError(supabaseError.message);
+			setLoading(false);
 			return;
 		}
 
 		queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
+		router.refresh();
 	};
 
 	return (
@@ -83,6 +94,7 @@ export function LoginForm() {
 						type="email"
 						placeholder="name@company.com"
 						onChange={(e) => setEmail(e.target.value)}
+						className={fieldErrClass("email")}
 					/>
 					{fieldErrors.email && (
 						<p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
@@ -106,6 +118,7 @@ export function LoginForm() {
 						id="password"
 						placeholder="Enter your password"
 						onChange={(e) => setPassword(e.target.value)}
+						className={fieldErrClass("password")}
 					/>
 					{fieldErrors.password && (
 						<p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
@@ -121,7 +134,9 @@ export function LoginForm() {
 					</p>
 				)}
 
-				<Button type="submit">Sign In</Button>
+				<Button type="submit" disabled={loading}>
+					{loading ? "Signing in…" : "Sign In"}
+				</Button>
 			</form>
 
 			<p className="mt-4 text-xs text-gray-400 text-center leading-relaxed">

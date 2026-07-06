@@ -174,6 +174,7 @@ name          String
 description   String?
 creation_date DateTime      @default(now() AT UTC)
 end_date      DateTime?
+deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
 ```
@@ -188,6 +189,7 @@ description   String?
 project_id    UUID → Projects
 creation_date DateTime
 end_date      DateTime?
+deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
 ```
@@ -202,6 +204,7 @@ description   String?
 stage_id      UUID → Stages
 creation_date DateTime
 end_date      DateTime?
+deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
 ```
@@ -214,6 +217,7 @@ name          String
 phase_id      UUID → Phases
 creation_date DateTime
 end_date      DateTime?
+deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
 ```
@@ -224,12 +228,16 @@ deleted_at    DateTime?
 workflow_id   UUID PK
 name          String
 is_approved   Boolean   @default(false)
+number        Int?                       @@unique([number, module_id]) — nullable; set to null on soft-delete to release the slot
 module_id     UUID → Modules
 creation_date DateTime
 end_date      DateTime?
+deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
 ```
+
+> **Note**: `Workflows.number` is used for drag-and-drop reordering within a module. It is auto-assigned on creation (`createWorkflow()`) and swapped via `swapWorkflowOrder()`. It is set to `null` on soft-delete. The `getStageTree` query orders workflows by `number` (nulls last) with `creation_date` as fallback.
 
 ### `Tickets`
 
@@ -244,8 +252,8 @@ api_route       String?                       (optional API endpoint path)
 api_method      ApiMethod?                    (GET | POST | PUT | DELETE)
 assignment_date DateTime
 creation_date   DateTime
-end_date        DateTime?
-deadline_date   DateTime
+end_date        DateTime?                     (set to now() when status → FINISHED; null otherwise)
+deadline_date   DateTime?
 ```
 
 ---
@@ -538,11 +546,42 @@ The permissions matrix references features with no corresponding tables yet:
 ### ticketActions.ts — diff-ing + history writes
 - `updateTicket()` uses a diff-ing approach: fetches existing `name`, `status`, `watcher_id`, `TicketAssigned`, and `TicketTags`, computes `toAdd` / `toRemove` for assignees, tags, and watcher, and applies only the needed creates and deletes. The original `assigned_date` is preserved for unchanged entries.
 - After the update, `updateTicket()` writes `HistoryEvent` rows for every changed field: RENAMED, FINISHED / UPDATED_STATUS, ASSIGNED, UNASSIGNED, and WATCHER_CHANGED.
-- `updateTicketStatus()` (drag-and-drop) is wrapped in `prisma.$transaction` so the ticket status change and HistoryEvent write are atomic — if either fails, both roll back.
+- `updateTicketStatus()` (drag-and-drop) is wrapped in `prisma.$transaction` so the ticket status change and HistoryEvent write are atomic — if either fails, both roll back. Sets `end_date: new Date()` when status → FINISHED, and `null` otherwise.
 - `createTicket()`, `cascadeSoftDeleteTicket()`, and `createCommentWithImages()` each write their respective HistoryEvent rows (CREATED, DELETE, COMMENT_ADDED) alongside their primary mutation.
 
+### `deadline_date` column
+All hierarchy models (Projects, Stages, Phases, Modules, Workflows, and Tickets) now include a `deadline_date DateTime?` column. This is an **editable user-set deadline** — distinct from:
+- `creation_date`: auto-set on create, never edited (Date Created in the UI)
+- `end_date`: **computed** by `getStageTree()`, not editable in the UI. Represents the date the last ticket under that entity was finished (see below).
+
+The Zod schemas (`phaseCreateSchema`, `moduleCreateSchema`, `workflowCreateSchema`) all include `deadline_date: z.date().optional().nullable()`. All server actions (`createPhase`, `updatePhase`, `createModule`, `updateModule`, `createWorkflow`, `updateWorkflow`) accept and persist `deadlineDate`.
+
+### `getStageTree()` — computed `end_date` + ticket progress
+`getStageTree()` in `stageActions.ts` is the single source of truth for the stage editor's nested data. It performs **4 batched queries** (stage → phases → modules → workflows) plus a **5th query** for tickets, then assembles everything in-memory:
+
+1. Fetches all non-deleted tickets for the stage's workflows
+2. Groups tickets by `workflow_id`
+3. Per workflow: computes `ticketCount`, `progress` (finished/total × 100), and `end_date`
+
+**End date rule**: A workflow's computed `end_date` is set **only when ALL its tickets are FINISHED** (`finished === total > 0`). If any ticket is not finished, `end_date` is `null` → renders as "Unfinished" in the UI. When all are finished, `end_date` = max `end_date` of the finished tickets.
+
+This rule **propagates upward**:
+- **Module end_date**: only set when ALL its workflows are finished (all have non-null end_date); otherwise null.
+- **Phase end_date**: only set when ALL its modules are finished; otherwise null.
+
+Adding a new unfinished workflow/module to an already-finished parent immediately resets the parent's end_date to null.
+
+**Progress bars** in the WorkflowsList UI show:
+- Gray bar with "- %" when `ticketCount === 0`
+- Indigo bar with `{progress}%` when tickets exist
+
+### Workflow DnD ordering
+Workflows have a `number Int?` column with a composite unique constraint `@@unique([number, module_id])`. On creation, `createWorkflow()` auto-assigns `number = count + 1`. Drag-and-drop in the WorkflowsList calls `swapWorkflowOrder()` — a transactional swap of the `number` fields between the dragged and dropped workflows. The mutation (`useSwapWorkflowOrder`) invalidates `stageKeys.tree(stageId)` on success.
+
+`getStageTree()` orders workflows by `[{ number: { sort: 'asc', nulls: 'last' } }, { creation_date: 'asc' }]` — numbered workflows sort first, existing unnumbered ones fall back to creation order. Phases use the same pattern via `swapPhaseOrder()`.
+
 ### Profiles soft-delete (not yet implemented)
-- Behavior documented in Section 7. Currently `Profiles` has `is_deleted` and `deleted_at` columns but no soft-delete workflow is built.
+- Behavior documented in Section 7. Currently `Profiles` has `is_deleted` and `deleted_at` columns but no soft-delete workflow is built. Because of this, profile queries (e.g. `getProfileByEmail` in `profileActions.ts`) do not filter on `is_deleted` — all profiles are assumed active. If soft-delete is implemented later, all profile lookups must add `where: { is_deleted: false }` and the duplicate-email check in `ClientSignupForm` + `StaffSignupForm` must account for soft-deleted users who should be able to re-register.
 
 ### Legacy naming artifacts
 - `Profiles` PK constraint map name is `"Users_pkey"` — the table was renamed from `Users` to `Profiles` at some point.
@@ -567,6 +606,7 @@ The permissions matrix references features with no corresponding tables yet:
 | `Gates` | `(project_id, number)` | `@@unique` |
 | `Stages` | `(project_id, number)` | `@@unique` |
 | `Phases` | `(stage_id, number)` | `@@unique` |
+| `Workflows` | `(number, module_id)` | `@@unique` |
 | `GateSignatures` | `gate_id` | `@@id` (single-column PK, one per gate) |
 | `RoleAssignments` | `(role_id, user_id, project_id)` | `@@id` (composite PK) |
 | `RolePermissions` | `(role_id, permission_id)` | `@@id` (composite PK) |
@@ -577,7 +617,7 @@ The permissions matrix references features with no corresponding tables yet:
 
 ## 13. Frontend Architecture
 
-> **⚠️ Branch note**: Sections 13–16 describe features from the `stage-editor` branch that are not yet merged into `main`. The current `src/` may not contain `stage-editor/`, `getStageTree()`, or the SignupForm dropdown described here. Treat as reference for upcoming work.
+> **Note**: The stage-editor feature is fully implemented and merged. Sections 13–16 describe the current production state.
 
 ### FSD Layer Structure
 
@@ -638,6 +678,8 @@ Server action (createTicket / updateTicket / updateTicketStatus / cascadeSoftDel
 
 The log collapses to the first 4 entries with a "Show all N entries" toggle. Status values (`PENDING` / `IN_PROGRESS` / `FINISHED`) render as lowercase colored badges matching the board columns (gray / blue / green). Performer names are rendered in `text-indigo-700 font-semibold` and target names (assignees, watcher targets) in `text-teal-600 font-medium`.
 
+**Cross-invalidation with stage-editor**: `useUpdateTicketStatus` invalidates `stageKeys.all` on success, so navigating back to the stage editor after a ticket status change shows fresh progress bars and computed end dates.
+
 ### Zod Schemas
 
 All create/update inputs are validated via Zod schemas in `shared/schemas/`. Schemas use **snake_case** field names matching the database columns. UI types in `features/stage-editor/types.ts` also use snake_case for DB-originating fields (`phase_id`, `start_date`, `creation_date`), with only computed UI fields (`ticketCount`, `progress`) in camelCase.
@@ -648,20 +690,20 @@ All create/update inputs are validated via Zod schemas in `shared/schemas/`. Sch
 
 ### Route
 
-`/projects/[projectId]/stages/[stageId]` — renders the stage structure editor.
+`/projects/[projectId]/stages/[stageId]?phase=N` — renders the stage structure editor. The `?phase=N` URL param persists the selected phase across navigation (supplemented by `sessionStorage` for round-trip persistence from ticket-board → back).
 
 ### Feature Slice
 
-`features/stage-editor/` — Components manage Phases → Modules → Workflows within a single Stage.
+`features/stage-editor/` — Components manage Phases → Modules → Workflows within a single Stage. All state flows through `useStageTree()` → `getStageTree()`.
 
 ### Component Tree
 
 ```
 Page (useStageTree → phases)
-  ├── PhaseStepper    ← phase list, add/delete/drag-reorder
-  ├── ActivePhaseDetails ← edit name/description/dates (buffered, explicit Save)
-  └── ModulesCard     ← module list, add/edit/delete, expand to workflows
-       └── WorkflowsList ← workflow list, add/edit/delete/drag
+  ├── PhaseStepper    ← phase dots, drag-reorder, create/delete
+  ├── ActivePhaseDetails ← edit name/description/deadline (buffered, explicit Save)
+  └── ModulesCard     ← module list, create/edit/delete, expand to workflows
+       └── WorkflowsList ← workflow list, create/edit/delete/drag, progress bars
 ```
 
 ### Server Action Wiring
@@ -671,30 +713,51 @@ Page (useStageTree → phases)
 | PhaseStepper | `useCreatePhase` | — | `useDeletePhase` | `useSwapPhaseOrder` |
 | ActivePhaseDetails | — | `useUpdatePhase` | `useDeletePhase` | — |
 | ModulesCard | `useCreateModule` | `useUpdateModule` | `useDeleteModule` | — |
-| WorkflowsList | `useCreateWorkflow` | `useUpdateWorkflow` | `useDeleteWorkflow` | visual-only |
+| WorkflowsList | `useCreateWorkflow` | `useUpdateWorkflow` | `useDeleteWorkflow` | `useSwapWorkflowOrder` |
 
-### Date Validation
+All mutations invalidate `stageKeys.tree(stageId)` on success.
 
-All phase/module/workflow date fields enforce a **1-day minimum gap**: when a user changes a start date and it conflicts with the end date, the end date auto-advances to start + 1 day. When an end date is moved before start, start auto-pulls back to end − 1 day. Applied in:
-- `ActivePhaseDetails` (inline editing)
-- `AddModule` / `EditModule` modals
-- `AddWorkflow` / `EditWorkflow` modals
+### Datetime fields
 
-### Navigation
+Every entity has three datetime concepts displayed in the UI:
 
-- Workflow names in `WorkflowsList` are clickable `<Link>` elements navigating to `/projects/[projectId]/workflows/[workflowId]`
-- The `TicketBoard` header on workflow pages shows the workflow name as a clickable link back to `/projects/[projectId]/stages/[stageId]`
+| Field | DB column | Editable | Description |
+|---|---|---|---|
+| Date Created | `creation_date` | No | Auto-set on creation. Displayed as `"Jan 15, 2025, 2:30 PM"`. |
+| Deadline Date | `deadline_date` | Yes | User-set via `datetime-local` input in modals and ActivePhaseDetails. Nullable. |
+| End Date | `end_date` (computed) | No | Computed by `getStageTree()` — the date the last ticket was finished (only when ALL sub-tickets are finished). Renders as "Unfinished" if null. |
 
-### `getStageTree()`
+### `getStageTree()` data flow
 
-Resides in `entities/stage/stageActions.ts`. Fetches the full hierarchy in 4 batched queries:
+1. Fetches stage → phases → modules → workflows (4 queries, ordered)
+2. Fetches all non-deleted tickets for those workflows (5th query)
+3. Groups tickets by workflow, computes per-workflow: `ticketCount`, `progress` (finished/total %), `end_date` (only when all tickets finished)
+4. Assembles nested tree, propagating `end_date` upward (workflow → module → phase) using the "all finished" rule
 
-1. `stages.findUnique` (the stage)
-2. `phases.findMany` (all phases for the stage)
-3. `modules.findMany` (all modules for those phases, via `{ in: phaseIds }`)
-4. `workflows.findMany` (all workflows for those modules, via `{ in: moduleIds }`)
+### Modals — validation UI
 
-Results are assembled into a nested object: `{ ...stage, phases: [{ ...phase, modules: [{ ...module, workflows: [...] }] }] }`.
+All 7 modals (Add/Edit/Delete for Phase, Module, Workflow + standalone DeletePhase/DeleteWorkflow) use:
+- **`<Label required error={...}>`** from `shared/ui/label.tsx` — red asterisk on error
+- **Red border** (`border-red-400`) on invalid inputs
+- **Character counter** (`{n}/20` for phases, `{n}/35` for modules/workflows) with `maxLength` on inputs
+- **Zod validation** via `phaseCreateSchema` / `moduleCreateSchema` / `workflowCreateSchema` before save
+- **Inline error messages** via `fieldErrors` state
+
+### Phase visualization
+
+- Phase dots in PhaseStepper: numbered circles with active/completed/pending states
+- Phase names truncated at ~10 chars via `max-w-[80px] truncate` with `title` tooltip
+- Drag-and-drop swaps `number` fields via `swapPhaseOrder()` (Prisma transaction)
+- Selected phase persisted in `sessionStorage` ("stageEditorPhase") and URL `?phase=N` param
+- Delete X button on hover triggers `DeletePhase` confirmation modal
+
+### Progress bars
+
+WorkflowsList renders per-workflow:
+- **Ticket count**: `{N} Tickets` with star icon
+- **Progress bar**: indigo bar with `{progress}%` when tickets exist; gray bar with `- %` when `ticketCount === 0`
+- **Date badge**: `creation_date – end_date (or "Unfinished")` — compact interval view
+- **Deadline**: shown under workflow title as `Deadline: {datetime}` or `——` if null
 
 ---
 
@@ -710,9 +773,23 @@ Styling matches the shared `Input` component (`px-3.5 py-2.5 rounded-lg border b
 
 ---
 
-## 16. updatePhase() — Description Parameter
+## 16. Server Action Signatures (Phase / Module / Workflow)
 
-The `updatePhase()` server action in `entities/phase/phaseActions.ts` now accepts an optional `description` parameter (4th argument):
+All create and update server actions now accept `deadlineDate?: Date | null`.
+
+### `createPhase()`
+
+```typescript
+export async function createPhase(
+    stageId: string,
+    phaseName: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null
+)
+```
+
+### `updatePhase()`
 
 ```typescript
 export async function updatePhase(
@@ -720,8 +797,59 @@ export async function updatePhase(
     phaseName?: string,
     description?: string | null,
     startDate?: Date | null,
-    endDate?: Date | null
+    endDate?: Date | null,
+    deadlineDate?: Date | null
 )
 ```
 
-Previously missing, this aligns the function with the `Phases.description` column in the schema and the `phaseUpdateSchema` Zod schema.
+### `createModule()`
+
+```typescript
+export async function createModule(
+    phaseId: string,
+    moduleName: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null
+)
+```
+
+### `updateModule()`
+
+```typescript
+export async function updateModule(
+    moduleId: string,
+    moduleName?: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null
+)
+```
+
+### `createWorkflow()`
+
+```typescript
+export async function createWorkflow(
+    moduleId: string,
+    workflowName: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null,
+    isApproved?: boolean
+)
+```
+
+### `updateWorkflow()`
+
+```typescript
+export async function updateWorkflow(
+    workflowId: string,
+    workflowName?: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    isApproved?: boolean,
+    deadlineDate?: Date | null
+)
+```
+
+All signatures pass through to their respective TanStack mutations, which forward `params.deadline_date` from the Zod-validated form data.

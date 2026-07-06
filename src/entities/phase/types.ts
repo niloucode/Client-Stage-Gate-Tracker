@@ -5,5 +5,5 @@ export const phaseInclude = {} as const;
 
 /** Full phase payload returned by phase queries. */
 export type PhasePayload = Prisma.PhasesGetPayload<{
-  include: typeof phaseInclude;
+	include: typeof phaseInclude;
 }>;
