@@ -1,7 +1,16 @@
-export default function ModulePage({
-  params,
-}: {
-  params: { projectId: string; phaseId: string; moduleId: string };
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+
+export default async function ModulePage({ params }: {
+  params: Promise<{ projectId: string; moduleId: string }>;
 }) {
-  return <div>Module {params.moduleId}</div>;
+  const { projectId, moduleId } = await params;
+
+  const mod = await prisma.modules.findUnique({
+    where: { module_id: moduleId, is_deleted: false },
+    select: { module_id: true },
+  });
+  if (!mod) notFound();
+
+  return <div>Module {moduleId}</div>;
 }

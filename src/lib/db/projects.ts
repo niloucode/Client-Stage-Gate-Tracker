@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
 export async function getProjects() {
-  return prisma.project.findMany();
+  return prisma.projects.findMany();
 }

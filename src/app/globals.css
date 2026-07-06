@@ -22,5 +22,35 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-hanken-grotesk), system-ui, sans-serif;
+  font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
 }
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Drag and drop styles */
+.drag-over {
+  border-color: #4F46E5 !important;
+  background-color: rgba(79, 70, 229, 0.05) !important;
+  border-radius: 0.75rem;
+  transform: scale(1.02);
+}
+
+/* Drag and drop styles for workflows */
+.drag-over-workflow {
+  border-left: 2px solid #4F46E5 !important;
+  background-color: rgba(79, 70, 229, 0.05) !important;
+}
+
+/* Make draggable items show cursor */
+[ draggable="true"] {
+  cursor: grab;
+}
+
+[ draggable="true"]:active {
+  cursor: grabbing;
+}
+
+
+
