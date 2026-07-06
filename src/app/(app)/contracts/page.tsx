@@ -33,14 +33,20 @@ const signatories: Signatory[] = [
 
 const allSigned = signatories.every((s) => s.status === "signed");
 
-export default function ContractPage({
-  params,
-}: {
-  params: { projectId: string };
-}) {
+//UNCOMMENT THIS WHEN GOING BACK TO REGULAR
+// export default function ContractPage({
+//   params,
+// }: {
+//   params: { projectId: string };
+// }) {
+
+export default function ContractPage() {
   const [contract, setContract] = useState<Contract | null>(null)
-  const {projectId} = params
   const searchParams = useSearchParams()
+
+  //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
+  //const {projectId} = params 
+  const projectId = searchParams.get('projectId') ?? ''
   const clientId = contract?.client_id ?? searchParams.get('clientId') ?? ''
 
   const get_contract = async () => {
@@ -52,6 +58,8 @@ export default function ContractPage({
 
   useEffect(() => {
     get_contract()
+    console.log(`Client Id: ${clientId}`)
+    console.log(`Project Id: ${projectId}`)
   }, [projectId])
   
 
