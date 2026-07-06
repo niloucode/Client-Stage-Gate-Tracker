@@ -8,6 +8,17 @@ import { Label } from "@/shared/ui/label";
 import { Button } from "@/shared/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
 import { clientSignupSchema, type ClientSignupInput } from "@/shared/schemas";
+import { createClient } from "@/lib/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { profileKeys } from "@/shared/query/keys";
+import { getProfileByEmail } from "@/entities/profile/profileActions";
+import {
+  clientSelectByNameTin,
+  clientCreate,
+  clientDeleteByID,
+} from "@/entities/client/clientActions";
+import type { ClientType } from "@/shared/schemas";
+import type { ProfileType } from "@/shared/schemas";
 
 type FieldKey = keyof ClientSignupInput;
 type Errors = Partial<Record<FieldKey, string>>;
@@ -29,12 +40,16 @@ const emptyFields: ClientSignupInput = {
 
 export function ClientSignupForm() {
 	const router = useRouter();
+	const supabase = createClient();
+	const queryClient = useQueryClient();
 
 	const [fields, setFields] = useState<ClientSignupInput>(emptyFields);
 
 	const [errors, setErrors] = useState<Errors>({});
 	const [apiError, setApiError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [showResend, setShowResend] = useState(false);
+	const [resendLoading, setResendLoading] = useState(false);
 
 	function set(key: FieldKey) {
 		return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,9 +66,51 @@ export function ClientSignupForm() {
 		};
 	}
 
+	async function userSignUp(
+		user: ProfileType,
+		password: string,
+	): Promise<{ signupError: string | null; data: { user: unknown } | null }> {
+		const { success, data: existingProfile } =
+			await getProfileByEmail(user.email);
+		if (success && existingProfile) {
+			return {
+				signupError: "An account with this email already exists.",
+				data: null,
+			};
+		}
+
+		const res = await supabase.auth.signUp({
+			email: user.email,
+			password,
+			options: {
+				data: {
+					first_name: user.first_name,
+					last_name: user.last_name,
+					job_title: user.job_title,
+					client_id: user.client_id,
+					department_id: user.department_id,
+					phone: user.phone,
+					is_deleted: user.is_deleted,
+					deleted_at: user.deleted_at,
+				},
+				emailRedirectTo: "http://localhost:3000/signup-callback",
+			},
+		});
+
+		if (!res.data.user) {
+			return {
+				signupError: "Account could not be registered, please try again.",
+				data: null,
+			};
+		}
+
+		return { signupError: null, data: res.data };
+	}
+
 	async function handleSubmit(e: React.BaseSyntheticEvent) {
 		e.preventDefault();
 		setApiError(null);
+		setShowResend(false);
 
 		const result = clientSignupSchema.safeParse(fields);
 		if (!result.success) {
@@ -67,20 +124,95 @@ export function ClientSignupForm() {
 		}
 		setErrors({});
 		setLoading(true);
-		try {
-			// TODO: connect to backend
-			// Available fields:
-			//   fields.firstName, fields.lastName, fields.companyName, fields.email, fields.password
-			//   fields.streetNumber, fields.streetName, fields.city, fields.country
-			//   fields.tin, fields.phone
-			//
-			// On API error: call setApiError('Your error message here') and return
-			router.push("/login");
-		} catch {
+
+		// Check if client already exists
+		const existingClient = await clientSelectByNameTin(
+			fields.companyName.trim(),
+			fields.tin.trim(),
+		);
+
+		let client = existingClient ?? null;
+
+		// Create client if not found
+		if (!client) {
+			const address =
+				fields.streetNumber.trim() +
+				" " +
+				fields.streetName.trim() +
+				", " +
+				fields.city.trim() +
+				", " +
+				fields.country.trim();
+
+			const newClient: ClientType = {
+				client_id: "",
+				client_name: fields.companyName.trim(),
+				tin: fields.tin.trim(),
+				billing_address: address,
+				is_deleted: false,
+				deleted_at: null,
+			};
+
+			client = await clientCreate(newClient);
+			if (!client) {
+				setApiError("Unable to save company data.");
+				setLoading(false);
+				return;
+			}
+		}
+
+		// Create profile and sign up
+		const user: ProfileType = {
+			profile_id: "",
+			first_name: fields.firstName.trim(),
+			last_name: fields.lastName.trim(),
+			phone: fields.phone.trim(),
+			image_id: null,
+			client_id: client.client_id,
+			department_id: null,
+			email: fields.email.trim(),
+			job_title: null,
+			is_deleted: false,
+			deleted_at: null,
+		};
+
+		const { data, signupError } = await userSignUp(user, fields.password);
+
+		if (signupError) {
+			setApiError(signupError);
+			if (client && !existingClient) {
+				await clientDeleteByID(client.client_id);
+			}
+			setLoading(false);
+			return;
+		}
+
+		if (data?.user) {
+			queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
+			setShowResend(true);
+			setApiError(null);
+			setLoading(false);
+		} else {
 			setApiError("Something went wrong. Please try again.");
-		} finally {
 			setLoading(false);
 		}
+	}
+
+	async function resendConfirmationEmail() {
+		setResendLoading(true);
+		const { error } = await supabase.auth.resend({
+			type: "signup",
+			email: fields.email,
+			options: {
+				emailRedirectTo: "http://localhost:3000/signup-callback",
+			},
+		});
+		setResendLoading(false);
+		setApiError(
+			error
+				? error.message
+				: "Confirmation email resent. Please check your inbox.",
+		);
 	}
 
 	function errClass(key: FieldKey) {
@@ -380,9 +512,26 @@ export function ClientSignupForm() {
 			</div>
 
 			{apiError && (
-				<p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+				<p
+					className={`text-sm rounded-md px-3 py-2 border ${
+						showResend
+							? "text-green-700 bg-green-50 border-green-200"
+							: "text-red-600 bg-red-50 border-red-200"
+					}`}
+				>
 					{apiError}
 				</p>
+			)}
+
+			{showResend && (
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={resendConfirmationEmail}
+					disabled={resendLoading}
+				>
+					{resendLoading ? "Resending..." : "Resend confirmation email"}
+				</Button>
 			)}
 
 			<Button type="submit" className="mt-2" disabled={loading}>
