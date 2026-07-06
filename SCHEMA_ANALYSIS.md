@@ -238,7 +238,7 @@ ticket_id       UUID PK
 name            String
 description     String?
 status          status    @default(PENDING)   (PENDING | IN_PROGRESS | FINISHED)
-workflow_id     UUID? → Workflows             (nullable — can exist outside a workflow)
+workflow_id     UUID  → Workflows             (required — tickets always belong to a workflow)
 watcher_id      UUID? → Profiles              (single watcher, informational)
 api_route       String?                       (optional API endpoint path)
 api_method      ApiMethod?                    (GET | POST | PUT | DELETE)
@@ -323,14 +323,35 @@ Same polymorphic caveat as Comments — app-level integrity enforcement.
 ```
 history_event_id UUID PK
 action           action        (CREATED | FINISHED | UPDATED_STATUS | RENAMED
-                               | COMMENT_ADDED | ASSIGNED | UNASSIGNED | DELETE)
+                               | COMMENT_ADDED | WATCHER_CHANGED
+                               | ASSIGNED | UNASSIGNED | DELETE)
 performed_by     UUID → Profiles       (who did the action)
 ticket_id        UUID → Tickets        (which ticket)
-target_profile_id UUID? → Profiles     (who was assigned/unassigned/deleted)
+target_profile_id UUID? → Profiles     (who was assigned/unassigned/watcher-targeted; null for other actions)
+details          String?               (optional JSON metadata — see convention table below)
 date_performed   DateTime
 ```
 
-An append-only audit trail for tickets. The `DELETE` action records **who soft-deleted a ticket**. No `is_deleted` column — by design, history is immutable.
+An append-only audit trail for tickets. Every ticket-mutating server action writes a row.
+History is fetched via `selectTicketHistory()` which joins both the performer (via `Profiles_HistoryEvent_performed_byToProfiles`) and the target (via `Profiles`) to populate `performerName` and `targetName` for the UI. The `TicketHistoryLog` component renders these as colored entries — status values as per-column badges, performer names in indigo, target names in teal — and collapses to the first 4 entries with a "Show all" toggle.
+
+| Action | Written by | `details` JSON shape | `target_profile_id` |
+|---|---|---|---|
+| CREATED | `createTicket()` | `{ticket_name}` | null |
+| FINISHED | `updateTicket()` / `updateTicketStatus()` when status → FINISHED | `{from}` (previous status) | null |
+| UPDATED_STATUS | `updateTicket()` / `updateTicketStatus()` for non-FINISHED transitions | `{from, to}` (status strings) | null |
+| RENAMED | `updateTicket()` | `{from, to}` (old/new names) | null |
+| COMMENT_ADDED | `createCommentWithImages()` (TICKET_COMMENT only; inside a `$transaction`) | — | null |
+| WATCHER_CHANGED | `updateTicket()` | `{from, to}` (UUIDs or null) | new watcher UUID (or old watcher if removing) |
+| ASSIGNED | `updateTicket()` | — | assigned profile UUID |
+| UNASSIGNED | `updateTicket()` | — | removed profile UUID |
+| DELETE | `cascadeSoftDeleteTicket()` | `{ticket_name}` | null |
+
+No `is_deleted` column — by design, history is immutable. `details` is an optional `String?` column storing structured JSON that the UI's `formatHistoryMessage()` parses to build human-readable activity sentences. `target_profile_id` is populated for ASSIGNED, UNASSIGNED, and WATCHER_CHANGED — the `selectTicketHistory` join on `Profiles` automatically fills `targetName` when `target_profile_id` is set.
+
+**Transaction safety**: `updateTicketStatus()` wraps the ticket update + history write in a `prisma.$transaction` so both succeed or both roll back. Other writes (in `createTicket`, `cascadeSoftDeleteTicket`, `createCommentWithImages`) follow the same atomic pattern.
+
+**TanStack integration**: All ticket mutations (`useCreateTicket`, `useUpdateTicket`, `useUpdateTicketStatus`, `useDeleteTicket`) invalidate `historyKeys.list(ticketId)` on success for targeted refetch. `useCreateComment` also invalidates `historyKeys.list(parent_id)` when `parent_type === "TICKET_COMMENT"`. The history query fetches via `fetchTicketHistory()` → `selectTicketHistory()` → Zod validation through `ticketHistoryEntrySchema`.
 
 ### `Tags` + `TicketTags`
 
@@ -413,7 +434,7 @@ We do not currently plan to implement soft-delete for profiles, but if/when it i
 | Enum | Values | Used By |
 |---|---|---|
 | `status` | `PENDING`, `IN_PROGRESS`, `FINISHED` | `Tickets.status` |
-| `action` | `CREATED`, `FINISHED`, `UPDATED_STATUS`, `RENAMED`, `COMMENT_ADDED`, `ASSIGNED`, `UNASSIGNED`, `DELETE` | `HistoryEvent.action` |
+| `action` | `CREATED`, `FINISHED`, `UPDATED_STATUS`, `RENAMED`, `COMMENT_ADDED`, `WATCHER_CHANGED`, `ASSIGNED`, `UNASSIGNED`, `DELETE` | `HistoryEvent.action` |
 | `CommentParentType` | `TICKET_COMMENT`, `GATE_COMMENT` | `Comments.parent_type` |
 | `ImageParentType` | `TICKET`, `TICKET_COMMENT`, `GATE_COMMENT`, `PROFILE` | `Images.parent_type` |
 | `ApiMethod` | `GET`, `POST`, `PUT`, `DELETE` | `Tickets.api_method` |
@@ -514,8 +535,11 @@ The permissions matrix references features with no corresponding tables yet:
 ### Contracts: blank-on-creation + 1:1
 - `project_id` and `client_id` are required; `file_path`, signatures, and signed-at timestamps are filled later. `project_id` is unique — one contract per project. Dual signatures: PO signs with `project_owner_signature`/`project_owner_signed_at`, client signs with `client_signature`/`client_signed_at`.
 
-### ticketActions.ts — diff-ing implemented
-- `updateTicket()` uses a diff-ing approach: fetches existing `TicketAssigned` and `TicketTags`, computes `toAdd` / `toRemove`, and applies only the needed creates and deletes. The original `assigned_date` is preserved for unchanged entries.
+### ticketActions.ts — diff-ing + history writes
+- `updateTicket()` uses a diff-ing approach: fetches existing `name`, `status`, `watcher_id`, `TicketAssigned`, and `TicketTags`, computes `toAdd` / `toRemove` for assignees, tags, and watcher, and applies only the needed creates and deletes. The original `assigned_date` is preserved for unchanged entries.
+- After the update, `updateTicket()` writes `HistoryEvent` rows for every changed field: RENAMED, FINISHED / UPDATED_STATUS, ASSIGNED, UNASSIGNED, and WATCHER_CHANGED.
+- `updateTicketStatus()` (drag-and-drop) is wrapped in `prisma.$transaction` so the ticket status change and HistoryEvent write are atomic — if either fails, both roll back.
+- `createTicket()`, `cascadeSoftDeleteTicket()`, and `createCommentWithImages()` each write their respective HistoryEvent rows (CREATED, DELETE, COMMENT_ADDED) alongside their primary mutation.
 
 ### Profiles soft-delete (not yet implemented)
 - Behavior documented in Section 7. Currently `Profiles` has `is_deleted` and `deleted_at` columns but no soft-delete workflow is built.
@@ -590,11 +614,29 @@ User action (form submit) → mutation.mutateAsync(...)
 Query keys follow a hierarchical factory pattern in `shared/query/keys.ts`:
 
 ```typescript
-stageKeys.tree(stageId)  // ["stages", "detail", stageId, "tree"] — full nested tree
-phaseKeys.detail(id)     // ["phases", "detail", id]
-moduleKeys.detail(id)    // ["modules", "detail", id]
-workflowKeys.detail(id)  // ["workflows", "detail", id]
+stageKeys.tree(stageId)    // ["stages", "detail", stageId, "tree"] — full nested tree
+phaseKeys.detail(id)       // ["phases", "detail", id]
+moduleKeys.detail(id)      // ["modules", "detail", id]
+workflowKeys.detail(id)    // ["workflows", "detail", id]
+historyKeys.list(ticketId) // ["ticketHistory", "list", ticketId] — activity log for a ticket
 ```
+
+### Ticket Board Feature
+
+The ticket-board feature (`src/features/ticket-board/`) renders a Kanban board for a workflow's tickets. Each ticket opens a slide-over (`TicketModalEdit`) that includes the **Activity Log** (`TicketHistoryLog`).
+
+**Activity log data flow**:
+```
+Server action (createTicket / updateTicket / updateTicketStatus / cascadeSoftDeleteTicket / createCommentWithImages)
+  → writes HistoryEvent row to DB
+    → TanStack mutation.onSuccess invalidates historyKeys.list(ticketId)
+      → useTicketHistory refetches via fetchTicketHistory()
+        → selectTicketHistory() joins performer + target Profiles
+          → ticketHistoryEntrySchema.parse() validates each row
+            → TicketHistoryLog renders with colored status badges, performer (indigo), target (teal)
+```
+
+The log collapses to the first 4 entries with a "Show all N entries" toggle. Status values (`PENDING` / `IN_PROGRESS` / `FINISHED`) render as lowercase colored badges matching the board columns (gray / blue / green). Performer names are rendered in `text-indigo-700 font-semibold` and target names (assignees, watcher targets) in `text-teal-600 font-medium`.
 
 ### Zod Schemas
 
@@ -658,7 +700,7 @@ Results are assembled into a nested object: `{ ...stage, phases: [{ ...phase, mo
 
 ## 15. Signup Department Dropdown
 
-The `SignupForm` component (`features/auth/ui/SignupForm.tsx`) restricts the Department field to a `<select>` dropdown with three options:
+The `StaffSignupForm` component (`features/auth/ui/StaffSignupForm.tsx`) restricts the Department field to a `<select>` dropdown with three options:
 
 - `Project Team`
 - `Project Owner`

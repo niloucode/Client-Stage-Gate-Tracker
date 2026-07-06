@@ -87,6 +87,18 @@ export async function createCommentWithImages(data: CommentCreateInput) {
             });
         }
 
+        // ── Write HistoryEvent for ticket comments ──────────────────────
+        // Only TICKET_COMMENT maps to a ticket; GATE_COMMENT parent_id is a gate.
+        if (data.parent_type === "TICKET_COMMENT") {
+            await tx.historyEvent.create({
+                data: {
+                    action: "COMMENT_ADDED",
+                    performed_by: data.profile_id,
+                    ticket_id: data.parent_id,
+                },
+            });
+        }
+
         return comment;
     });
 }

@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { CommentParentType, status as status } from "@/lib/generated/prisma";
 import { Input } from "@/shared/ui/input";
 
+import { useAuth } from "@/features/auth";
 import { useProfiles } from "@/entities/profile/queries";
 import { useTicketComments, useTicketImages } from "@/entities/comment/queries";
 import { useCreateComment } from "@/entities/comment/mutations";
@@ -79,6 +80,7 @@ export default function TicketModalEdit({
 
 	// ── TanStack Query ──────────────────────────────────────────────────────
 
+	const { user } = useAuth();
 	const { data: profiles = [] } = useProfiles();
 	const { data: comments = [] } = useTicketComments(ticket?.ticket_id);
 	const { data: ticketImages = [] } = useTicketImages(ticket?.ticket_id);
@@ -195,16 +197,17 @@ export default function TicketModalEdit({
 			workflow_id: ticket.workflow_id,
 			name: ticket.name,
 			deadline_date: ticket.deadline_date,
-			status: ticket.status, // Renamed locally to avoid conflict with the 'status' type name
+			status: ticket.status,
 			watcher_id: ticket.watcher_id,
 			TicketAssigned: ticket.TicketAssigned.map(
 				(assignment) => assignment.profile_id,
 			),
-			tagIds: selectedTags, // Clean string array from frontend tag selector
+			tagIds: selectedTags,
 			description: ticket.description,
 			end_date: ticket.end_date,
 			api_route: apiRoute || null,
 			api_method: apiMethod || null,
+			performed_by: user?.profile_id,
 		});
 		onUpdate(updated as unknown as Ticket);
 		onClose();

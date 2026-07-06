@@ -1,16 +1,19 @@
-"use client";
+/**
+ * Staff signup page — split-panel layout with StaffSignupForm on the left
+ * and the Asceoft brand panel on the right.
+ */
 
 import Image from "next/image";
 import Link from "next/link";
 import { Hanken_Grotesk } from "next/font/google";
-import { LoginForm } from "@/features/auth";
+import { StaffSignupForm } from "@/features/auth";
 
 const hanken = Hanken_Grotesk({
 	subsets: ["latin"],
 	weight: ["400", "500", "600", "700"],
 });
 
-export default function LoginPage() {
+export default function SignupPage() {
 	return (
 		<div className={`${hanken.className} flex min-h-screen w-full`}>
 			{/* ── Left Panel ── */}
@@ -32,14 +35,19 @@ export default function LoginPage() {
 				{/* Form — vertically centred */}
 				<div className="flex flex-col justify-center flex-1">
 					<div className="w-full max-w-[340px] mx-auto">
-						<LoginForm />
+						<div className="mb-7">
+							<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
+								Create your account
+							</h1>
+						</div>
+						<StaffSignupForm />
 					</div>
 				</div>
 
 				{/* Footer */}
 				<div className="text-center mt-6">
 					<p className="text-[11px] text-gray-400 leading-relaxed">
-						By signing in you agree to Asceoft&apos;s{" "}
+						By signing up, you agree to our{" "}
 						<Link
 							href="#"
 							className="underline hover:text-gray-500 transition-colors"

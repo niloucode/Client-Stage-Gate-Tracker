@@ -591,6 +591,7 @@ model HistoryEvent {
   ticket_id                                    String    @db.Uuid
   target_profile_id                            String?   @db.Uuid
   performed_by                                 String    @db.Uuid
+  details                                      String?
   Profiles_HistoryEvent_performed_byToProfiles Profiles  @relation("HistoryEvent_performed_byToProfiles", fields: [performed_by], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
   Profiles                                     Profiles? @relation(fields: [target_profile_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
   Tickets                                      Tickets   @relation(fields: [ticket_id], references: [ticket_id], onDelete: NoAction, onUpdate: NoAction)
@@ -905,6 +906,7 @@ enum action {
   UPDATED_STATUS
   RENAMED
   COMMENT_ADDED
+  WATCHER_CHANGED
   ASSIGNED
   UNASSIGNED
   DELETE

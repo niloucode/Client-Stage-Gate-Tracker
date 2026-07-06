@@ -214,7 +214,7 @@ export async function cascadeSoftDeleteWorkflow(workflowId: string, txClient?: P
         });
 
         for (const ticket of childTickets) {
-            await cascadeSoftDeleteTicket(ticket.ticket_id, tx);
+            await cascadeSoftDeleteTicket(ticket.ticket_id, undefined, tx);
         }
     };
 

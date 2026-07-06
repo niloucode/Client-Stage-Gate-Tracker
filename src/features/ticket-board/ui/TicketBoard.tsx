@@ -44,6 +44,7 @@ type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
 
 // Icons
 import { TagsIcon, PlusIcon } from "@/shared/ui/icons";
+import { useAuth } from "@/features/auth";
 
 // ── Main board ────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export default function TicketBoard({
 	const [tagManagerOpen, setTagManagerOpen] = useState(false);
 
 	const wasDraggingRef = useRef(false);
+	const { user } = useAuth();
 
 	const mouseSensor = useSensor(MouseSensor, {
 		activationConstraint: { distance: 8 },
@@ -136,7 +138,8 @@ export default function TicketBoard({
 				status: TicketStatus.PENDING,
 				TicketAssigned: data.TicketAssigned ?? [],
 				tagIds: data.tagIds ?? [],
-			} as CreateTicketParams);
+			performed_by: user?.profile_id,
+			} as CreateTicketParams & { performed_by?: string });
 			setModalOpen(false);
 		} catch (error) {
 			console.error("Failed to create ticket:", error);
@@ -151,7 +154,7 @@ export default function TicketBoard({
 	 * @returns {Promise<void>} Resolves when state mutation pipelines finish reconciling.
 	 */
 	function handleDeleteTicket(ticketId: string) {
-		deleteTicketMutation.mutate(ticketId);
+		deleteTicketMutation.mutate({ ticketId, performed_by: user?.profile_id });
 	}
 
 	/**
@@ -230,6 +233,7 @@ export default function TicketBoard({
 			updateStatusMutation.mutate({
 				ticketId: active.id as string,
 				status: newStatus,
+				performed_by: user?.profile_id,
 			});
 		}
 

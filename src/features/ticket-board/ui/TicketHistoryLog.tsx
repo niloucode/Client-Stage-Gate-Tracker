@@ -1,102 +1,349 @@
-'use client'
+"use client";
 
-import type { ReactElement } from 'react'
-import { action } from '@/lib/generated/prisma'
-import { useTicketHistory } from '../model/queries'
-import type { TicketHistoryEntry } from '../model/types'
+import { useState, type ReactElement } from "react";
+import { action } from "@/lib/generated/prisma";
+import { useTicketHistory } from "../model/queries";
+import type { TicketHistoryEntry } from "../model/types";
 import {
-  PlusCircleIcon,
-  CheckCircleIcon,
-  StatusChangeIcon,
-  PencilIcon,
-  MessageIcon,
-  UserPlusIcon,
-  UserMinusIcon,
-  TrashIcon,
-} from '@/shared/ui/icons'
+	PlusCircleIcon,
+	CheckCircleIcon,
+	StatusChangeIcon,
+	PencilIcon,
+	MessageIcon,
+	UserPlusIcon,
+	UserMinusIcon,
+	TrashIcon,
+	EyeIcon,
+} from "@/shared/ui/icons";
+
+// ── Icon + colour mapping per action ─────────────────────────────────────────
 
 const ACTION_META: Record<
-  action,
-  { Icon: (props: { className?: string }) => ReactElement; bg: string; text: string }
+	action,
+	{
+		Icon: (props: { className?: string }) => ReactElement;
+		bg: string;
+		text: string;
+	}
 > = {
-  [action.CREATED]: { Icon: PlusCircleIcon, bg: 'bg-green-100', text: 'text-green-600' },
-  [action.UPDATED_STATUS]: { Icon: StatusChangeIcon, bg: 'bg-blue-100', text: 'text-blue-600' },
-  [action.RENAMED]: { Icon: PencilIcon, bg: 'bg-amber-100', text: 'text-amber-600' },
-  [action.COMMENT_ADDED]: { Icon: MessageIcon, bg: 'bg-gray-100', text: 'text-gray-500' },
-  [action.FINISHED]: { Icon: CheckCircleIcon, bg: 'bg-indigo-100', text: 'text-indigo-600' },
-  [action.ASSIGNED]: { Icon: UserPlusIcon, bg: 'bg-teal-100', text: 'text-teal-600' },
-  [action.UNASSIGNED]: { Icon: UserMinusIcon, bg: 'bg-gray-100', text: 'text-gray-500' },
-  [action.DELETE]: { Icon: TrashIcon, bg: 'bg-red-100', text: 'text-red-600' },
+	[action.CREATED]: {
+		Icon: PlusCircleIcon,
+		bg: "bg-green-100",
+		text: "text-green-600",
+	},
+	[action.UPDATED_STATUS]: {
+		Icon: StatusChangeIcon,
+		bg: "bg-blue-100",
+		text: "text-blue-600",
+	},
+	[action.RENAMED]: {
+		Icon: PencilIcon,
+		bg: "bg-amber-100",
+		text: "text-amber-600",
+	},
+	[action.COMMENT_ADDED]: {
+		Icon: MessageIcon,
+		bg: "bg-gray-100",
+		text: "text-gray-500",
+	},
+	[action.WATCHER_CHANGED]: {
+		Icon: EyeIcon,
+		bg: "bg-violet-100",
+		text: "text-violet-600",
+	},
+	[action.FINISHED]: {
+		Icon: CheckCircleIcon,
+		bg: "bg-indigo-100",
+		text: "text-indigo-600",
+	},
+	[action.ASSIGNED]: {
+		Icon: UserPlusIcon,
+		bg: "bg-teal-100",
+		text: "text-teal-600",
+	},
+	[action.UNASSIGNED]: {
+		Icon: UserMinusIcon,
+		bg: "bg-gray-100",
+		text: "text-gray-500",
+	},
+	[action.DELETE]: {
+		Icon: TrashIcon,
+		bg: "bg-red-100",
+		text: "text-red-600",
+	},
+};
+
+// ── Status colour helpers ────────────────────────────────────────────────────
+
+const STATUS_COLORS: Record<string, string> = {
+	PENDING: "text-gray-500",
+	IN_PROGRESS: "text-blue-600",
+	FINISHED: "text-green-600",
+};
+
+function statusLabel(s: string): string {
+	const map: Record<string, string> = {
+		PENDING: "pending",
+		IN_PROGRESS: "in progress",
+		FINISHED: "finished",
+	};
+	return map[s] ?? s.toLowerCase();
+}
+
+function StatusBadge({ status }: { status: string }) {
+	return (
+		<span className={`font-medium ${STATUS_COLORS[status] ?? "text-gray-500"}`}>
+			{statusLabel(status)}
+		</span>
+	);
+}
+
+function TargetName({ name }: { name: string }) {
+	return <span className="text-teal-600 font-medium">{name}</span>;
+}
+
+// ── Sentence builder ─────────────────────────────────────────────────────────
+
+/**
+ * Builds a human-readable JSX sentence from a HistoryEvent row.
+ *
+ * Formats:
+ *   CREATED         → "created the ticket"
+ *   FINISHED        → "marked the ticket as finished"
+ *   UPDATED_STATUS  → "changed status from [pending] to [in progress]"
+ *   RENAMED         → "renamed the ticket from X to Y"
+ *   COMMENT_ADDED   → "added a comment"
+ *   WATCHER_CHANGED → "changed the watcher to [Name]" / "set a watcher to [Name]" / "removed [Name] as watcher"
+ *   ASSIGNED        → "assigned [Juan dela Cruz]"
+ *   UNASSIGNED      → "unassigned [Juan dela Cruz]"
+ *   DELETE          → "deleted the ticket"
+ */
+function formatHistoryMessage(entry: TicketHistoryEntry): React.ReactNode {
+	const a = entry.action;
+	const target = entry.targetName;
+
+	switch (a) {
+		case "CREATED": {
+			if (entry.details) {
+				try {
+					const { ticket_name } = JSON.parse(entry.details);
+					if (ticket_name)
+						return <>created the ticket &ldquo;{ticket_name}&rdquo;</>;
+				} catch {
+					// fall through
+				}
+			}
+			return "created the ticket";
+		}
+		case "FINISHED": {
+			if (entry.details) {
+				try {
+					const { from } = JSON.parse(entry.details);
+					if (from)
+						return (
+							<>
+								marked the ticket as finished (from <StatusBadge status={from} />)
+							</>
+						);
+				} catch {
+					// fall through
+				}
+			}
+			return "marked the ticket as finished";
+		}
+		case "UPDATED_STATUS": {
+			if (entry.details) {
+				try {
+					const { from, to } = JSON.parse(entry.details);
+					return (
+						<>
+							changed status from <StatusBadge status={from} /> to{" "}
+							<StatusBadge status={to} />
+						</>
+					);
+				} catch {
+					// fall through
+				}
+			}
+			return "updated the ticket status";
+		}
+		case "RENAMED": {
+			if (entry.details) {
+				try {
+					const { from, to } = JSON.parse(entry.details);
+					return (
+						<>
+							renamed the ticket from &ldquo;{from}&rdquo; to &ldquo;{to}
+							&rdquo;
+						</>
+					);
+				} catch {
+					// fall through
+				}
+			}
+			return "renamed the ticket";
+		}
+		case "COMMENT_ADDED":
+			return "added a comment";
+		case "WATCHER_CHANGED": {
+			if (entry.details) {
+				try {
+					const { from, to } = JSON.parse(entry.details);
+					if (from && to && target)
+						return (
+							<>
+								changed the watcher to <TargetName name={target} />
+							</>
+						);
+					if (!from && to && target)
+						return (
+							<>
+								set <TargetName name={target} /> as watcher
+							</>
+						);
+					if (from && !to && target)
+						return (
+							<>
+								removed <TargetName name={target} /> as watcher
+							</>
+						);
+					if (from && to) return "changed the watcher";
+					if (!from && to) return "set a watcher";
+					if (from && !to) return "removed the watcher";
+				} catch {
+					// fall through
+				}
+			}
+			return "changed the watcher";
+		}
+		case "ASSIGNED":
+			return target ? (
+				<>
+					assigned <TargetName name={target} />
+				</>
+			) : (
+				"assigned a user"
+			);
+		case "UNASSIGNED":
+			return target ? (
+				<>
+					unassigned <TargetName name={target} />
+				</>
+			) : (
+				"unassigned a user"
+			);
+		case "DELETE": {
+			if (entry.details) {
+				try {
+					const { ticket_name } = JSON.parse(entry.details);
+					if (ticket_name)
+						return <>deleted the ticket &ldquo;{ticket_name}&rdquo;</>;
+				} catch {
+					// fall through
+				}
+			}
+			return "deleted the ticket";
+		}
+		default:
+			return "performed an action";
+	}
 }
 
 /**
- * Formats a past Date as a short relative string ("2 hours ago").
- * Falls back to a calendar date once the gap exceeds a week.
+ * Formats a Date as a short, human-readable datetime string.
+ * Example output: "Jan 15, 2024, 2:30 PM"
  */
-function formatRelativeTime(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
-
-  const thresholds: [number, string][] = [
-    [60, 'second'],
-    [60, 'minute'],
-    [24, 'hour'],
-    [7, 'day'],
-  ]
-
-  let value = seconds
-  for (const [limit, unit] of thresholds) {
-    if (value < limit) {
-      const rounded = Math.max(1, Math.floor(value))
-      return `${rounded} ${unit}${rounded === 1 ? '' : 's'} ago`
-    }
-    value /= limit
-  }
-
-  return date.toLocaleDateString()
+function formatDateTime(date: Date): string {
+	return date.toLocaleString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+		hour12: true,
+	});
 }
+
+// ── Row component ────────────────────────────────────────────────────────────
 
 function HistoryEntryRow({ entry }: { entry: TicketHistoryEntry }) {
-  const { Icon, bg, text } = ACTION_META[entry.action]
+	const { Icon, bg, text } = ACTION_META[entry.action];
 
-  return (
-    <li className="flex gap-2.5">
-      <span className={`flex h-5 w-5 items-center justify-center rounded-full shrink-0 mt-0.5 ${bg}`}>
-        <Icon className={text} />
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-700 leading-snug">
-          <span className="font-medium text-gray-900">{entry.performedByName}</span>{' '}
-          {entry.description}
-        </p>
-        <p
-          className="text-xs text-gray-400 mt-0.5 cursor-default"
-          title={entry.date_performed.toLocaleString()}
-        >
-          {formatRelativeTime(entry.date_performed)}
-        </p>
-      </div>
-    </li>
-  )
+	return (
+		<li className="flex gap-2.5">
+			<span
+				className={`flex h-5 w-5 items-center justify-center rounded-full shrink-0 mt-0.5 ${bg}`}
+			>
+				<Icon className={text} />
+			</span>
+			<div className="flex-1 min-w-0">
+				<p className="text-sm text-gray-700 leading-snug">
+					<span className="font-semibold text-indigo-700">
+						{entry.performerName}
+					</span>{" "}
+					{formatHistoryMessage(entry)}
+				</p>
+				<p
+					className="text-xs text-gray-400 mt-0.5"
+					title={entry.date_performed.toISOString()}
+				>
+					{formatDateTime(entry.date_performed)}
+				</p>
+			</div>
+		</li>
+	);
 }
 
-export default function TicketHistoryLog({ ticketId }: { ticketId: string | undefined }) {
-  const { data: history = [], isLoading } = useTicketHistory(ticketId)
+// ── Main component ───────────────────────────────────────────────────────────
 
-  return (
-    <div className="px-5 py-4 border-b border-gray-100">
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">Activity</h3>
+const INITIAL_VISIBLE = 4;
 
-      {isLoading ? (
-        <p className="text-sm text-gray-400">Loading activity…</p>
-      ) : history.length === 0 ? (
-        <p className="text-sm text-gray-400 italic">No activity yet</p>
-      ) : (
-        <ol className="space-y-3">
-          {history.map((entry) => (
-            <HistoryEntryRow key={entry.history_event_id} entry={entry} />
-          ))}
-        </ol>
-      )}
-    </div>
-  )
+export default function TicketHistoryLog({
+	ticketId,
+}: {
+	ticketId: string | undefined;
+}) {
+	const { data: history = [], isLoading, isError, error } = useTicketHistory(ticketId);
+	const [expanded, setExpanded] = useState(false);
+
+	const visibleEntries = expanded ? history : history.slice(0, INITIAL_VISIBLE);
+	const hasMore = history.length > INITIAL_VISIBLE;
+
+	return (
+		<div className="px-5 py-4 border-b border-gray-100">
+			<h3 className="text-sm font-semibold text-gray-900 mb-3">Activity</h3>
+
+			{isLoading ? (
+				<p className="text-sm text-gray-400">Loading activity…</p>
+			) : isError ? (
+				<p className="text-sm text-red-500">
+					Failed to load activity
+					{error instanceof Error ? `: ${error.message}` : ""}
+				</p>
+			) : history.length === 0 ? (
+				<p className="text-sm text-gray-400 italic">No activity yet</p>
+			) : (
+				<>
+					<ol className="space-y-3">
+						{visibleEntries.map((entry) => (
+							<HistoryEntryRow
+								key={entry.history_event_id}
+								entry={entry}
+							/>
+						))}
+					</ol>
+					{hasMore && (
+						<button
+							onClick={() => setExpanded((v) => !v)}
+							className="mt-3 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+						>
+							{expanded
+								? "Show less"
+								: `Show all ${history.length} entries`}
+						</button>
+					)}
+				</>
+			)}
+		</div>
+	);
 }

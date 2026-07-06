@@ -11,7 +11,7 @@ import { EntityFilterStatus } from "../ticket/ticketActions";
  * Returns a promise that resolves to an array containing all user objects in the database.
  */
 export async function selectProfile() {
-  return prisma.profiles.findMany();
+	return prisma.profiles.findMany();
 }
 
 /**
@@ -29,25 +29,32 @@ export async function selectProfile() {
  * Returns `success: false` and an error message if the user does not exist, does not match
  * the requested status, or the query fails.
  */
-export async function getProfileById(userId: string, status: EntityFilterStatus = 'active') {
-  try {
-    const isDeletedFilter = status === 'active' ? false : status === 'deleted' ? true : undefined;
+export async function getProfileById(
+	userId: string,
+	status: EntityFilterStatus = "active",
+) {
+	try {
+		const isDeletedFilter =
+			status === "active" ? false : status === "deleted" ? true : undefined;
 
-    const userData = await prisma.profiles.findUnique({
-      where: {
-        profile_id: userId,
-        // is_deleted: isDeletedFilter,
-      },
-    });
+		const userData = await prisma.profiles.findUnique({
+			where: {
+				profile_id: userId,
+				// is_deleted: isDeletedFilter,
+			},
+		});
 
-    if (!userData) {
-      return { success: false, error: "User not found or does not match the requested status." };
-    }
-    return { success: true, data: userData };
-  } catch (error) {
-    console.error("Failed to fetch user:", error);
-    return { success: false, error: "Failed to fetch user details." };
-  }
+		if (!userData) {
+			return {
+				success: false,
+				error: "User not found or does not match the requested status.",
+			};
+		}
+		return { success: true, data: userData };
+	} catch (error) {
+		console.error("Failed to fetch user:", error);
+		return { success: false, error: "Failed to fetch user details." };
+	}
 }
 
 /**
@@ -59,24 +66,24 @@ export async function getProfileById(userId: string, status: EntityFilterStatus 
  * Returns `success: false` and an error message if the update fails.
  */
 export async function updateProfile(profile: ProfileType) {
-  try {
-    const updatedProfile = await prisma.profiles.update({
-      where: { profile_id: profile.profile_id },
-      data: {
-        first_name: profile.first_name,
-        last_name: profile.last_name,
-        phone: profile.phone,
-        image_id: profile.image_id == '' ? null : profile.image_id,
-        client_id: profile.client_id == '' ? null : profile.client_id,
-        department_id: profile.department_id,
-        email: profile.email,
-      },
-    });
-    return { success: true, data: updatedProfile };
-  } catch (error) {
-    console.error("Failed to update user:", error);
-    return { success: false, error: "Failed to update user details." };
-  }
+	try {
+		const updatedProfile = await prisma.profiles.update({
+			where: { profile_id: profile.profile_id },
+			data: {
+				first_name: profile.first_name,
+				last_name: profile.last_name,
+				phone: profile.phone,
+				image_id: profile.image_id == "" ? null : profile.image_id,
+				client_id: profile.client_id == "" ? null : profile.client_id,
+				department_id: profile.department_id,
+				email: profile.email,
+			},
+		});
+		return { success: true, data: updatedProfile };
+	} catch (error) {
+		console.error("Failed to update user:", error);
+		return { success: false, error: "Failed to update user details." };
+	}
 }
 
 /**
@@ -90,30 +97,33 @@ export async function updateProfile(profile: ProfileType) {
  * Returns `success: false` and an error message if the user has assignments or the query fails.
  */
 export async function softDeleteProfile(profile_id: string) {
-  try {
-    const activeAssignmentsCount = await prisma.ticketAssigned.count({
-      where: {
-        profile_id: profile_id,
-        // is_deleted: false,
-      },
-    });
-    if (activeAssignmentsCount > 0) {
-      return {
-        success: false,
-        error: `Cannot archive user. Please remove or reassign all ${activeAssignmentsCount} active ticket assignment(s) first.`,
-      };
-    }
+	try {
+		const activeAssignmentsCount = await prisma.ticketAssigned.count({
+			where: {
+				profile_id: profile_id,
+				// is_deleted: false,
+			},
+		});
+		if (activeAssignmentsCount > 0) {
+			return {
+				success: false,
+				error: `Cannot archive user. Please remove or reassign all ${activeAssignmentsCount} active ticket assignment(s) first.`,
+			};
+		}
 
-    await prisma.profiles.update({
-      where: { profile_id: profile_id },
-      data: {
-        is_deleted: true,
-        deleted_at: new Date(),
-      },
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to soft delete user:", error);
-    return { success: false, error: "Failed to archive the user due to a database error." };
-  }
+		await prisma.profiles.update({
+			where: { profile_id: profile_id },
+			data: {
+				is_deleted: true,
+				deleted_at: new Date(),
+			},
+		});
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to soft delete user:", error);
+		return {
+			success: false,
+			error: "Failed to archive the user due to a database error.",
+		};
+	}
 }
