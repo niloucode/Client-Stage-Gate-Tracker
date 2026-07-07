@@ -56,7 +56,7 @@ export function TicketCardContent({
 			className={[
 				"bg-white rounded-xl p-4 border border-gray-200 cursor-pointer relative",
 				"hover:border-gray-300 transition-colors duration-150 select-none",
-				ticket.deadline_date < today ? "border-l-4 border-l-red-500" : "",
+				ticket.deadline_date && ticket.deadline_date < today ? "border-l-4 border-l-red-500" : "",
 			].join(" ")}
 		>
 			{/* Top row: ID + badges + menu */}
@@ -64,7 +64,7 @@ export function TicketCardContent({
 			<div className="flex items-center justify-center mb-2.5 gap-1">
 				{/* Title */}
 				<p className="text-sm font-medium text-gray-900 leading-snug    line-clamp-2">
-					{ticket.name}
+					{ticket.name.length > 15 ? ticket.name.slice(0, 15) + "..." : ticket.name}
 				</p>
 				{/* <span className="text-xs font-semibold text-indigo-600 shrink-0">{ticket.ticket_id}</span> */}
 				<div className="flex items-center gap-1.5 ml-auto relative" ref={menuRef}>
@@ -73,7 +73,7 @@ export function TicketCardContent({
               Active
             </span>
           )} */}
-					{ticket.deadline_date < today && (
+					{ticket.deadline_date && ticket.deadline_date < today && (
 						<span className="text-[10px] font-semibold tracking-wide text-red-600 bg-red-50 px-2 py-0.5 rounded-full uppercase">
 							Overdue
 						</span>

@@ -3,12 +3,11 @@ import { z } from "zod";
 // ── Create ticket ────────────────────────────────────────────────────────────
 
 export const ticketCreateSchema = z.object({
-  name: z.string().min(1, "Ticket name is required").max(25, "Ticket name must be 25 characters or less"),
+  name: z.string().min(1, "Ticket name is required").max(50, "Ticket name must be 50 characters or less"),
   description: z.string().optional().nullable(),
   deadline_date: z.date({ message: "Deadline is required" }),
   watcher_id: z.string().uuid().optional().nullable(),
   tagIds: z.array(z.string().uuid()).optional().nullable(),
-  start_date: z.date().optional().nullable(),
   end_date: z.date().optional().nullable(),
   api_route: z.string().optional().nullable(),
   api_method: z.enum(["GET", "POST", "PUT", "DELETE"]).optional().nullable(),
@@ -23,7 +22,7 @@ export type CreateTicketParams = TicketCreateInput & {
   status: import("@/lib/generated/prisma").status;
   TicketAssigned: string[] | null;
   tagIds: string[] | null;
-  image_url?: string | null;
+  image_urls?: string[];
 };
 
 // ── Update ticket ────────────────────────────────────────────────────────────

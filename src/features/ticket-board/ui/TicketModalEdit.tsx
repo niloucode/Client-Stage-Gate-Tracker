@@ -6,12 +6,16 @@ import { useState, useRef, useEffect } from "react";
 import { CommentParentType, status as status } from "@/lib/generated/prisma";
 import { Input } from "@/shared/ui/input";
 
+import { useAuth } from "@/features/auth";
 import { useProfiles } from "@/entities/profile/queries";
-import { useTicketComments } from "@/entities/comment/queries";
+import { useTicketComments, useTicketImages } from "@/entities/comment/queries";
 import { useCreateComment } from "@/entities/comment/mutations";
-import { updateTicket } from "@/entities/ticket/ticketActions";
+import { useUpdateTicket } from "@/entities/ticket/mutations";
 import { createClient } from "@/lib/supabase/client";
 import { getInitials } from "@/shared/lib/strings";
+import ImageLightbox from "@/shared/ui/ImageLightbox";
+import TicketHistoryLog from "./TicketHistoryLog";
+
 
 function statusLabel(status: status) {
 	const map: Record<status, string> = {
@@ -70,14 +74,19 @@ export default function TicketModalEdit({
 	const [commentText, setCommentText] = useState("");
 	const [commentImages, setCommentImages] = useState<File[]>([]);
 	const [commentImagePreviews, setCommentImagePreviews] = useState<string[]>([]);
+	const [commentError, setCommentError] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const commentImageRef = useRef<HTMLInputElement>(null);
 
 	// ── TanStack Query ──────────────────────────────────────────────────────
 
+	const { user } = useAuth();
 	const { data: profiles = [] } = useProfiles();
 	const { data: comments = [] } = useTicketComments(ticket?.ticket_id);
+	const { data: ticketImages = [] } = useTicketImages(ticket?.ticket_id);
 	const createCommentMutation = useCreateComment();
+	const updateTicketMutation = useUpdateTicket();
+	const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
 	// Click-outside listener
 	useEffect(() => {
@@ -94,15 +103,25 @@ export default function TicketModalEdit({
 		return () => document.removeEventListener("mousedown", handler);
 	}, []);
 
-	// Sync initialTicket data when it changes
+	// Sync ticket data when modal opens or ticket changes
 	useEffect(() => {
+		if (!isOpen) return;
 		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setTicket(initialTicket);
 		setEditing(null);
 		setSelectedTags(
 			initialTicket?.TicketTags?.map((t: { tag_id: string }) => t.tag_id) ?? [],
 		);
-	}, [initialTicket]);
+	}, [isOpen, initialTicket]);
+
+	// Clear comment draft when modal closes
+	useEffect(() => {
+		if (isOpen) return;
+		setCommentText("");
+		setCommentImages([]);
+		setCommentImagePreviews([]);
+		setCommentError(null);
+	}, [isOpen]);
 
 	// Focus inputs when entering editing modes
 	useEffect(() => {
@@ -127,7 +146,7 @@ export default function TicketModalEdit({
 		if (field === "deadline")
 			setDeadlineDraft(
 				ticket!.deadline_date
-					? new Date(ticket!.deadline_date).toISOString().split("T")[0]
+					? new Date(ticket!.deadline_date).toISOString().slice(0, 16)
 					: "",
 			);
 	}
@@ -173,22 +192,22 @@ export default function TicketModalEdit({
 	async function handleSave() {
 		if (!ticket) return;
 		// Persist status updates to database through your server action
-		const updated = await updateTicket({
+		const updated = await updateTicketMutation.mutateAsync({
 			ticket_id: ticket.ticket_id,
 			workflow_id: ticket.workflow_id,
 			name: ticket.name,
-			deadline_date: ticket.deadline_date,
-			status: ticket.status, // Renamed locally to avoid conflict with the 'status' type name
+			deadline_date: ticket.deadline_date ?? undefined,
+			status: ticket.status,
 			watcher_id: ticket.watcher_id,
 			TicketAssigned: ticket.TicketAssigned.map(
 				(assignment) => assignment.profile_id,
 			),
-			tagIds: selectedTags, // Clean string array from frontend tag selector
+			tagIds: selectedTags,
 			description: ticket.description,
-			start_date: ticket.start_date,
 			end_date: ticket.end_date,
 			api_route: apiRoute || null,
 			api_method: apiMethod || null,
+			performed_by: user?.profile_id,
 		});
 		onUpdate(updated as unknown as Ticket);
 		onClose();
@@ -243,8 +262,14 @@ export default function TicketModalEdit({
 	}
 
 	async function handleAddComment() {
-		// Guard check against empty submissions
-		if (!commentText.trim() && commentImages.length === 0) return;
+		// Require text — images alone aren't enough
+		if (!commentText.trim()) {
+			if (commentImages.length > 0) {
+				setCommentError("Add some text to go with your image.");
+			}
+			return;
+		}
+		setCommentError(null);
 
 		try {
 			setIsSubmitting(true);
@@ -301,6 +326,7 @@ export default function TicketModalEdit({
 			setCommentText("");
 			setCommentImages([]);
 			setCommentImagePreviews([]);
+			setCommentError(null);
 			if (commentImageRef.current) commentImageRef.current.value = "";
 		} catch (error) {
 			console.error("Error adding comment:", error);
@@ -320,14 +346,16 @@ export default function TicketModalEdit({
 				className={`fixed top-0 right-0 h-full w-[520px] bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
 			>
 				{/* Header */}
-				<div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
+				<div className="flex items-start gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
 					<span className="text-xs font-semibold text-indigo-600 shrink-0">
 						{ticket.ticket_id.slice(0, 8)}
 					</span>
 					{editing === "title" ? (
+					<>
 						<input
 							ref={titleRef}
 							value={titleDraft}
+							maxLength={50}
 							onChange={(e) => setTitleDraft(e.target.value)}
 							onBlur={commitTitle}
 							onKeyDown={(e) => {
@@ -338,15 +366,20 @@ export default function TicketModalEdit({
 									setEditing(null);
 								}
 							}}
-							className="flex-1 text-sm font-semibold text-gray-900 border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+							className="flex-1 min-w-0 text-sm font-semibold text-gray-900 border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 break-all"
 						/>
+					<p className="text-xs text-gray-400 text-right mt-0.5">{titleDraft.length}/50</p>
+					</>
 					) : (
-						<h2
-							className="text-sm font-semibold text-gray-900 flex-1 truncate cursor-pointer hover:text-indigo-700 transition-colors"
-							onClick={() => startEdit("title")}
-						>
+					<div className="flex items-start gap-1.5 flex-1 min-w-0 overflow-hidden cursor-pointer" onClick={() => startEdit("title")}>
+						<h2 className="text-sm font-semibold text-gray-900 break-all hover:text-indigo-700 transition-colors">
 							{ticket.name}
 						</h2>
+						<svg className="w-3 h-3 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+							<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+							<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+						</svg>
+					</div>
 					)}
 					<button
 						onClick={onClose}
@@ -367,7 +400,7 @@ export default function TicketModalEdit({
 							<span>▾</span>
 						</button>
 						{editing === "status" && (
-							<div className="absolute z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+							<div className="absolute z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
 								{STATUSES.map((s) => (
 									<button
 										key={s}
@@ -429,13 +462,13 @@ export default function TicketModalEdit({
 								<div className="relative mt-2" ref={assignDropdownRef}>
 									<button
 										onClick={() => setShowAssignDropdown((v) => !v)}
-										className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 font-medium transition-colors"
+										className="flex items-center gap-1 text-xs text-indigo-600 hover:bg-indigo-50 font-medium transition-colors border border-indigo-200 rounded-lg px-2.5 py-1"
 									>
-										<span className="text-base leading-none">+</span> Add assignee
+										+ Add Assignee
 									</button>
 
 									{showAssignDropdown && (
-										<div className="absolute z-10 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+										<div className="absolute z-10 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
 											{availableProfiles.map((profile) => (
 												<button
 													key={profile.profile_id}
@@ -493,11 +526,11 @@ export default function TicketModalEdit({
 										<span className="text-sm text-gray-700 font-medium">{`${watcher.first_name} ${watcher.last_name}`}</span>
 									</div>
 								) : (
-									<span className="text-sm text-gray-400">—</span>
+									<span className="text-sm text-indigo-500 font-medium">Unassigned</span>
 								)}
 							</div>
 							{editing === "watcher" && (
-								<div className="absolute z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+								<div className="absolute z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
 									<button
 										onClick={() => {
 											setWatcher("");
@@ -514,8 +547,11 @@ export default function TicketModalEdit({
 												setWatcher(u.profile_id);
 												setEditing(null);
 											}}
-											className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+											className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
 										>
+											<div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+												{`${u.first_name} ${u.last_name}`.split(" ").map((n) => n[0]).join("")}
+											</div>
 											{`${u.first_name} ${u.last_name}`}
 										</button>
 									))}
@@ -523,37 +559,58 @@ export default function TicketModalEdit({
 							)}
 						</div>
 
-						{/* Deadline */}
-						<div>
-							<p className="text-xs text-gray-400 font-medium mb-1.5">Deadline</p>
-							{editing === "deadline" ? (
-								<input
-									type="date"
-									value={deadlineDraft}
-									onChange={(e) => setDeadlineDraft(e.target.value)}
-									onBlur={commitDeadline}
-									onKeyDown={(e) => {
-										if (e.key === "Enter") commitDeadline();
-										if (e.key === "Escape") setEditing(null);
-									}}
-									className="text-sm border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-									autoFocus
-								/>
-							) : (
-								<div
-									className={`text-sm font-medium cursor-pointer ${isOverdue ? "text-red-500" : "text-gray-700"}`}
-									onClick={() => startEdit("deadline")}
-								>
-									{deadlineDisplay ?? (
-										<span className="text-gray-400 font-normal">No deadline</span>
-									)}
-								</div>
-							)}
-						</div>
+						{/* Creation Date */}
+					<div>
+						<p className="text-xs text-gray-400 font-medium mb-1.5">Creation Date</p>
+						<p className="text-sm text-gray-700">
+							{ticket.creation_date
+								? new Date(ticket.creation_date).toLocaleString()
+								: "—"}
+						</p>
+					</div>
 
-						{/* Tags */}
-						<div className="col-span-2">
-							<p className="text-xs text-gray-400 font-medium mb-1.5">Tags</p>
+					{/* End Date */}
+					<div>
+						<p className="text-xs text-gray-400 font-medium mb-1.5">End Date</p>
+						<p className="text-sm text-gray-700">
+							{ticket.end_date
+								? new Date(ticket.end_date).toLocaleString()
+								: "—"}
+						</p>
+					</div>
+
+					{/* Deadline */}
+					<div>
+						<p className="text-xs text-gray-400 font-medium mb-1.5">Deadline</p>
+						<input
+							type="datetime-local"
+							value={deadlineDraft || (ticket.deadline_date ? new Date(ticket.deadline_date).toISOString().slice(0, 16) : "")}
+							onChange={(e) => { setDeadlineDraft(e.target.value); commitDeadline(); }}
+							className="text-sm text-gray-900 border border-gray-200 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+						/>
+					</div>
+
+						{/* Attachments */}
+					{ticketImages.length > 0 && (
+						<div>
+							<p className="text-xs text-gray-400 font-medium mb-1.5">Attachments</p>
+							<div className="flex flex-wrap gap-2">
+								{ticketImages.map((img) => (
+									<img
+										key={img.image_id}
+										src={img.image_src}
+										alt="Ticket attachment"
+										className="h-16 w-auto rounded-lg border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+										onClick={() => setLightboxSrc(img.image_src)}
+									/>
+								))}
+							</div>
+						</div>
+					)}
+
+					{/* Tags */}
+					<div className="col-span-2">
+						<p className="text-xs text-gray-400 font-medium mb-1.5">Tags</p>
 							<div className="flex flex-wrap gap-1.5 items-center">
 								{selectedTags.map((tag_id) => {
 									const tag = tags.find((t) => t.tag_id === tag_id);
@@ -657,7 +714,7 @@ export default function TicketModalEdit({
 									value={descDraft}
 									onChange={(e) => setDescDraft(e.target.value)}
 									rows={5}
-									className="w-full text-sm text-gray-600 border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+									className="w-full text-sm text-gray-600 border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none break-words"
 								/>
 								<div className="flex gap-2">
 									<button
@@ -676,7 +733,7 @@ export default function TicketModalEdit({
 							</div>
 						) : (
 							<p
-								className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap cursor-pointer hover:text-gray-800"
+								className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap break-words cursor-pointer hover:text-gray-800"
 								onClick={() => startEdit("description")}
 							>
 								{ticket.description || (
@@ -687,6 +744,50 @@ export default function TicketModalEdit({
 							</p>
 						)}
 					</div>
+
+            {/* Subtasks */}
+            {/*{ticket.subtasks && ticket.subtasks.length > 0 && (*/}
+            {/*    <div className="px-5 py-4 border-b border-gray-100">*/}
+            {/*      <h3 className="text-sm font-semibold text-gray-900 mb-3">*/}
+            {/*        Subtasks ({completedSubtasks}/{totalSubtasks})*/}
+            {/*      </h3>*/}
+            {/*      <div className="space-y-2">*/}
+            {/*        {ticket.subtasks.map((subtask) => (*/}
+            {/*            <div key={subtask.id} className="flex items-center gap-3 group">*/}
+            {/*              <div*/}
+            {/*                  className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${*/}
+            {/*                      subtask.completed*/}
+            {/*                          ? 'bg-indigo-600 border-indigo-600'*/}
+            {/*                          : 'border-gray-300 group-hover:border-gray-400'*/}
+            {/*                  }`}*/}
+            {/*              >*/}
+            {/*                {subtask.completed && <CheckIcon className="text-white" />}*/}
+            {/*              </div>*/}
+            {/*              <span*/}
+            {/*                  className={`text-sm flex-1 ${*/}
+            {/*                      subtask.completed ? 'line-through text-gray-400' : 'text-gray-700'*/}
+            {/*                  }`}*/}
+            {/*              >*/}
+            {/*              {subtask.title}*/}
+            {/*            </span>*/}
+            {/*              {subtask.assignee ? (*/}
+            {/*                  <div*/}
+            {/*                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 ${subtask.assignee.bgColor}`}*/}
+            {/*                      title={subtask.assignee.name}*/}
+            {/*                  >*/}
+            {/*                    {subtask.assignee.initials}*/}
+            {/*                  </div>*/}
+            {/*              ) : (*/}
+            {/*                  <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-200 shrink-0" />*/}
+            {/*              )}*/}
+            {/*            </div>*/}
+            {/*        ))}*/}
+            {/*      </div>*/}
+            {/*    </div>*/}
+            {/*)}*/}
+
+            {/* Activity / history log */}
+            <TicketHistoryLog ticketId={ticket.ticket_id} />
 
 					<div className="h-4" />
 
@@ -713,7 +814,8 @@ export default function TicketModalEdit({
 																key={img.image_id}
 																src={img.image_src}
 																alt="attachment"
-																className="max-h-40 rounded-md object-contain"
+																className="max-h-40 rounded-md object-contain cursor-pointer hover:opacity-80 transition-opacity"
+																	onClick={() => setLightboxSrc(img.image_src)}
 															/>
 														))}
 													</div>
@@ -762,7 +864,7 @@ export default function TicketModalEdit({
 
 							<textarea
 								value={commentText}
-								onChange={(e) => setCommentText(e.target.value)}
+								onChange={(e) => { setCommentText(e.target.value); setCommentError(null); }}
 								onKeyDown={(e) => {
 									if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleAddComment();
 								}}
@@ -770,6 +872,9 @@ export default function TicketModalEdit({
 								rows={2}
 								className="w-full px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none resize-none bg-transparent"
 							/>
+						{commentError && (
+							<p className="px-3 pb-1 text-xs text-red-500">{commentError}</p>
+						)}
 							<div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 bg-gray-50/50">
 								<label
 									className="cursor-pointer text-gray-400 hover:text-indigo-500 transition-colors"
@@ -829,6 +934,9 @@ export default function TicketModalEdit({
 					</button>
 				</div>
 			</div>
+		{lightboxSrc && (
+				<ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+			)}
 		</>
 	);
 }

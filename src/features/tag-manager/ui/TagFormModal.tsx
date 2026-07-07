@@ -9,11 +9,13 @@ import {
 export default function TagFormModal({
 	mode,
 	initial,
+	error,
 	onClose,
 	onSubmit,
 }: {
 	mode: "create" | "edit";
 	initial?: Tag;
+	error?: string | null;
 	onClose: () => void;
 	onSubmit: ({
 		tag_id,
@@ -25,14 +27,14 @@ export default function TagFormModal({
 		name: string;
 		description?: string;
 		color?: string;
-	}) => void;
+	}) => Promise<{ error?: string }>;
 }) {
 	const [name, setName] = useState(initial?.name ?? "");
 	const [description, setDescription] = useState(initial?.description ?? "");
 	const [color, setColor] = useState(initial?.color ?? "#3B82F6");
 
-	function handleSubmit() {
-		onSubmit({
+	async function handleSubmit() {
+		await onSubmit({
 			tag_id: initial?.tag_id,
 			name: name,
 			description: description,
@@ -64,8 +66,13 @@ export default function TagFormModal({
 								value={name}
 								onChange={(e) => setName(e.target.value)}
 								placeholder="e.g. Production"
+								maxLength={10}
 								className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
 							/>
+							<div className="flex mt-0.5 text-xs">
+								{error && <span className="text-red-500">{error}</span>}
+								<span className="text-gray-400 ml-auto">{name.length}/10</span>
+							</div>
 						</div>
 
 						<div>
@@ -75,10 +82,12 @@ export default function TagFormModal({
 							<textarea
 								value={description}
 								onChange={(e) => setDescription(e.target.value)}
-								placeholder="Used for critical infrastructure and customer facing assets."
+								placeholder="Used for critical infrastructure."
 								rows={3}
+								maxLength={35}
 								className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
 							/>
+							<p className="text-xs text-gray-400 text-right mt-0.5">{description.length}/35</p>
 						</div>
 
 						<div>

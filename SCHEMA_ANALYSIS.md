@@ -86,6 +86,8 @@ name    String @unique
 
 Expected roles: `"Project Owner"`, `"Project Team"`, `"Finance"`, `"Client"`.
 
+> **Note**: The `SignupForm` Department field is a `<select>` restricted to the three internal department names (Project Owner, Project Team, Finance Team). See Section 15.
+
 ### `Permissions`
 
 ```
@@ -172,34 +174,40 @@ project_id    UUID PK
 name          String
 description   String?
 creation_date DateTime      @default(now() AT UTC)
-start_date    DateTime?
 end_date      DateTime?
+deadline_date DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Stages`
 
 ```
 stage_id      UUID PK
-number        Int                          @@unique([project_id, number])
+number        Int?                         @@unique([project_id, number]) — nullable; set to null on soft-delete to release the slot
 name          String
 description   String?
 project_id    UUID → Projects
 creation_date DateTime
-start_date    DateTime?
 end_date      DateTime?
+deadline_date DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Phases`
 
 ```
 phase_id      UUID PK
-number        Int                          @@unique([stage_id, number])
+number        Int?                         @@unique([stage_id, number]) — nullable; set to null on soft-delete to release the slot
 name          String
 description   String?
 stage_id      UUID → Stages
 creation_date DateTime
-start_date    DateTime?
 end_date      DateTime?
+deadline_date DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Modules`
@@ -209,8 +217,10 @@ module_id     UUID PK
 name          String
 phase_id      UUID → Phases
 creation_date DateTime
-start_date    DateTime?
 end_date      DateTime?
+deadline_date DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 ### `Workflows`
@@ -219,11 +229,16 @@ end_date      DateTime?
 workflow_id   UUID PK
 name          String
 is_approved   Boolean   @default(false)
+number        Int?                       @@unique([number, module_id]) — nullable; set to null on soft-delete to release the slot
 module_id     UUID → Modules
 creation_date DateTime
-start_date    DateTime?
 end_date      DateTime?
+deadline_date DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
+
+> **Note**: `Workflows.number` is used for drag-and-drop reordering within a module. It is auto-assigned on creation (`createWorkflow()`) and swapped via `swapWorkflowOrder()`. It is set to `null` on soft-delete. The `getStageTree` query orders workflows by `number` (nulls last) with `creation_date` as fallback.
 
 ### `Tickets`
 
@@ -232,14 +247,14 @@ ticket_id       UUID PK
 name            String
 description     String?
 status          status    @default(PENDING)   (PENDING | IN_PROGRESS | FINISHED)
-workflow_id     UUID? → Workflows             (nullable — can exist outside a workflow)
+workflow_id     UUID  → Workflows             (required — tickets always belong to a workflow)
 watcher_id      UUID? → Profiles              (single watcher, informational)
-api_route       String?                       (optional, for API-tagged tickets)
+api_route       String?                       (optional API endpoint path)
+api_method      ApiMethod?                    (GET | POST | PUT | DELETE)
 assignment_date DateTime
 creation_date   DateTime
-start_date      DateTime?
-end_date        DateTime?
-deadline_date   DateTime
+end_date        DateTime?                     (set to now() when status → FINISHED; null otherwise)
+deadline_date   DateTime?
 ```
 
 ---
@@ -253,8 +268,8 @@ gate_id       UUID PK
 number        Int                          @@unique([project_id, number])
 project_id    UUID → Projects
 creation_date DateTime
-start_date    DateTime?
-end_date      DateTime?
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 Gates are checkpoints within a project where **clients can approve and comment**. By design, gates have **no `name` or `description`** — they are identified by `number` only.
@@ -285,6 +300,8 @@ description   String                (NON-NULLABLE — blank comments are rejecte
 parent_type   CommentParentType    (TICKET_COMMENT | GATE_COMMENT)
 parent_id     UUID                 (ticket_id or gate_id based on parent_type)
 creation_date DateTime
+is_deleted    Boolean   @default(false)
+deleted_at    DateTime?
 ```
 
 Comments attach to either a **Ticket** (work discussion) or a **Gate** (client feedback/approval). The polymorphic pair `(parent_type, parent_id)` determines the target. Referential integrity between `parent_id` and the target table is **not enforced at the DB level** — the application must ensure consistency.
@@ -298,6 +315,8 @@ image_id    UUID PK
 image_src   String @unique       (URL or path to image)
 parent_type ImageParentType      (TICKET | TICKET_COMMENT | GATE_COMMENT | PROFILE)
 parent_id   UUID                 (ticket_id, comment_id, or profile_id)
+is_deleted  Boolean   @default(false)
+deleted_at  DateTime?
 ```
 
 Images can attach to:
@@ -314,14 +333,35 @@ Same polymorphic caveat as Comments — app-level integrity enforcement.
 ```
 history_event_id UUID PK
 action           action        (CREATED | FINISHED | UPDATED_STATUS | RENAMED
-                               | COMMENT_ADDED | ASSIGNED | UNASSIGNED | DELETE)
+                               | COMMENT_ADDED | WATCHER_CHANGED
+                               | ASSIGNED | UNASSIGNED | DELETE)
 performed_by     UUID → Profiles       (who did the action)
 ticket_id        UUID → Tickets        (which ticket)
-target_profile_id UUID? → Profiles     (who was assigned/unassigned/deleted)
+target_profile_id UUID? → Profiles     (who was assigned/unassigned/watcher-targeted; null for other actions)
+details          String?               (optional JSON metadata — see convention table below)
 date_performed   DateTime
 ```
 
-An append-only audit trail for tickets. The `DELETE` action records **who soft-deleted a ticket**. No `is_deleted` column — by design, history is immutable.
+An append-only audit trail for tickets. Every ticket-mutating server action writes a row.
+History is fetched via `selectTicketHistory()` which joins both the performer (via `Profiles_HistoryEvent_performed_byToProfiles`) and the target (via `Profiles`) to populate `performerName` and `targetName` for the UI. The `TicketHistoryLog` component renders these as colored entries — status values as per-column badges, performer names in indigo, target names in teal — and collapses to the first 4 entries with a "Show all" toggle.
+
+| Action | Written by | `details` JSON shape | `target_profile_id` |
+|---|---|---|---|
+| CREATED | `createTicket()` | `{ticket_name}` | null |
+| FINISHED | `updateTicket()` / `updateTicketStatus()` when status → FINISHED | `{from}` (previous status) | null |
+| UPDATED_STATUS | `updateTicket()` / `updateTicketStatus()` for non-FINISHED transitions | `{from, to}` (status strings) | null |
+| RENAMED | `updateTicket()` | `{from, to}` (old/new names) | null |
+| COMMENT_ADDED | `createCommentWithImages()` (TICKET_COMMENT only; inside a `$transaction`) | — | null |
+| WATCHER_CHANGED | `updateTicket()` | `{from, to}` (UUIDs or null) | new watcher UUID (or old watcher if removing) |
+| ASSIGNED | `updateTicket()` | — | assigned profile UUID |
+| UNASSIGNED | `updateTicket()` | — | removed profile UUID |
+| DELETE | `cascadeSoftDeleteTicket()` | `{ticket_name}` | null |
+
+No `is_deleted` column — by design, history is immutable. `details` is an optional `String?` column storing structured JSON that the UI's `formatHistoryMessage()` parses to build human-readable activity sentences. `target_profile_id` is populated for ASSIGNED, UNASSIGNED, and WATCHER_CHANGED — the `selectTicketHistory` join on `Profiles` automatically fills `targetName` when `target_profile_id` is set.
+
+**Transaction safety**: `updateTicketStatus()` wraps the ticket update + history write in a `prisma.$transaction` so both succeed or both roll back. Other writes (in `createTicket`, `cascadeSoftDeleteTicket`, `createCommentWithImages`) follow the same atomic pattern.
+
+**TanStack integration**: All ticket mutations (`useCreateTicket`, `useUpdateTicket`, `useUpdateTicketStatus`, `useDeleteTicket`) invalidate `historyKeys.list(ticketId)` on success for targeted refetch. `useCreateComment` also invalidates `historyKeys.list(parent_id)` when `parent_type === "TICKET_COMMENT"`. The history query fetches via `fetchTicketHistory()` → `selectTicketHistory()` → Zod validation through `ticketHistoryEntrySchema`.
 
 ### `Tags` + `TicketTags`
 
@@ -331,6 +371,8 @@ Tags:
   name        String @unique
   description String?
   color       String?
+  is_deleted  Boolean   @default(false)
+  deleted_at  DateTime?
 
 TicketTags:
   ticket_id UUID → Tickets
@@ -351,7 +393,7 @@ PK: (ticket_id, profile_id)
 
 A ticket can have **0+ assignees**. This is distinct from `Tickets.watcher_id` (a single watcher — informal visibility). Removing an assignee hard-deletes the `TicketAssigned` row.
 
-> **IMPORTANT — code note**: The current `updateTicket()` in `src/entities/ticket/ticketActions.ts` uses a **nuke-it-all** approach (`deleteMany: {}` then `create`) for `TicketAssigned` and `TicketTags`. This destroys the original `assigned_date` on every update. This needs to be replaced with a **diff-ing approach**: compute which profiles/tags to add vs. remove, then only `create` the additions and `deleteMany` the removals. This preserves the original dates on unchanged assignments.
+> **Code note**: `updateTicket()` uses a **diff-ing approach** for `TicketAssigned` and `TicketTags` — it fetches existing assignments, computes which profiles/tags to add vs. remove, and only creates/deletes the differences. This preserves the original `assigned_date` on unchanged entries.
 
 ### `Contracts` — 1:1 with Projects
 
@@ -364,6 +406,8 @@ client_signature         String?                    (signed by any client profil
 client_signed_at         DateTime?                  (when the client signed)
 project_owner_signature  String?                    (signed by the PO)
 project_owner_signed_at  DateTime?                  (when the PO signed)
+is_deleted               Boolean   @default(false)
+deleted_at               DateTime?
 ```
 
 Contracts are created as a **blank record** when a project is made — only `project_id` and `client_id` are required upfront. `file_path`, signatures, and signed-at timestamps are filled later.
@@ -397,12 +441,13 @@ We do not currently plan to implement soft-delete for profiles, but if/when it i
 
 ## 8. Enums (public schema)
 
-| Enum                | Values                                                                                                  | Used By                |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `status`            | `PENDING`, `IN_PROGRESS`, `FINISHED`                                                                    | `Tickets.status`       |
-| `action`            | `CREATED`, `FINISHED`, `UPDATED_STATUS`, `RENAMED`, `COMMENT_ADDED`, `ASSIGNED`, `UNASSIGNED`, `DELETE` | `HistoryEvent.action`  |
-| `CommentParentType` | `TICKET_COMMENT`, `GATE_COMMENT`                                                                        | `Comments.parent_type` |
-| `ImageParentType`   | `TICKET`, `TICKET_COMMENT`, `GATE_COMMENT`, `PROFILE`                                                   | `Images.parent_type`   |
+| Enum | Values | Used By |
+|---|---|---|
+| `status` | `PENDING`, `IN_PROGRESS`, `FINISHED` | `Tickets.status` |
+| `action` | `CREATED`, `FINISHED`, `UPDATED_STATUS`, `RENAMED`, `COMMENT_ADDED`, `WATCHER_CHANGED`, `ASSIGNED`, `UNASSIGNED`, `DELETE` | `HistoryEvent.action` |
+| `CommentParentType` | `TICKET_COMMENT`, `GATE_COMMENT` | `Comments.parent_type` |
+| `ImageParentType` | `TICKET`, `TICKET_COMMENT`, `GATE_COMMENT`, `PROFILE` | `Images.parent_type` |
+| `ApiMethod` | `GET`, `POST`, `PUT`, `DELETE` | `Tickets.api_method` |
 
 ---
 
@@ -496,8 +541,8 @@ The permissions matrix references features with no corresponding tables yet:
 - `Comments.(parent_type, parent_id)` and `Images.(parent_type, parent_id)` use Prisma enums for the type discriminator but have no DB-level FK to the target tables. Application code must validate that `parent_id` refers to a real row of the correct type.
 
 ### Gates: no name or description
-
-- Intentional design decision. Gates are identified by `number` within a project only.
+- Intentional design decision. **Gates** are identified by `number` within a project only.
+- **Stages** DO have both `name` and `description` (unlike Gates).
 
 ### Gate approval model
 
@@ -507,13 +552,45 @@ The permissions matrix references features with no corresponding tables yet:
 
 - `project_id` and `client_id` are required; `file_path`, signatures, and signed-at timestamps are filled later. `project_id` is unique — one contract per project. Dual signatures: PO signs with `project_owner_signature`/`project_owner_signed_at`, client signs with `client_signature`/`client_signed_at`.
 
-### ticketActions.ts needs refactoring
+### ticketActions.ts — diff-ing + history writes
+- `updateTicket()` uses a diff-ing approach: fetches existing `name`, `status`, `watcher_id`, `TicketAssigned`, and `TicketTags`, computes `toAdd` / `toRemove` for assignees, tags, and watcher, and applies only the needed creates and deletes. The original `assigned_date` is preserved for unchanged entries.
+- After the update, `updateTicket()` writes `HistoryEvent` rows for every changed field: RENAMED, FINISHED / UPDATED_STATUS, ASSIGNED, UNASSIGNED, and WATCHER_CHANGED.
+- `updateTicketStatus()` (drag-and-drop) is wrapped in `prisma.$transaction` so the ticket status change and HistoryEvent write are atomic — if either fails, both roll back. Sets `end_date: new Date()` when status → FINISHED, and `null` otherwise.
+- `createTicket()`, `cascadeSoftDeleteTicket()`, and `createCommentWithImages()` each write their respective HistoryEvent rows (CREATED, DELETE, COMMENT_ADDED) alongside their primary mutation.
 
-- `updateTicket()` currently nukes and recreates all `TicketAssigned` and `TicketTags` rows on every update (`deleteMany: {}` + `create`). This destroys the original `assigned_date` values. Must be replaced with a diff-ing approach: compute `toAdd` (in new list, not in existing) and `toRemove` (in existing, not in new list), then only `create` additions and `deleteMany` removals.
+### `deadline_date` column
+All hierarchy models (Projects, Stages, Phases, Modules, Workflows, and Tickets) now include a `deadline_date DateTime?` column. This is an **editable user-set deadline** — distinct from:
+- `creation_date`: auto-set on create, never edited (Date Created in the UI)
+- `end_date`: **computed** by `getStageTree()`, not editable in the UI. Represents the date the last ticket under that entity was finished (see below).
+
+The Zod schemas (`phaseCreateSchema`, `moduleCreateSchema`, `workflowCreateSchema`) all include `deadline_date: z.date().optional().nullable()`. All server actions (`createPhase`, `updatePhase`, `createModule`, `updateModule`, `createWorkflow`, `updateWorkflow`) accept and persist `deadlineDate`.
+
+### `getStageTree()` — computed `end_date` + ticket progress
+`getStageTree()` in `stageActions.ts` is the single source of truth for the stage editor's nested data. It performs **4 batched queries** (stage → phases → modules → workflows) plus a **5th query** for tickets, then assembles everything in-memory:
+
+1. Fetches all non-deleted tickets for the stage's workflows
+2. Groups tickets by `workflow_id`
+3. Per workflow: computes `ticketCount`, `progress` (finished/total × 100), and `end_date`
+
+**End date rule**: A workflow's computed `end_date` is set **only when ALL its tickets are FINISHED** (`finished === total > 0`). If any ticket is not finished, `end_date` is `null` → renders as "Unfinished" in the UI. When all are finished, `end_date` = max `end_date` of the finished tickets.
+
+This rule **propagates upward**:
+- **Module end_date**: only set when ALL its workflows are finished (all have non-null end_date); otherwise null.
+- **Phase end_date**: only set when ALL its modules are finished; otherwise null.
+
+Adding a new unfinished workflow/module to an already-finished parent immediately resets the parent's end_date to null.
+
+**Progress bars** in the WorkflowsList UI show:
+- Gray bar with "- %" when `ticketCount === 0`
+- Indigo bar with `{progress}%` when tickets exist
+
+### Workflow DnD ordering
+Workflows have a `number Int?` column with a composite unique constraint `@@unique([number, module_id])`. On creation, `createWorkflow()` auto-assigns `number = count + 1`. Drag-and-drop in the WorkflowsList calls `swapWorkflowOrder()` — a transactional swap of the `number` fields between the dragged and dropped workflows. The mutation (`useSwapWorkflowOrder`) invalidates `stageKeys.tree(stageId)` on success.
+
+`getStageTree()` orders workflows by `[{ number: { sort: 'asc', nulls: 'last' } }, { creation_date: 'asc' }]` — numbered workflows sort first, existing unnumbered ones fall back to creation order. Phases use the same pattern via `swapPhaseOrder()`.
 
 ### Profiles soft-delete (not yet implemented)
-
-- Behavior documented in Section 7. Currently `Profiles` has `is_deleted` and `deleted_at` columns but no soft-delete workflow is built.
+- Behavior documented in Section 7. Currently `Profiles` has `is_deleted` and `deleted_at` columns but no soft-delete workflow is built. Because of this, profile queries (e.g. `getProfileByEmail` in `profileActions.ts`) do not filter on `is_deleted` — all profiles are assumed active. If soft-delete is implemented later, all profile lookups must add `where: { is_deleted: false }` and the duplicate-email check in `ClientSignupForm` + `StaffSignupForm` must account for soft-deleted users who should be able to re-register.
 
 ### Legacy naming artifacts
 
@@ -525,22 +602,264 @@ The permissions matrix references features with no corresponding tables yet:
 
 ## 12. Key Constraints Summary
 
-| Table             | Constraint                       | Type                                    |
-| ----------------- | -------------------------------- | --------------------------------------- |
-| `Profiles`        | `email`                          | `@unique`                               |
-| `Profiles`        | `phone`                          | `@unique`                               |
-| `Department`      | `name`                           | `@unique`                               |
-| `Roles`           | `name`                           | `@unique`                               |
-| `Permissions`     | `(resource, action)`             | `@@unique`                              |
-| `Tags`            | `name`                           | `@unique`                               |
-| `Images`          | `image_src`                      | `@unique`                               |
-| `Contracts`       | `project_id`                     | `@unique` (1:1 with Projects)           |
-| `Contracts`       | `file_path`                      | `@unique`                               |
-| `Gates`           | `(project_id, number)`           | `@@unique`                              |
-| `Stages`          | `(project_id, number)`           | `@@unique`                              |
-| `Phases`          | `(stage_id, number)`             | `@@unique`                              |
-| `GateSignatures`  | `gate_id`                        | `@@id` (single-column PK, one per gate) |
-| `RoleAssignments` | `(role_id, user_id, project_id)` | `@@id` (composite PK)                   |
-| `RolePermissions` | `(role_id, permission_id)`       | `@@id` (composite PK)                   |
-| `TicketAssigned`  | `(ticket_id, profile_id)`        | `@@id` (composite PK)                   |
-| `TicketTags`      | `(ticket_id, tag_id)`            | `@@id` (composite PK)                   |
+| Table | Constraint | Type |
+|---|---|---|
+| `Profiles` | `email` | `@unique` |
+| `Profiles` | `phone` | `@unique` |
+| `Department` | `name` | `@unique` |
+| `Roles` | `name` | `@unique` |
+| `Permissions` | `(resource, action)` | `@@unique` |
+| `Tags` | `name` | `@unique` |
+| `Images` | `image_src` | `@unique` |
+| `Contracts` | `project_id` | `@unique` (1:1 with Projects) |
+| `Contracts` | `file_path` | `@unique` |
+| `Gates` | `(project_id, number)` | `@@unique` |
+| `Stages` | `(project_id, number)` | `@@unique` |
+| `Phases` | `(stage_id, number)` | `@@unique` |
+| `Workflows` | `(number, module_id)` | `@@unique` |
+| `GateSignatures` | `gate_id` | `@@id` (single-column PK, one per gate) |
+| `RoleAssignments` | `(role_id, user_id, project_id)` | `@@id` (composite PK) |
+| `RolePermissions` | `(role_id, permission_id)` | `@@id` (composite PK) |
+| `TicketAssigned` | `(ticket_id, profile_id)` | `@@id` (composite PK) |
+| `TicketTags` | `(ticket_id, tag_id)` | `@@id` (composite PK) |
+
+---
+
+## 13. Frontend Architecture
+
+> **Note**: The stage-editor feature is fully implemented and merged. Sections 13–16 describe the current production state.
+
+### FSD Layer Structure
+
+```
+src/
+├── app/              ← routes (Next.js App Router)
+├── entities/         ← server actions + TanStack Query hooks per DB table
+├── features/         ← UI components grouped by user-facing capability
+└── shared/           ← reusable primitives (schemas, UI kit, query keys)
+```
+
+Layer dependency rule: `app → features → entities → shared`
+
+### Data Flow (TanStack Query + Mutations)
+
+Every CRUD operation follows this chain:
+
+```
+User action (form submit) → mutation.mutateAsync(...)
+  → server action (Prisma create/update/delete)
+    → DB generates UUID (gen_random_uuid())
+      → onSuccess: queryClient.invalidateQueries(stageKeys.tree(stageId))
+        → useQuery auto-refetches fresh data
+          → UI re-renders with real UUIDs
+```
+
+**Key rules:**
+- No client-side ID generation — all UUIDs originate from the DB
+- No `setPhases()` callbacks — data flows one-way from TanStack Query cache
+- Mutations invalidate `stageKeys.tree(stageId)` to trigger a single efficient refetch of the full nested hierarchy
+
+### Query Keys
+
+Query keys follow a hierarchical factory pattern in `shared/query/keys.ts`:
+
+```typescript
+stageKeys.tree(stageId)    // ["stages", "detail", stageId, "tree"] — full nested tree
+phaseKeys.detail(id)       // ["phases", "detail", id]
+moduleKeys.detail(id)      // ["modules", "detail", id]
+workflowKeys.detail(id)    // ["workflows", "detail", id]
+historyKeys.list(ticketId) // ["ticketHistory", "list", ticketId] — activity log for a ticket
+```
+
+### Ticket Board Feature
+
+The ticket-board feature (`src/features/ticket-board/`) renders a Kanban board for a workflow's tickets. Each ticket opens a slide-over (`TicketModalEdit`) that includes the **Activity Log** (`TicketHistoryLog`).
+
+**Activity log data flow**:
+```
+Server action (createTicket / updateTicket / updateTicketStatus / cascadeSoftDeleteTicket / createCommentWithImages)
+  → writes HistoryEvent row to DB
+    → TanStack mutation.onSuccess invalidates historyKeys.list(ticketId)
+      → useTicketHistory refetches via fetchTicketHistory()
+        → selectTicketHistory() joins performer + target Profiles
+          → ticketHistoryEntrySchema.parse() validates each row
+            → TicketHistoryLog renders with colored status badges, performer (indigo), target (teal)
+```
+
+The log collapses to the first 4 entries with a "Show all N entries" toggle. Status values (`PENDING` / `IN_PROGRESS` / `FINISHED`) render as lowercase colored badges matching the board columns (gray / blue / green). Performer names are rendered in `text-indigo-700 font-semibold` and target names (assignees, watcher targets) in `text-teal-600 font-medium`.
+
+**Cross-invalidation with stage-editor**: `useUpdateTicketStatus` invalidates `stageKeys.all` on success, so navigating back to the stage editor after a ticket status change shows fresh progress bars and computed end dates.
+
+### Zod Schemas
+
+All create/update inputs are validated via Zod schemas in `shared/schemas/`. Schemas use **snake_case** field names matching the database columns. UI types in `features/stage-editor/types.ts` also use snake_case for DB-originating fields (`phase_id`, `start_date`, `creation_date`), with only computed UI fields (`ticketCount`, `progress`) in camelCase.
+
+---
+
+## 14. Stage Editor Feature
+
+### Route
+
+`/projects/[projectId]/stages/[stageId]?phase=N` — renders the stage structure editor. The `?phase=N` URL param persists the selected phase across navigation (supplemented by `sessionStorage` for round-trip persistence from ticket-board → back).
+
+### Feature Slice
+
+`features/stage-editor/` — Components manage Phases → Modules → Workflows within a single Stage. All state flows through `useStageTree()` → `getStageTree()`.
+
+### Component Tree
+
+```
+Page (useStageTree → phases)
+  ├── PhaseStepper    ← phase dots, drag-reorder, create/delete
+  ├── ActivePhaseDetails ← edit name/description/deadline (buffered, explicit Save)
+  └── ModulesCard     ← module list, create/edit/delete, expand to workflows
+       └── WorkflowsList ← workflow list, create/edit/delete/drag, progress bars
+```
+
+### Server Action Wiring
+
+| Component | Create | Update | Delete | Reorder |
+|---|---|---|---|---|
+| PhaseStepper | `useCreatePhase` | — | `useDeletePhase` | `useSwapPhaseOrder` |
+| ActivePhaseDetails | — | `useUpdatePhase` | `useDeletePhase` | — |
+| ModulesCard | `useCreateModule` | `useUpdateModule` | `useDeleteModule` | — |
+| WorkflowsList | `useCreateWorkflow` | `useUpdateWorkflow` | `useDeleteWorkflow` | `useSwapWorkflowOrder` |
+
+All mutations invalidate `stageKeys.tree(stageId)` on success.
+
+### Datetime fields
+
+Every entity has three datetime concepts displayed in the UI:
+
+| Field | DB column | Editable | Description |
+|---|---|---|---|
+| Date Created | `creation_date` | No | Auto-set on creation. Displayed as `"Jan 15, 2025, 2:30 PM"`. |
+| Deadline Date | `deadline_date` | Yes | User-set via `datetime-local` input in modals and ActivePhaseDetails. Nullable. |
+| End Date | `end_date` (computed) | No | Computed by `getStageTree()` — the date the last ticket was finished (only when ALL sub-tickets are finished). Renders as "Unfinished" if null. |
+
+### `getStageTree()` data flow
+
+1. Fetches stage → phases → modules → workflows (4 queries, ordered)
+2. Fetches all non-deleted tickets for those workflows (5th query)
+3. Groups tickets by workflow, computes per-workflow: `ticketCount`, `progress` (finished/total %), `end_date` (only when all tickets finished)
+4. Assembles nested tree, propagating `end_date` upward (workflow → module → phase) using the "all finished" rule
+
+### Modals — validation UI
+
+All 7 modals (Add/Edit/Delete for Phase, Module, Workflow + standalone DeletePhase/DeleteWorkflow) use:
+- **`<Label required error={...}>`** from `shared/ui/label.tsx` — red asterisk on error
+- **Red border** (`border-red-400`) on invalid inputs
+- **Character counter** (`{n}/20` for phases, `{n}/35` for modules/workflows) with `maxLength` on inputs
+- **Zod validation** via `phaseCreateSchema` / `moduleCreateSchema` / `workflowCreateSchema` before save
+- **Inline error messages** via `fieldErrors` state
+
+### Phase visualization
+
+- Phase dots in PhaseStepper: numbered circles with active/completed/pending states
+- Phase names truncated at ~10 chars via `max-w-[80px] truncate` with `title` tooltip
+- Drag-and-drop swaps `number` fields via `swapPhaseOrder()` (Prisma transaction)
+- Selected phase persisted in `sessionStorage` ("stageEditorPhase") and URL `?phase=N` param
+- Delete X button on hover triggers `DeletePhase` confirmation modal
+
+### Progress bars
+
+WorkflowsList renders per-workflow:
+- **Ticket count**: `{N} Tickets` with star icon
+- **Progress bar**: indigo bar with `{progress}%` when tickets exist; gray bar with `- %` when `ticketCount === 0`
+- **Date badge**: `creation_date – end_date (or "Unfinished")` — compact interval view
+- **Deadline**: shown under workflow title as `Deadline: {datetime}` or `——` if null
+
+---
+
+## 15. Signup Department Dropdown
+
+The `StaffSignupForm` component (`features/auth/ui/StaffSignupForm.tsx`) restricts the Department field to a `<select>` dropdown with three options:
+
+- `Project Team`
+- `Project Owner`
+- `Finance Team`
+
+Styling matches the shared `Input` component (`px-3.5 py-2.5 rounded-lg border border-gray-300`). Placeholder text is `"Select..."` in gray. This replaces the previous free-text input to prevent misspellings and enforce the three valid internal departments.
+
+---
+
+## 16. Server Action Signatures (Phase / Module / Workflow)
+
+All create and update server actions now accept `deadlineDate?: Date | null`.
+
+### `createPhase()`
+
+```typescript
+export async function createPhase(
+    stageId: string,
+    phaseName: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null
+)
+```
+
+### `updatePhase()`
+
+```typescript
+export async function updatePhase(
+    phaseId: string,
+    phaseName?: string,
+    description?: string | null,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null
+)
+```
+
+### `createModule()`
+
+```typescript
+export async function createModule(
+    phaseId: string,
+    moduleName: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null
+)
+```
+
+### `updateModule()`
+
+```typescript
+export async function updateModule(
+    moduleId: string,
+    moduleName?: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null
+)
+```
+
+### `createWorkflow()`
+
+```typescript
+export async function createWorkflow(
+    moduleId: string,
+    workflowName: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    deadlineDate?: Date | null,
+    isApproved?: boolean
+)
+```
+
+### `updateWorkflow()`
+
+```typescript
+export async function updateWorkflow(
+    workflowId: string,
+    workflowName?: string,
+    startDate?: Date | null,
+    endDate?: Date | null,
+    isApproved?: boolean,
+    deadlineDate?: Date | null
+)
+```
+
+All signatures pass through to their respective TanStack mutations, which forward `params.deadline_date` from the Zod-validated form data.

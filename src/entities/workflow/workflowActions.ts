@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import { cascadeSoftDeleteTicket } from "../ticket/ticketActions";
 
-export type EntityFilterStatus = 'active' | 'deleted' | 'all';
+export type EntityFilterStatus = "active" | "deleted" | "all";
 
 /**
  * Creates a new workflow and maps it to its parent module.
@@ -18,27 +18,34 @@ export type EntityFilterStatus = 'active' | 'deleted' | 'all';
  * Returns `success: false` and an error message if the creation fails.
  */
 export async function createWorkflow(
-    moduleId: string,
-    workflowName: string,
-    startDate?: Date | null,
-    endDate?: Date | null,
-    isApproved: boolean = false
+	moduleId: string,
+	workflowName: string,
+	startDate?: Date | null,
+	endDate?: Date | null,
+	deadlineDate?: Date | null,
+	isApproved: boolean = false,
 ) {
-    try {
-        const newWorkflow = await prisma.workflows.create({
-            data: {
-                name: workflowName,
-                start_date: startDate,
-                end_date: endDate,
-                is_approved: isApproved,
-                module_id: moduleId,
-            },
-        });
-        return { success: true, data: newWorkflow };
-    } catch (error) {
-        console.error("Failed to create workflow:", error);
-        return { success: false, error: "Failed to create workflow." };
-    }
+	try {
+		const existingCount = await prisma.workflows.count({
+			where: { module_id: moduleId, is_deleted: false },
+		});
+		const nextNumber = existingCount + 1;
+
+		const newWorkflow = await prisma.workflows.create({
+			data: {
+				name: workflowName,
+				end_date: endDate,
+				is_approved: isApproved,
+				number: nextNumber,
+				module_id: moduleId,
+				deadline_date: deadlineDate ?? null,
+			},
+		});
+		return { success: true, data: newWorkflow };
+	} catch (error) {
+		console.error("Failed to create workflow:", error);
+		return { success: false, error: "Failed to create workflow." };
+	}
 }
 
 /**
@@ -56,28 +63,35 @@ export async function createWorkflow(
  * Returns `success: true` and the workflow object if found.
  * Returns `success: false` and an error message if the workflow does not exist, does not match the requested status, or the query fails.
  */
-export async function getWorkflowById(workflowId: string, status: EntityFilterStatus = 'active') {
-    try {
-        const isDeletedFilter = status === 'active' ? false : status === 'deleted' ? true : undefined;
+export async function getWorkflowById(
+	workflowId: string,
+	status: EntityFilterStatus = "active",
+) {
+	try {
+		const isDeletedFilter =
+			status === "active" ? false : status === "deleted" ? true : undefined;
 
-        const workflowData = await prisma.workflows.findUnique({
-            where: {
-                workflow_id: workflowId,
-                is_deleted: isDeletedFilter,
-            },
-            include: {
-                Modules: true,
-            },
-        });
-        
-        if (!workflowData) {
-            return { success: false, error: "Workflow not found or does not match the requested status." };
-        }
-        return { success: true, data: workflowData };
-    } catch (error) {
-        console.error("Failed to fetch workflow:", error);
-        return { success: false, error: "Failed to fetch workflow details." };
-    }
+		const workflowData = await prisma.workflows.findUnique({
+			where: {
+				workflow_id: workflowId,
+				is_deleted: isDeletedFilter,
+			},
+			include: {
+				Modules: true,
+			},
+		});
+
+		if (!workflowData) {
+			return {
+				success: false,
+				error: "Workflow not found or does not match the requested status.",
+			};
+		}
+		return { success: true, data: workflowData };
+	} catch (error) {
+		console.error("Failed to fetch workflow:", error);
+		return { success: false, error: "Failed to fetch workflow details." };
+	}
 }
 
 /**
@@ -94,25 +108,29 @@ export async function getWorkflowById(workflowId: string, status: EntityFilterSt
  * Returns `success: true` and an array of tickets if the query is successful.
  * Returns `success: false` and an error message if the query fails.
  */
-export async function getTicketsByWorkflowId(workflowId: string, status: EntityFilterStatus = 'active') {
-    try {
-        const isDeletedFilter = status === 'active' ? false : status === 'deleted' ? true : undefined;
+export async function getTicketsByWorkflowId(
+	workflowId: string,
+	status: EntityFilterStatus = "active",
+) {
+	try {
+		const isDeletedFilter =
+			status === "active" ? false : status === "deleted" ? true : undefined;
 
-        const tickets = await prisma.tickets.findMany({
-            where: {
-                workflow_id: workflowId,
-                is_deleted: isDeletedFilter,
-            },
-            orderBy: {
-                creation_date: 'asc',
-            },
-        });
+		const tickets = await prisma.tickets.findMany({
+			where: {
+				workflow_id: workflowId,
+				is_deleted: isDeletedFilter,
+			},
+			orderBy: {
+				creation_date: "asc",
+			},
+		});
 
-        return { success: true, data: tickets };
-    } catch (error) {
-        console.error("Failed to fetch tickets for workflow:", error);
-        return { success: false, error: "Failed to fetch tickets." };
-    }
+		return { success: true, data: tickets };
+	} catch (error) {
+		console.error("Failed to fetch tickets for workflow:", error);
+		return { success: false, error: "Failed to fetch tickets." };
+	}
 }
 
 /**
@@ -128,29 +146,30 @@ export async function getTicketsByWorkflowId(workflowId: string, status: EntityF
  * Returns `success: false` and an error message if the update fails.
  */
 export async function updateWorkflow(
-    workflowId: string,
-    workflowName?: string,
-    startDate?: Date | null,
-    endDate?: Date | null,
-    isApproved?: boolean
+	workflowId: string,
+	workflowName?: string,
+	startDate?: Date | null,
+	endDate?: Date | null,
+	isApproved?: boolean,
+	deadlineDate?: Date | null,
 ) {
-    try {
-        const updatedWorkflow = await prisma.workflows.update({
-            where: {
-                workflow_id: workflowId,
-            },
-            data: {
-                name: workflowName,
-                start_date: startDate,
-                end_date: endDate,
-                is_approved: isApproved,
-            },
-        });
-        return { success: true, data: updatedWorkflow };
-    } catch (error) {
-        console.error("Failed to update workflow:", error);
-        return { success: false, error: "Failed to update workflow details." };
-    }
+	try {
+		const updatedWorkflow = await prisma.workflows.update({
+			where: {
+				workflow_id: workflowId,
+			},
+			data: {
+				name: workflowName,
+				end_date: endDate,
+				deadline_date: deadlineDate,
+				is_approved: isApproved,
+			},
+		});
+		return { success: true, data: updatedWorkflow };
+	} catch (error) {
+		console.error("Failed to update workflow:", error);
+		return { success: false, error: "Failed to update workflow details." };
+	}
 }
 
 /**
@@ -164,39 +183,42 @@ export async function updateWorkflow(
  * Returns `success: false` and an error message if the workflow contains tickets or the query fails.
  */
 export async function softDeleteWorkflow(workflowId: string) {
-    try {
-        const attachedTicketsCount = await prisma.tickets.count({
-            where: {
-                workflow_id: workflowId,
-                is_deleted: false
-            },
-        });
-        if (attachedTicketsCount > 0) {
-            return {
-                success: false,
-                error: `Cannot archive workflow. Please remove or archive all ${attachedTicketsCount} associated ticket(s) first.`
-            };
-        }
+	try {
+		const attachedTicketsCount = await prisma.tickets.count({
+			where: {
+				workflow_id: workflowId,
+				is_deleted: false,
+			},
+		});
+		if (attachedTicketsCount > 0) {
+			return {
+				success: false,
+				error: `Cannot archive workflow. Please remove or archive all ${attachedTicketsCount} associated ticket(s) first.`,
+			};
+		}
 
-        await prisma.workflows.update({
-            where: { workflow_id: workflowId },
-            data: {
-                is_deleted: true,
-                deleted_at: new Date(),
-            },
-        });
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to soft delete workflow:", error);
-        return { success: false, error: "Failed to archive the workflow due to a database error." };
-    }
+		await prisma.workflows.update({
+			where: { workflow_id: workflowId },
+			data: {
+				is_deleted: true,
+				deleted_at: new Date(),
+			},
+		});
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to soft delete workflow:", error);
+		return {
+			success: false,
+			error: "Failed to archive the workflow due to a database error.",
+		};
+	}
 }
 
 /**
  * Performs a cascading soft delete on a workflow and all its nested tickets.
- * This function operates inside a provided Prisma transaction (txClient) to ensure 
- * rollback integrity. It soft deletes the workflow and retrieves all associated tickets. 
- * A placeholder is currently set in the execution loop to await the creation of 
+ * This function operates inside a provided Prisma transaction (txClient) to ensure
+ * rollback integrity. It soft deletes the workflow and retrieves all associated tickets.
+ * A placeholder is currently set in the execution loop to await the creation of
  * a future 'cascadeSoftDeleteTicket' action.
  *
  * @param {string} workflowId - The UUID of the workflow to archive.
@@ -205,33 +227,77 @@ export async function softDeleteWorkflow(workflowId: string) {
  * Returns `success: true` upon successful cascade.
  * Returns `success: false` and an error message if the operation fails, or throws an error to trigger a rollback if executed within a parent transaction.
  */
-export async function cascadeSoftDeleteWorkflow(workflowId: string, txClient?: Prisma.TransactionClient) {
-    const executeLogic = async (tx: Prisma.TransactionClient) => {
-        await tx.workflows.update({
-            where: { workflow_id: workflowId },
-            data: { is_deleted: true, deleted_at: new Date() }
-        });
+export async function cascadeSoftDeleteWorkflow(
+	workflowId: string,
+	txClient?: Prisma.TransactionClient,
+) {
+	const executeLogic = async (tx: Prisma.TransactionClient) => {
+		await tx.workflows.update({
+			where: { workflow_id: workflowId },
+			data: { is_deleted: true, deleted_at: new Date() },
+		});
 
-        const childTickets = await tx.tickets.findMany({
-            where: { workflow_id: workflowId, is_deleted: false },
-            select: { ticket_id: true }
-        });
+		const childTickets = await tx.tickets.findMany({
+			where: { workflow_id: workflowId, is_deleted: false },
+			select: { ticket_id: true },
+		});
 
-        for (const ticket of childTickets) {
-            await cascadeSoftDeleteTicket(ticket.ticket_id, tx);
-        }
-    };
+		for (const ticket of childTickets) {
+			await cascadeSoftDeleteTicket(ticket.ticket_id, undefined, tx);
+		}
+	};
 
-    try {
-        if (txClient) {
-            await executeLogic(txClient);
-        } else {
-            await prisma.$transaction(executeLogic);
-        }
-        return { success: true };
-    } catch (error) {
-        console.error("Failed cascading soft delete for workflow:", error);
-        if (txClient) throw error;
-        return { success: false, error: "Failed to cascade archive workflow." };
-    }
+	try {
+		if (txClient) {
+			await executeLogic(txClient);
+		} else {
+			await prisma.$transaction(executeLogic);
+		}
+		return { success: true };
+	} catch (error) {
+		console.error("Failed cascading soft delete for workflow:", error);
+		if (txClient) throw error;
+		return { success: false, error: "Failed to cascade archive workflow." };
+	}
+}
+
+/**
+ * Swaps the sequential 'number' values of two workflows within the same module.
+ * Uses a Prisma interactive transaction to fetch current numbers and update simultaneously,
+ * preventing duplicate sequence numbers.
+ */
+export async function swapWorkflowOrder(
+	workflowId1: string,
+	workflowId2: string,
+) {
+	try {
+		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+			const wf1 = await tx.workflows.findUnique({
+				where: { workflow_id: workflowId1 },
+			});
+			const wf2 = await tx.workflows.findUnique({
+				where: { workflow_id: workflowId2 },
+			});
+
+			if (!wf1 || !wf2) {
+				throw new Error("One or both workflows not found");
+			}
+
+			const num1 = wf1.number;
+			const num2 = wf2.number;
+
+			await tx.workflows.update({
+				where: { workflow_id: workflowId1 },
+				data: { number: num2 },
+			});
+			await tx.workflows.update({
+				where: { workflow_id: workflowId2 },
+				data: { number: num1 },
+			});
+		});
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to swap workflow order:", error);
+		return { success: false, error: "Failed to reorder workflows." };
+	}
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import {
 	DndContext,
 	DragEndEvent,
@@ -42,7 +43,8 @@ import type { CreateTicketParams } from "@/shared/schemas";
 type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
 
 // Icons
-import { TagsIcon, FilterIcon, PlusIcon } from "@/shared/ui/icons";
+import { TagsIcon, PlusIcon } from "@/shared/ui/icons";
+import { useAuth } from "@/features/auth";
 
 // ── Main board ────────────────────────────────────────────────────────────────
 
@@ -54,7 +56,17 @@ import { TagsIcon, FilterIcon, PlusIcon } from "@/shared/ui/icons";
  * @param {string} props.workflow_id - Unique container scope identifying the target board sprint layout.
  * @returns {JSX.Element} The fully rendered sprint board panel or a loading skeleton.
  */
-export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
+export default function TicketBoard({
+  workflow_id,
+  workflowName = 'Current Sprint',
+  projectId,
+  stageId,
+}: {
+  workflow_id: string;
+  workflowName?: string;
+  projectId?: string;
+  stageId?: string;
+}) {
 	const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [slideOverOpen, setSlideOverOpen] = useState(false);
@@ -62,6 +74,7 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 	const [tagManagerOpen, setTagManagerOpen] = useState(false);
 
 	const wasDraggingRef = useRef(false);
+	const { user } = useAuth();
 
 	const mouseSensor = useSensor(MouseSensor, {
 		activationConstraint: { distance: 8 },
@@ -125,7 +138,8 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 				status: TicketStatus.PENDING,
 				TicketAssigned: data.TicketAssigned ?? [],
 				tagIds: data.tagIds ?? [],
-			} as CreateTicketParams);
+			performed_by: user?.profile_id,
+			} as CreateTicketParams & { performed_by?: string });
 			setModalOpen(false);
 		} catch (error) {
 			console.error("Failed to create ticket:", error);
@@ -140,7 +154,7 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 	 * @returns {Promise<void>} Resolves when state mutation pipelines finish reconciling.
 	 */
 	function handleDeleteTicket(ticketId: string) {
-		deleteTicketMutation.mutate(ticketId);
+		deleteTicketMutation.mutate({ ticketId, performed_by: user?.profile_id });
 	}
 
 	/**
@@ -155,7 +169,7 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 	 * @param {string | null} [color] - Optional Hex code, Tailwind class, or color variant identifier for UI styling.
 	 * @returns {Promise<void>} Resolves when the database mutations complete and React component state is successfully reconciled.
 	 */
-	function handleSaveTag({
+	async function handleSaveTag({
 		name,
 		tag_id,
 		description,
@@ -165,11 +179,16 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 		tag_id?: string;
 		description?: string | null;
 		color?: string | null;
-	}): void {
-		if (tag_id) {
-			updateTagMutation.mutate({ tag_id, name, description, color });
-		} else {
-			createTagMutation.mutate({ name, description, color });
+	}): Promise<{ error?: string }> {
+		try {
+			if (tag_id) {
+				await updateTagMutation.mutateAsync({ tag_id, name, description, color });
+			} else {
+				await createTagMutation.mutateAsync({ name, description, color });
+			}
+			return {};
+		} catch (err: any) {
+			return { error: err?.message ?? "Failed to save tag" };
 		}
 	}
 
@@ -214,6 +233,7 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 			updateStatusMutation.mutate({
 				ticketId: active.id as string,
 				status: newStatus,
+				performed_by: user?.profile_id,
 			});
 		}
 
@@ -238,7 +258,19 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 
 			<div className="flex items-center justify-between px-6 py-5 shrink-0">
 				<div className="flex items-center gap-3">
-					<h1 className="text-xl font-bold text-gray-900">Current Sprint</h1>
+					{stageId && projectId ? (
+						<Link
+							href={`/projects/${projectId}/stages/${stageId}`}
+							className="flex items-center gap-2 text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors"
+						>
+							<svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+								<path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+							</svg>
+							{workflowName}
+						</Link>
+					) : (
+						<h1 className="text-xl font-bold text-gray-900">{workflowName}</h1>
+					)}
 				</div>
 
 				<div className="flex items-center gap-3">
@@ -250,10 +282,6 @@ export default function TicketBoard({ workflow_id }: { workflow_id: string }) {
 						Tags
 					</button>
 
-					<button className="flex items-center gap-1.5 text-sm font-medium text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-						<FilterIcon />
-						Filter
-					</button>
 					<button
 						onClick={() => setModalOpen(true)}
 						className="flex items-center gap-1.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"

@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 import { commentCreateSchema, type CommentCreateInput } from "@/shared/schemas";
 
+export async function selectImagesByParent(parentType: ImageParentType, parentId: string) {
+	return prisma.images.findMany({
+		where: { parent_type: parentType, parent_id: parentId, is_deleted: false },
+	});
+}
+
 export type EntityFilterStatus = 'active' | 'deleted' | 'all';
 
 export async function selectComment() {
@@ -78,6 +84,18 @@ export async function createCommentWithImages(data: CommentCreateInput) {
 
             await tx.images.createMany({
                 data: imageData,
+            });
+        }
+
+        // ── Write HistoryEvent for ticket comments ──────────────────────
+        // Only TICKET_COMMENT maps to a ticket; GATE_COMMENT parent_id is a gate.
+        if (data.parent_type === "TICKET_COMMENT") {
+            await tx.historyEvent.create({
+                data: {
+                    action: "COMMENT_ADDED",
+                    performed_by: data.profile_id,
+                    ticket_id: data.parent_id,
+                },
             });
         }
 

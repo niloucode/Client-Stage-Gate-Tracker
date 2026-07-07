@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import { cascadeSoftDeleteWorkflow } from "../workflow/workflowActions";
 
-export type EntityFilterStatus = 'active' | 'deleted' | 'all';
+export type EntityFilterStatus = "active" | "deleted" | "all";
 
 /**
  * Creates a new module and maps it to its parent phase.
@@ -18,27 +18,27 @@ export type EntityFilterStatus = 'active' | 'deleted' | 'all';
  * Returns `success: false` and an error message if the creation fails.
  */
 export async function createModule(
-    phaseId: string,
-    moduleName: string,
-    startDate?: Date | null,
-    endDate?: Date | null
+	phaseId: string,
+	moduleName: string,
+	startDate?: Date | null,
+	endDate?: Date | null,
+	deadlineDate?: Date | null,
 ) {
-    try {
-        const newModule = await prisma.modules.create({
-            data: {
-                name: moduleName,
-                start_date: startDate,
-                end_date: endDate,
-                phase_id: phaseId,
-            },
-        });
-        return { success: true, data: newModule };
-    } catch (error) {
-        console.error("Failed to create module:", error);
-        return { success: false, error: "Failed to create module." };
-    }
+	try {
+		const newModule = await prisma.modules.create({
+			data: {
+				name: moduleName,
+				end_date: endDate,
+				deadline_date: deadlineDate,
+				phase_id: phaseId,
+			},
+		});
+		return { success: true, data: newModule };
+	} catch (error) {
+		console.error("Failed to create module:", error);
+		return { success: false, error: "Failed to create module." };
+	}
 }
-
 
 /**
  * Retrieves a specific module from the database using its unique ID.
@@ -54,28 +54,35 @@ export async function createModule(
  * Returns `success: true` and the module object if found.
  * Returns `success: false` and an error message if the module does not exist, does not match the requested status, or the query fails.
  */
-export async function getModuleById(moduleId: string, status: EntityFilterStatus = 'active') {
-    try {
-        const isDeletedFilter = status === 'active' ? false : status === 'deleted' ? true : undefined;
+export async function getModuleById(
+	moduleId: string,
+	status: EntityFilterStatus = "active",
+) {
+	try {
+		const isDeletedFilter =
+			status === "active" ? false : status === "deleted" ? true : undefined;
 
-        const moduleData = await prisma.modules.findUnique({
-            where: {
-                module_id: moduleId,
-                is_deleted: isDeletedFilter,
-            },
-            include: {
-                Phases: true,
-            },
-        });
+		const moduleData = await prisma.modules.findUnique({
+			where: {
+				module_id: moduleId,
+				is_deleted: isDeletedFilter,
+			},
+			include: {
+				Phases: true,
+			},
+		});
 
-        if (!moduleData) {
-            return { success: false, error: "Module not found or does not match the requested status." };
-        }
-        return { success: true, data: moduleData };
-    } catch (error) {
-        console.error("Failed to fetch module:", error);
-        return { success: false, error: "Failed to fetch module details." };
-    }
+		if (!moduleData) {
+			return {
+				success: false,
+				error: "Module not found or does not match the requested status.",
+			};
+		}
+		return { success: true, data: moduleData };
+	} catch (error) {
+		console.error("Failed to fetch module:", error);
+		return { success: false, error: "Failed to fetch module details." };
+	}
 }
 
 /**
@@ -92,25 +99,29 @@ export async function getModuleById(moduleId: string, status: EntityFilterStatus
  * Returns `success: true` and an array of workflows if the query is successful.
  * Returns `success: false` and an error message if the query fails.
  */
-export async function getWorkflowsByModuleId(moduleId: string, status: EntityFilterStatus = 'active') {
-    try {
-        const isDeletedFilter = status === 'active' ? false : status === 'deleted' ? true : undefined;
+export async function getWorkflowsByModuleId(
+	moduleId: string,
+	status: EntityFilterStatus = "active",
+) {
+	try {
+		const isDeletedFilter =
+			status === "active" ? false : status === "deleted" ? true : undefined;
 
-        const workflows = await prisma.workflows.findMany({
-            where: {
-                module_id: moduleId,
-                is_deleted: isDeletedFilter,
-            },
-            orderBy: {
-                creation_date: 'asc',
-            },
-        });
+		const workflows = await prisma.workflows.findMany({
+			where: {
+				module_id: moduleId,
+				is_deleted: isDeletedFilter,
+			},
+			orderBy: {
+				creation_date: "asc",
+			},
+		});
 
-        return { success: true, data: workflows };
-    } catch (error) {
-        console.error("Failed to fetch workflows for module:", error);
-        return { success: false, error: "Failed to fetch workflows." };
-    }
+		return { success: true, data: workflows };
+	} catch (error) {
+		console.error("Failed to fetch workflows for module:", error);
+		return { success: false, error: "Failed to fetch workflows." };
+	}
 }
 
 /**
@@ -126,29 +137,29 @@ export async function getWorkflowsByModuleId(moduleId: string, status: EntityFil
  * Returns `success: false` and an error message if the update fails.
  */
 export async function updateModule(
-    moduleId: string,
-    moduleName?: string,
-    startDate?: Date | null,
-    endDate?: Date | null
+	moduleId: string,
+	moduleName?: string,
+	startDate?: Date | null,
+	endDate?: Date | null,
+	deadlineDate?: Date | null,
 ) {
-    try {
-        const updatedModule = await prisma.modules.update({
-            where: {
-                module_id: moduleId,
-            },
-            data: {
-                name: moduleName,
-                start_date: startDate,
-                end_date: endDate,
-            },
-        });
-        return { success: true, data: updatedModule };
-    } catch (error) {
-        console.error("Failed to update module:", error);
-        return { success: false, error: "Failed to update module details." };
-    }
+	try {
+		const updatedModule = await prisma.modules.update({
+			where: {
+				module_id: moduleId,
+			},
+			data: {
+				name: moduleName,
+				end_date: endDate,
+				deadline_date: deadlineDate,
+			},
+		});
+		return { success: true, data: updatedModule };
+	} catch (error) {
+		console.error("Failed to update module:", error);
+		return { success: false, error: "Failed to update module details." };
+	}
 }
-
 
 /**
  * Performs a "soft delete" on a module by marking it as deleted instead of permanently erasing it.
@@ -161,32 +172,35 @@ export async function updateModule(
  * Returns `success: false` and an error message if the module contains workflows or the query fails.
  */
 export async function softDeleteModule(moduleId: string) {
-    try {
-        const attachedWorkflowsCount = await prisma.workflows.count({
-            where: {
-                module_id: moduleId,
-                is_deleted: false
-            },
-        });
-        if (attachedWorkflowsCount > 0) {
-            return {
-                success: false,
-                error: `Cannot archive module. Please remove or archive all ${attachedWorkflowsCount} associated workflow(s) first.`
-            };
-        }
+	try {
+		const attachedWorkflowsCount = await prisma.workflows.count({
+			where: {
+				module_id: moduleId,
+				is_deleted: false,
+			},
+		});
+		if (attachedWorkflowsCount > 0) {
+			return {
+				success: false,
+				error: `Cannot archive module. Please remove or archive all ${attachedWorkflowsCount} associated workflow(s) first.`,
+			};
+		}
 
-        await prisma.modules.update({
-            where: { module_id: moduleId },
-            data: {
-                is_deleted: true,
-                deleted_at: new Date(),
-            },
-        });
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to soft delete module:", error);
-        return { success: false, error: "Failed to archive the module due to a database error." };
-    }
+		await prisma.modules.update({
+			where: { module_id: moduleId },
+			data: {
+				is_deleted: true,
+				deleted_at: new Date(),
+			},
+		});
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to soft delete module:", error);
+		return {
+			success: false,
+			error: "Failed to archive the module due to a database error.",
+		};
+	}
 }
 
 /**
@@ -202,33 +216,36 @@ export async function softDeleteModule(moduleId: string) {
  * Returns `success: true` upon successful cascade.
  * Returns `success: false` and an error message if the operation fails, or throws an error to trigger a rollback if executed within a parent transaction.
  */
-export async function cascadeSoftDeleteModule(moduleId: string, txClient?: Prisma.TransactionClient) {
-    const executeLogic = async (tx: Prisma.TransactionClient) => {
-        await tx.modules.update({
-            where: { module_id: moduleId },
-            data: { is_deleted: true, deleted_at: new Date() }
-        });
+export async function cascadeSoftDeleteModule(
+	moduleId: string,
+	txClient?: Prisma.TransactionClient,
+) {
+	const executeLogic = async (tx: Prisma.TransactionClient) => {
+		await tx.modules.update({
+			where: { module_id: moduleId },
+			data: { is_deleted: true, deleted_at: new Date() },
+		});
 
-        const childWorkflows = await tx.workflows.findMany({
-            where: { module_id: moduleId, is_deleted: false },
-            select: { workflow_id: true }
-        });
+		const childWorkflows = await tx.workflows.findMany({
+			where: { module_id: moduleId, is_deleted: false },
+			select: { workflow_id: true },
+		});
 
-        for (const workflow of childWorkflows) {
-            await cascadeSoftDeleteWorkflow(workflow.workflow_id, tx);
-        }
-    };
+		for (const workflow of childWorkflows) {
+			await cascadeSoftDeleteWorkflow(workflow.workflow_id, tx);
+		}
+	};
 
-    try {
-        if (txClient) {
-            await executeLogic(txClient);
-        } else {
-            await prisma.$transaction(executeLogic);
-        }
-        return { success: true };
-    } catch (error) {
-        console.error("Failed cascading soft delete for module:", error);
-        if (txClient) throw error;
-        return { success: false, error: "Failed to cascade archive module." };
-    }
+	try {
+		if (txClient) {
+			await executeLogic(txClient);
+		} else {
+			await prisma.$transaction(executeLogic);
+		}
+		return { success: true };
+	} catch (error) {
+		console.error("Failed cascading soft delete for module:", error);
+		if (txClient) throw error;
+		return { success: false, error: "Failed to cascade archive module." };
+	}
 }

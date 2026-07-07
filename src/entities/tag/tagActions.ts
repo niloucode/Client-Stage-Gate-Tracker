@@ -29,9 +29,12 @@ export async function createTag(data: TagCreateInput) {
             }
         });
         return { success: true, data: newTag };
-    } catch (error) {
+    } catch (error: any) {
+        if (error?.code === "P2002") {
+            throw new Error("A tag with this name already exists.");
+        }
         console.error("Create tag error:", error);
-        return { success: false, error: "Failed to create tag" };
+        throw new Error("Failed to create tag");
     }
 }
 

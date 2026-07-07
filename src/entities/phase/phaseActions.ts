@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import { cascadeSoftDeleteModule } from "../module/moduleActions";
 
-export type EntityFilterStatus = 'active' | 'deleted' | 'all';
+export type EntityFilterStatus = "active" | "deleted" | "all";
 
 /**
  * Creates a new phase and automatically assigns it a scoped sequential number
@@ -18,35 +18,36 @@ export type EntityFilterStatus = 'active' | 'deleted' | 'all';
  * Returns `success: false` and an error message if the creation fails.
  */
 export async function createPhase(
-    stageId: string,
-    phaseName: string,
-    startDate?: Date | null,
-    endDate?: Date | null
+	stageId: string,
+	phaseName: string,
+	startDate?: Date | null,
+	endDate?: Date | null,
+	deadlineDate?: Date | null,
 ) {
-    try {
-        const existingPhasesCount = await prisma.phases.count({
-            where: {
-                stage_id: stageId,
-            },
-        });
-        const nextPhaseNumber = existingPhasesCount + 1;
+	try {
+		const existingPhasesCount = await prisma.phases.count({
+			where: {
+				stage_id: stageId,
+				is_deleted: false,
+			},
+		});
+		const nextPhaseNumber = existingPhasesCount + 1;
 
-        const newPhase = await prisma.phases.create({
-            data: {
-                name: phaseName,
-                number: nextPhaseNumber,
-                start_date: startDate,
-                end_date: endDate,
-                stage_id: stageId,
-            },
-        });
-        return { success: true, data: newPhase };
-    } catch (error) {
-        console.error("Failed to create phase:", error);
-        return { success: false, error: "Failed to create phase." };
-    }
+		const newPhase = await prisma.phases.create({
+			data: {
+				name: phaseName,
+				number: nextPhaseNumber,
+				end_date: endDate,
+				deadline_date: deadlineDate,
+				stage_id: stageId,
+			},
+		});
+		return { success: true, data: newPhase };
+	} catch (error) {
+		console.error("Failed to create phase:", error);
+		return { success: false, error: "Failed to create phase." };
+	}
 }
-
 
 /**
  * Retrieves a specific phase from the database using its unique ID.
@@ -62,25 +63,32 @@ export async function createPhase(
  * Returns `success: true` and the phase object if found.
  * Returns `success: false` and an error message if the phase does not exist, does not match the requested status, or the query fails.
  */
-export async function getPhaseById(phaseId: string, status: EntityFilterStatus = 'active') {
-    try {
-        const isDeletedFilter = status === 'active' ? false : status === 'deleted' ? true : undefined;
+export async function getPhaseById(
+	phaseId: string,
+	status: EntityFilterStatus = "active",
+) {
+	try {
+		const isDeletedFilter =
+			status === "active" ? false : status === "deleted" ? true : undefined;
 
-        const phase = await prisma.phases.findUnique({
-            where: {
-                phase_id: phaseId,
-                is_deleted: isDeletedFilter,
-            },
-        });
+		const phase = await prisma.phases.findUnique({
+			where: {
+				phase_id: phaseId,
+				is_deleted: isDeletedFilter,
+			},
+		});
 
-        if (!phase) {
-            return { success: false, error: "Phase not found or does not match the requested status." };
-        }
-        return { success: true, data: phase };
-    } catch (error) {
-        console.error("Failed to fetch phase:", error);
-        return { success: false, error: "Failed to fetch phase details." };
-    }
+		if (!phase) {
+			return {
+				success: false,
+				error: "Phase not found or does not match the requested status.",
+			};
+		}
+		return { success: true, data: phase };
+	} catch (error) {
+		console.error("Failed to fetch phase:", error);
+		return { success: false, error: "Failed to fetch phase details." };
+	}
 }
 
 /**
@@ -97,25 +105,29 @@ export async function getPhaseById(phaseId: string, status: EntityFilterStatus =
  * Returns `success: true` and an array of modules if the query is successful.
  * Returns `success: false` and an error message if the query fails.
  */
-export async function getModulesByPhaseId(phaseId: string, status: EntityFilterStatus = 'active') {
-    try {
-        const isDeletedFilter = status === 'active' ? false : status === 'deleted' ? true : undefined;
+export async function getModulesByPhaseId(
+	phaseId: string,
+	status: EntityFilterStatus = "active",
+) {
+	try {
+		const isDeletedFilter =
+			status === "active" ? false : status === "deleted" ? true : undefined;
 
-        const modules = await prisma.modules.findMany({
-            where: {
-                phase_id: phaseId,
-                is_deleted: isDeletedFilter,
-            },
-            orderBy: {
-                creation_date: 'asc',
-            },
-        });
+		const modules = await prisma.modules.findMany({
+			where: {
+				phase_id: phaseId,
+				is_deleted: isDeletedFilter,
+			},
+			orderBy: {
+				creation_date: "asc",
+			},
+		});
 
-        return { success: true, data: modules };
-    } catch (error) {
-        console.error("Failed to fetch modules for phase:", error);
-        return { success: false, error: "Failed to fetch modules." };
-    }
+		return { success: true, data: modules };
+	} catch (error) {
+		console.error("Failed to fetch modules for phase:", error);
+		return { success: false, error: "Failed to fetch modules." };
+	}
 }
 
 /**
@@ -124,6 +136,7 @@ export async function getModulesByPhaseId(phaseId: string, status: EntityFilterS
  *
  * @param {string} phaseId - The UUID of the phase to update.
  * @param {string} [phaseName] - (Optional) The new name for the phase.
+ * @param {string | null} [description] - (Optional) The new description for the phase.
  * @param {Date | null} [startDate] - (Optional) The new scheduled start date.
  * @param {Date | null} [endDate] - (Optional) The new scheduled end date.
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
@@ -131,27 +144,30 @@ export async function getModulesByPhaseId(phaseId: string, status: EntityFilterS
  * Returns `success: false` and an error message if the update fails.
  */
 export async function updatePhase(
-    phaseId: string,
-    phaseName?: string,
-    startDate?: Date | null,
-    endDate?: Date | null
+	phaseId: string,
+	phaseName?: string,
+	description?: string | null,
+	startDate?: Date | null,
+	endDate?: Date | null,
+	deadlineDate?: Date | null,
 ) {
-    try {
-        const updatedPhase = await prisma.phases.update({
-            where: {
-                phase_id: phaseId,
-            },
-            data: {
-                name: phaseName,
-                start_date: startDate,
-                end_date: endDate,
-            },
-        });
-        return { success: true, data: updatedPhase };
-    } catch (error) {
-        console.error("Failed to update phase:", error);
-        return { success: false, error: "Failed to update phase details." };
-    }
+	try {
+		const updatedPhase = await prisma.phases.update({
+			where: {
+				phase_id: phaseId,
+			},
+			data: {
+				name: phaseName,
+				description: description,
+				end_date: endDate,
+				deadline_date: deadlineDate,
+			},
+		});
+		return { success: true, data: updatedPhase };
+	} catch (error) {
+		console.error("Failed to update phase:", error);
+		return { success: false, error: "Failed to update phase details." };
+	}
 }
 
 /**
@@ -165,32 +181,36 @@ export async function updatePhase(
  * Returns `success: false` and an error message if the phase contains modules or the query fails.
  */
 export async function softDeletePhase(phaseId: string) {
-    try {
-        const attachedModulesCount = await prisma.modules.count({
-            where: {
-                phase_id: phaseId,
-                is_deleted: false
-            },
-        });
-        if (attachedModulesCount > 0) {
-            return {
-                success: false,
-                error: `Cannot archive phase. Please remove or archive all ${attachedModulesCount} associated module(s) first.`
-            };
-        }
+	try {
+		const attachedModulesCount = await prisma.modules.count({
+			where: {
+				phase_id: phaseId,
+				is_deleted: false,
+			},
+		});
+		if (attachedModulesCount > 0) {
+			return {
+				success: false,
+				error: `Cannot archive phase. Please remove or archive all ${attachedModulesCount} associated module(s) first.`,
+			};
+		}
 
-        await prisma.phases.update({
-            where: { phase_id: phaseId },
-            data: {
-                is_deleted: true,
-                deleted_at: new Date(),
-            },
-        });
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to soft delete phase:", error);
-        return { success: false, error: "Failed to archive the phase due to a database error." };
-    }
+		await prisma.phases.update({
+			where: { phase_id: phaseId },
+			data: {
+				is_deleted: true,
+				deleted_at: new Date(),
+				number: null,
+			} as any,
+		});
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to soft delete phase:", error);
+		return {
+			success: false,
+			error: "Failed to archive the phase due to a database error.",
+		};
+	}
 }
 
 /**
@@ -206,35 +226,38 @@ export async function softDeletePhase(phaseId: string) {
  * Returns `success: true` upon successful cascade.
  * Returns `success: false` and an error message if the operation fails, or throws an error to trigger a rollback if executed within a parent transaction.
  */
-export async function cascadeSoftDeletePhase(phaseId: string, txClient?: Prisma.TransactionClient) {
-    const executeLogic = async (tx: Prisma.TransactionClient) => {
-        await tx.phases.update({
-            where: { phase_id: phaseId },
-            data: { is_deleted: true, deleted_at: new Date() }
-        });
+export async function cascadeSoftDeletePhase(
+	phaseId: string,
+	txClient?: Prisma.TransactionClient,
+) {
+	const executeLogic = async (tx: Prisma.TransactionClient) => {
+		await tx.phases.update({
+			where: { phase_id: phaseId },
+			data: { is_deleted: true, deleted_at: new Date(), number: null } as any,
+		});
 
-        const childModules = await tx.modules.findMany({
-            where: { phase_id: phaseId, is_deleted: false },
-            select: { module_id: true }
-        });
+		const childModules = await tx.modules.findMany({
+			where: { phase_id: phaseId, is_deleted: false },
+			select: { module_id: true },
+		});
 
-        for (const childModule of childModules) {
-            await cascadeSoftDeleteModule(childModule.module_id, tx);
-        }
-    };
+		for (const childModule of childModules) {
+			await cascadeSoftDeleteModule(childModule.module_id, tx);
+		}
+	};
 
-    try {
-        if (txClient) {
-            await executeLogic(txClient);
-        } else {
-            await prisma.$transaction(executeLogic);
-        }
-        return { success: true };
-    } catch (error) {
-        console.error("Failed cascading soft delete for phase:", error);
-        if (txClient) throw error;
-        return { success: false, error: "Failed to cascade archive phase." };
-    }
+	try {
+		if (txClient) {
+			await executeLogic(txClient);
+		} else {
+			await prisma.$transaction(executeLogic);
+		}
+		return { success: true };
+	} catch (error) {
+		console.error("Failed cascading soft delete for phase:", error);
+		if (txClient) throw error;
+		return { success: false, error: "Failed to cascade archive phase." };
+	}
 }
 
 /**
@@ -251,29 +274,33 @@ export async function cascadeSoftDeletePhase(phaseId: string, txClient?: Prisma.
  * Returns `success: false` and an error message if the phases cannot be found or the database update fails.
  */
 export async function swapPhaseOrder(phaseId1: string, phaseId2: string) {
-    try {
-        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-            const phase1 = await tx.phases.findUnique({ where: { phase_id: phaseId1 } });
-            const phase2 = await tx.phases.findUnique({ where: { phase_id: phaseId2 } });
+	try {
+		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+			const phase1 = await tx.phases.findUnique({
+				where: { phase_id: phaseId1 },
+			});
+			const phase2 = await tx.phases.findUnique({
+				where: { phase_id: phaseId2 },
+			});
 
-            if (!phase1 || !phase2) {
-                throw new Error("One or both phases could not be found.");
-            }
+			if (!phase1 || !phase2) {
+				throw new Error("One or both phases could not be found.");
+			}
 
-            await tx.phases.update({
-                where: { phase_id: phaseId1 },
-                data: { number: phase2.number },
-            });
+			await tx.phases.update({
+				where: { phase_id: phaseId1 },
+				data: { number: phase2.number },
+			});
 
-            await tx.phases.update({
-                where: { phase_id: phaseId2 },
-                data: { number: phase1.number },
-            });
-        });
+			await tx.phases.update({
+				where: { phase_id: phaseId2 },
+				data: { number: phase1.number },
+			});
+		});
 
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to swap phase orders:", error);
-        return { success: false, error: "Failed to reorder phases." };
-    }
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to swap phase orders:", error);
+		return { success: false, error: "Failed to reorder phases." };
+	}
 }

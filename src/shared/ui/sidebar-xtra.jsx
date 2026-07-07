@@ -63,7 +63,7 @@ export const navItems = [
   //{ label: "Dashboard",        icon: <LayoutDashboard /> },
   { label: "Projects",         icon: <FolderIcon /> },
   //{ label: "Contracts",        icon: <FileTextIcon /> },
-  { label: "Credentials Repo", icon: <KeyIcon /> },
+  //{ label: "Credentials Repo", icon: <KeyIcon /> },
 ];
 
 export const SidebarLogo = ({ collapsed }) => (

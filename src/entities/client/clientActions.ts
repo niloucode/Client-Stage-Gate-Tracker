@@ -71,3 +71,11 @@ export async function clientCreate(client: ClientType){
         }
     })
 }
+
+export async function clientDeleteByID(clientID: string){
+    return await prisma.clients.delete({
+        where: {
+            client_id: clientID
+        }
+    })
+}

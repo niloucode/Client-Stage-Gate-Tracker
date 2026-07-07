@@ -3,13 +3,13 @@
 // import { redirect } from "next/navigation";
 
 export default function AuthLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  // const supabase = await createClient();
-  // const { data } = await supabase.auth.getClaims();
-  // if (data?.claims) redirect("/dashboard");
+	// const supabase = await createClient();
+	// const { data } = await supabase.auth.getClaims();
+	// if (data?.claims) redirect("/dashboard");
 
-  return <>{children}</>;
+	return <>{children}</>;
 }

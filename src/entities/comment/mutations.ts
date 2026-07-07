@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { commentKeys } from "@/shared/query/keys";
+import { commentKeys, historyKeys } from "@/shared/query/keys";
 import { createCommentWithImages } from "./commentActions";
 import type { CommentParentType } from "@/lib/generated/prisma";
 
@@ -15,6 +15,13 @@ export function useCreateComment() {
 				queryKey: commentKeys.list(vars.parent_type, vars.parent_id),
 			});
 			queryClient.invalidateQueries({ queryKey: commentKeys.lists() });
+
+			// Also refresh ticket history when commenting on a ticket
+			if (vars.parent_type === "TICKET_COMMENT") {
+				queryClient.invalidateQueries({
+					queryKey: historyKeys.list(vars.parent_id),
+				});
+			}
 
 			queryClient.setQueryData(
 				commentKeys.list(vars.parent_type, vars.parent_id),
