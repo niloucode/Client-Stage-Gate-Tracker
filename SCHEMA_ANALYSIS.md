@@ -183,7 +183,7 @@ deleted_at    DateTime?
 
 ```
 stage_id      UUID PK
-number        Int?                         @@unique([project_id, number]) — nullable; set to null on soft-delete to release the slot
+number        Int?                         @@unique([project_id, number]) — nullable; set to null on soft-delete; remaining stages renumbered to close gap
 name          String
 description   String?
 project_id    UUID → Projects
@@ -198,7 +198,7 @@ deleted_at    DateTime?
 
 ```
 phase_id      UUID PK
-number        Int?                         @@unique([stage_id, number]) — nullable; set to null on soft-delete to release the slot
+number        Int?                         @@unique([stage_id, number]) — nullable; set to null on soft-delete; remaining phases renumbered to close gap
 name          String
 description   String?
 stage_id      UUID → Stages
@@ -228,7 +228,7 @@ deleted_at    DateTime?
 workflow_id   UUID PK
 name          String
 is_approved   Boolean   @default(false)
-number        Int?                       @@unique([number, module_id]) — nullable; set to null on soft-delete to release the slot
+number        Int?                       @@unique([number, module_id]) — nullable; set to null on soft-delete; remaining workflows renumbered to close gap
 module_id     UUID → Modules
 creation_date DateTime
 end_date      DateTime?
@@ -577,7 +577,7 @@ Adding a new unfinished workflow/module to an already-finished parent immediatel
 
 ### Phase / Workflow DnD ordering
 
-Both `Phases` and `Workflows` have a `number Int?` column with a composite unique constraint (`@@unique([stage_id, number])` and `@@unique([number, module_id])` respectively). On creation, the number is auto-assigned as `count + 1` (counting only non-deleted siblings). On soft-delete, the number is set to `null` to release the slot.
+Both `Phases` and `Workflows` have a `number Int?` column with a composite unique constraint (`@@unique([stage_id, number])` and `@@unique([number, module_id])` respectively). On creation, the number is auto-assigned as `MAX(number) + 1` (using `COALESCE(MAX(number), 0) + 1` to survive gaps). On soft-delete, the number is set to `null` and all remaining siblings with higher numbers are shifted down by 1 (null-all-then-reassign) to keep the sequence contiguous.
 
 Drag-and-drop uses an **insertion-based reorder** (not a swap). Both `reorderPhase(phaseId, targetNumber)` and `reorderWorkflow(workflowId, targetNumber)` use a three-step algorithm inside a Prisma interactive transaction:
 

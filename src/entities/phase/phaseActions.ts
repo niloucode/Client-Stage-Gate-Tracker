@@ -23,19 +23,19 @@ export async function createPhase(
 	startDate?: Date | null,
 	endDate?: Date | null,
 	deadlineDate?: Date | null,
+	description?: string | null,
 ) {
 	try {
-		const existingPhasesCount = await prisma.phases.count({
-			where: {
-				stage_id: stageId,
-				is_deleted: false,
-			},
+		const maxNumber = await prisma.phases.aggregate({
+			where: { stage_id: stageId, is_deleted: false },
+			_max: { number: true },
 		});
-		const nextPhaseNumber = existingPhasesCount + 1;
+		const nextPhaseNumber = (maxNumber._max.number ?? 0) + 1;
 
 		const newPhase = await prisma.phases.create({
 			data: {
 				name: phaseName,
+				description: description,
 				number: nextPhaseNumber,
 				end_date: endDate,
 				deadline_date: deadlineDate,
@@ -195,14 +195,55 @@ export async function softDeletePhase(phaseId: string) {
 			};
 		}
 
-		await prisma.phases.update({
-			where: { phase_id: phaseId },
-			data: {
-				is_deleted: true,
-				deleted_at: new Date(),
-				number: null,
-			} as any,
+		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+			// Read the phase's number before nulling it
+			const phase = await tx.phases.findUnique({
+				where: { phase_id: phaseId },
+				select: { stage_id: true, number: true },
+			});
+
+			// Mark the phase as deleted and release its number slot
+			await tx.phases.update({
+				where: { phase_id: phaseId },
+				data: {
+					is_deleted: true,
+					deleted_at: new Date(),
+					number: null,
+				} as any,
+			});
+
+			// Renumber remaining phases to close the gap
+			if (phase?.number != null) {
+				const higherPhases = await tx.phases.findMany({
+					where: {
+						stage_id: phase.stage_id,
+						number: { gt: phase.number },
+						is_deleted: false,
+					},
+					select: { phase_id: true, number: true },
+					orderBy: { number: "asc" },
+				});
+
+				if (higherPhases.length > 0) {
+					// Null all affected phases (safe — multiple NULLs allowed)
+					await tx.phases.updateMany({
+						where: {
+							phase_id: { in: higherPhases.map((p) => p.phase_id) },
+						},
+						data: { number: null },
+					});
+
+					// Reassign each to its new number
+					for (const p of higherPhases) {
+						await tx.phases.update({
+							where: { phase_id: p.phase_id },
+							data: { number: p.number! - 1 },
+						});
+					}
+				}
+			}
 		});
+
 		return { success: true };
 	} catch (error) {
 		console.error("Failed to soft delete phase:", error);
@@ -231,6 +272,12 @@ export async function cascadeSoftDeletePhase(
 	txClient?: Prisma.TransactionClient,
 ) {
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
+		// Read the phase's number before nulling it
+		const phase = await tx.phases.findUnique({
+			where: { phase_id: phaseId },
+			select: { stage_id: true, number: true },
+		});
+
 		await tx.phases.update({
 			where: { phase_id: phaseId },
 			data: { is_deleted: true, deleted_at: new Date(), number: null } as any,
@@ -243,6 +290,35 @@ export async function cascadeSoftDeletePhase(
 
 		for (const childModule of childModules) {
 			await cascadeSoftDeleteModule(childModule.module_id, tx);
+		}
+
+		// Renumber remaining phases to close the gap
+		if (phase?.number != null) {
+			const higherPhases = await tx.phases.findMany({
+				where: {
+					stage_id: phase.stage_id,
+					number: { gt: phase.number },
+					is_deleted: false,
+				},
+				select: { phase_id: true, number: true },
+				orderBy: { number: "asc" },
+			});
+
+			if (higherPhases.length > 0) {
+				await tx.phases.updateMany({
+					where: {
+						phase_id: { in: higherPhases.map((p) => p.phase_id) },
+					},
+					data: { number: null },
+				});
+
+				for (const p of higherPhases) {
+					await tx.phases.update({
+						where: { phase_id: p.phase_id },
+						data: { number: p.number! - 1 },
+					});
+				}
+			}
 		}
 	};
 

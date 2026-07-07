@@ -24,13 +24,11 @@ export async function createStage(
 	endDate?: Date | null,
 ) {
 	try {
-		const existingStagesCount = await prisma.stages.count({
-			where: {
-				project_id: projectId,
-				is_deleted: false,
-			},
+		const maxNumber = await prisma.stages.aggregate({
+			where: { project_id: projectId, is_deleted: false },
+			_max: { number: true },
 		});
-		const nextStageNumber = existingStagesCount + 1;
+		const nextStageNumber = (maxNumber._max.number ?? 0) + 1;
 
 		const newStage = await prisma.stages.create({
 			data: {

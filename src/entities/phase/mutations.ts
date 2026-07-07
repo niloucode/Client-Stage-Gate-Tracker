@@ -21,6 +21,7 @@ export function useCreatePhase() {
 				params.creation_date,
 				params.end_date,
 				params.deadline_date,
+				params.description,
 			),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({

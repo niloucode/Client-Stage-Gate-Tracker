@@ -26,10 +26,11 @@ export async function createWorkflow(
 	isApproved: boolean = false,
 ) {
 	try {
-		const existingCount = await prisma.workflows.count({
+		const maxNumber = await prisma.workflows.aggregate({
 			where: { module_id: moduleId, is_deleted: false },
+			_max: { number: true },
 		});
-		const nextNumber = existingCount + 1;
+		const nextNumber = (maxNumber._max.number ?? 0) + 1;
 
 		const newWorkflow = await prisma.workflows.create({
 			data: {
@@ -197,14 +198,54 @@ export async function softDeleteWorkflow(workflowId: string) {
 			};
 		}
 
-		await prisma.workflows.update({
-			where: { workflow_id: workflowId },
-			data: {
-				is_deleted: true,
-				deleted_at: new Date(),
-				number: null,
-			} as any,
+		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+			// Read the workflow's number before nulling it
+			const wf = await tx.workflows.findUnique({
+				where: { workflow_id: workflowId },
+				select: { module_id: true, number: true },
+			});
+
+			await tx.workflows.update({
+				where: { workflow_id: workflowId },
+				data: {
+					is_deleted: true,
+					deleted_at: new Date(),
+					number: null,
+				} as any,
+			});
+
+			// Renumber remaining workflows to close the gap
+			if (wf?.number != null) {
+				const higherWorkflows = await tx.workflows.findMany({
+					where: {
+						module_id: wf.module_id,
+						number: { gt: wf.number },
+						is_deleted: false,
+					},
+					select: { workflow_id: true, number: true },
+					orderBy: { number: "asc" },
+				});
+
+				if (higherWorkflows.length > 0) {
+					await tx.workflows.updateMany({
+						where: {
+							workflow_id: {
+								in: higherWorkflows.map((w) => w.workflow_id),
+							},
+						},
+						data: { number: null },
+					});
+
+					for (const w of higherWorkflows) {
+						await tx.workflows.update({
+							where: { workflow_id: w.workflow_id },
+							data: { number: w.number! - 1 },
+						});
+					}
+				}
+			}
 		});
+
 		return { success: true };
 	} catch (error) {
 		console.error("Failed to soft delete workflow:", error);
@@ -233,6 +274,12 @@ export async function cascadeSoftDeleteWorkflow(
 	txClient?: Prisma.TransactionClient,
 ) {
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
+		// Read the workflow's number before nulling it
+		const wf = await tx.workflows.findUnique({
+			where: { workflow_id: workflowId },
+			select: { module_id: true, number: true },
+		});
+
 		await tx.workflows.update({
 			where: { workflow_id: workflowId },
 			data: { is_deleted: true, deleted_at: new Date(), number: null } as any,
@@ -245,6 +292,37 @@ export async function cascadeSoftDeleteWorkflow(
 
 		for (const ticket of childTickets) {
 			await cascadeSoftDeleteTicket(ticket.ticket_id, undefined, tx);
+		}
+
+		// Renumber remaining workflows to close the gap
+		if (wf?.number != null) {
+			const higherWorkflows = await tx.workflows.findMany({
+				where: {
+					module_id: wf.module_id,
+					number: { gt: wf.number },
+					is_deleted: false,
+				},
+				select: { workflow_id: true, number: true },
+				orderBy: { number: "asc" },
+			});
+
+			if (higherWorkflows.length > 0) {
+				await tx.workflows.updateMany({
+					where: {
+						workflow_id: {
+							in: higherWorkflows.map((w) => w.workflow_id),
+						},
+					},
+					data: { number: null },
+				});
+
+				for (const w of higherWorkflows) {
+					await tx.workflows.update({
+						where: { workflow_id: w.workflow_id },
+						data: { number: w.number! - 1 },
+					});
+				}
+			}
 		}
 	};
 
