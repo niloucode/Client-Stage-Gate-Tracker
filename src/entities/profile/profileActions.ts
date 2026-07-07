@@ -50,20 +50,20 @@ export async function getProfileById(profileId: string, status: EntityFilterStat
   }
 }
 
-export async function getProfileByClientId(clientId: string) {
+export async function getProfilesByClientId(clientId: string) {
   try {
 
-    const userData = await prisma.profiles.findUnique({
+    const usersArray = await prisma.profiles.findMany({
       where: {
         client_id: clientId,
-        // is_deleted: isDeletedFilter,
+        is_deleted: false,
       },
     });
 
-    if (!userData) {
+    if (!usersArray) {
       return { success: false, error: "User not found or does not match the requested status." };
     }
-    return { success: true, data: userData };
+    return { success: true, data: usersArray };
   } catch (error) {
     console.error("Failed to fetch user:", error);
     return { success: false, error: "Failed to fetch user details." };

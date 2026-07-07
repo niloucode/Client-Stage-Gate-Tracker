@@ -14,7 +14,6 @@ import { useSearchParams } from "next/navigation";
 import { Contract } from "@/entities/types";
 import { useAuth } from "@/features/auth";
 import { getClientByProjectId ,getProjectOwnerByProjectId } from "@/entities/roleAssignment";
-import { getProfileByClientId } from "@/entities/profile";
 
 //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 // export default function ContractPage({
