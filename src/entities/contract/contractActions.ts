@@ -1,143 +1,263 @@
-'use server'
-import { createClient } from '@/lib/supabase/server'
-import { prisma } from '@/lib/prisma'
+"use server";
+import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
+import {
+	contractUploadSchema,
+	contractSignSchema,
+	contractChangeNameSchema,
+} from "@/shared/schemas";
 
-// UPLOAD — stores file in Supabase, saves path in Prisma
-export async function uploadContract(clientId: string, projectId: string, file: File, contractName: string) {
-  const supabase = await createClient()
+// ── UPLOAD ────────────────────────────────────────────────────────────────────
 
-  //upsert if contract exists
-  
-  const updated_contract = await prisma.contracts.upsert({
-    where: {
-      project_id: projectId
-    },
-    update: {
-      is_deleted: false, //reset soft-delete
-      deleted_at: null
-    },
-    create: {
-      client_id: clientId,
-      project_id: projectId
-    }
-  })
+export async function uploadContract(
+	clientId: string,
+	projectId: string,
+	file: File,
+	contractName: string,
+) {
+	try {
+		const parsed = contractUploadSchema.safeParse({
+			clientId,
+			projectId,
+			contractName,
+		});
+		if (!parsed.success) {
+			return {
+				success: false,
+				error: parsed.error.flatten().fieldErrors,
+			};
+		}
 
-  const fileName = contractName.trim() == '' ? updated_contract.contract_id : contractName
-  const filePath = `${projectId}/${fileName}.pdf`
+		const supabase = await createClient();
 
-  const { error: uploadError } = await supabase.storage
-    .from('contracts')
-    .upload(filePath, file, {
-      contentType: 'application/pdf', //restrict to pdfs onli
-      upsert: true
-    })
+		// Upsert — create or reset soft-delete on existing
+		const updatedContract = await prisma.contracts.upsert({
+			where: { project_id: projectId },
+			update: {
+				is_deleted: false,
+				deleted_at: null,
+			},
+			create: {
+				client_id: clientId,
+				project_id: projectId,
+			},
+		});
 
-  if (uploadError) {
-    //delete the recently made prisma record if storage fails on a new contract
-    if (!updated_contract.file_path) {
-      await prisma.contracts.delete({
-        where: { contract_id: updated_contract.contract_id }
-      })
-    }
-    throw new Error(uploadError.message)
-  }
+		const fileName =
+			contractName.trim() === "" ? updatedContract.contract_id : contractName;
+		const filePath = `${projectId}/${fileName}.pdf`;
 
-  // save the path reference in Prisma
-  const final_contract = await prisma.contracts.update({
-    where: { contract_id: updated_contract.contract_id },
-    data: {
-      file_path: filePath,
-      is_deleted: false,
-      deleted_at: null // clear soft delete if re-uploading
-    }
-  })
+		const { error: uploadError } = await supabase.storage
+			.from("contracts")
+			.upload(filePath, file, {
+				contentType: "application/pdf",
+				upsert: true,
+			});
 
-  return { contract: final_contract}
+		if (uploadError) {
+			// Rollback: delete the Prisma record if it was just created
+			if (!updatedContract.file_path) {
+				await prisma.contracts.delete({
+					where: { contract_id: updatedContract.contract_id },
+				});
+			}
+			return { success: false, error: uploadError.message };
+		}
+
+		const finalContract = await prisma.contracts.update({
+			where: { contract_id: updatedContract.contract_id },
+			data: {
+				file_path: filePath,
+				contract_name: contractName.trim() || null,
+				is_deleted: false,
+				deleted_at: null,
+			},
+		});
+
+		return { success: true, data: finalContract };
+	} catch (error) {
+		console.error("Failed to upload contract:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to upload contract.",
+		};
+	}
 }
 
-// GET SIGNED URL — for viewing/downloading (expires in 1 hour)
+// ── GET SIGNED URL ────────────────────────────────────────────────────────────
+
 export async function getContractUrl(filePath: string) {
-  console.log('🔍 Requesting signed URL for path:', filePath);
-  const supabase = await createClient();
-  // const { data, error } = await supabase.storage.from('contracts').createSignedUrl(filePath, 3600);
-  const { data } = await supabase.storage.from('contracts').getPublicUrl(filePath)
+	try {
+		if (!filePath) {
+			return { success: false, error: "No file path provided." };
+		}
 
-  return data.publicUrl;
+		const supabase = await createClient();
+		const { data } = await supabase.storage
+			.from("contracts")
+			.getPublicUrl(filePath);
+
+		if (!data?.publicUrl) {
+			return { success: false, error: "Failed to generate public URL." };
+		}
+
+		return { success: true, data: data.publicUrl };
+	} catch (error) {
+		console.error("Failed to get contract URL:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to get contract URL.",
+		};
+	}
 }
 
-// SOFT DELETE — marks as deleted in Prisma, removes from Storage
+// ── SOFT DELETE ───────────────────────────────────────────────────────────────
+
 export async function deleteContract(projectId: string, filePath: string) {
-  const supabase = await createClient()
+	try {
+		if (!projectId || !filePath) {
+			return { success: false, error: "Missing project ID or file path." };
+		}
 
-  // soft delete in Prisma first
-  await prisma.contracts.update({
-    where: { project_id: projectId },
-    data: { 
-        deleted_at: new Date(),
-        is_deleted: true
-     }
-  })
+		const supabase = await createClient();
 
-  // remove actual file from storage
-  const { error } = await supabase.storage
-    .from('contracts')
-    .remove([filePath])
+		// Remove from storage FIRST — if this fails, DB is untouched
+		const { error: storageError } = await supabase.storage
+			.from("contracts")
+			.remove([filePath]);
 
-  if (error) throw new Error(error.message)
+		if (storageError) {
+			return { success: false, error: storageError.message };
+		}
+
+		// Then soft-delete in the database
+		await prisma.contracts.update({
+			where: { project_id: projectId },
+			data: {
+				deleted_at: new Date(),
+				is_deleted: true,
+			},
+		});
+
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to delete contract:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to delete contract.",
+		};
+	}
 }
 
-// FETCH CONTRACT — checks soft delete
+// ── FETCH ─────────────────────────────────────────────────────────────────────
+
 export async function getContractByProjectId(projectId: string) {
-  return prisma.contracts.findFirst({
-    where: {
-      project_id: projectId,
-      is_deleted: false // exclude soft-deleted
-    }
-  })
+	try {
+		if (!projectId) {
+			return { success: false, error: "No project ID provided." };
+		}
+
+		const contract = await prisma.contracts.findFirst({
+			where: {
+				project_id: projectId,
+				is_deleted: false,
+			},
+		});
+
+		return { success: true, data: contract };
+	} catch (error) {
+		console.error("Failed to fetch contract:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to fetch contract.",
+		};
+	}
 }
 
-export async function changeContractName(contractId: string, contractName: string){
-  return prisma.contracts.update({
-    where: { contract_id: contractId},
-    data:
-    {
-      contract_name: contractName
-    }
-  })
+// ── CHANGE NAME ───────────────────────────────────────────────────────────────
+
+export async function changeContractName(
+	contractId: string,
+	contractName: string,
+) {
+	try {
+		const parsed = contractChangeNameSchema.safeParse({
+			contractId,
+			contractName,
+		});
+		if (!parsed.success) {
+			return {
+				success: false,
+				error: parsed.error.flatten().fieldErrors,
+			};
+		}
+
+		const updated = await prisma.contracts.update({
+			where: { contract_id: contractId },
+			data: { contract_name: contractName },
+		});
+
+		return { success: true, data: updated };
+	} catch (error) {
+		console.error("Failed to change contract name:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to rename contract.",
+		};
+	}
 }
+
+// ── SIGN ──────────────────────────────────────────────────────────────────────
 
 export async function signContract(
-  projectId: string,
-  role: 'Client Viewer' | 'Project Owner',
-  fullName: string,
-  initials: string
+	projectId: string,
+	role: "Client Viewer" | "Project Owner",
+	fullName: string,
+	initials: string,
 ) {
-  const isClient = role === 'Client Viewer'
+	try {
+		const parsed = contractSignSchema.safeParse({
+			projectId,
+			role,
+			fullName,
+			initials,
+		});
+		if (!parsed.success) {
+			return {
+				success: false,
+				error: parsed.error.flatten().fieldErrors,
+			};
+		}
 
-  await prisma.contracts.update({
-    where: { project_id: projectId },
-    data: isClient
-      ? {
-          client_signature: fullName, 
-          client_initials: initials,        
-          client_signed_at: new Date(),     
-        }
-      : {
-          project_owner_signature: fullName,
-          project_owner_initials: initials,
-          project_owner_signed_at: new Date(),
-        }
-  })
+		const isClient = role === "Client Viewer";
+
+		await prisma.contracts.update({
+			where: { project_id: projectId },
+			data: isClient
+				? {
+						client_signature: fullName,
+						client_initials: initials,
+						client_signed_at: new Date(),
+					}
+				: {
+						project_owner_signature: fullName,
+						project_owner_initials: initials,
+						project_owner_signed_at: new Date(),
+					},
+		});
+
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to sign contract:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to sign contract.",
+		};
+	}
 }
-
-// export async function contractSignedByUser(
-//   profileId: string,
-//   contractId: string
-// ){
-//   return await prisma.contracts.findFirst({
-//     where: {
-//       contract_id: contractId,
-//       profile_id: profileId
-//     }
-//   })
-// }

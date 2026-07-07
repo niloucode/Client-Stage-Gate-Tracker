@@ -401,20 +401,28 @@ A ticket can have **0+ assignees**. This is distinct from `Tickets.watcher_id` (
 contract_id              UUID PK
 project_id               UUID @unique → Projects    (1:1 — one contract per project)
 client_id                UUID → Clients             (required)
-file_path                String? @unique            (the contract document, unique)
-client_signature         String?                    (signed by any client profile)
+contract_name            String?   @unique          (display name; optional, set on upload)
+file_path                String?   @unique          (the contract document in Supabase Storage)
+client_signature         String?                    (full name of signing client)
+client_initials          String?                    (client's initials, max 4 chars)
 client_signed_at         DateTime?                  (when the client signed)
-project_owner_signature  String?                    (signed by the PO)
+project_owner_signature  String?                    (full name of signing PO)
+project_owner_initials   String?                    (PO's initials, max 4 chars)
 project_owner_signed_at  DateTime?                  (when the PO signed)
 is_deleted               Boolean   @default(false)
 deleted_at               DateTime?
 ```
 
-Contracts are created as a **blank record** when a project is made — only `project_id` and `client_id` are required upfront. `file_path`, signatures, and signed-at timestamps are filled later.
+Contracts are created as a **blank record** when a project is made — only `project_id` and `client_id` are required upfront. `file_path`, `contract_name`, signatures, and signed-at timestamps are filled later.
 
 - Each project has **exactly 1 contract** (`project_id @unique`).
-- Signing is split into two independent actions: the **client** signs and the **project owner** signs. Each signature is tracked with its own value and timestamp.
+- Signing is split into two independent actions: the **client** signs and the **project owner** signs. Each signature is tracked with a full name, initials (max 4 chars), and timestamp.
 - Only PO can upload the contract (`file_path`). Both PO and Client can provide their respective signatures.
+- Soft-delete via `is_deleted` + `deleted_at`; on re-upload, soft-delete is reset.
+
+> **Server actions** (`src/entities/contract/contractActions.ts`): All six actions (`uploadContract`, `getContractUrl`, `deleteContract`, `getContractByProjectId`, `changeContractName`, `signContract`) are validated with Zod schemas (`contractUploadSchema`, `contractSignSchema`, `contractChangeNameSchema` in `src/shared/schemas/contract.ts`) and return the consistent `{ success: true, data? }` / `{ success: false, error }` shape — never throwing. `deleteContract` removes from Supabase Storage **before** soft-deleting the DB row to avoid orphaned files.
+
+> **TanStack Query** (`src/entities/contract/queries.ts`, `mutations.ts`): `useContract(projectId)` fetches via `contractKeys.detail(projectId)`. `useUploadContract`, `useSignContract`, and `useDeleteContract` mutations each invalidate `contractKeys.detail(projectId)` on success. The contracts page (`src/app/(app)/contracts/page.tsx`) uses these hooks instead of raw `useEffect` + direct server-action calls.
 
 ---
 
@@ -550,7 +558,8 @@ The permissions matrix references features with no corresponding tables yet:
 
 ### Contracts: blank-on-creation + 1:1
 
-- `project_id` and `client_id` are required; `file_path`, signatures, and signed-at timestamps are filled later. `project_id` is unique — one contract per project. Dual signatures: PO signs with `project_owner_signature`/`project_owner_signed_at`, client signs with `client_signature`/`client_signed_at`.
+- `project_id` and `client_id` are required; `file_path`, `contract_name`, signatures, initials, and signed-at timestamps are filled later. `project_id` is unique — one contract per project. Dual signatures: PO signs with `project_owner_signature`/`project_owner_initials`/`project_owner_signed_at`, client signs with `client_signature`/`client_initials`/`client_signed_at`.
+- All server actions validated with Zod (`contractUploadSchema`, `contractSignSchema`, `contractChangeNameSchema`) and return `{ success, data/error }`. TanStack Query hooks (`useContract`, `useUploadContract`, `useSignContract`, `useDeleteContract`) manage caching and invalidation via `contractKeys`.
 
 ### ticketActions.ts — diff-ing + history writes
 - `updateTicket()` uses a diff-ing approach: fetches existing `name`, `status`, `watcher_id`, `TicketAssigned`, and `TicketTags`, computes `toAdd` / `toRemove` for assignees, tags, and watcher, and applies only the needed creates and deletes. The original `assigned_date` is preserved for unchanged entries.
@@ -624,6 +633,7 @@ The mutations (`useReorderPhase`, `useReorderWorkflow`) invalidate `stageKeys.tr
 | `Images` | `image_src` | `@unique` |
 | `Contracts` | `project_id` | `@unique` (1:1 with Projects) |
 | `Contracts` | `file_path` | `@unique` |
+| `Contracts` | `contract_name` | `@unique` |
 | `Gates` | `(project_id, number)` | `@@unique` |
 | `Stages` | `(project_id, number)` | `@@unique` |
 | `Phases` | `(stage_id, number)` | `@@unique` |

@@ -71,3 +71,9 @@ export const historyKeys = {
 	lists: () => [...historyKeys.all, "list"] as const,
 	list: (ticketId: string) => [...historyKeys.lists(), ticketId] as const,
 };
+
+export const contractKeys = {
+	all: ["contracts"] as const,
+	detail: (projectId: string) =>
+		[...contractKeys.all, "detail", projectId] as const,
+};
