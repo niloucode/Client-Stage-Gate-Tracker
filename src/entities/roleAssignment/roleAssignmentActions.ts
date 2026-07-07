@@ -17,6 +17,19 @@ export async function getRoleAssignmentByProjectId(profileId: string){
     })
 }
 
+export async function getClientByProjectId(projectId: string) {
+  return prisma.roleAssignments.findFirst({
+    where: {
+      project_id: projectId,
+      Roles: { name: 'Client Viewer' }
+    },
+    include: {
+      Users: true,
+      Roles: true
+    }
+  })
+}
+
 export async function getProjectOwnerByProjectId(projectId: string) {
   return prisma.roleAssignments.findFirst({
     where: {

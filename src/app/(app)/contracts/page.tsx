@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Contract } from "@/entities/types";
 import { useAuth } from "@/features/auth";
-import { getProjectOwnerByProjectId } from "@/entities/roleAssignment";
+import { getClientByProjectId ,getProjectOwnerByProjectId } from "@/entities/roleAssignment";
 import { getProfileByClientId } from "@/entities/profile";
 
 //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
@@ -53,13 +53,13 @@ export default function ContractPage() {
 
       // --- CLIENT SIGNATORY ---
       if (contract?.client_id) {
-        const { data: clientProfile } = await getProfileByClientId(contract.client_id)
+        const clientAssignment = await getClientByProjectId(projectId)
 
-        if (clientProfile) {
+        if (clientAssignment?.Users) {
           const clientSigned = !!contract.client_signed_at
           temp.push({
             id: '1',
-            name: `${clientProfile.first_name} ${clientProfile.last_name}`,
+            name: `${clientAssignment.Users.first_name} ${clientAssignment.Users.last_name}`,
             role: 'Client Representative',
             status: clientSigned ? 'signed' : 'pending',
             timestamp: contract.client_signed_at?.toDateString(),
