@@ -48,8 +48,6 @@ export function ClientSignupForm() {
 	const [errors, setErrors] = useState<Errors>({});
 	const [apiError, setApiError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
-	const [showResend, setShowResend] = useState(false);
-	const [resendLoading, setResendLoading] = useState(false);
 
 	function set(key: FieldKey) {
 		return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,20 +64,8 @@ export function ClientSignupForm() {
 		};
 	}
 
-	async function userSignUp(
-		user: ProfileType,
-		password: string,
-	): Promise<{ signupError: string | null; data: { user: unknown } | null }> {
-		const { success, data: existingProfile } =
-			await getProfileByEmail(user.email);
-		if (success && existingProfile) {
-			return {
-				signupError: "An account with this email already exists.",
-				data: null,
-			};
-		}
-
-		const res = await supabase.auth.signUp({
+	async function userSignUp(user: ProfileType, password: string) {
+		return await supabase.auth.signUp({
 			email: user.email,
 			password,
 			options: {
@@ -96,21 +82,11 @@ export function ClientSignupForm() {
 				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
 			},
 		});
-
-		if (!res.data.user) {
-			return {
-				signupError: "Account could not be registered, please try again.",
-				data: null,
-			};
-		}
-
-		return { signupError: null, data: res.data };
 	}
 
 	async function handleSubmit(e: React.BaseSyntheticEvent) {
 		e.preventDefault();
 		setApiError(null);
-		setShowResend(false);
 
 		const result = clientSignupSchema.safeParse(fields);
 		if (!result.success) {
@@ -124,6 +100,15 @@ export function ClientSignupForm() {
 		}
 		setErrors({});
 		setLoading(true);
+
+		// Duplicate email check (same pattern as StaffSignup)
+		const { success: emailOk, data: existingProfile } =
+			await getProfileByEmail(fields.email.trim());
+		if (emailOk && existingProfile) {
+			setApiError("An account with this email already exists.");
+			setLoading(false);
+			return;
+		}
 
 		// Check if client already exists
 		const existingClient = await clientSelectByNameTin(
@@ -176,10 +161,13 @@ export function ClientSignupForm() {
 			deleted_at: null,
 		};
 
-		const { data, signupError } = await userSignUp(user, fields.password);
+		const { data, error: signUpError } = await userSignUp(
+			user,
+			fields.password,
+		);
 
-		if (signupError) {
-			setApiError(signupError);
+		if (signUpError) {
+			setApiError(signUpError.message);
 			if (client && !existingClient) {
 				await clientDeleteByID(client.client_id);
 			}
@@ -187,32 +175,16 @@ export function ClientSignupForm() {
 			return;
 		}
 
-		if (data?.user) {
+		// Only triggers if email confirmation is OFF in Supabase
+		if (data.session) {
+			router.push("/login");
 			queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
-			setShowResend(true);
-			setApiError(null);
-			setLoading(false);
 		} else {
-			setApiError("Something went wrong. Please try again.");
+			setApiError(
+				"Account created! Check your email to confirm your account before logging in.",
+			);
 			setLoading(false);
 		}
-	}
-
-	async function resendConfirmationEmail() {
-		setResendLoading(true);
-		const { error } = await supabase.auth.resend({
-			type: "signup",
-			email: fields.email,
-			options: {
-				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
-			},
-		});
-		setResendLoading(false);
-		setApiError(
-			error
-				? error.message
-				: "Confirmation email resent. Please check your inbox.",
-		);
 	}
 
 	function errClass(key: FieldKey) {
@@ -512,26 +484,9 @@ export function ClientSignupForm() {
 			</div>
 
 			{apiError && (
-				<p
-					className={`text-sm rounded-md px-3 py-2 border ${
-						showResend
-							? "text-green-700 bg-green-50 border-green-200"
-							: "text-red-600 bg-red-50 border-red-200"
-					}`}
-				>
+				<p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
 					{apiError}
 				</p>
-			)}
-
-			{showResend && (
-				<Button
-					type="button"
-					variant="ghost"
-					onClick={resendConfirmationEmail}
-					disabled={resendLoading}
-				>
-					{resendLoading ? "Resending..." : "Resend confirmation email"}
-				</Button>
 			)}
 
 			<Button type="submit" className="mt-2" disabled={loading}>
