@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Contract } from "@/entities/types";
 import { useAuth } from "@/features/auth";
-import { getClientByProjectId ,getProjectOwnerByProjectId } from "@/entities/roleAssignment";
+import { getClientByProjectId ,getProjectOwnerByProjectId, getRoleAssignmentByProfileProjectId } from "@/entities/roleAssignment";
 
 //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 // export default function ContractPage({
@@ -26,6 +26,7 @@ export default function ContractPage() {
   const [contract, setContract] = useState<Contract | null>(null)
   const [signatories, setSignatories] = useState<Signatory[]>([])
   const [allSigned, setAllSigned] = useState(false)
+  const [userRole, setUserRole] = useState<"Client Viewer" | "Project Owner">("Client Viewer")
   const searchParams = useSearchParams()
   const {user} = useAuth()
   
@@ -45,6 +46,26 @@ export default function ContractPage() {
     if (!contract || !projectId) return
     get_signatories()
   }, [contract?.contract_id]) // runs when contract first loads
+
+  useEffect(() => {
+    if (!user) return
+    get_role()
+  }, [user?.profile_id])
+
+  const get_role = async () => {
+    try {
+      if(user?.profile_id){
+        const user_role = await getRoleAssignmentByProfileProjectId(user?.profile_id, projectId)
+
+        if(user_role && (user_role.Roles.name == "Client Viewer" || user_role.Roles.name == "Project Owner")){
+          setUserRole(user_role.Roles.name)
+        }
+      }
+    }
+    catch(err){
+      console.error(err)
+    }
+  }
 
   const get_signatories = async () => {
     try {
@@ -82,6 +103,7 @@ export default function ContractPage() {
       }
 
       setSignatories(temp)
+      //check if all signatories have signed
       setAllSigned(temp.length > 0 && temp.every(s => s.status === 'signed'))
 
     } catch (err) {
@@ -120,7 +142,9 @@ export default function ContractPage() {
 
           <div className="flex flex-col gap-6">
             <SignatoriesCard signatories={signatories} />
-            <ExecuteAgreementCard maskedEmail="a***@client.com" />
+            <ExecuteAgreementCard maskedEmail="a***@client.com" 
+            projectId={projectId} role={userRole ?? 'Client Viewer'}
+            onSigned={get_signatories}/>
           </div>
         </div>
       </div>

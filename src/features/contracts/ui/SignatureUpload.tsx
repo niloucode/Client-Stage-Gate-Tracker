@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from "react";
 import { PenLine, UploadCloud, X } from "lucide-react";
 import { AdoptSignatureModal, renderSignatureToFile } from "./AdoptSignatureModal";
+import { Dispatch } from "react";
+import { SetStateAction } from "react";
 
 const ACCEPTED_TYPES = [
   "image/png",
@@ -17,9 +19,11 @@ type UploadState = "idle" | "dragging" | "preview" | "error";
 
 interface SignatureUploadProps {
   onSignatureChange?: (file: File | null) => void;
+  onSignatureAdopted?: (fullName: string, initials: string) => void
+  setSigned: Dispatch<SetStateAction<boolean>>
 }
 
-export function SignatureUpload({ onSignatureChange }: SignatureUploadProps) {
+export function SignatureUpload({ onSignatureChange, onSignatureAdopted, setSigned }: SignatureUploadProps) {
   const [state, setState] = useState<UploadState>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
@@ -78,17 +82,32 @@ export function SignatureUpload({ onSignatureChange }: SignatureUploadProps) {
   // Opens the "Adopt Your Signature" modal instead of the native file picker
   const open = () => setShowAdoptModal(true);
 
+
+  function getInitials(fullName: string): string {
+    return fullName
+      .trim()
+      .split(' ')
+      .filter(Boolean)
+      .map(n => n[0].toUpperCase())
+      .join('')
+  }
+
   const handleAdopt = async ({
     fullName,
     font,
   }: {
-    fullName: string;
-    font: string;
+    fullName: string
+    font: string
   }) => {
-    const file = await renderSignatureToFile({ fullName, font });
-    setShowAdoptModal(false);
-    if (file) processFile(file);
-  };
+    const file = await renderSignatureToFile({ fullName, font })
+    setShowAdoptModal(false)
+    if (file) {
+      processFile(file)
+      // derive initials and notify parent
+      const initials = getInitials(fullName)
+      onSignatureAdopted?.(fullName, initials)
+    }
+  }
 
   if (state === "preview" && preview) {
     return (

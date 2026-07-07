@@ -529,7 +529,6 @@ model Comments {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Contracts {
-  contract_name           String?   @unique
   contract_id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   project_id              String    @unique @db.Uuid
   client_id               String    @db.Uuid
@@ -540,6 +539,9 @@ model Contracts {
   project_owner_signature String?
   client_signed_at        DateTime? @db.Timestamptz(6)
   project_owner_signed_at DateTime? @db.Timestamptz(6)
+  client_initials         String?
+  project_owner_initials  String?
+  contract_name           String?   @unique
   Clients                 Clients   @relation(fields: [client_id], references: [client_id], onDelete: NoAction, onUpdate: NoAction)
   Projects                Projects  @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -914,10 +916,10 @@ enum action {
   UPDATED_STATUS
   RENAMED
   COMMENT_ADDED
-  WATCHER_CHANGED
   ASSIGNED
   UNASSIGNED
   DELETE
+  WATCHER_CHANGED
 
   @@schema("public")
 }

@@ -105,3 +105,39 @@ export async function changeContractName(contractId: string, contractName: strin
     }
   })
 }
+
+export async function signContract(
+  projectId: string,
+  role: 'Client Viewer' | 'Project Owner',
+  fullName: string,
+  initials: string
+) {
+  const isClient = role === 'Client Viewer'
+
+  await prisma.contracts.update({
+    where: { project_id: projectId },
+    data: isClient
+      ? {
+          client_signature: fullName, 
+          client_initials: initials,        
+          client_signed_at: new Date(),     
+        }
+      : {
+          project_owner_signature: fullName,
+          project_owner_initials: initials,
+          project_owner_signed_at: new Date(),
+        }
+  })
+}
+
+// export async function contractSignedByUser(
+//   profileId: string,
+//   contractId: string
+// ){
+//   return await prisma.contracts.findFirst({
+//     where: {
+//       contract_id: contractId,
+//       profile_id: profileId
+//     }
+//   })
+// }
