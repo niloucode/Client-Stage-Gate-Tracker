@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { stageKeys } from "@/shared/query/keys";
-import { swapPhaseOrder } from "./phaseActions";
+import { reorderPhase } from "./phaseActions";
 import {
 	createPhase,
 	updatePhase,
@@ -67,15 +67,15 @@ export function useDeletePhase() {
 	});
 }
 
-export function useSwapPhaseOrder() {
+export function useReorderPhase() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: (params: {
-			phaseId1: string;
-			phaseId2: string;
+			phaseId: string;
+			targetNumber: number;
 			stageId: string;
-		}) => swapPhaseOrder(params.phaseId1, params.phaseId2),
+		}) => reorderPhase(params.phaseId, params.targetNumber),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),

@@ -237,7 +237,7 @@ is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
 ```
 
-> **Note**: `Workflows.number` is used for drag-and-drop reordering within a module. It is auto-assigned on creation (`createWorkflow()`) and swapped via `swapWorkflowOrder()`. It is set to `null` on soft-delete. The `getStageTree` query orders workflows by `number` (nulls last) with `creation_date` as fallback.
+> **Note**: `Workflows.number` is used for drag-and-drop reordering within a module. It is auto-assigned on creation (`createWorkflow()`) and reordered via `reorderWorkflow()` (insertion-based null-shift-reassign algorithm). It is set to `null` on soft-delete to release the slot. The `getStageTree` query orders workflows by `number` (nulls last) with `creation_date` as fallback.
 
 ### `Tickets`
 
@@ -575,10 +575,21 @@ Adding a new unfinished workflow/module to an already-finished parent immediatel
 - Gray bar with "- %" when `ticketCount === 0`
 - Indigo bar with `{progress}%` when tickets exist
 
-### Workflow DnD ordering
-Workflows have a `number Int?` column with a composite unique constraint `@@unique([number, module_id])`. On creation, `createWorkflow()` auto-assigns `number = count + 1`. Drag-and-drop in the WorkflowsList calls `swapWorkflowOrder()` — a transactional swap of the `number` fields between the dragged and dropped workflows. The mutation (`useSwapWorkflowOrder`) invalidates `stageKeys.tree(stageId)` on success.
+### Phase / Workflow DnD ordering
 
-`getStageTree()` orders workflows by `[{ number: { sort: 'asc', nulls: 'last' } }, { creation_date: 'asc' }]` — numbered workflows sort first, existing unnumbered ones fall back to creation order. Phases use the same pattern via `swapPhaseOrder()`.
+Both `Phases` and `Workflows` have a `number Int?` column with a composite unique constraint (`@@unique([stage_id, number])` and `@@unique([number, module_id])` respectively). On creation, the number is auto-assigned as `count + 1` (counting only non-deleted siblings). On soft-delete, the number is set to `null` to release the slot.
+
+Drag-and-drop uses an **insertion-based reorder** (not a swap). Both `reorderPhase(phaseId, targetNumber)` and `reorderWorkflow(workflowId, targetNumber)` use a three-step algorithm inside a Prisma interactive transaction:
+
+1. **Fetch** all affected entities in the range `[min(oldNumber, targetNumber), max(oldNumber, targetNumber)]`
+2. **Null** all their numbers in one `updateMany` (multiple NULLs don't violate the unique constraint)
+3. **Reassign** each entity one at a time: the dragged entity gets `targetNumber`, every other entity shifts by `±1`
+
+This approach avoids the per-row unique-constraint checks that would fail with a naive `UPDATE … SET number = number - 1` or a two-statement swap.
+
+The mutations (`useReorderPhase`, `useReorderWorkflow`) invalidate `stageKeys.tree(stageId)` on success. The UI guards against dragging an entity whose `number` is `null`.
+
+`getStageTree()` orders both phases and workflows by `[{ number: { sort: 'asc', nulls: 'last' } }, { creation_date: 'asc' }]` — numbered items sort first, unnumbered ones fall back to creation order.
 
 ### Profiles soft-delete (not yet implemented)
 - Behavior documented in Section 7. Currently `Profiles` has `is_deleted` and `deleted_at` columns but no soft-delete workflow is built. Because of this, profile queries (e.g. `getProfileByEmail` in `profileActions.ts`) do not filter on `is_deleted` — all profiles are assumed active. If soft-delete is implemented later, all profile lookups must add `where: { is_deleted: false }` and the duplicate-email check in `ClientSignupForm` + `StaffSignupForm` must account for soft-deleted users who should be able to re-register.
@@ -710,10 +721,10 @@ Page (useStageTree → phases)
 
 | Component | Create | Update | Delete | Reorder |
 |---|---|---|---|---|
-| PhaseStepper | `useCreatePhase` | — | `useDeletePhase` | `useSwapPhaseOrder` |
+| PhaseStepper | `useCreatePhase` | — | `useDeletePhase` | `useReorderPhase` |
 | ActivePhaseDetails | — | `useUpdatePhase` | `useDeletePhase` | — |
 | ModulesCard | `useCreateModule` | `useUpdateModule` | `useDeleteModule` | — |
-| WorkflowsList | `useCreateWorkflow` | `useUpdateWorkflow` | `useDeleteWorkflow` | `useSwapWorkflowOrder` |
+| WorkflowsList | `useCreateWorkflow` | `useUpdateWorkflow` | `useDeleteWorkflow` | `useReorderWorkflow` |
 
 All mutations invalidate `stageKeys.tree(stageId)` on success.
 
@@ -747,7 +758,7 @@ All 7 modals (Add/Edit/Delete for Phase, Module, Workflow + standalone DeletePha
 
 - Phase dots in PhaseStepper: numbered circles with active/completed/pending states
 - Phase names truncated at ~10 chars via `max-w-[80px] truncate` with `title` tooltip
-- Drag-and-drop swaps `number` fields via `swapPhaseOrder()` (Prisma transaction)
+- Drag-and-drop reorders phases via `reorderPhase()` (insertion-based, null-shift-reassign inside a Prisma transaction)
 - Selected phase persisted in `sessionStorage` ("stageEditorPhase") and URL `?phase=N` param
 - Delete X button on hover triggers `DeletePhase` confirmation modal
 

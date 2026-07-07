@@ -6,7 +6,7 @@ import {
 	createWorkflow,
 	updateWorkflow,
 	cascadeSoftDeleteWorkflow,
-	swapWorkflowOrder,
+	reorderWorkflow,
 } from "./workflowActions";
 import type {
 	WorkflowCreateInput,
@@ -72,15 +72,15 @@ export function useDeleteWorkflow() {
 	});
 }
 
-export function useSwapWorkflowOrder() {
+export function useReorderWorkflow() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: (params: {
-			workflowId1: string;
-			workflowId2: string;
+			workflowId: string;
+			targetNumber: number;
 			stageId: string;
-		}) => swapWorkflowOrder(params.workflowId1, params.workflowId2),
+		}) => reorderWorkflow(params.workflowId, params.targetNumber),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),

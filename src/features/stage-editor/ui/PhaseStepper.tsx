@@ -13,7 +13,7 @@ import { AddPhase } from "@/features/stage-editor/ui/modals/AddPhase";
 import {
 	useCreatePhase,
 	useDeletePhase,
-	useSwapPhaseOrder,
+	useReorderPhase,
 } from "@/entities/phase/mutations";
 
 interface PhaseStepperProps {
@@ -37,7 +37,7 @@ export const PhaseStepper = forwardRef<
 
 	const createPhaseMutation = useCreatePhase();
 	const deletePhaseMutation = useDeletePhase();
-	const swapPhaseOrderMutation = useSwapPhaseOrder();
+	const reorderPhaseMutation = useReorderPhase();
 
 	useImperativeHandle(ref, () => ({
 		openCreateModal: () => setIsModalOpen(true),
@@ -166,15 +166,15 @@ export const PhaseStepper = forwardRef<
 		});
 
 		const draggedPhase = phases[dragIndex];
-		const droppedPhase = phases[dropIndex];
-		if (!draggedPhase || !droppedPhase) {
+		const targetNumber = phases[dropIndex]?.number;
+		if (!draggedPhase || draggedPhase.number == null || targetNumber == null) {
 			setDraggedIndex(null);
 			return;
 		}
 
-		await swapPhaseOrderMutation.mutateAsync({
-			phaseId1: draggedPhase.phase_id,
-			phaseId2: droppedPhase.phase_id,
+		await reorderPhaseMutation.mutateAsync({
+			phaseId: draggedPhase.phase_id,
+			targetNumber,
 			stageId,
 		});
 

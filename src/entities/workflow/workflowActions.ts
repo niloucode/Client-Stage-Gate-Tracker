@@ -202,7 +202,8 @@ export async function softDeleteWorkflow(workflowId: string) {
 			data: {
 				is_deleted: true,
 				deleted_at: new Date(),
-			},
+				number: null,
+			} as any,
 		});
 		return { success: true };
 	} catch (error) {
@@ -234,7 +235,7 @@ export async function cascadeSoftDeleteWorkflow(
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
 		await tx.workflows.update({
 			where: { workflow_id: workflowId },
-			data: { is_deleted: true, deleted_at: new Date() },
+			data: { is_deleted: true, deleted_at: new Date(), number: null } as any,
 		});
 
 		const childTickets = await tx.tickets.findMany({
@@ -262,42 +263,103 @@ export async function cascadeSoftDeleteWorkflow(
 }
 
 /**
- * Swaps the sequential 'number' values of two workflows within the same module.
- * Uses a Prisma interactive transaction to fetch current numbers and update simultaneously,
- * preventing duplicate sequence numbers.
+ * Moves a workflow to a new sequential position by its target number.
+ * Uses an insertion-based algorithm inside a Prisma interactive transaction:
+ *  1. Fetch all affected workflows (dragged + every workflow between old and target).
+ *  2. Null ALL their numbers in one updateMany (multiple NULLs don't violate
+ *     the @@unique([number, module_id]) constraint).
+ *  3. Reassign each workflow one at a time: the dragged workflow gets the target
+ *     number, every other workflow shifts by ±1.
+ *
+ * This avoids PostgreSQL per-row unique checks on intermediate states.
+ *
+ * @param {string} workflowId   - The UUID of the workflow being moved.
+ * @param {number} targetNumber - The desired sequential position (1-based).
+ * @returns {Promise<{success: boolean, error?: string}>}
  */
-export async function swapWorkflowOrder(
-	workflowId1: string,
-	workflowId2: string,
+export async function reorderWorkflow(
+	workflowId: string,
+	targetNumber: number,
 ) {
 	try {
 		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			const wf1 = await tx.workflows.findUnique({
-				where: { workflow_id: workflowId1 },
-			});
-			const wf2 = await tx.workflows.findUnique({
-				where: { workflow_id: workflowId2 },
+			const wf = await tx.workflows.findUnique({
+				where: { workflow_id: workflowId },
 			});
 
-			if (!wf1 || !wf2) {
-				throw new Error("One or both workflows not found");
+			if (!wf) {
+				throw new Error(`Workflow ${workflowId} not found.`);
+			}
+			if (wf.number === null) {
+				throw new Error(
+					`Workflow ${workflowId} has no sequence number (number is null).`,
+				);
 			}
 
-			const num1 = wf1.number;
-			const num2 = wf2.number;
+			const moduleId = wf.module_id;
+			const oldNumber = wf.number;
 
-			await tx.workflows.update({
-				where: { workflow_id: workflowId1 },
-				data: { number: num2 },
+			// No-op if already at the target position
+			if (oldNumber === targetNumber) return;
+
+			// Validate target range
+			const activeCount = await tx.workflows.count({
+				where: { module_id: moduleId, is_deleted: false },
 			});
-			await tx.workflows.update({
-				where: { workflow_id: workflowId2 },
-				data: { number: num1 },
+			if (targetNumber < 1 || targetNumber > activeCount) {
+				throw new Error(
+					`Target number ${targetNumber} is out of bounds (1–${activeCount}).`,
+				);
+			}
+
+			// Step 1: Fetch every workflow in the affected range (dragged + shifted)
+			const rangeStart = Math.min(oldNumber, targetNumber);
+			const rangeEnd = Math.max(oldNumber, targetNumber);
+			const affected = await tx.workflows.findMany({
+				where: {
+					module_id: moduleId,
+					number: { gte: rangeStart, lte: rangeEnd },
+					is_deleted: false,
+				},
+				select: { workflow_id: true, number: true },
 			});
+
+			// Step 2: Null ALL affected workflows at once —
+			//         multiple NULLs don't violate the unique constraint
+			await tx.workflows.updateMany({
+				where: {
+					workflow_id: { in: affected.map((w) => w.workflow_id) },
+				},
+				data: { number: null },
+			});
+
+			// Step 3: Reassign each workflow one at a time (safe — all numbers are null)
+			for (const w of affected) {
+				if (w.workflow_id === workflowId) {
+					// The dragged workflow lands at the target
+					await tx.workflows.update({
+						where: { workflow_id: w.workflow_id },
+						data: { number: targetNumber },
+					});
+				} else if (oldNumber < targetNumber) {
+					// Moving right: items shift down by 1
+					await tx.workflows.update({
+						where: { workflow_id: w.workflow_id },
+						data: { number: w.number! - 1 },
+					});
+				} else {
+					// Moving left: items shift up by 1
+					await tx.workflows.update({
+						where: { workflow_id: w.workflow_id },
+						data: { number: w.number! + 1 },
+					});
+				}
+			}
 		});
+
 		return { success: true };
 	} catch (error) {
-		console.error("Failed to swap workflow order:", error);
+		console.error("Failed to reorder workflow:", error);
 		return { success: false, error: "Failed to reorder workflows." };
 	}
 }

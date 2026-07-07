@@ -1,5 +1,6 @@
 export interface Workflow {
 	workflow_id: string;
+	number: number | null; // null = soft-deleted; active workflows always have a number
 	name: string;
 	creation_date: Date;
 	deadline_date: Date | null;

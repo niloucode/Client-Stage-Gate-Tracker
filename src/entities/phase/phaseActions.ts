@@ -261,46 +261,103 @@ export async function cascadeSoftDeletePhase(
 }
 
 /**
- * Swaps the sequential 'number' values of two phases.
- * This function utilizes a Prisma interactive transaction to fetch the current
- * numbers of both phases and perform the updates simultaneously. This approach
- * guarantees database consistency by ensuring that if one update fails, the
- * other is rolled back, preventing duplicate sequence numbers from being assigned.
+ * Moves a phase to a new sequential position by its target number.
+ * Uses an insertion-based algorithm inside a Prisma interactive transaction:
+ *  1. Fetch all affected phases (dragged + every phase between old and target).
+ *  2. Null ALL their numbers in one updateMany (multiple NULLs don't violate
+ *     the @@unique([stage_id, number]) constraint).
+ *  3. Reassign each phase one at a time: the dragged phase gets the target number,
+ *     every other phase shifts by ±1.
  *
- * @param {string} phaseId1 - The UUID of the first phase.
- * @param {string} phaseId2 - The UUID of the second phase.
+ * This avoids PostgreSQL per-row unique checks on intermediate states.
+ *
+ * @param {string} phaseId     - The UUID of the phase being moved.
+ * @param {number} targetNumber - The desired sequential position (1-based).
  * @returns {Promise<{success: boolean, error?: string}>}
- * Returns `success: true` if the transaction completes successfully.
- * Returns `success: false` and an error message if the phases cannot be found or the database update fails.
  */
-export async function swapPhaseOrder(phaseId1: string, phaseId2: string) {
+export async function reorderPhase(
+	phaseId: string,
+	targetNumber: number,
+) {
 	try {
 		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			const phase1 = await tx.phases.findUnique({
-				where: { phase_id: phaseId1 },
-			});
-			const phase2 = await tx.phases.findUnique({
-				where: { phase_id: phaseId2 },
+			const phase = await tx.phases.findUnique({
+				where: { phase_id: phaseId },
 			});
 
-			if (!phase1 || !phase2) {
-				throw new Error("One or both phases could not be found.");
+			if (!phase) {
+				throw new Error(`Phase ${phaseId} not found.`);
+			}
+			if (phase.number === null) {
+				throw new Error(
+					`Phase ${phaseId} has no sequence number (number is null).`,
+				);
 			}
 
-			await tx.phases.update({
-				where: { phase_id: phaseId1 },
-				data: { number: phase2.number },
+			const stageId = phase.stage_id;
+			const oldNumber = phase.number;
+
+			// No-op if already at the target position
+			if (oldNumber === targetNumber) return;
+
+			// Validate target range
+			const activeCount = await tx.phases.count({
+				where: { stage_id: stageId, is_deleted: false },
+			});
+			if (targetNumber < 1 || targetNumber > activeCount) {
+				throw new Error(
+					`Target number ${targetNumber} is out of bounds (1–${activeCount}).`,
+				);
+			}
+
+			// Step 1: Fetch every phase in the affected range (dragged + shifted)
+			const rangeStart = Math.min(oldNumber, targetNumber);
+			const rangeEnd = Math.max(oldNumber, targetNumber);
+			const affected = await tx.phases.findMany({
+				where: {
+					stage_id: stageId,
+					number: { gte: rangeStart, lte: rangeEnd },
+					is_deleted: false,
+				},
+				select: { phase_id: true, number: true },
 			});
 
-			await tx.phases.update({
-				where: { phase_id: phaseId2 },
-				data: { number: phase1.number },
+			// Step 2: Null ALL affected phases at once —
+			//         multiple NULLs don't violate the unique constraint
+			await tx.phases.updateMany({
+				where: {
+					phase_id: { in: affected.map((p) => p.phase_id) },
+				},
+				data: { number: null },
 			});
+
+			// Step 3: Reassign each phase one at a time (safe — all numbers are null)
+			for (const p of affected) {
+				if (p.phase_id === phaseId) {
+					// The dragged phase lands at the target
+					await tx.phases.update({
+						where: { phase_id: p.phase_id },
+						data: { number: targetNumber },
+					});
+				} else if (oldNumber < targetNumber) {
+					// Moving right: items shift down by 1
+					await tx.phases.update({
+						where: { phase_id: p.phase_id },
+						data: { number: p.number! - 1 },
+					});
+				} else {
+					// Moving left: items shift up by 1
+					await tx.phases.update({
+						where: { phase_id: p.phase_id },
+						data: { number: p.number! + 1 },
+					});
+				}
+			}
 		});
 
 		return { success: true };
 	} catch (error) {
-		console.error("Failed to swap phase orders:", error);
+		console.error("Failed to reorder phase:", error);
 		return { success: false, error: "Failed to reorder phases." };
 	}
 }

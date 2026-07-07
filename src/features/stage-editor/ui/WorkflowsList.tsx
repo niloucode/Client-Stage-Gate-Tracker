@@ -10,7 +10,7 @@ import {
 	useCreateWorkflow,
 	useUpdateWorkflow,
 	useDeleteWorkflow,
-	useSwapWorkflowOrder,
+	useReorderWorkflow,
 } from "@/entities/workflow/mutations";
 
 interface WorkflowsListProps {
@@ -37,7 +37,7 @@ export function WorkflowsList({
 	const createWorkflowMutation = useCreateWorkflow();
 	const updateWorkflowMutation = useUpdateWorkflow();
 	const deleteWorkflowMutation = useDeleteWorkflow();
-	const swapWorkflowOrderMutation = useSwapWorkflowOrder();
+	const reorderWorkflowMutation = useReorderWorkflow();
 
 	const openCreateWorkflowModal = () => setIsAddOpen(true);
 	const openEditWorkflowModal = (workflow: Workflow) =>
@@ -155,15 +155,15 @@ export function WorkflowsList({
 		});
 
 		const draggedWf = workflows[dragIndex];
-		const droppedWf = workflows[dropIndex];
-		if (!draggedWf || !droppedWf) {
+		const targetNumber = workflows[dropIndex]?.number;
+		if (!draggedWf || draggedWf.number == null || targetNumber == null) {
 			setDraggedIndex(null);
 			return;
 		}
 
-		await swapWorkflowOrderMutation.mutateAsync({
-			workflowId1: draggedWf.workflow_id,
-			workflowId2: droppedWf.workflow_id,
+		await reorderWorkflowMutation.mutateAsync({
+			workflowId: draggedWf.workflow_id,
+			targetNumber,
 			stageId,
 		});
 
