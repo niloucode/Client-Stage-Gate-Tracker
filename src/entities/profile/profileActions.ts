@@ -50,6 +50,26 @@ export async function getProfileById(profileId: string, status: EntityFilterStat
   }
 }
 
+export async function getProfilesByClientId(clientId: string) {
+  try {
+
+    const usersArray = await prisma.profiles.findMany({
+      where: {
+        client_id: clientId,
+        is_deleted: false,
+      },
+    });
+
+    if (!usersArray) {
+      return { success: false, error: "User not found or does not match the requested status." };
+    }
+    return { success: true, data: usersArray };
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+    return { success: false, error: "Failed to fetch user details." };
+  }
+}
+
 /**
  * Retrieves the specific profile of a user from the database using their unique email.
  * Security Note: Ensure user authorization claims are verified before execution.

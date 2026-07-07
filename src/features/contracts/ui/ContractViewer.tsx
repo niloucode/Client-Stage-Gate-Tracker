@@ -12,12 +12,20 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
+import { uploadContract, getContractUrl, deleteContract } from "@/entities/contract";
+import { type Dispatch, SetStateAction } from "react";
+import { Contract } from "@/entities/types";
 
 interface PDFViewerProps {
   className?: string;
+  projectId: string;
+  clientId: string;
+  profileId?: string | null;
+  initialFilePath?: string | null //null if contract DOESN'T exist yet
+  setContract: Dispatch<SetStateAction<Contract | null>> //pass setter function of contract in page
 }
 
-export function ContractViewer({ className = "" }: PDFViewerProps) {
+export function ContractViewer({ className = "", projectId, clientId, setContract, initialFilePath }: PDFViewerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -27,13 +35,29 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
   const [zoom, setZoom] = useState(100);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false); 
+  const [contractName, setContractName] = useState(""); //ADDED THISSS
+
 
   // Revoke the object URL whenever it changes or the component unmounts
   useEffect(() => {
+  if (initialFilePath) {
+    let revoked = false;
+    getContractUrl(initialFilePath)
+      .then((url) => {
+        if (!revoked && url) setFileUrl(url);
+      })
+      .catch((err) => {
+        if (!revoked) {
+          console.error(err);
+          setFileError(err.message || 'Failed to load contract');
+        }
+      });
     return () => {
-      if (fileUrl) URL.revokeObjectURL(fileUrl);
+      revoked = true;
     };
-  }, [fileUrl]);
+  }
+}, [initialFilePath]);
 
   const isPdfFile = (f: File) =>
     f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
@@ -50,13 +74,36 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
     setPendingFile(next);
   };
 
-  const confirmUpload = () => {
-    if (!pendingFile) return;
-    if (fileUrl) URL.revokeObjectURL(fileUrl);
-    setFile(pendingFile);
-    setFileUrl(URL.createObjectURL(pendingFile));
-    setZoom(100);
-    setPendingFile(null);
+  const confirmUpload = async () => {
+    if (!pendingFile) {
+      console.log("no pending file")
+      return;
+    }
+    if(!projectId) {
+      console.log("no projectId")
+      return;
+    }
+    //start uploading process
+    setIsUploading(true)
+
+    try {
+      //put contract in Supabase storage
+      const {contract} = await uploadContract(clientId, projectId, pendingFile, contractName)
+      //clear url since we don't need it anymore
+      if (fileUrl) URL.revokeObjectURL(fileUrl)
+        
+      //store uploaded file for easier access
+      setFile(pendingFile)
+      setContract(contract)
+      //local preview while signed URL loads
+      setFileUrl(URL.createObjectURL(pendingFile)) 
+      setZoom(100)
+      setPendingFile(null)
+    } catch (err) {
+      setFileError('Upload failed. Please try again.')
+    } finally {
+      setIsUploading(false)
+    }
   };
 
   const cancelUpload = () => {
@@ -84,13 +131,20 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
     setRemoveConfirmText("");
   };
 
-  const confirmRemove = () => {
-    if (!file || removeConfirmText !== file.name) return;
-    if (fileUrl) URL.revokeObjectURL(fileUrl);
-    setFile(null);
-    setFileUrl(null);
-    setRemoveRequested(false);
-    setRemoveConfirmText("");
+  const confirmRemove = async() => {
+    if (!file || removeConfirmText !== file.name
+        || !initialFilePath || !projectId) return;
+    try {
+      //soft-delete contract from database
+      await deleteContract(projectId, initialFilePath)
+      if (fileUrl) URL.revokeObjectURL(fileUrl)
+      setFile(null)
+      setFileUrl(null)
+      setRemoveRequested(false)
+      setRemoveConfirmText('')
+    } catch (err) {
+      setFileError('Deletion failed. Please try again.')
+    }
   };
 
   const handlePrint = () => {
@@ -113,7 +167,7 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
         <div className="flex min-w-0 items-center gap-2">
           <FileText className="h-4 w-4 shrink-0 text-[#4338CA]" />
           <span className="truncate text-sm font-medium text-[#181724]">
-            {file ? file.name : "No document loaded"}
+            {file && fileUrl ? file.name : "Untitled.pdf"}
           </span>
         </div>
 
@@ -251,6 +305,18 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
               will become the active contract between you and the client.
               The client will be able to see this document right away.
             </p>
+
+            <label className="mt-4 block text-xs font-medium text-[#6E6B82]"> { /* ALSO ADDED THIS */}
+              Contract name
+            </label>
+            <input
+              value={contractName}
+              onChange={(e) => setContractName(e.target.value)}
+              placeholder="e.g. Input Contract Name here"
+              autoFocus
+              className="mt-1.5 w-full rounded-lg border border-[#E6E4F0] px-3 py-2 text-sm text-[#181724] outline-none focus:border-[#4338CA]"
+            />
+
             <div className="mt-5 flex gap-2">
               <button
                 onClick={cancelUpload}
@@ -260,7 +326,8 @@ export function ContractViewer({ className = "" }: PDFViewerProps) {
               </button>
               <button
                 onClick={confirmUpload}
-                className="flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-white hover:bg-[#3730A3]"
+                disabled={!contractName.trim()}
+                className="flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-white hover:bg-[#3730A3] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Yes, upload
               </button>
