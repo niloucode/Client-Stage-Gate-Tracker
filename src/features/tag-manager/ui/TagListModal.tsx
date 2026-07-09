@@ -32,7 +32,7 @@ export default function TagListModal({
 					{/* Table Body Area */}
 					<div className="flex-1 overflow-y-auto px-6 flex flex-col">
 						{/* Purple-tinted header — sticky, sits above the scroll area */}
-						<table className="w-full table-fixed">
+						<table className="w-full table-fixed mt-4">
 							<colgroup>
 								<col style={{ width: "28%" }} />
 								<col style={{ width: "48%" }} />
@@ -40,12 +40,12 @@ export default function TagListModal({
 							</colgroup>
 							<thead>
 								<tr
-									className="text-xs font-semibold uppercase tracking-wider"
+									className="text-xs font-semibold tracking-wider"
 									style={{ backgroundColor: "#EEF2FF", color: "#6366F1" }}
 								>
-									<th className="text-center py-2.5 px-3 rounded-l-lg">Tag</th>
-									<th className="text-center py-2.5 px-3">Description</th>
-									<th className="text-center py-2.5 px-3 rounded-r-lg">Actions</th>
+									<th className="text-left py-2.5 px-3 rounded-l-lg">{tags.length} Tags</th>
+									<th className="text-left py-2.5 px-3"></th>
+									<th className="text-left py-2.5 px-3 rounded-r-lg"></th>
 								</tr>
 							</thead>
 						</table>
@@ -67,7 +67,7 @@ export default function TagListModal({
 								<tbody className="divide-y divide-gray-200">
 									{tags.length === 0 && (
 										<tr>
-											<td colSpan={3} className="py-8 text-center text-sm text-gray-400">
+											<td colSpan={3} className="py-8 text-left text-sm text-gray-400">
 												No tags yet. Create one to get started.
 											</td>
 										</tr>
@@ -77,16 +77,16 @@ export default function TagListModal({
 											key={tag.tag_id}
 											className="group hover:bg-indigo-50/50 transition-colors"
 										>
-											<td className="py-3 px-3 align-middle text-center">
+											<td className="py-3 px-3 align-middle text-left">
 												<TagBadge tag={tag} />
 											</td>
 											<td
-												className="py-3 px-3 text-sm text-gray-500 text-center align-middle whitespace-normal break-words"
+												className="py-3 px-3 text-sm text-gray-500 text-left align-middle whitespace-normal break-words"
 											>
 												{tag.description}
 											</td>
 											<td className="py-3 px-3 align-middle">
-												<div className="flex items-center justify-center gap-2">
+												<div className="flex items-center justify-end gap-2">
 													<button
 														onClick={() => onEditTag(tag)}
 														className="text-indigo-400 hover:text-indigo-600 transition-colors"

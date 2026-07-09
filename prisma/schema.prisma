@@ -539,9 +539,9 @@ model Contracts {
   project_owner_signature String?
   client_signed_at        DateTime? @db.Timestamptz(6)
   project_owner_signed_at DateTime? @db.Timestamptz(6)
+  contract_name           String?   @unique
   client_initials         String?
   project_owner_initials  String?
-  contract_name           String?   @unique
   Clients                 Clients   @relation(fields: [client_id], references: [client_id], onDelete: NoAction, onUpdate: NoAction)
   Projects                Projects  @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
 
