@@ -12,7 +12,7 @@ import {
 	X,
 	AlertTriangle,
 } from "lucide-react";
-import { getContractUrl } from "@/entities/contract";
+import { getContractUrl, deleteContract } from "@/entities/contract";
 import { useUploadContract, useDeleteContract } from "@/entities/contract";
 
 interface PDFViewerProps {
@@ -48,10 +48,17 @@ export function ContractViewer({
 	useEffect(() => {
 		if (initialFilePath) {
 			let revoked = false;
+			console.log(initialFilePath);
 			getContractUrl(initialFilePath)
-				.then((result) => {
+				.then(async (result) => {
 					if (!revoked && result.success && result.data) {
 						setFileUrl(result.data);
+
+						// Reconstruct File from the public URL
+						const response = await fetch(result.data);
+						const blob = await response.blob();
+						const fileName = initialFilePath.split("/").pop() ?? "contract.pdf";
+						setFile(new File([blob], fileName, { type: "application/pdf" }));
 					} else if (!revoked && !result.success) {
 						setFileError(
 							typeof result.error === "string"
@@ -88,15 +95,7 @@ export function ContractViewer({
 	};
 
 	const confirmUpload = async () => {
-		if (!pendingFile) {
-			console.log("no pending file");
-			return;
-		}
-		if (!projectId) {
-			console.log("no projectId");
-			return;
-		}
-		//start uploading process
+		if (!pendingFile || !projectId) return;
 		setIsUploading(true);
 
 		try {
@@ -113,20 +112,18 @@ export function ContractViewer({
 						? result.error
 						: "Upload failed. Please try again.",
 				);
+				setPendingFile(null); // close modal, error shows in main view
 				return;
 			}
 
-			//clear url since we don't need it anymore
 			if (fileUrl) URL.revokeObjectURL(fileUrl);
-
-			//store uploaded file for easier access
 			setFile(pendingFile);
-			//local preview while signed URL loads
 			setFileUrl(URL.createObjectURL(pendingFile));
 			setZoom(100);
 			setPendingFile(null);
 		} catch (err) {
 			setFileError("Upload failed. Please try again.");
+			setPendingFile(null); // close modal on thrown errors too
 		} finally {
 			setIsUploading(false);
 		}

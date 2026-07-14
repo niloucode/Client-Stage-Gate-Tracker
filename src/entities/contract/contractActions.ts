@@ -1,5 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { prisma } from "@/lib/prisma";
 import {
 	contractUploadSchema,
@@ -7,14 +8,14 @@ import {
 	contractChangeNameSchema,
 } from "@/shared/schemas";
 
+
 // ── UPLOAD ────────────────────────────────────────────────────────────────────
 
-export async function uploadContract(
-	clientId: string,
-	projectId: string,
-	file: File,
-	contractName: string,
-) {
+export async function uploadContract(formData: FormData) {
+  const clientId = formData.get("clientId") as string;
+  const projectId = formData.get("projectId") as string;
+  const file = formData.get("file") as File;
+  const contractName = formData.get("contractName") as string;
 	try {
 		const parsed = contractUploadSchema.safeParse({
 			clientId,
@@ -28,7 +29,10 @@ export async function uploadContract(
 			};
 		}
 
-		const supabase = await createClient();
+		const supabaseAdmin = createAdminClient(
+			process.env.NEXT_PUBLIC_SUPABASE_URL!,
+			process.env.SUPABASE_SERVICE_ROLE_KEY!,
+		);
 
 		// Upsert — create or reset soft-delete on existing
 		const updatedContract = await prisma.contracts.upsert({
@@ -47,7 +51,7 @@ export async function uploadContract(
 			contractName.trim() === "" ? updatedContract.contract_id : contractName;
 		const filePath = `${projectId}/${fileName}.pdf`;
 
-		const { error: uploadError } = await supabase.storage
+		const { error: uploadError } = await supabaseAdmin.storage
 			.from("contracts")
 			.upload(filePath, file, {
 				contentType: "application/pdf",
@@ -114,42 +118,35 @@ export async function getContractUrl(filePath: string) {
 }
 
 // ── SOFT DELETE ───────────────────────────────────────────────────────────────
-
 export async function deleteContract(projectId: string, filePath: string) {
-	try {
-		if (!projectId || !filePath) {
-			return { success: false, error: "Missing project ID or file path." };
-		}
+  try {
+    const adminSupabase = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!, // service role, not anon key
+    );
 
-		const supabase = await createClient();
+    const { error: storageError } = await adminSupabase.storage
+      .from("contracts")
+      .remove([filePath]);
 
-		// Remove from storage FIRST — if this fails, DB is untouched
-		const { error: storageError } = await supabase.storage
-			.from("contracts")
-			.remove([filePath]);
+    if (storageError) {
+      return { success: false, error: storageError.message };
+    }
 
-		if (storageError) {
-			return { success: false, error: storageError.message };
-		}
+    await prisma.contracts.update({
+      where: { project_id: projectId },
+      data: { deleted_at: new Date(), is_deleted: true , file_path: null},
+    });
 
-		// Then soft-delete in the database
-		await prisma.contracts.update({
-			where: { project_id: projectId },
-			data: {
-				deleted_at: new Date(),
-				is_deleted: true,
-			},
-		});
-
-		return { success: true };
-	} catch (error) {
-		console.error("Failed to delete contract:", error);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete contract:", error);
 		return {
 			success: false,
 			error:
 				error instanceof Error ? error.message : "Failed to delete contract.",
 		};
-	}
+  }
 }
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
