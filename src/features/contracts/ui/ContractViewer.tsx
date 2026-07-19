@@ -207,7 +207,7 @@ export function ContractViewer({
 					<div className="flex min-w-0 items-center gap-2">
 						<FileText className="h-4 w-4 shrink-0 text-[#4338CA]" />
 						<span className="truncate text-sm font-medium text-[#181724]">
-							{file && fileUrl ? file.name : "Untitled.pdf"}
+							{file && fileUrl ? file.name : "No file found"}
 						</span>
 					</div>
 

@@ -17,6 +17,7 @@ import {
 	getProjectOwnerByProjectId,
 	getRoleAssignmentByProfileProjectId,
 } from "@/entities/roleAssignment";
+import { TruckElectricIcon } from "lucide-react";
 
 //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 // export default function ContractPage({
@@ -33,6 +34,7 @@ export default function ContractPage() {
 	);
 	const searchParams = useSearchParams();
 	const { user } = useAuth();
+	const [executedDate, setExecutedDate] = useState<Date | null>(null);
 
 	//UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 	//const {projectId} = params
@@ -47,9 +49,43 @@ export default function ContractPage() {
 	}, [contract?.contract_id]); // runs when contract first loads
 
 	useEffect(() => {
+		if (allSigned && contract) {
+			const client_date =
+				contract.client_signed_at || new Date(-8640000000000000);
+			const project_owner_date =
+				contract.project_owner_signed_at || new Date(-8640000000000000);
+
+			const latest = new Date(
+				Math.max(client_date.getTime(), project_owner_date.getTime()),
+			);
+			setExecutedDate(latest);
+		}
+	}, [allSigned]);
+
+	useEffect(() => {
 		if (!user) return;
 		get_role();
 	}, [user?.profile_id]);
+
+	function get_masked_email(email: string) {
+		// let i = 0;
+		// let flag = true;
+		// let masked = "";
+		// for (let i = 0; i < email.length; i++) {
+		// 	if (email[i] != "@" && i != 0 && flag) masked += "*";
+		// 	else if (!flag || i == 0) masked += email[i];
+		// 	else flag = false;
+		// }
+		// return masked;
+		const res = email.split("@");
+		const masked =
+			res[0][0] +
+			"*".repeat(res[0].length - 2) +
+			res[0][res[0].length - 1] +
+			"@" +
+			res[1];
+		return masked;
+	}
 
 	const get_role = async () => {
 		try {
@@ -121,7 +157,10 @@ export default function ContractPage() {
 			<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
 				<div className="mx-auto max-w-6xl">
 					{allSigned && (
-						<ExecutedBanner executedAt="2023-10-24" className="mb-6" />
+						<ExecutedBanner
+							executedAt={executedDate || undefined}
+							className="mb-6"
+						/>
 					)}
 
 					<header className="mb-6">
@@ -146,7 +185,9 @@ export default function ContractPage() {
 						<div className="flex flex-col gap-6">
 							<SignatoriesCard signatories={signatories} />
 							<ExecuteAgreementCard
-								maskedEmail="a***@client.com"
+								maskedEmail={
+									user ? get_masked_email(user.email) : "a******@gmail.com"
+								}
 								projectId={projectId}
 								role={userRole ?? "Client Viewer"}
 								onSigned={get_signatories}

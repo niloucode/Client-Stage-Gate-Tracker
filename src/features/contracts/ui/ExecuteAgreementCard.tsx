@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SignatureUpload } from "./SignatureUpload";
 import { OTPVerification } from "./OTPVerification";
 import { useSignContract } from "@/entities/contract";
@@ -23,24 +23,34 @@ export function ExecuteAgreementCard({
 	const [, setSignatureFile] = useState<File | null>(null);
 	const [signed, setSigned] = useState(false);
 	const signMutation = useSignContract();
+	const [pendingSignature, setPendingSignature] = useState<{
+		fullName: string;
+		initials: string;
+	} | null>(null);
 
-	const handleSignatureAdopted = async (fullName: string, initials: string) => {
+	const handleSignatureAdopted = (fullName: string, initials: string) => {
+		setPendingSignature({ fullName, initials });
+	};
+
+	const handleVerified = async () => {
 		try {
-			const result = await signMutation.mutateAsync({
-				projectId,
-				role,
-				fullName,
-				initials,
-			});
-			if (result.success) {
-				setSigned(true);
-				onSigned?.(); // tell parent to refresh signatories
-			} else {
-				console.error(
-					typeof result.error === "string"
-						? result.error
-						: "Failed to sign contract",
-				);
+			if (pendingSignature) {
+				const result = await signMutation.mutateAsync({
+					projectId,
+					role,
+					fullName: pendingSignature.fullName,
+					initials: pendingSignature.initials,
+				});
+				if (result.success) {
+					setSigned(true);
+					onSigned?.(); // tell parent to refresh signatories
+				} else {
+					console.error(
+						typeof result.error === "string"
+							? result.error
+							: "Failed to sign contract",
+					);
+				}
 			}
 		} catch (err) {
 			console.error(err);
@@ -73,11 +83,19 @@ export function ExecuteAgreementCard({
 				<SignatureUpload
 					onSignatureChange={setSignatureFile}
 					setSigned={setSigned}
+					onSignatureAdopted={handleSignatureAdopted}
 				/>
 
-				<hr className="border-[#E6E4F0]" />
+				{
+					<>
+						<hr className="border-[#E6E4F0]" />
 
-				<OTPVerification maskedEmail={maskedEmail} />
+						<OTPVerification
+							maskedEmail={maskedEmail}
+							onVerified={handleVerified}
+						/>
+					</>
+				}
 			</div>
 		</div>
 	);

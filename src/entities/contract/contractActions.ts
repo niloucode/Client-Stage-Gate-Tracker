@@ -7,7 +7,7 @@ import {
 	contractSignSchema,
 	contractChangeNameSchema,
 } from "@/shared/schemas";
-
+import nodemailer from "nodemailer";
 
 // ── UPLOAD ────────────────────────────────────────────────────────────────────
 
@@ -88,6 +88,7 @@ export async function uploadContract(formData: FormData) {
 		};
 	}
 }
+
 
 // ── GET SIGNED URL ────────────────────────────────────────────────────────────
 
