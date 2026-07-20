@@ -10,7 +10,6 @@ interface ExecuteAgreementCardProps {
 	maskedEmail?: string;
 	className?: string;
 	role: "Client Viewer" | "Project Owner"; //pass from ContractPage
-	onSigned?: () => void;
 }
 
 export function ExecuteAgreementCard({
@@ -18,9 +17,8 @@ export function ExecuteAgreementCard({
 	className = "",
 	role,
 	projectId,
-	onSigned,
 }: ExecuteAgreementCardProps) {
-	const [, setSignatureFile] = useState<File | null>(null);
+	const [signatureFile, setSignatureFile] = useState<File | null>(null);
 	const [signed, setSigned] = useState(false);
 	const signMutation = useSignContract();
 	const [pendingSignature, setPendingSignature] = useState<{
@@ -43,7 +41,6 @@ export function ExecuteAgreementCard({
 				});
 				if (result.success) {
 					setSigned(true);
-					onSigned?.(); // tell parent to refresh signatories
 				} else {
 					console.error(
 						typeof result.error === "string"
@@ -86,7 +83,7 @@ export function ExecuteAgreementCard({
 					onSignatureAdopted={handleSignatureAdopted}
 				/>
 
-				{
+				{signatureFile && (
 					<>
 						<hr className="border-[#E6E4F0]" />
 
@@ -95,7 +92,7 @@ export function ExecuteAgreementCard({
 							onVerified={handleVerified}
 						/>
 					</>
-				}
+				)}
 			</div>
 		</div>
 	);

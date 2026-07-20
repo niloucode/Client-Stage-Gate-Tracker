@@ -41,12 +41,20 @@ export default function ContractPage() {
 	const projectId = searchParams.get("projectId") ?? "";
 	const { data: contract } = useContract(projectId || undefined);
 	const clientId = contract?.client_id ?? searchParams.get("clientId") ?? "";
+	const userSigned =
+		userRole == "Client Viewer"
+			? contract?.client_signed_at != null
+			: contract?.project_owner_signed_at != null;
 
 	// Fetch signatories when contract loads
 	useEffect(() => {
 		if (!contract || !projectId) return;
 		get_signatories();
-	}, [contract?.contract_id]); // runs when contract first loads
+	}, [
+		contract?.contract_id,
+		contract?.client_signed_at,
+		contract?.project_owner_signed_at,
+	]); // runs when contract first loads or when new signing happens
 
 	useEffect(() => {
 		if (allSigned && contract) {
@@ -68,15 +76,6 @@ export default function ContractPage() {
 	}, [user?.profile_id]);
 
 	function get_masked_email(email: string) {
-		// let i = 0;
-		// let flag = true;
-		// let masked = "";
-		// for (let i = 0; i < email.length; i++) {
-		// 	if (email[i] != "@" && i != 0 && flag) masked += "*";
-		// 	else if (!flag || i == 0) masked += email[i];
-		// 	else flag = false;
-		// }
-		// return masked;
 		const res = email.split("@");
 		const masked =
 			res[0][0] +
@@ -145,7 +144,11 @@ export default function ContractPage() {
 
 			setSignatories(temp);
 			//check if all signatories have signed
-			setAllSigned(temp.length > 0 && temp.every((s) => s.status === "signed"));
+			const check =
+				temp.length > 0 &&
+				temp.every((s) => s.status.trim() == "signed".trim());
+			console.log(`have I signed: ${userSigned}`);
+			setAllSigned(check);
 		} catch (err) {
 			console.error("Failed to load signatories:", err);
 		}
@@ -184,14 +187,17 @@ export default function ContractPage() {
 
 						<div className="flex flex-col gap-6">
 							<SignatoriesCard signatories={signatories} />
-							<ExecuteAgreementCard
-								maskedEmail={
-									user ? get_masked_email(user.email) : "a******@gmail.com"
-								}
-								projectId={projectId}
-								role={userRole ?? "Client Viewer"}
-								onSigned={get_signatories}
-							/>
+							{!userSigned && (
+								<>
+									<ExecuteAgreementCard
+										maskedEmail={
+											user ? get_masked_email(user.email) : "a******@gmail.com"
+										}
+										projectId={projectId}
+										role={userRole ?? "Client Viewer"}
+									/>
+								</>
+							)}
 						</div>
 					</div>
 				</div>
