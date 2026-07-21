@@ -6,6 +6,7 @@ import {
 	uploadContract,
 	deleteContract,
 	signContract,
+	changeContractName
 } from "./contractActions";
 
 export function useUploadContract() {
@@ -32,7 +33,6 @@ export function useUploadContract() {
     },
   });
 }
-
 
 export function useDeleteContract() {
 	const queryClient = useQueryClient();
@@ -64,6 +64,20 @@ export function useSignContract() {
 				params.fullName,
 				params.initials,
 			),
+		onSuccess: (_data, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: contractKeys.detail(variables.projectId),
+			});
+		},
+	});
+}
+
+export function useChangeContractName() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (params: { projectId: string; contractName: string }) =>
+			changeContractName(params.projectId, params.contractName),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: contractKeys.detail(variables.projectId),

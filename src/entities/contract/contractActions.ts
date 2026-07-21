@@ -7,7 +7,6 @@ import {
 	contractSignSchema,
 	contractChangeNameSchema,
 } from "@/shared/schemas";
-import nodemailer from "nodemailer";
 
 // ── UPLOAD ────────────────────────────────────────────────────────────────────
 
@@ -136,7 +135,11 @@ export async function deleteContract(projectId: string, filePath: string) {
 
     await prisma.contracts.update({
       where: { project_id: projectId },
-      data: { deleted_at: new Date(), is_deleted: true , file_path: null},
+      data: { 
+		deleted_at: new Date(), is_deleted: true , file_path: null, contract_name: null,
+        client_signature: null, client_initials: null, client_signed_at: null,
+        project_owner_signature: null, project_owner_initials: null, project_owner_signed_at: null
+	},
     });
 
     return { success: true };
@@ -179,12 +182,12 @@ export async function getContractByProjectId(projectId: string) {
 // ── CHANGE NAME ───────────────────────────────────────────────────────────────
 
 export async function changeContractName(
-	contractId: string,
+	projectId: string,
 	contractName: string,
 ) {
 	try {
 		const parsed = contractChangeNameSchema.safeParse({
-			contractId,
+			projectId,
 			contractName,
 		});
 		if (!parsed.success) {
@@ -195,7 +198,7 @@ export async function changeContractName(
 		}
 
 		const updated = await prisma.contracts.update({
-			where: { contract_id: contractId },
+			where: { project_id: projectId },
 			data: { contract_name: contractName },
 		});
 

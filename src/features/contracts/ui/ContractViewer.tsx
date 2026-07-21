@@ -12,8 +12,12 @@ import {
 	X,
 	AlertTriangle,
 } from "lucide-react";
-import { getContractUrl, deleteContract } from "@/entities/contract";
-import { useUploadContract, useDeleteContract } from "@/entities/contract";
+import { getContractUrl } from "@/entities/contract";
+import {
+	useUploadContract,
+	useDeleteContract,
+	useChangeContractName,
+} from "@/entities/contract";
 
 interface PDFViewerProps {
 	className?: string;
@@ -39,16 +43,26 @@ export function ContractViewer({
 	const [isDragging, setIsDragging] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [isUploading, setIsUploading] = useState(false);
-	const [contractName, setContractName] = useState(""); //ADDED THISSS
+	const [contractName, setContractName] = useState(
+		file && fileUrl ? file.name : "",
+	); //ADDED THISSS
+	const [changeName, setChangeName] = useState(
+		file && fileUrl ? file.name : "",
+	);
 
 	const uploadMutation = useUploadContract();
 	const deleteMutation = useDeleteContract();
+	const changeNameMutation = useChangeContractName();
 
 	// Revoke the object URL whenever it changes or the component unmounts
 	useEffect(() => {
+		setContractName(file && fileUrl ? file.name : "");
+		setChangeName(file && fileUrl ? file.name : "");
+	}, [file, fileUrl]);
+
+	useEffect(() => {
 		if (initialFilePath) {
 			let revoked = false;
-			console.log(initialFilePath);
 			getContractUrl(initialFilePath)
 				.then(async (result) => {
 					if (!revoked && result.success && result.data) {
@@ -103,7 +117,7 @@ export function ContractViewer({
 				clientId,
 				projectId,
 				file: pendingFile,
-				contractName,
+				contractName: contractName.trim(),
 			});
 
 			if (!result.success) {
@@ -205,10 +219,25 @@ export function ContractViewer({
 				{/* Toolbar */}
 				<div className="flex items-center justify-between gap-3 border-b border-[#E6E4F0] px-4 py-3">
 					<div className="flex min-w-0 items-center gap-2">
-						<FileText className="h-4 w-4 shrink-0 text-[#4338CA]" />
-						<span className="truncate text-sm font-medium text-[#181724]">
-							{file && fileUrl ? file.name : "No file found"}
-						</span>
+						<FileText className="h-5 w-5 shrink-0 text-[#4338CA]" />
+						<input
+							type="text"
+							className="truncate text-sm font-medium text-[#181724] border border-transparent hover:border-black"
+							value={changeName}
+							onChange={(e) => setChangeName(e.target.value)}
+							//trigger saving when I click enter
+							onKeyDown={(e) => {
+								if (e.key === "Enter") e.currentTarget.blur();
+							}}
+							onBlur={() => {
+								//check if contract exists first
+								if (!changeName || !file) return;
+								changeNameMutation.mutate({
+									projectId,
+									contractName: changeName.trim(),
+								});
+							}}
+						></input>
 					</div>
 
 					<div className="flex shrink-0 items-center gap-1">

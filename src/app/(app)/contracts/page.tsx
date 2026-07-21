@@ -187,7 +187,7 @@ export default function ContractPage() {
 
 						<div className="flex flex-col gap-6">
 							<SignatoriesCard signatories={signatories} />
-							{!userSigned && (
+							{!userSigned && contract && (
 								<>
 									<ExecuteAgreementCard
 										maskedEmail={

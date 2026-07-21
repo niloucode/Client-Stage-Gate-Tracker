@@ -50,7 +50,6 @@ export function OTPVerification({
 	const triggerOTP = async () => {
 		// TODO: connect to backend — call OTP send/resend API
 		if (!user) return;
-		console.log(user?.email);
 		const { error } = await supabase.auth.signInWithOtp({ email: user?.email });
 		if (error) {
 			console.error(error.message);
@@ -103,7 +102,6 @@ export function OTPVerification({
 		// TODO: connect to backend — POST /api/otp/verify with { code: digits.join("") }
 		// Backend should resolve with { success: boolean }; on failure set otpState to "error"
 		setTimeout(async () => {
-			console.log(`token: ${digits.toString()}`);
 			const { data, error } = await supabase.auth.verifyOtp({
 				email: user.email,
 				token: digits.toString().replaceAll(",", ""),
