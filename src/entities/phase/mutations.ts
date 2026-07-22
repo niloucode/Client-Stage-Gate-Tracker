@@ -18,8 +18,8 @@ export function useCreatePhase() {
 			createPhase(
 				params.stageId,
 				params.name,
-				params.creation_date,
-				params.end_date,
+				params.start_date,
+				params.finish_date,
 				params.deadline_date,
 				params.description,
 			),
@@ -42,8 +42,8 @@ export function useUpdatePhase() {
 				params.phaseId,
 				params.name,
 				params.description,
-				params.creation_date,
-				params.end_date,
+				params.start_date,
+				params.finish_date,
 				params.deadline_date,
 			),
 		onSuccess: (_data, variables) => {

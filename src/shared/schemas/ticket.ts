@@ -8,7 +8,7 @@ export const ticketCreateSchema = z.object({
   deadline_date: z.date({ message: "Deadline is required" }),
   watcher_id: z.string().uuid().optional().nullable(),
   tagIds: z.array(z.string().uuid()).optional().nullable(),
-  end_date: z.date().optional().nullable(),
+  finish_date: z.date().optional().nullable(),
   api_route: z.string().optional().nullable(),
   api_method: z.enum(["GET", "POST", "PUT", "DELETE"]).optional().nullable(),
 });

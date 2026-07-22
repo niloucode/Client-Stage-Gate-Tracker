@@ -127,7 +127,7 @@ export default function TicketBoard({
 	 * @param {string[] | null} [params.tagIds] - Primary key association list attaching metadata styling tags.
 	 * @param {string | null} [params.description] - Markdown descriptive content text block string.
 	 * @param {Date | null} [params.start_date] - Timestamp scheduling baseline start window boundary.
-	 * @param {Date | null} [params.end_date] - Timestamp scheduling baseline completion window boundary.
+	 * @param {Date | null} [params.finish_date] - Timestamp scheduling baseline completion window boundary.
 	 * @returns {Promise<void>} Resolves when the local state append routine completes.
 	 */
 	async function handleCreateTicket(data: CreateTicketFormData) {

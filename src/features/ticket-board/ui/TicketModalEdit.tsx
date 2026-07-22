@@ -204,7 +204,7 @@ export default function TicketModalEdit({
 			),
 			tagIds: selectedTags,
 			description: ticket.description,
-			end_date: ticket.end_date,
+			finish_date: ticket.finish_date,
 			api_route: apiRoute || null,
 			api_method: apiMethod || null,
 			performed_by: user?.profile_id,
@@ -559,22 +559,22 @@ export default function TicketModalEdit({
 							)}
 						</div>
 
-						{/* Creation Date */}
+						{/* Start Date */}
 					<div>
-						<p className="text-xs text-gray-400 font-medium mb-1.5">Creation Date</p>
+						<p className="text-xs text-gray-400 font-medium mb-1.5">Start Date</p>
 						<p className="text-sm text-gray-700">
-							{ticket.creation_date
-								? new Date(ticket.creation_date).toLocaleString()
+							{ticket.start_date
+								? new Date(ticket.start_date).toLocaleString()
 								: "—"}
 						</p>
 					</div>
 
-					{/* End Date */}
+					{/* Finish Date */}
 					<div>
-						<p className="text-xs text-gray-400 font-medium mb-1.5">End Date</p>
+						<p className="text-xs text-gray-400 font-medium mb-1.5">Finish Date</p>
 						<p className="text-sm text-gray-700">
-							{ticket.end_date
-								? new Date(ticket.end_date).toLocaleString()
+							{ticket.finish_date
+								? new Date(ticket.finish_date).toLocaleString()
 								: "—"}
 						</p>
 					</div>

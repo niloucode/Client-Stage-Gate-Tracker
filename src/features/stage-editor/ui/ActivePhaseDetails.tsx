@@ -242,10 +242,10 @@ export function ActivePhaseDetails({
 
 						<div className="grid grid-cols-3 gap-6 mt-4">
 							<div>
-								<Label>Date Created</Label>
+								<Label>Start Date</Label>
 								<input
 									type="text"
-									value={formatDateTime(currentPhase.creation_date)}
+									value={formatDateTime(currentPhase.start_date)}
 									disabled
 									className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-[#64748B] cursor-not-allowed"
 									onClick={(e) => e.stopPropagation()}
@@ -266,10 +266,10 @@ export function ActivePhaseDetails({
 								/>
 							</div>
 							<div>
-								<Label>End Date</Label>
+								<Label>Finish Date</Label>
 								<input
 									type="text"
-									value={formatDateTime(currentPhase.end_date)}
+									value={formatDateTime(currentPhase.finish_date)}
 									disabled
 									className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-[#64748B] cursor-not-allowed"
 									onClick={(e) => e.stopPropagation()}

@@ -72,17 +72,17 @@ export const PhaseStepper = forwardRef<
 	const handleAddPhase = async (data: {
 		name: string;
 		description: string;
-		creation_date: Date | null;
+		start_date: Date | null;
 		deadline_date: Date | null;
-		end_date: Date | null;
+		finish_date: Date | null;
 	}) => {
 		await createPhaseMutation.mutateAsync({
 			stageId,
 			name: data.name,
 			description: data.description,
-			creation_date: data.creation_date ?? undefined,
+			start_date: data.start_date ?? undefined,
 			deadline_date: data.deadline_date ?? undefined,
-			end_date: data.end_date ?? undefined,
+			finish_date: data.finish_date ?? undefined,
 		});
 		setIsModalOpen(false);
 	};
@@ -350,14 +350,14 @@ export const PhaseStepper = forwardRef<
 													>
 														{phase.name}
 													</div>
-													{phase.creation_date && phase.end_date && (
+													{phase.start_date && phase.finish_date && (
 														<div className="text-[9px] text-[#94A3B8] mt-0.5 whitespace-nowrap">
-															{phase.creation_date.toLocaleDateString("en-US", {
+															{phase.start_date.toLocaleDateString("en-US", {
 																month: "short",
 																day: "numeric",
 															})}{" "}
 															–{" "}
-															{phase.end_date.toLocaleDateString("en-US", {
+															{phase.finish_date.toLocaleDateString("en-US", {
 																month: "short",
 																day: "numeric",
 															})}

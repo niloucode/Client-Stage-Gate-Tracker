@@ -32,7 +32,7 @@ export async function createTicket(data: CreateTicketParams & { performed_by?: s
             workflow_id: data.workflow_id ?? null,
             watcher_id: data.watcher_id ?? null,
             description: data.description ?? null,
-            end_date: data.end_date ?? null,
+            finish_date: data.finish_date ?? null,
             api_route: data.api_route ?? null,
             api_method: data.api_method ?? null,
 
@@ -97,14 +97,14 @@ export async function updateTicket(data: UpdateTicketParams & { performed_by?: s
     const tagsToAdd         = data.tagIds.filter((id: string) => !existingTagIds.includes(id));
     const tagsToRemove      = existingTagIds.filter((id: string) => !data.tagIds.includes(id));
 
-    // Auto-manage end_date based on status transition
+    // Auto-manage finish_date based on status transition
     const oldStatus = existing?.status;
     const newStatus = data.status;
-    const endDate = newStatus === "FINISHED" && oldStatus !== "FINISHED"
+    const finishDate = newStatus === "FINISHED" && oldStatus !== "FINISHED"
         ? new Date()
         : newStatus !== "FINISHED"
         ? null
-        : data.end_date;
+        : data.finish_date;
 
     const updated = await prisma.tickets.update({
         where: { ticket_id: data.ticket_id },
@@ -115,7 +115,7 @@ export async function updateTicket(data: UpdateTicketParams & { performed_by?: s
             workflow_id: data.workflow_id ?? null,
             watcher_id: data.watcher_id ?? null,
             description: data.description ?? null,
-            end_date: endDate,
+            finish_date: finishDate,
             api_route: data.api_route ?? null,
             api_method: data.api_method ?? null,
 
@@ -240,7 +240,7 @@ export async function updateTicketStatus(ticketId: string, status: status, perfo
             where: { ticket_id: ticketId },
             data: {
                 status,
-                end_date: status === "FINISHED" ? new Date() : null,
+                finish_date: status === "FINISHED" ? new Date() : null,
             },
             include: ticketInclude,
         });

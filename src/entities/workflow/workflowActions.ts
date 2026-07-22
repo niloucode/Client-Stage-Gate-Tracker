@@ -35,7 +35,8 @@ export async function createWorkflow(
 		const newWorkflow = await prisma.workflows.create({
 			data: {
 				name: workflowName,
-				end_date: endDate,
+				start_date: startDate,
+				finish_date: endDate,
 				is_approved: isApproved,
 				number: nextNumber,
 				module_id: moduleId,
@@ -101,7 +102,7 @@ export async function getWorkflowById(
  * - 'active' (default): Returns only tickets that are NOT soft-deleted.
  * - 'deleted': Returns only tickets that ARE soft-deleted (useful for recycle bin views).
  * - 'all': Bypasses the filter and returns everything.
- * Tickets are returned in ascending chronological order based on their 'creation_date' field.
+ * Tickets are returned in ascending chronological order based on their 'start_date' field.
  *
  * @param {string} workflowId - The UUID of the parent workflow.
  * @param {EntityFilterStatus} [status='active'] - The deletion status filter.
@@ -123,7 +124,7 @@ export async function getTicketsByWorkflowId(
 				is_deleted: isDeletedFilter,
 			},
 			orderBy: {
-				creation_date: "asc",
+				start_date: "asc",
 			},
 		});
 
@@ -161,7 +162,8 @@ export async function updateWorkflow(
 			},
 			data: {
 				name: workflowName,
-				end_date: endDate,
+				start_date: startDate,
+				finish_date: endDate,
 				deadline_date: deadlineDate,
 				is_approved: isApproved,
 			},

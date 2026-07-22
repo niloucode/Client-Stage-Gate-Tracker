@@ -7,9 +7,9 @@ import { workflowCreateSchema } from "@/shared/schemas";
 
 interface EditWorkflowFormData {
 	name: string;
-	creation_date: Date | null;
+	start_date: Date | null;
 	deadline_date: Date | null;
-	end_date: Date | null;
+	finish_date: Date | null;
 }
 
 interface EditWorkflowProps {
@@ -22,9 +22,9 @@ interface EditWorkflowProps {
 
 const toFormData = (workflow: Workflow | null): EditWorkflowFormData => ({
 	name: workflow?.name ?? "",
-	creation_date: workflow?.creation_date ?? null,
+	start_date: workflow?.start_date ?? null,
 	deadline_date: workflow?.deadline_date ?? null,
-	end_date: workflow?.end_date ?? null,
+	finish_date: workflow?.finish_date ?? null,
 });
 
 type FieldErrors = Partial<Record<"name", string>>;

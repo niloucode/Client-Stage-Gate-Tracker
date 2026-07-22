@@ -19,8 +19,8 @@ export function useCreateModule() {
 			createModule(
 				params.phaseId,
 				params.name,
-				params.creation_date,
-				params.end_date,
+				params.start_date,
+				params.finish_date,
 				params.deadline_date,
 			),
 		onSuccess: (_data, variables) => {
@@ -41,8 +41,8 @@ export function useUpdateModule() {
 			updateModule(
 				params.moduleId,
 				params.name,
-				params.creation_date,
-				params.end_date,
+				params.start_date,
+				params.finish_date,
 				params.deadline_date,
 			),
 		onSuccess: (_data, variables) => {

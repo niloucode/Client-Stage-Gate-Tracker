@@ -28,7 +28,8 @@ export async function createModule(
 		const newModule = await prisma.modules.create({
 			data: {
 				name: moduleName,
-				end_date: endDate,
+				start_date: startDate,
+				finish_date: endDate,
 				deadline_date: deadlineDate,
 				phase_id: phaseId,
 			},
@@ -91,7 +92,7 @@ export async function getModuleById(
  * - 'active' (default): Returns only workflows that are NOT soft-deleted.
  * - 'deleted': Returns only workflows that ARE soft-deleted (useful for recycle bin views).
  * - 'all': Bypasses the filter and returns everything.
- * Workflows are returned in ascending chronological order based on their 'creation_date' field.
+ * Workflows are returned in ascending chronological order based on their 'start_date' field.
  *
  * @param {string} moduleId - The UUID of the parent module.
  * @param {EntityFilterStatus} [status='active'] - The deletion status filter.
@@ -113,7 +114,7 @@ export async function getWorkflowsByModuleId(
 				is_deleted: isDeletedFilter,
 			},
 			orderBy: {
-				creation_date: "asc",
+				start_date: "asc",
 			},
 		});
 
@@ -150,7 +151,8 @@ export async function updateModule(
 			},
 			data: {
 				name: moduleName,
-				end_date: endDate,
+				start_date: startDate,
+				finish_date: endDate,
 				deadline_date: deadlineDate,
 			},
 		});

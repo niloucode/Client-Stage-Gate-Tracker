@@ -37,7 +37,8 @@ export async function createPhase(
 				name: phaseName,
 				description: description,
 				number: nextPhaseNumber,
-				end_date: endDate,
+				start_date: startDate,
+				finish_date: endDate,
 				deadline_date: deadlineDate,
 				stage_id: stageId,
 			},
@@ -97,7 +98,7 @@ export async function getPhaseById(
  * - 'active' (default): Returns only modules that are NOT soft-deleted.
  * - 'deleted': Returns only modules that ARE soft-deleted (useful for recycle bin views).
  * - 'all': Bypasses the filter and returns everything.
- * Modules are returned in ascending chronological order based on their 'creation_date' field.
+ * Modules are returned in ascending chronological order based on their 'start_date' field.
  *
  * @param {string} phaseId - The UUID of the parent phase.
  * @param {EntityFilterStatus} [status='active'] - The deletion status filter.
@@ -119,7 +120,7 @@ export async function getModulesByPhaseId(
 				is_deleted: isDeletedFilter,
 			},
 			orderBy: {
-				creation_date: "asc",
+				start_date: "asc",
 			},
 		});
 
@@ -159,7 +160,8 @@ export async function updatePhase(
 			data: {
 				name: phaseName,
 				description: description,
-				end_date: endDate,
+				start_date: startDate,
+				finish_date: endDate,
 				deadline_date: deadlineDate,
 			},
 		});
