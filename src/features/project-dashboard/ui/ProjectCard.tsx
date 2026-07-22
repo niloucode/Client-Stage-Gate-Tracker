@@ -173,17 +173,20 @@ export function ProjectCard({
 				<div className="flex items-center gap-1.5 text-xs text-[#334155] min-w-0">
 					{project.start_date || project.deadline_date || project.finish_date ? (
 						<>
-							{project.start_date && (
+							{project.start_date ? (
 								<>
 									<CalendarIcon />
 									<span className="font-medium truncate">
 										{formatDateTime(project.start_date)}
 									</span>
 								</>
-							)}
-							{project.start_date && (project.deadline_date || project.finish_date) && (
+							):
+								(<span className="font-medium truncate">
+									N/A
+								</span>)}
+							{/*{project.start_date && (project.deadline_date || project.finish_date) && (*/}
 								<span className="text-[#94A3B8] flex-shrink-0">—</span>
-							)}
+							{/*)}*/}
 							{project.deadline_date || project.finish_date ? (
 								<>
 									{!project.start_date && <CalendarIcon />}
@@ -191,10 +194,14 @@ export function ProjectCard({
 										{formatDateTime(project.deadline_date ?? project.finish_date)}
 									</span>
 								</>
-							) : null}
+							) : (
+								<span className="font-medium truncate">
+									N/A
+								</span>
+							)}
 						</>
 					) : (
-						<><CalendarIcon /><span className="text-[#334155]">starting — deadline</span></>
+						<><CalendarIcon /><span className="text-[#334155]">N/A — N/A</span></>
 					)}
 				</div>
 
