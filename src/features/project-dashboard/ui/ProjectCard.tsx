@@ -97,7 +97,7 @@ export function ProjectCard({
 			const spaceBelow = window.innerHeight - rect.bottom;
 			const top = spaceBelow >= dropdownHeight
 				? rect.bottom + 4
-				: rect.top - dropdownHeight - 4;
+				: rect.top - dropdownHeight + 50;
 			setMenuPos({ top, right: window.innerWidth - rect.right });
 		}
 		setMenuOpen((prev) => !prev);
