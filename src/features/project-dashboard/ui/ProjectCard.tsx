@@ -59,10 +59,7 @@ function formatDateTime(date: Date | null): string {
 	return date.toLocaleString("en-US", {
 		month: "short",
 		day: "numeric",
-		year: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-		hour12: true,
+		year: "numeric"
 	});
 }
 
@@ -171,11 +168,10 @@ export function ProjectCard({
 			{/* Bottom Row: Timeline + Menu */}
 			<div className="flex items-center justify-between mt-auto">
 				<div className="flex items-center gap-1.5 text-xs text-[#334155] min-w-0">
-					{project.start_date || project.deadline_date || project.finish_date ? (
 						<>
+							<CalendarIcon />
 							{project.start_date ? (
 								<>
-									<CalendarIcon />
 									<span className="font-medium truncate">
 										{formatDateTime(project.start_date)}
 									</span>
@@ -187,9 +183,9 @@ export function ProjectCard({
 							{/*{project.start_date && (project.deadline_date || project.finish_date) && (*/}
 								<span className="text-[#94A3B8] flex-shrink-0">—</span>
 							{/*)}*/}
+							<CalendarIcon />
 							{project.deadline_date || project.finish_date ? (
 								<>
-									{!project.start_date && <CalendarIcon />}
 									<span className="font-medium truncate">
 										{formatDateTime(project.deadline_date ?? project.finish_date)}
 									</span>
@@ -200,9 +196,6 @@ export function ProjectCard({
 								</span>
 							)}
 						</>
-					) : (
-						<><CalendarIcon /><span className="text-[#334155]">N/A — N/A</span></>
-					)}
 				</div>
 
 				{/* Menu Ellipsis — bottom right */}
