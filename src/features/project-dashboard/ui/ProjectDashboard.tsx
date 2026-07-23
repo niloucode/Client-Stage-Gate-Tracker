@@ -118,7 +118,7 @@ export function ProjectDashboard() {
 	return (
 		<div className="p-8 max-w-[1550px] mx-auto">
 			{/* Page Header */}
-			<div className="flex justify-between items-end pb-6 mb-6 border-b border-[#E2E8F0]">
+			<div className="flex align-middle pb-6 mb-6 border-b border-[#E2E8F0]">
 				<div>
 					<h1 className="text-3xl font-bold text-[#0F172A] tracking-tight">Projects</h1>
 					<p className="text-m text-[#64748B] mt-1">
@@ -127,7 +127,7 @@ export function ProjectDashboard() {
 				</div>
 				<button
 					onClick={() => setShowAddModal(true)}
-					className="flex items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+					className="flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 				>
 					<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
 						<path d="M7 1V13M1 7H13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
