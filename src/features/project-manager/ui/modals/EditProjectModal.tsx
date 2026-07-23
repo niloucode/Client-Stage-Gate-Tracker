@@ -37,7 +37,7 @@ const emptyFormData: EditProjectFormData = {
 
 type FieldErrors = Partial<Record<keyof EditProjectFormData, string>>;
 
-function toDateTimeInput(date: Date | null): string {
+function toDateInput(date: Date | null): string {
 	if (!date) return "";
 	const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
 	return d.toISOString().slice(0, 16);
@@ -143,36 +143,38 @@ export function EditProjectModal({
 
 	return (
 		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" key={formKey}>
-			<div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative">
-				<button
-					onClick={handleClose}
-					className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#475569] transition-colors"
-				>
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<path
-							d="M15 5L5 15M5 5L15 15"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-						/>
-					</svg>
-				</button>
+			<div className="bg-[#FAF8FF] rounded-xl shadow-xl w-full max-w-lg relative">
+				<div className="h-[4em] bg-white rounded-t-xl border-b-1 p-6 flex border-[#C7C4D8]">
+					<h2 className="mt-auto mb-auto text-l font text-[#0F172A]">
+						{isEditMode ? "Edit Project" : "Create New Project"}
+					</h2>
 
-				<h2 className="text-xl font-bold text-[#0F172A] mb-2">
-					{isEditMode ? "Edit Project" : "Create New Project"}
-				</h2>
-				<p className="text-sm text-[#64748B] mb-6">
-					{isEditMode
-						? "Update the project details below."
-						: "Fill in the details to create a new project."}
-				</p>
+					<button
+						onClick={handleClose}
+						className="ml-auto text-[#94A3B8] hover:text-[#475569] transition-colors"
+					>
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<path
+								d="M15 5L5 15M5 5L15 15"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+							/>
+						</svg>
+					</button>
 
-				<div className="space-y-4">
+				</div>
+				<div className="space-y-4 p-6">
 					{/* Project Name */}
 					<div>
-						<Label required error={!!fieldErrors.name}>
-							Project Name
-						</Label>
+						<div className="flex">
+							<Label required error={!!fieldErrors.name}>
+								Project Name
+							</Label>
+							<span className="ml-auto mt-auto text-[10px] text-[#94A3B8]">
+								{formData.name.length}/50
+							</span>
+						</div>
 						<input
 							type="text"
 							maxLength={50}
@@ -181,35 +183,38 @@ export function EditProjectModal({
 								setFormData({ ...formData, name: e.target.value })
 							}
 							placeholder="Project Name"
-							className={`w-full px-3 py-2 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all ${
+							className={`w-full mt-1 px-3 py-2 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all ${
 								fieldErrors.name
 									? "border-red-400 focus:ring-red-400"
 									: "border-[#CBD5E1]"
 							}`}
 						/>
-						<div className="flex justify-between mt-1">
+						<div className="flex justify-between h-[10px] mt-1">
 							{fieldErrors.name ? (
 								<p className="text-xs text-red-500">{fieldErrors.name}</p>
 							) : (
 								<span />
 							)}
-							<span className="text-[10px] text-[#94A3B8]">
-								{formData.name.length}/50
-							</span>
 						</div>
 					</div>
 
 					{/* Description */}
 					<div>
-						<Label>Description</Label>
+						<div className="flex">
+							<Label>Description</Label>
+							<span className="ml-auto mt-auto text-[10px] text-[#94A3B8]">
+								{formData.description.length}/160
+							</span>
+						</div>
 						<textarea
 							value={formData.description}
+							maxLength={160}
 							onChange={(e) =>
 								setFormData({ ...formData, description: e.target.value })
 							}
 							placeholder="Project Description"
 							rows={4}
-							className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+							className="w-full mt-1 px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
 						/>
 					</div>
 
@@ -269,45 +274,48 @@ export function EditProjectModal({
 							)}
 						</div>
 					)}
+					<div className="flex">
+						{/* Start Date */}
+						<div>
+							<Label>Start Date</Label>
+							<input
+								type="datetime-local"
+								value={toDateInput(formData.start_date)}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										start_date: e.target.value
+											? new Date(e.target.value + ":00")
+											: null,
+									})
+								}
+								className="px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] 
+								focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+							/>
+						</div>
 
-					{/* Start Date */}
-					<div>
-						<Label>Start Date</Label>
-						<input
-							type="datetime-local"
-							value={toDateTimeInput(formData.start_date)}
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									start_date: e.target.value
-										? new Date(e.target.value + ":00")
-										: null,
-								})
-							}
-							className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
-						/>
-					</div>
-
-					{/* Deadline Date */}
-					<div>
-						<Label>Deadline Date</Label>
-						<input
-							type="datetime-local"
-							value={toDateTimeInput(formData.deadline_date)}
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									deadline_date: e.target.value
-										? new Date(e.target.value + ":00")
-										: null,
-								})
-							}
-							className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
-						/>
+						{/* Deadline Date */}
+						<div className="ml-auto">
+							<Label>Deadline Date</Label>
+							<input
+								type="datetime-local"
+								value={toDateInput(formData.deadline_date)}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										deadline_date: e.target.value
+											? new Date(e.target.value + ":00")
+											: null,
+									})
+								}
+								className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A]
+								focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+							/>
+						</div>
 					</div>
 				</div>
 
-				<div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#F1F5F9]">
+				<div className="h-[4em] p-3 border-[#C7C4D8] flex rounded-b-xl justify-end gap-3 bg-[#F2F3FF] border-t-1">
 					<button
 						onClick={handleClose}
 						className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"

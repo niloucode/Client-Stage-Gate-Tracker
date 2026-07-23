@@ -20,13 +20,14 @@ function CalendarIcon() {
 	);
 }
 
-
 function formatDateTime(date: Date | null): string {
 	if (!date) return "—";
 	return date.toLocaleString("en-US", {
 		month: "numeric",
 		day: "numeric",
-		year: "numeric"
+		year: "numeric",
+		hour: "numeric",
+		minute: "numeric"
 	});
 }
 

@@ -68,15 +68,14 @@ export function DeleteProjectModal({
 				<h2 className="text-xl font-bold text-[#0F172A] mb-2">
 					Delete Project
 				</h2>
-				<p className="text-sm text-[#64748B] mb-6">
+				<div className="h-px bg-[#dde4ee] -mx-6 my-4" />
+				<p className="text-sm text-[#64748B]">
 					This action cannot be undone. Please type{" "}
 					<strong className="text-[#0F172A]">{projectName}</strong> to
 					confirm.
 				</p>
-
-				<div className="space-y-4">
+				<div className="">
 					<div>
-						<Label>Input Project Name To Delete</Label>
 						<input
 							type="text"
 							value={typedName}
@@ -99,7 +98,9 @@ export function DeleteProjectModal({
 					</div>
 				</div>
 
-				<div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#F1F5F9]">
+				<div className="h-px bg-[#dde4ee] -mx-6 my-4"/>
+
+				<div className="flex justify-end gap-3">
 					<button
 						onClick={handleClose}
 						className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
