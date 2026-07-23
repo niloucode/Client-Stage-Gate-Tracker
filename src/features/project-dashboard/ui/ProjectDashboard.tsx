@@ -15,6 +15,7 @@ import { DeleteProjectModal } from "@/features/project-manager/ui/modals/DeleteP
 import { ProjectSection } from "./ProjectSection";
 import { ProjectCard } from "./ProjectCard";
 import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas";
+import { Toasts } from "@/shared/ui/toasts";
 
 interface ModalState {
 	project_id: string;
@@ -116,7 +117,7 @@ export function ProjectDashboard() {
 	}
 
 	return (
-		<div className="p-8 max-w-[1550px] mx-auto">
+		<div className="p-8 flex-6 max-w-[1550px] mx-auto">
 			{/* Page Header */}
 			<div className="flex align-middle pb-6 mb-6 border-b border-[#E2E8F0]">
 				<div>
@@ -211,6 +212,11 @@ export function ProjectDashboard() {
 				projectName={deleteProject?.name ?? ""}
 				onClose={() => setDeleteProject(null)}
 				onConfirm={handleDelete}
+			/>
+			<Toasts
+				type={"exclamation"}
+				title={"Hamilton"}
+				description={"Hamiltoe"}
 			/>
 		</div>
 	);
