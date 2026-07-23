@@ -14,7 +14,7 @@ export default function SidebarLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-100">
+    <div className="flex min-h-screen w-full bg-[#FAF8FF]">
       {/* Sidebar */}
       <div
         className={`

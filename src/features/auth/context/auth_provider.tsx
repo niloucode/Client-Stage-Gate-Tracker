@@ -23,7 +23,7 @@ const DEPARTMENT_IDS = {
 } as const;
 
 const DEFAULT_PROJECT_REDIRECT =
-	"/projects/8e2492cf-a825-470b-9ab3-ace672b1f0c7/stages/39bfb76d-7e8e-41c8-bcea-09754989e75a/";
+	"/projects/";
 
 const AUTH_PAGES = ["/login", "/signup/staff", "/signup/client", "/"] as const;
 

@@ -79,6 +79,7 @@ export function EditProjectModal({
 	useEffect(() => {
 		clientSelectAll().then((data) => {
 			if (mountedRef.current) setClients(data);
+	console.log(data)
 		}).catch((err) => console.error("Failed to load clients", err));
 	}, []);
 

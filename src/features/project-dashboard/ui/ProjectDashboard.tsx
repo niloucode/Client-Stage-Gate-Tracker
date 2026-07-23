@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import { useState, useMemo } from "react";
 import {
@@ -95,7 +95,7 @@ export function ProjectDashboard() {
 
 	if (isLoading) {
 		return (
-			<div className="p-8 max-w-[1400px] mx-auto">
+			<div className="p-8 max-w-[1550px] mx-auto">
 				<div className="animate-pulse space-y-6">
 					<div className="h-8 bg-[#F1F5F9] rounded w-48" />
 					<div className="h-4 bg-[#F1F5F9] rounded w-72" />
@@ -109,19 +109,19 @@ export function ProjectDashboard() {
 
 	if (error) {
 		return (
-			<div className="p-8 max-w-[1400px] mx-auto">
+			<div className="p-8 max-w-[1550px] mx-auto">
 				<p className="text-sm text-red-500">Failed to load projects. Please try again.</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className="p-8 max-w-[1400px] mx-auto">
+		<div className="p-8 max-w-[1550px] mx-auto">
 			{/* Page Header */}
 			<div className="flex justify-between items-end pb-6 mb-6 border-b border-[#E2E8F0]">
 				<div>
-					<h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">Projects</h1>
-					<p className="text-sm text-[#64748B] mt-1">
+					<h1 className="text-3xl font-bold text-[#0F172A] tracking-tight">Projects</h1>
+					<p className="text-m text-[#64748B] mt-1">
 						Manage and track the projects assigned to you.
 					</p>
 				</div>

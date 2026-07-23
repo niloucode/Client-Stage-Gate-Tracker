@@ -20,44 +20,11 @@ function CalendarIcon() {
 	);
 }
 
-function PendingIcon({ size = 16 }: { size?: number }) {
-	return (
-		<svg width={size} height={size} viewBox="0 0 12 12" fill="none">
-			<circle cx="6" cy="6" r="5" stroke="#CA8A04" strokeWidth="1.2" />
-			<path d="M6 3.5V6.5L8 8" stroke="#CA8A04" strokeWidth="1.2" strokeLinecap="round" />
-		</svg>
-	);
-}
-
-function ActiveIcon({ size = 16 }: { size?: number }) {
-	return (
-		<svg width={size} height={size} viewBox="0 0 12 12" fill="none">
-			<path d="M3 1.5L10 6L3 10.5V1.5Z" fill="#4F46E5" />
-		</svg>
-	);
-}
-
-function CompletedIcon({ size = 16 }: { size?: number }) {
-	return (
-		<svg width={size} height={size} viewBox="0 0 12 12" fill="none">
-			<circle cx="6" cy="6" r="5" fill="#16A34A" />
-			<path d="M4 6L5.5 7.5L8 4.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-		</svg>
-	);
-}
-
-export { PendingIcon, ActiveIcon, CompletedIcon };
-
-const STATUS_ICONS = {
-	PENDING: PendingIcon,
-	ACTIVE: ActiveIcon,
-	COMPLETED: CompletedIcon,
-} as const;
 
 function formatDateTime(date: Date | null): string {
 	if (!date) return "—";
 	return date.toLocaleString("en-US", {
-		month: "short",
+		month: "numeric",
 		day: "numeric",
 		year: "numeric"
 	});
@@ -103,8 +70,6 @@ export function ProjectCard({
 		setMenuOpen((prev) => !prev);
 	}, []);
 
-	const StatusIcon = STATUS_ICONS[project.project_status];
-
 	const statusLabel =
 		project.project_status === "PENDING"
 			? "PENDING"
@@ -114,13 +79,13 @@ export function ProjectCard({
 
 	const statusClass =
 		project.project_status === "PENDING"
-			? "bg-yellow-50 text-yellow-700"
+			? "bg-[#FFDAD7] text-[#410004]"
 			: project.project_status === "ACTIVE"
-				? "bg-indigo-50 text-indigo-700"
-				: "bg-green-50 text-green-700";
+				? "bg-[#4F46E5] text-[#DAD7FF]"
+				: "text-[#00714D] bg-[#BAE9D4]";
 
 	return (
-		<div className="bg-white rounded-xl border border-[#E2E8F0] p-5 hover:shadow-md transition-shadow flex flex-col h-full">
+		<div className="bg-[#F8F9FF] rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full">
 			{/* Project Head: Name left, Status badge top-right */}
 			<div className="flex items-start justify-between gap-2 mb-3 min-h-[2.5rem]">
 				<h3 className="text-sm font-semibold text-[#0F172A] break-words max-w-[65%] line-clamp-2">
@@ -129,7 +94,6 @@ export function ProjectCard({
 				<span
 					className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${statusClass}`}
 				>
-					<StatusIcon />
 					{statusLabel}
 				</span>
 			</div>
@@ -145,7 +109,7 @@ export function ProjectCard({
 			</div>
 
 			{/* Description — always shown, clamped to 2 lines */}
-			<div className="mb-3 min-h-[2.5rem]">
+			<div className="mb-3 h-[2.8rem]">
 				<p className="text-[10px] font-semibold text-[#334155] uppercase tracking-wide mb-0.5">
 					Description
 				</p>
@@ -163,38 +127,28 @@ export function ProjectCard({
 			</div>
 
 			{/* Divider */}
-			<div className="border-t border-[#E2E8F0] mb-3" />
+			<div className="border-t border-[#E2E8F0] mb-5" />
 
 			{/* Bottom Row: Timeline + Menu */}
-			<div className="flex items-center justify-between mt-auto">
-				<div className="flex items-center gap-1.5 text-xs text-[#334155] min-w-0">
+			<div className="flex h-[.4rem] items-center justify-between mt-auto">
+				<div className="font-weight-100 flex items-center gap-1.5 text-xs text-[#334155] min-w-0">
 						<>
 							<CalendarIcon />
-							{project.start_date ? (
-								<>
-									<span className="font-medium truncate">
-										{formatDateTime(project.start_date)}
-									</span>
-								</>
-							):
-								(<span className="font-medium truncate">
-									N/A
-								</span>)}
-							{/*{project.start_date && (project.deadline_date || project.finish_date) && (*/}
-								<span className="text-[#94A3B8] flex-shrink-0">—</span>
-							{/*)}*/}
+							<span className="truncate">
+								{ project.start_date ? formatDateTime(project.start_date) :'N/A' }
+							</span>
+							
+							<span className="font-weight-100 text-[#94A3B8] flex-shrink-0">—</span>
+							
 							<CalendarIcon />
-							{project.deadline_date || project.finish_date ? (
-								<>
-									<span className="font-medium truncate">
-										{formatDateTime(project.deadline_date ?? project.finish_date)}
-									</span>
-								</>
+							
+							<span className="truncate">
+							{ project.project_status === "PENDING" || project.project_status === "ACTIVE" ? (
+									project.deadline_date ? formatDateTime(project.deadline_date):'N/A'
 							) : (
-								<span className="font-medium truncate">
-									N/A
-								</span>
+									project.finish_date ? formatDateTime(project.deadline_date ?? project.finish_date):'N/A'
 							)}
+							</span>
 						</>
 				</div>
 

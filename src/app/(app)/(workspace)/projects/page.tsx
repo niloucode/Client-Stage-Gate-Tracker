@@ -6,7 +6,7 @@ import { ProjectDashboard } from "@/features/project-dashboard";
 
 export default function ProjectsPage() {
 	return (
-		<div className="bg-[#F8FAFC] min-h-screen">
+		<div className="min-h-screen">
 			<Sidebar>
 				<TopNav breadcrumbs={["Acesoft", "Projects"]} />
 				<ProjectDashboard />
