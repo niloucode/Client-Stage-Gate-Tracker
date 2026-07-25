@@ -1,3 +1,5 @@
+import { Backdrop } from "@/shared/ui/backdrop"
+
 /**
  * An overlay modal dialog that prompts the user to confirm or cancel a ticket deletion.
  * It blocks background interactions and stops event propagation to prevent triggering
@@ -24,7 +26,7 @@ export default function TicketModalDelete({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+		<Backdrop isOpen={isOpen} onClose={onClose}>
 			<div
 				className="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-150"
 				onClick={(e) => e.stopPropagation()}
@@ -50,6 +52,6 @@ export default function TicketModalDelete({
 					</button>
 				</div>
 			</div>
-		</div>
+		</Backdrop>
 	);
 }

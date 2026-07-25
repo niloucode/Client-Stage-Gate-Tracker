@@ -55,7 +55,7 @@ export function TicketCardContent({
 			onClick={() => onSelect(ticket)}
 			className={[
 				"bg-white rounded-xl p-4 border border-gray-200 cursor-pointer relative",
-				"hover:border-gray-300 transition-colors duration-150 select-none",
+				"hover:bg-[#FAFAFA] transition-colors duration-150 select-none",
 				ticket.deadline_date && ticket.deadline_date < today ? "border-l-4 border-l-red-500" : "",
 			].join(" ")}
 		>
@@ -85,22 +85,19 @@ export function TicketCardContent({
 							e.stopPropagation();
 							setMenuOpen(!menuOpen);
 						}}
-						className={`p-0.5 rounded transition-colors ${menuOpen ? "text-gray-700 bg-gray-100" : "text-gray-400 hover:text-gray-600"}`}
+						className={`cursor-pointer p-0.5 rounded transition-colors ${menuOpen ? "text-gray-700 bg-gray-100" : "text-gray-400 hover:text-gray-600"}`}
 					>
 						<MoreHorizontalIcon />
 					</button>
 
-					{/* Action Menu Dropdown */}
-					{menuOpen && (
-						<div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg border border-gray-200 shadow-lg py-1 z-30">
-							<button
+					<button
 								onClick={(e) => {
 									e.stopPropagation();
 									setMenuOpen(false);
 									onSelect(ticket);
 									onEdit(ticket);
 								}}
-								className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 font-medium"
+								className="cursor-pointer w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 font-medium"
 							>
 								Edit
 							</button>
@@ -110,12 +107,10 @@ export function TicketCardContent({
 									setMenuOpen(false);
 									setIsDeleteModalOpen(true);
 								}}
-								className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 font-medium"
+								className="cursor-pointer w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 font-medium"
 							>
 								Delete
 							</button>
-						</div>
-					)}
 				</div>
 			</div>
 

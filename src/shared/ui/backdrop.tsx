@@ -28,9 +28,12 @@ export function Backdrop({ isOpen, onClose, children }: BackdropProps) {
 
   return (
     <div
-      	onClick={onClose}
-		className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-all duration-100 ease-out ${
-			visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+      	onClick={(e) => {
+			e.stopPropagation()
+			onClose()
+		}}
+		className={`cursor-default fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-all duration-100 ease-out ${
+			visible ? "opacity-100" : "opacity-0"}`}
     >
 		<div
 			onClick={(e) => e.stopPropagation()}

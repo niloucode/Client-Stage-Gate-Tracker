@@ -163,7 +163,7 @@ export function EditProjectModal({
 
 					<button
 						onClick={handleClose}
-						className="ml-auto text-[#94A3B8] hover:text-[#475569] transition-colors"
+						className="ml-auto text-[#94A3B8] hover:text-[#475569] transition-colors cursor-pointer"
 					>
 						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
 							<path
@@ -239,7 +239,7 @@ export function EditProjectModal({
 						<button
 							type="button"
 							onClick={() => setClientDropdownOpen(!clientDropdownOpen)}
-							className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent transition-all mt-1 ${
+							className={`cursor-pointer w-full flex items-center justify-between px-3.5 py-2.5 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent transition-all mt-1 ${
 								fieldErrors.client_id 
 									? "border-red-400 focus:ring-red-400" 
 									: "border-gray-300 focus:ring-indigo-500"
@@ -336,13 +336,13 @@ export function EditProjectModal({
 				<div className="h-[4em] p-3 border-[#C7C4D8] flex rounded-b-xl justify-end gap-3 bg-[#F2F3FF] border-t-1">
 					<button
 						onClick={handleClose}
-						className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+						className="cursor-pointer px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
 					>
 						Cancel
 					</button>
 					<button
 						onClick={handleSubmit}
-						className="px-4 py-2 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+						className="cursor-pointer px-4 py-2 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 					>
 						{isEditMode ? "Save Changes" : "Create Project"}
 					</button>

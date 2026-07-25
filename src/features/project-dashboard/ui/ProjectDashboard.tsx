@@ -156,7 +156,7 @@ export function ProjectDashboard() {
 				</div>
 				<button
 					onClick={() => setShowAddModal(true)}
-					className="font-semibold text-sm flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+					className="cursor-pointer font-semibold text-sm flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 				>
 					<LucidePlus size={15} strokeWidth={3}/>
 					<span>Add Project</span>

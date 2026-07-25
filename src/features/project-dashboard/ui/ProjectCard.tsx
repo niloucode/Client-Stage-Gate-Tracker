@@ -103,7 +103,7 @@ export function ProjectCard({
 			"bg-[#BAE9D4] text-[#00714D]";
 
 	return (
-		<div className="bg-[#F8F9FF] rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full cursor-pointer select-none">
+		<div className="bg-[#F8F9FF] cursor-pointer  rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none">
 			{/* Project Head: Name left, Status badge top-right */}
 			<div className="flex items-start justify-between gap-2 mb-3">
 				<h3 className="text-sm font-semibold text-[#0F172A] max-w-[80%] break-all line-clamp-2">
@@ -128,7 +128,7 @@ export function ProjectCard({
 						overflow: "hidden",
 					}}
 				>
-					1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+					{project.description}
 				</p>
 			</div>
 
@@ -169,7 +169,7 @@ export function ProjectCard({
 					<button
 						ref={menuBtnRef}
 						onClick={handleMenuClick}
-						className="p-1.5 rounded-lg hover:bg-[#F1F5F9] transition-colors text-[#94A3B8] hover:text-[#475569]"
+						className="cursor-pointer p-1.5 rounded-lg hover:bg-[#F1F5F9] transition-colors text-[#94A3B8] hover:text-[#475569]"
 					>
 						<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
 							<circle cx="8" cy="3" r="1.5" />
@@ -186,7 +186,7 @@ export function ProjectCard({
 						>
 							<button
 								onClick={() => { setMenuOpen(false); onEdit(); }}
-								className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
+								className="cursor-pointer  w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
 							>
 								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 									<path d="M11.5 1.5L14.5 4.5L5.5 13.5L2 14L2.5 10.5L11.5 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -195,7 +195,7 @@ export function ProjectCard({
 							</button>
 							<button
 								onClick={() => { setMenuOpen(false); onManageMembers(); }}
-								className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
+								className="cursor-pointer  w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
 							>
 								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 									<path d="M8 10C9.933 10 11.5 8.433 11.5 6.5C11.5 4.567 9.933 3 8 3C6.067 3 4.5 4.567 4.5 6.5C4.5 8.433 6.067 10 8 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -206,7 +206,7 @@ export function ProjectCard({
 							<div className="border-t border-[#F1F5F9] my-1" />
 							<button
 								onClick={() => { setMenuOpen(false); onDelete(); }}
-								className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+								className="cursor-pointer  w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
 							>
 								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 									<path d="M2 4H14M5 4V2.5C5 2.22386 5.22386 2 5.5 2H10.5C10.7761 2 11 2.22386 11 2.5V4M6.5 7V11.5M9.5 7V11.5M3.5 4L4.5 13.5C4.5 13.7761 4.72386 14 5 14H11C11.2761 14 11.5 13.7761 11.5 13.5L12.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
