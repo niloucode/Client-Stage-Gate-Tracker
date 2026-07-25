@@ -31,6 +31,8 @@ function formatDateTime(date: Date | null): string {
 	});
 }
 
+
+
 export function ProjectCard({
 	project,
 	onEdit,
@@ -56,6 +58,22 @@ export function ProjectCard({
 		};
 		document.addEventListener("mousedown", handleClick);
 		return () => document.removeEventListener("mousedown", handleClick);
+	}, [menuOpen]);
+
+	useEffect(() => {
+		if (!menuOpen) return;
+
+		const handleDismiss = () => {
+			setMenuOpen(false);
+		};
+
+		window.addEventListener('scroll', handleDismiss, true);
+		window.addEventListener('resize', handleDismiss);
+
+		return () => {
+			window.removeEventListener('scroll', handleDismiss, true);
+			window.removeEventListener('resize', handleDismiss);
+		};
 	}, [menuOpen]);
 
 	const handleMenuClick = useCallback(() => {

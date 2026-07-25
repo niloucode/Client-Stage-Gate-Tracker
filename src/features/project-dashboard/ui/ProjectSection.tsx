@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import type { ProjectWithStatus, ProjectStatus } from "@/entities/project";
+import type { ProjectWithStatus, ProjectStatus } from "@/entities/project"
 
 function PendingIcon({ size = 18 }: { size?: number }) {
 	const currentColor = '#410004'
@@ -20,7 +20,7 @@ function PendingIcon({ size = 18 }: { size?: number }) {
             <circle cx="7" cy="7" r="0.85" fill={currentColor} />
             <circle cx="9.8" cy="7" r="0.85" fill={currentColor} />
         </svg>
-	);
+	)
 }
 
 function ActiveIcon({ size = 18 }: { size?: number }) {
@@ -60,11 +60,11 @@ function ActiveIcon({ size = 18 }: { size?: number }) {
                 strokeLinecap="round" 
             />
         </svg>
-	);
+	)
 }
 
 function CompletedIcon({ size = 18 }: { size?: number }) {
-	const currentColor = '#00714D';
+	const currentColor = '#00714D'
 	return (
 		<svg width={size} height={size} viewBox="0 0 14 14" fill="none">
             {/* Outer Circle (identical to MoreCircleIcon) */}
@@ -85,25 +85,29 @@ function CompletedIcon({ size = 18 }: { size?: number }) {
                 strokeLinejoin="round" 
             />
         </svg>
-	);
+	)
 }
 
 const STATUS_ICONS = {
 	PENDING: PendingIcon,
 	ACTIVE: ActiveIcon,
 	COMPLETED: CompletedIcon,
-} as const;
+} as const
 
 interface ProjectSectionProps {
-	title: string;
-	status: ProjectStatus;
-	projects: ProjectWithStatus[];
-	isExpanded: boolean;
-	onToggle: () => void;
-	children: React.ReactNode;
+	title: string
+	status: ProjectStatus
+	projects: ProjectWithStatus[]
+	isExpanded: boolean
+	onToggle: () => void
+	children: React.ReactNode
 }
 
-const STATUS_CONFIG: Record<ProjectStatus, { color: string; bg: string; emptyText: string; icon: React.ComponentType<{ size?: number }> }> = {
+const STATUS_CONFIG: Record<ProjectStatus, { 
+	color: string 
+	bg: string 
+	emptyText: string 
+	icon: React.ComponentType<{ size?: number }> }> = {
 	PENDING: {
 		color: "text-[#410004]",
 		bg: "bg-[#FFDAD7]",
@@ -122,7 +126,8 @@ const STATUS_CONFIG: Record<ProjectStatus, { color: string; bg: string; emptyTex
 		emptyText: "No completed projects yet.",
 		icon: CompletedIcon,
 	},
-};
+}
+
 
 export function ProjectSection({
 	title,
@@ -132,8 +137,8 @@ export function ProjectSection({
 	onToggle,
 	children,
 }: ProjectSectionProps) {
-	const config = STATUS_CONFIG[status];
-	const IconComponent = config.icon;
+	const config = STATUS_CONFIG[status]
+	const IconComponent = config.icon
 
 	return (
 		<div>
@@ -181,5 +186,5 @@ export function ProjectSection({
 				</div>
 			)}
 		</div>
-	);
+	)
 }

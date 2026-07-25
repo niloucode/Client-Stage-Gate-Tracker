@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { useProjectMembers, useAddProjectMember, useRemoveProjectMember } from "@/entities/project"
 import { searchProfilesForProject } from "@/entities/project/projectActions"
-import { Label } from "@/shared/ui/label"
 import { Backdrop } from "@/shared/ui/backdrop"
+import { LucideSearch } from "lucide-react"
 
 interface ManageMembersModalProps {
 	isOpen: boolean
@@ -22,38 +22,6 @@ export function DepartmentDisplay({departmentName}:{departmentName:string})
 {
 	return <span className={`px-2 py-0.5 rounded-xl text-xs 
 		${DEPARTMENT_STYLES[departmentName]}`}>{departmentName}</span>
-}
-
-export function SearchIcon({
-  size = 14,
-  className = "",
-  ...props
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 14 14"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      {...props}
-    >
-      <circle
-        cx="6"
-        cy="6"
-        r="3.75"
-        stroke="currentColor"
-        strokeWidth="1.2"
-      />
-      <path
-        d="M8.75 8.75L12 12"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
 }
 
 export function ManageMembersModal({
@@ -189,13 +157,13 @@ export function ManageMembersModal({
 
 				<div className="border-t border-[#F1F5F9] my-3 -mx-6"></div>
 
-				<div className="">
+				<div>
 					{/* Search Input */}
 					<div className="mt-6">
 
 						<div className="relative flex items-center w-full mt-1.5">
 							{/* Search Icon */}
-							<SearchIcon className="absolute left-3 text-[#94A3B8] pointer-events-none" />
+							<LucideSearch className="absolute left-3 w-4 h-4 text-[#94A3B8] pointer-events-none" />
 
 							{/* Input Field */}
 							<input

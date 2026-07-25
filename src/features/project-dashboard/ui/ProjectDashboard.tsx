@@ -87,7 +87,6 @@ export function ProjectDashboard() {
 
 	const { showToast } = useToast()
 
-
 	const handleCreate = async (data: ProjectCreateInput) => {
 		const result = await createMutation.mutateAsync(data)
 		if (result.success && result.data) {

@@ -32,10 +32,10 @@ export function ToastProvider({ children }:{children:ReactNode}) {
 		{toastConfig && (
 			<Toast
 				id={toastConfig.id}
-				isOpen={true}
 				title={toastConfig.title}
 				description={toastConfig.description}
 				type={toastConfig.type}
+				onDismiss={() => setToastConfig(null)}
 			/>)
 		}
 		</ToastContext.Provider>
@@ -52,35 +52,42 @@ export function useToast() {
 
 export function Toast({
 	id,
-	isOpen=false,
 	type="",
 	title,
 	description,
-	duration = 4000
+	duration = 1000,
+	onDismiss
 }:{
 	id: number,
-	isOpen: boolean,
 	title?: string,
 	description?: string,
 	type?: string,
 	duration?: number
+	onDismiss: () => void
 })
 {
+	const [mounted, setMounted] = useState(false)
 	const [visible, setVisible] = useState(true)
 
 	useEffect(() => {
+		const mountTimer = setTimeout(() => setMounted(true), 10)
+		
 		setVisible(true)
-		const timer = setTimeout(() => {
+		const visibilityTimer = setTimeout(() => {
 			setVisible(false)
 		}, duration)
 
-		return () => clearTimeout(timer)
+		return () => {
+			clearTimeout(mountTimer)
+			clearTimeout(visibilityTimer)
+		}
 	}, [id, title, description, type, duration])
 	
 
-	const onClose = (()=>{
+	const handleClose = () => {
 		setVisible(false)
-	})
+		setTimeout(() => onDismiss?.(), 300) // Match transition duration
+	}
 
   	const TOAST_COLORS: Record<string, string> = {
 		error:"#B81C1C",
@@ -101,13 +108,13 @@ export function Toast({
 	const iconComponent = TOAST_ICONS[type] || <LucideCircleQuestionMark color={colorComponent}/>
   
 	return (
-    <div
-      className={`fixed top-20 h-20 w-75 transition-all duration-500 ease-out ${
-        visible
-          ? 'right-0 opacity-100 pointer-events-auto'
-          : '-right-10 opacity-0 pointer-events-none'
-      }`}
-    >
+	<div
+	className={`fixed top-20 right-0 h-20 w-75 transition-all duration-300 ease-out ${
+		(mounted && visible)
+			? 'translate-x-0 opacity-100 pointer-events-auto'
+          	: 'translate-x-full opacity-0 pointer-events-none'
+	}`}
+	>
         <div className={"overflow-hidden border-1 rounded-l-2xl border-[#C7C4D8] ml-auto flex items-center bg-white h-full w-72"}>
 			<div className={"h-full w-[10px]"}
             	style={{backgroundColor:colorComponent}}>
@@ -119,7 +126,7 @@ export function Toast({
 				<div className="text-[#151C27] w-43 truncate h-[24px] font-bold">{title}</div>
 				<div className="text-[#464555] w-43 truncate h-[24px]">{description}</div>
 			</div>
-			<button onClick={onClose}>
+			<button onClick={handleClose}>
 			<LucideX className="hover:text-gray-400 transition-all duration-300"/>
 			</button>
 		</div>
