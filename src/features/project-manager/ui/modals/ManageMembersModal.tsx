@@ -133,7 +133,7 @@ export function ManageMembersModal({
 	).length
 
 	return (
-		<Backdrop onClose={onClose}>
+		<Backdrop isOpen={isOpen} onClose={onClose}>
 			<div className="bg-white rounded-xl shadow-xl w-lg relative p-6">
 				<div className="h-[2em] bg-white rounded-t-xl flex items-center">
 					<h2 className="text-l font font-bold text-[#0F172A]">

@@ -55,7 +55,7 @@ export function Toast({
 	type="",
 	title,
 	description,
-	duration = 1000,
+	duration = 4000,
 	onDismiss
 }:{
 	id: number,
@@ -68,6 +68,7 @@ export function Toast({
 {
 	const [mounted, setMounted] = useState(false)
 	const [visible, setVisible] = useState(true)
+
 
 	useEffect(() => {
 		const mountTimer = setTimeout(() => setMounted(true), 10)
@@ -109,13 +110,13 @@ export function Toast({
   
 	return (
 	<div
-	className={`fixed top-20 right-0 h-20 w-75 transition-all duration-300 ease-out ${
+	className={`z-100 fixed top-20 right-0 h-20 w-80 transition-all duration-300 ease-out ${
 		(mounted && visible)
 			? 'translate-x-0 opacity-100 pointer-events-auto'
-          	: 'translate-x-full opacity-0 pointer-events-none'
+			: 'translate-x-full opacity-0 pointer-events-none'
 	}`}
 	>
-        <div className={"overflow-hidden border-1 rounded-l-2xl border-[#C7C4D8] ml-auto flex items-center bg-white h-full w-72"}>
+        <div className={"overflow-hidden rounded-l-2xl drop-shadow-2xl ml-auto flex items-center bg-white h-full w-72"}>
 			<div className={"h-full w-[10px]"}
             	style={{backgroundColor:colorComponent}}>
 			</div>
@@ -123,8 +124,8 @@ export function Toast({
 				{iconComponent}
 			</div>
 			<div>
-				<div className="text-[#151C27] w-43 truncate h-[24px] font-bold">{title}</div>
-				<div className="text-[#464555] w-43 truncate h-[24px]">{description}</div>
+				<div className="text-[#151C27] text-m w-43 truncate h-[24px] font-bold">{title}</div>
+				<div className="text-[#464555] text-xs w-43 truncate h-[24px]">{description}</div>
 			</div>
 			<button onClick={handleClose}>
 			<LucideX className="hover:text-gray-400 transition-all duration-300"/>

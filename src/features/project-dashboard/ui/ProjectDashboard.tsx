@@ -1,6 +1,6 @@
  "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
 	useOwnedProjects,
 	useCreateProject,
@@ -19,6 +19,8 @@ import { ProjectCard } from "./ProjectCard"
 
 import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas"
 import { useToast } from "@/shared/ui/toast"
+
+import {LucidePlus} from "lucide-react"
 
 interface ModalState {
 	project_id: string
@@ -87,6 +89,10 @@ export function ProjectDashboard() {
 
 	const { showToast } = useToast()
 
+	// Modal debugger
+	// useEffect(() =>
+	// {showToast("Project Deleted","Project successfully deleted","delete")},[])
+
 	const handleCreate = async (data: ProjectCreateInput) => {
 		const result = await createMutation.mutateAsync(data)
 		if (result.success && result.data) {
@@ -98,7 +104,10 @@ export function ProjectDashboard() {
 
 	const handleUpdate = async (data: ProjectUpdateInput) => {
 		const result = await updateMutation.mutateAsync(data)
-		if (result.success) setEditProject(null)
+		if (result.success) {
+			setEditProject(null)
+			showToast("Project Edited","Project successfully edited","check")
+		}
 	}
 
 	const handleDelete = async () => {
@@ -107,7 +116,10 @@ export function ProjectDashboard() {
 			projectId: deleteProject.project_id,
 			confirmationName: deleteProject.name,
 		})
-		if (result.success) setDeleteProject(null)
+		if (result.success) {
+			setDeleteProject(null)
+			showToast("Project Deleted","Project successfully deleted","delete")
+		}
 	}
 
 	if (isLoading) {
@@ -143,15 +155,11 @@ export function ProjectDashboard() {
 					</p>
 				</div>
 				<button
-					onClick={() => 
-						setShowAddModal(true)
-					}
-					className="flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+					onClick={() => setShowAddModal(true)}
+					className="font-semibold text-sm flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 				>
-					<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-						<path d="M7 1V13M1 7H13" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-					</svg>
-					<span className="font-semibold text-sm">Add Project</span>
+					<LucidePlus size={15} strokeWidth={3}/>
+					<span>Add Project</span>
 				</button>
 			</div>
 

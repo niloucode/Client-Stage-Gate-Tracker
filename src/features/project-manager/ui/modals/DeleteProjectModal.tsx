@@ -50,7 +50,7 @@ export function DeleteProjectModal({
 	if (!isOpen) return null;
 
 	return (
-		<Backdrop onClose={handleClose}>
+		<Backdrop isOpen={isOpen} onClose={onClose}>
 			<div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
 				<div className="flex items-center">
 

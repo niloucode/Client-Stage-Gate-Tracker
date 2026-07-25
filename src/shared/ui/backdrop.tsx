@@ -1,19 +1,44 @@
-import React from 'react';
+"use client"
+
+import { useState, useEffect, ReactNode } from "react"
 
 interface BackdropProps {
-  children: React.ReactNode;
-  onClose?: () => void;
+  isOpen: boolean
+  onClose: () => void
+  children: ReactNode
 }
 
-export const Backdrop = ({ children, onClose }: BackdropProps) => {
+export function Backdrop({ isOpen, onClose, children }: BackdropProps) {
+  const [mounted, setMounted] = useState(false)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+		setMounted(true)
+		const mountTimer = setTimeout(() => setVisible(true), 10)
+		return () => clearTimeout(mountTimer)
+    } else {
+		setVisible(false)
+		const unmountTimer = setTimeout(() => setMounted(false), 100)
+		return () => clearTimeout(unmountTimer)
+    }
+  }, [isOpen])
+
+  if (!mounted) return null
+
   return (
-    <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      onClick={onClose}
+    <div
+      	onClick={onClose}
+		className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-all duration-100 ease-out ${
+			visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
     >
-      <div onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
+		<div
+			onClick={(e) => e.stopPropagation()}
+			className={`transition-all duration-100 ease-out transform ${
+			visible ? "opacity-100" : "opacity-0"}`}
+		>
+			{children}
+		</div>
     </div>
-  );
-};
+  )
+}

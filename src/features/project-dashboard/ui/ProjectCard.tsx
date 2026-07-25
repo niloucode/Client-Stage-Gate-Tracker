@@ -90,24 +90,23 @@ export function ProjectCard({
 	}, []);
 
 	const statusLabel =
+		project.project_status === "ACTIVE"
+			? "ACTIVE" : 
 		project.project_status === "PENDING"
-			? "PENDING"
-			: project.project_status === "ACTIVE"
-				? "ACTIVE"
-				: "COMPLETED";
+			? "PENDING": "COMPLETED";
 
 	const statusClass =
+		project.project_status === "ACTIVE"
+			? "bg-[#4F46E5] text-[#DAD7FF]" : 
 		project.project_status === "PENDING"
-			? "bg-[#FFDAD7] text-[#410004]"
-			: project.project_status === "ACTIVE"
-				? "bg-[#4F46E5] text-[#DAD7FF]"
-				: "text-[#00714D] bg-[#BAE9D4]";
+			? "bg-[#FFDAD7] text-[#6d0007]" :
+			"bg-[#BAE9D4] text-[#00714D]";
 
 	return (
-		<div className="bg-[#F8F9FF] rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full">
+		<div className="bg-[#F8F9FF] rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full cursor-pointer select-none">
 			{/* Project Head: Name left, Status badge top-right */}
-			<div className="flex items-start justify-between gap-2 mb-3 min-h-[2.5rem]">
-				<h3 className="text-sm font-semibold text-[#0F172A] break-words max-w-[65%] line-clamp-2">
+			<div className="flex items-start justify-between gap-2 mb-3">
+				<h3 className="text-sm font-semibold text-[#0F172A] max-w-[80%] break-all line-clamp-2">
 					{project.name}
 				</h3>
 				<span
@@ -117,39 +116,33 @@ export function ProjectCard({
 				</span>
 			</div>
 
-			{/* Client Name — always shown */}
-			<div className="mb-2">
-				<p className="text-[10px] font-semibold text-[#334155] uppercase tracking-wide mb-0.5">
-					Client
-				</p>
-				<p className="text-xs text-[#334155]">
-					{project.client_name ?? "—"}
-				</p>
-			</div>
 
 			{/* Description — always shown, clamped to 2 lines */}
 			<div className="mb-3 h-[2.8rem]">
-				<p className="text-[10px] font-semibold text-[#334155] uppercase tracking-wide mb-0.5">
-					Description
-				</p>
 				<p
-					className={`text-xs break-words ${project.description ? "text-[#475569]" : "text-[#94A3B8]"} italic`}
+					className={`text-xs break-words ${project.description ? "text-[#475569]" : "text-[#94A3B8]"}`}
 					style={{
 						display: "-webkit-box",
-						WebkitLineClamp: 2,
+						WebkitLineClamp: 3,
 						WebkitBoxOrient: "vertical",
 						overflow: "hidden",
 					}}
 				>
-					{project.description || "(No description)"}
+					1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 				</p>
 			</div>
 
+			{/* Client Name — always shown */}
+			<div className="mb-2 mt-auto">
+				<p className="text-xs text-[#4F46E5]">
+					{project.client_name ?? "—"}
+				</p>
+			</div>
 			{/* Divider */}
 			<div className="border-t border-[#E2E8F0] mb-5" />
 
 			{/* Bottom Row: Timeline + Menu */}
-			<div className="flex h-[.4rem] items-center justify-between mt-auto">
+			<div className="flex h-[.4rem] items-center justify-between">
 				<div className="font-weight-100 flex items-center gap-1.5 text-xs text-[#334155] min-w-0">
 						<>
 							<CalendarIcon />
