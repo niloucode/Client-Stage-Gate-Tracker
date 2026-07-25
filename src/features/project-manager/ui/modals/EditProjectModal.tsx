@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { projectCreateSchema } from "@/shared/schemas";
 import { Label } from "@/shared/ui/label";
 import { clientSelectAll } from "@/entities/client/clientActions";
+import { Backdrop } from "@/shared/ui/backdrop"
 
 interface EditProjectFormData {
 	name: string;
@@ -142,8 +143,8 @@ export function EditProjectModal({
 	};
 
 	return (
-		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" key={formKey}>
-			<div className="bg-[#FAF8FF] rounded-xl shadow-xl w-full max-w-lg relative">
+		<Backdrop onClose={onClose}>
+			<div className="bg-[#FAF8FF] rounded-xl shadow-xl max-w-lg w-lg  relative">
 				<div className="h-[4em] bg-white rounded-t-xl border-b-1 p-6 flex border-[#C7C4D8]">
 					<h2 className="mt-auto mb-auto text-l font text-[#0F172A]">
 						{isEditMode ? "Edit Project" : "Create New Project"}
@@ -330,6 +331,6 @@ export function EditProjectModal({
 					</button>
 				</div>
 			</div>
-		</div>
+		</Backdrop>
 	);
 }

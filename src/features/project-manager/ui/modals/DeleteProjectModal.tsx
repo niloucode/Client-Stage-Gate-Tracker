@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Label } from "@/shared/ui/label";
+import { Backdrop } from "@/shared/ui/backdrop"
 
 interface DeleteProjectModalProps {
 	isOpen: boolean;
@@ -49,25 +50,27 @@ export function DeleteProjectModal({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+		<Backdrop onClose={handleClose}>
 			<div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
-				<button
-					onClick={handleClose}
-					className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#475569] transition-colors"
-				>
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<path
-							d="M15 5L5 15M5 5L15 15"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-						/>
-					</svg>
-				</button>
+				<div className="flex items-center">
 
-				<h2 className="text-xl font-bold text-[#0F172A] mb-2">
-					Delete Project
-				</h2>
+					<h2 className="text-xl font-bold text-[#0F172A]">
+						Delete Project
+					</h2>
+					<button
+						onClick={handleClose}
+						className="ml-auto text-[#94A3B8] hover:text-[#475569] transition-colors"
+					>
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<path
+								d="M15 5L5 15M5 5L15 15"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+							/>
+						</svg>
+					</button>
+				</div>
 				<div className="h-px bg-[#dde4ee] -mx-6 my-4" />
 				<p className="text-sm text-[#64748B]">
 					This action cannot be undone. Please type{" "}
@@ -102,12 +105,6 @@ export function DeleteProjectModal({
 
 				<div className="flex justify-end gap-3">
 					<button
-						onClick={handleClose}
-						className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
-					>
-						Cancel
-					</button>
-					<button
 						onClick={handleConfirm}
 						disabled={!namesMatch}
 						className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all shadow-sm ${
@@ -120,6 +117,6 @@ export function DeleteProjectModal({
 					</button>
 				</div>
 			</div>
-		</div>
+		</Backdrop>
 	);
 }

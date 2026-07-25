@@ -1,6 +1,6 @@
- "use client";
+ "use client"
 
-import { useState, useMemo } from "react";
+import { useState, useMemo } from "react"
 import {
 	useOwnedProjects,
 	useCreateProject,
@@ -8,91 +8,108 @@ import {
 	useDeleteProject,
 	type ProjectStatus,
 	type ProjectWithStatus,
-} from "@/entities/project";
-import { EditProjectModal } from "@/features/project-manager/ui/modals/EditProjectModal";
-import { ManageMembersModal } from "@/features/project-manager/ui/modals/ManageMembersModal";
-import { DeleteProjectModal } from "@/features/project-manager/ui/modals/DeleteProjectModal";
-import { ProjectSection } from "./ProjectSection";
-import { ProjectCard } from "./ProjectCard";
-import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas";
-import { Toast } from "@/shared/ui/toasts";
+} from "@/entities/project"
+
+import { EditProjectModal } from "@/features/project-manager/ui/modals/EditProjectModal"
+import { ManageMembersModal } from "@/features/project-manager/ui/modals/ManageMembersModal"
+import { DeleteProjectModal } from "@/features/project-manager/ui/modals/DeleteProjectModal"
+
+import { ProjectSection } from "./ProjectSection"
+import { ProjectCard } from "./ProjectCard"
+
+import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas"
+import { useToast } from "@/shared/ui/toast"
 
 interface ModalState {
-	project_id: string;
-	name: string;
-	description?: string | null;
-	client_id?: string | null;
-	start_date?: Date | null;
-	deadline_date?: Date | null;
+	project_id: string
+	name: string
+	description?: string | null
+	client_id?: string | null
+	start_date?: Date | null
+	deadline_date?: Date | null
 }
 
 export function ProjectDashboard() {
-	const { data: projects, isLoading, error } = useOwnedProjects();
-	const createMutation = useCreateProject();
-	const updateMutation = useUpdateProject();
-	const deleteMutation = useDeleteProject();
+	const { data: projects, isLoading, error } = useOwnedProjects()
+	const createMutation = useCreateProject()
+	const updateMutation = useUpdateProject()
+	const deleteMutation = useDeleteProject()
 
 	const [expandedSections, setExpandedSections] = useState<Set<ProjectStatus>>(
 		new Set(["PENDING", "ACTIVE", "COMPLETED"]),
-	);
-	const [showAddModal, setShowAddModal] = useState(false);
-	const [editProject, setEditProject] = useState<ModalState | null>(null);
-	const [manageMembersProjectId, setManageMembersProjectId] = useState<string | null>(null);
-	const [deleteProject, setDeleteProject] = useState<{ project_id: string; name: string } | null>(null);
+	)
+	const [showAddModal, setShowAddModal] = useState(false)
+	const [editProject, setEditProject] = useState<ModalState | null>(null)
+	const [manageMembersProjectId, setManageMembersProjectId] = useState<string | null>(null)
+	const [deleteProject, setDeleteProject] = useState<{ 
+		project_id: string 
+		name: string 
+	} | null>(null)
 
 	// Group projects by status
 	const grouped = useMemo(() => {
-		const empty: { PENDING: ProjectWithStatus[]; ACTIVE: ProjectWithStatus[]; COMPLETED: ProjectWithStatus[] } = {
+		const empty: { 
+			PENDING: ProjectWithStatus[] 
+			ACTIVE: ProjectWithStatus[] 
+			COMPLETED: ProjectWithStatus[] 
+		} = {
 			PENDING: [], ACTIVE: [], COMPLETED: [],
-		};
-		if (!projects) return empty;
+		}
+		if (!projects) return empty
 		return {
 			PENDING: projects.filter((p) => p.project_status === "PENDING"),
 			ACTIVE: projects.filter((p) => p.project_status === "ACTIVE"),
 			COMPLETED: projects.filter((p) => p.project_status === "COMPLETED"),
-		};
-	}, [projects]);
+		}
+	}, [projects])
 
-	const sections: { title: string; status: ProjectStatus; projects: ProjectWithStatus[] }[] = [
+	const sections: { 
+		title: string 
+		status: ProjectStatus 
+		projects: ProjectWithStatus[] 
+	}[] = [
 		{ title: "Active Projects", status: "ACTIVE", projects: grouped.ACTIVE },
 		{ title: "Pending Projects", status: "PENDING", projects: grouped.PENDING },
 		{ title: "Completed Projects", status: "COMPLETED", projects: grouped.COMPLETED },
-	];
+	]
 
 	const handleToggle = (status: ProjectStatus) => {
 		setExpandedSections((prev) => {
-			const next = new Set(prev);
+			const next = new Set(prev)
 			if (next.has(status)) {
-				next.delete(status);
+				next.delete(status)
 			} else {
-				next.add(status);
+				next.add(status)
 			}
-			return next;
-		});
-	};
+			return next
+		})
+	}
+
+	const { showToast } = useToast()
+
 
 	const handleCreate = async (data: ProjectCreateInput) => {
-		const result = await createMutation.mutateAsync(data);
+		const result = await createMutation.mutateAsync(data)
 		if (result.success && result.data) {
-			setShowAddModal(false);
-			// Auto-open Manage Members for the new project
-			setManageMembersProjectId(result.data.project_id);
+			setShowAddModal(false)
+			setManageMembersProjectId(result.data.project_id)
+			showToast("Project Added","Project successfully added","check")
 		}
-	};
+	}
 
 	const handleUpdate = async (data: ProjectUpdateInput) => {
-		const result = await updateMutation.mutateAsync(data);
-		if (result.success) setEditProject(null);
-	};
+		const result = await updateMutation.mutateAsync(data)
+		if (result.success) setEditProject(null)
+	}
 
 	const handleDelete = async () => {
-		if (!deleteProject) return;
+		if (!deleteProject) return
 		const result = await deleteMutation.mutateAsync({
 			projectId: deleteProject.project_id,
 			confirmationName: deleteProject.name,
-		});
-		if (result.success) setDeleteProject(null);
-	};
+		})
+		if (result.success) setDeleteProject(null)
+	}
 
 	if (isLoading) {
 		return (
@@ -105,7 +122,7 @@ export function ProjectDashboard() {
 					))}
 				</div>
 			</div>
-		);
+		)
 	}
 
 	if (error) {
@@ -113,7 +130,7 @@ export function ProjectDashboard() {
 			<div className="p-8 max-w-[1550px] mx-auto">
 				<p className="text-sm text-red-500">Failed to load projects. Please try again.</p>
 			</div>
-		);
+		)
 	}
 
 	return (
@@ -127,7 +144,9 @@ export function ProjectDashboard() {
 					</p>
 				</div>
 				<button
-					onClick={() => setShowAddModal(true)}
+					onClick={() => 
+						setShowAddModal(true)
+					}
 					className="flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 				>
 					<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -156,7 +175,7 @@ export function ProjectDashboard() {
 								client_id: project.client_id,
 								start_date: project.start_date,
 								deadline_date: project.deadline_date,
-							};
+							}
 							return (
 								<ProjectCard
 									key={project.project_id}
@@ -172,7 +191,7 @@ export function ProjectDashboard() {
 										})
 									}
 								/>
-							);
+							)
 						})}
 					</ProjectSection>
 				))}
@@ -195,12 +214,6 @@ export function ProjectDashboard() {
 				}
 			/>
 
-			
-			{/* <ManageMembersModal
-				isOpen={"e1114cdb-d7bb-4ca9-99b3-a4b719f9c96c"}
-				projectId={"e1114cdb-d7bb-4ca9-99b3-a4b719f9c96c"}
-				onClose={() => setManageMembersProjectId(null)}
-			/> */}
 			<ManageMembersModal
 				isOpen={manageMembersProjectId !== null}
 				projectId={manageMembersProjectId ?? ""}
@@ -214,5 +227,5 @@ export function ProjectDashboard() {
 				onConfirm={handleDelete}
 			/>
 		</div>
-	);
+	)
 }
