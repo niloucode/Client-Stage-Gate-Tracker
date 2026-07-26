@@ -35,6 +35,8 @@ import {
 	useDeleteTag,
 } from "@/entities/tag/mutations";
 
+import { LucideChevronLeft } from "lucide-react"
+
 // Types
 import { COLUMNS } from "../model/columns";
 import { Ticket } from "@/entities/types";
@@ -244,7 +246,7 @@ export default function TicketBoard({
 
 	if (isLoading) {
 		return (
-			<div className="flex h-full items-center justify-center bg-slate-50">
+			<div className="flex h-full items-center justify-center">
 				<div className="text-gray-500 font-medium animate-pulse">
 					Loading database tickets...
 				</div>
@@ -253,20 +255,17 @@ export default function TicketBoard({
 	}
 
 	return (
-		<div className="flex flex-col h-full bg-slate-50">
+		<div className="flex flex-col overflow-hidden">
 			<TopNav breadcrumbs={["Acesoft", "Project Alpha", "Tickets"]} />
 
 			<div className="flex items-center justify-between px-6 py-5 shrink-0">
-				<div className="flex items-center gap-3">
+				<div className="flex items-center gap-2">
 					{stageId && projectId ? (
 						<Link
 							href={`/projects/${projectId}/stages/${stageId}`}
-							className="flex items-center gap-2 text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors"
-						>
-							<svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
-								<path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-							</svg>
-							{workflowName}
+							className="group flex items-center gap-2 text-xl font-bold text-gray-900 hover:text-brand-600 transition-colors leading-none"						>
+							<LucideChevronLeft/>
+							<span>{workflowName}</span>
 						</Link>
 					) : (
 						<h1 className="text-xl font-bold text-gray-900">{workflowName}</h1>
@@ -276,7 +275,7 @@ export default function TicketBoard({
 				<div className="flex items-center gap-3">
 					<button
 						onClick={() => setTagManagerOpen(true)}
-						className="flex items-center gap-1.5 text-sm font-medium text-gray-600 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+						className="flex items-center gap-1.5 text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
 					>
 						<TagsIcon />
 						Tags
@@ -292,14 +291,15 @@ export default function TicketBoard({
 				</div>
 			</div>
 
+
 			<DndContext
 				id="ticket-board-dnd"
 				sensors={sensors}
 				onDragStart={handleDragStart}
 				onDragEnd={handleDragEnd}
 			>
-				<div className="flex-1 overflow-x-auto overflow-y-hidden px-6 pb-6">
-					<div className="flex gap-5 h-full items-start">
+				<div className="w-full h-full flex-1 overflow-x-auto px-6 pb-6">
+					<div className="grid grid-cols-3 gap-5 w-full h-full min-w-[800px]">
 						{COLUMNS.map((column) => (
 							<TicketColumn
 								key={column.id}

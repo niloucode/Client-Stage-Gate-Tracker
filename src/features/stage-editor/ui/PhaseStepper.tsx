@@ -276,42 +276,27 @@ export const PhaseStepper = forwardRef<
 													>
 														<div
 															className={`
-                                  w-10 h-10 rounded-full flex items-center justify-center
-                                  transition-colors duration-200 relative outline outline-[6px] outline-white
-                                  ${
-																		isActive
-																			? "bg-[#4F46E5] border-2 border-[#4F46E5] shadow-lg"
-																			: isCompleted
-																				? "bg-[#3525CD] border-2 border-white shadow-md"
-																				: "bg-white border-2 border-[#E2E8F0] group-hover:border-[#4F46E5]"
-																	}
-                                `}
+																w-10 h-10 rounded-full flex items-center justify-center
+																transition-colors duration-200 relative outline outline-[6px] outline-white
+																${
+																	isActive
+																	? "bg-[#4F46E5] border-2 border-[#4F46E5] shadow-lg"
+																	: isCompleted
+																	? "bg-[#3525CD] border-2 border-white shadow-md"
+																	: "bg-white border-2 border-[#E2E8F0] group-hover:border-[#4F46E5]"
+																}
+                                							`}
 														>
-															{isCompleted ? (
-																<svg
-																	width="16"
-																	height="12"
-																	viewBox="0 0 16 12"
-																	fill="none"
-																>
-																	<path
-																		d="M1 6L5.5 10.5L15 1"
-																		stroke="white"
-																		strokeWidth="2"
-																		strokeLinecap="round"
-																		strokeLinejoin="round"
-																	/>
-																</svg>
-															) : (
+															
 																<span
 																	className={`
-                                      font-semibold text-sm
-                                      ${isActive ? "text-white" : isPending ? "text-[#94A3B8]" : "text-[#475569]"}
-                                    `}
+																	font-semibold text-sm
+																	${isActive ? "text-white" : isPending ? "text-[#94A3B8]" : "text-white"}
+																	`}
 																>
 																	{phase.number ?? ""}
 																</span>
-															)}
+															
 														</div>
 													</button>
 
