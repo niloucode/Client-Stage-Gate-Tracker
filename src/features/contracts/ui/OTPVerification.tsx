@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/features/auth";
 
 type OTPState = "default" | "sent" | "verified" | "error";
 
 const RESEND_COOLDOWN_SEC = 30;
-const CODE_LENGTH = 6;
+const CODE_LENGTH = 8;
 
 interface OTPVerificationProps {
 	maskedEmail?: string;
@@ -23,6 +25,8 @@ export function OTPVerification({
 	const [isVerifying, setIsVerifying] = useState(false);
 	const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	const supabase = createClient();
+	const { user } = useAuth();
 
 	useEffect(() => {
 		return () => {
@@ -43,12 +47,18 @@ export function OTPVerification({
 		}, 1000);
 	};
 
-	const triggerOTP = () => {
+	const triggerOTP = async () => {
 		// TODO: connect to backend — call OTP send/resend API
-		setDigits(Array(CODE_LENGTH).fill(""));
-		setOtpState("sent");
-		startCountdown();
-		setTimeout(() => inputRefs.current[0]?.focus(), 50);
+		if (!user) return;
+		const { error } = await supabase.auth.signInWithOtp({ email: user?.email });
+		if (error) {
+			console.error(error.message);
+		} else {
+			setDigits(Array(CODE_LENGTH).fill(""));
+			setOtpState("sent");
+			startCountdown();
+			setTimeout(() => inputRefs.current[0]?.focus(), 50);
+		}
 	};
 
 	const handleDigitChange = (index: number, value: string) => {
@@ -85,15 +95,28 @@ export function OTPVerification({
 
 	const allFilled = digits.every((d) => d !== "");
 
-	const handleVerify = () => {
+	const handleVerify = async () => {
+		if (!user) return;
 		if (!allFilled || isVerifying) return;
 		setIsVerifying(true);
 		// TODO: connect to backend — POST /api/otp/verify with { code: digits.join("") }
 		// Backend should resolve with { success: boolean }; on failure set otpState to "error"
-		setTimeout(() => {
-			setIsVerifying(false);
-			setOtpState("verified");
-			onVerified?.();
+		setTimeout(async () => {
+			const { data, error } = await supabase.auth.verifyOtp({
+				email: user.email,
+				token: digits.toString().replaceAll(",", ""),
+				type: "email",
+			});
+
+			if (error) {
+				console.error(error.message);
+				setIsVerifying(false);
+				setOtpState("error");
+			} else {
+				setIsVerifying(false);
+				setOtpState("verified");
+				onVerified?.();
+			}
 		}, 800);
 	};
 
@@ -152,7 +175,7 @@ export function OTPVerification({
 			</div>
 
 			<p className="text-[11px] text-[#9C9AB0]">
-				Enter the 6-digit code sent to {maskedEmail}
+				Enter the 8-digit code sent to {maskedEmail}
 			</p>
 
 			<div className="flex gap-2" onPaste={handlePaste}>

@@ -35,7 +35,7 @@ export type ContractSignInput = z.infer<typeof contractSignSchema>;
 // ── Change Name ──────────────────────────────────────────────────────────────
 
 export const contractChangeNameSchema = z.object({
-	contractId: z.string().uuid("Invalid contract ID"),
+	projectId: z.string().uuid("Invalid project ID"),
 	contractName: z
 		.string()
 		.min(1, "Contract name is required")

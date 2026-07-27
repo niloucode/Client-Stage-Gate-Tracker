@@ -6,30 +6,32 @@ import {
 	uploadContract,
 	deleteContract,
 	signContract,
+	changeContractName
 } from "./contractActions";
 
 export function useUploadContract() {
-	const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-	return useMutation({
-		mutationFn: (params: {
-			clientId: string;
-			projectId: string;
-			file: File;
-			contractName: string;
-		}) =>
-			uploadContract(
-				params.clientId,
-				params.projectId,
-				params.file,
-				params.contractName,
-			),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
-				queryKey: contractKeys.detail(variables.projectId),
-			});
-		},
-	});
+  return useMutation({
+    mutationFn: (params: {
+      clientId: string;
+      projectId: string;
+      file: File;
+      contractName: string;
+    }) => {
+      const formData = new FormData();
+      formData.append("clientId", params.clientId);
+      formData.append("projectId", params.projectId);
+      formData.append("file", params.file);
+      formData.append("contractName", params.contractName);
+      return uploadContract(formData);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: contractKeys.detail(variables.projectId),
+      });
+    },
+  });
 }
 
 export function useDeleteContract() {
@@ -62,6 +64,20 @@ export function useSignContract() {
 				params.fullName,
 				params.initials,
 			),
+		onSuccess: (_data, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: contractKeys.detail(variables.projectId),
+			});
+		},
+	});
+}
+
+export function useChangeContractName() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (params: { projectId: string; contractName: string }) =>
+			changeContractName(params.projectId, params.contractName),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: contractKeys.detail(variables.projectId),
