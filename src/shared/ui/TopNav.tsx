@@ -136,13 +136,13 @@ export default function TopNav({
   }, []);
 
   return (
-    <header className="relative flex items-center justify-between px-6 py-3 bg-white border-b border-gray-100 shrink-0">
+    <header className="relative flex items-center justify-between px-6 py-3 border-b-1 border-brand-200 shrink-0">
       <nav className="flex items-center gap-1.5 text-sm">
         {breadcrumbs.map((crumb, i) => {
           const isLast = i === breadcrumbs.length - 1;
           return (
             <span key={i} className="flex items-center gap-1.5">
-              {i > 0 && <span className="text-gray-300"><ChevronRightIcon /></span>}
+              {i > 0 && <span className="text-gray-700"><ChevronRightIcon /></span>}
               <span
                 className={
                   isLast

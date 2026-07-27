@@ -103,10 +103,10 @@ export function ProjectCard({
 			"bg-[#BAE9D4] text-[#00714D]";
 
 	return (
-		<div className="bg-[#F8F9FF] cursor-pointer  rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none">
+		<div className="bg-white cursor-pointer rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none">
 			{/* Project Head: Name left, Status badge top-right */}
 			<div className="flex items-start justify-between gap-2 mb-3">
-				<h3 className="text-sm font-semibold text-[#0F172A] max-w-[80%] break-all line-clamp-2">
+				<h3 className="text-m font-semibold text-[#0F172A] max-w-[80%] break-all line-clamp-2">
 					{project.name}
 				</h3>
 				<span
@@ -139,7 +139,7 @@ export function ProjectCard({
 				</p>
 			</div>
 			{/* Divider */}
-			<div className="border-t border-[#E2E8F0] mb-5" />
+			<div className="border-t border-brand-200 mb-5" />
 
 			{/* Bottom Row: Timeline + Menu */}
 			<div className="flex h-[.4rem] items-center justify-between">

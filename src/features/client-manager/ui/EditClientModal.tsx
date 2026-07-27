@@ -2,18 +2,23 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { Backdrop } from "@/shared/ui/backdrop";
 
 const CLIENT_NAME_MAX = 40;
 
-interface AddClientModalProps {
+interface ClientData {
+	clientName: string;
+	tin: string;
+	email: string;
+	contactNumber: string;
+	billingAddress: string;
+}
+
+interface EditClientModalProps {
+	isOpen: boolean
+	initialData?: Partial<ClientData>;
 	onClose?: () => void;
-	onSubmit?: (data: {
-		clientName: string;
-		tin: string;
-		email: string;
-		contactNumber: string;
-		billingAddress: string;
-	}) => void;
+	onSubmit?: (data: ClientData) => void;
 }
 
 function RequiredLabel({ children }: { children: string }) {
@@ -25,14 +30,18 @@ function RequiredLabel({ children }: { children: string }) {
 	);
 }
 
-export default function AddClientModal({
+export default function EditClientModal({
+	isOpen,
+	initialData,
 	onClose,
 	onSubmit,
-}: AddClientModalProps) {
-	const [clientName, setClientName] = useState("");
+}: EditClientModalProps) {
+	const [clientName, setClientName] = useState(
+		initialData?.clientName ?? "Acme Corp",
+	);
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+		<Backdrop isOpen={isOpen} onClose={onClose}>
 			<div
 				className="w-full max-w-[512px] overflow-hidden rounded-xl shadow-xl"
 				style={{ backgroundColor: "#f9f9ff" }}
@@ -46,7 +55,7 @@ export default function AddClientModal({
 					}}
 				>
 					<h3 className="text-base font-bold" style={{ color: "#151c27" }}>
-						Add New Client Details
+						Edit Client Details
 					</h3>
 					<button
 						onClick={onClose}
@@ -65,7 +74,6 @@ export default function AddClientModal({
 						<input
 							type="text"
 							maxLength={CLIENT_NAME_MAX}
-							placeholder="Acme Corp"
 							value={clientName}
 							onChange={(e) => setClientName(e.target.value)}
 							className="w-full rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
@@ -82,7 +90,7 @@ export default function AddClientModal({
 							<RequiredLabel>TIN</RequiredLabel>
 							<input
 								type="text"
-								placeholder="4444444444"
+								defaultValue={initialData?.tin ?? "4444444444"}
 								className="w-full rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
 								style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 							/>
@@ -91,7 +99,7 @@ export default function AddClientModal({
 							<RequiredLabel>Email</RequiredLabel>
 							<input
 								type="email"
-								placeholder="contact@client.com"
+								defaultValue={initialData?.email ?? "contact@client.com"}
 								className="w-full rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
 								style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 							/>
@@ -103,7 +111,7 @@ export default function AddClientModal({
 						<RequiredLabel>Contact Number</RequiredLabel>
 						<input
 							type="tel"
-							placeholder="+1 (555) 000-0000"
+							defaultValue={initialData?.contactNumber ?? "+1 (555) 000-0000"}
 							className="w-full rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
 							style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 						/>
@@ -113,7 +121,7 @@ export default function AddClientModal({
 					<div className="flex flex-col gap-2">
 						<RequiredLabel>Billing Address</RequiredLabel>
 						<textarea
-							placeholder="4050 Oz Street"
+							defaultValue={initialData?.billingAddress ?? "4050 Oz Street"}
 							rows={4}
 							className="w-full resize-none rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
 							style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
@@ -137,10 +145,10 @@ export default function AddClientModal({
 						className="rounded-xl px-5 py-3 text-base font-bold text-white transition-colors hover:opacity-90"
 						style={{ backgroundColor: "#4f46e5" }}
 					>
-						Add Client
+						Save Changes
 					</button>
 				</div>
 			</div>
-		</div>
+		</Backdrop>
 	);
 }

@@ -1,19 +1,15 @@
-"use client";
+"use client"
 
-import { X } from "lucide-react";
+import { X } from "lucide-react"
+import { Backdrop } from "@/shared/ui/backdrop"
 
 interface TeamMember {
-	id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone: string;
-	avatarUrl?: string;
-}
-
-interface ViewTeamMembersModalProps {
-	members?: TeamMember[];
-	onClose?: () => void;
+	id: string
+	firstName: string
+	lastName: string
+	email: string
+	phone: string
+	avatarUrl?: string
 }
 
 const PLACEHOLDER_MEMBERS: TeamMember[] = [
@@ -38,18 +34,24 @@ const PLACEHOLDER_MEMBERS: TeamMember[] = [
 		email: "sarah.j@acme.com",
 		phone: "77777777777",
 	},
-];
+]
+
+interface ViewTeamMembersModalProps {
+	isOpen: boolean
+	members?: TeamMember[]
+	onClose: () => void
+}
 
 function MemberAvatar({
 	firstName,
 	lastName,
 	avatarUrl,
 }: {
-	firstName: string;
-	lastName: string;
-	avatarUrl?: string;
+	firstName: string
+	lastName: string
+	avatarUrl?: string
 }) {
-	const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
+	const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase()
 	if (avatarUrl) {
 		return (
 			<img
@@ -58,7 +60,7 @@ function MemberAvatar({
 				className="h-10 w-10 rounded-full object-cover"
 				style={{ border: "1px solid #c7c4d7" }}
 			/>
-		);
+		)
 	}
 	return (
 		<div
@@ -67,24 +69,17 @@ function MemberAvatar({
 		>
 			{initials}
 		</div>
-	);
+	)
 }
 
 export default function ViewTeamMembersModal({
+	isOpen,
 	members = PLACEHOLDER_MEMBERS,
 	onClose,
 }: ViewTeamMembersModalProps) {
 	return (
-		<>
-			<style>{`
-        .team-scroll::-webkit-scrollbar { width: 6px; }
-        .team-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 9999px; }
-        .team-scroll::-webkit-scrollbar-thumb { background: #c7c4d7; border-radius: 9999px; }
-        .team-scroll::-webkit-scrollbar-thumb:hover { background: #9c99b8; }
-      `}</style>
-
-			<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-				<div
+		<Backdrop isOpen={isOpen} onClose={onClose}>
+			<div
 					className="w-full max-w-[672px] overflow-hidden rounded-xl bg-white shadow-xl"
 					style={{ border: "1px solid #c7c4d7" }}
 				>
@@ -172,7 +167,6 @@ export default function ViewTeamMembersModal({
 						</div>
 					</div>
 				</div>
-			</div>
-		</>
-	);
+		</Backdrop>
+	)
 }

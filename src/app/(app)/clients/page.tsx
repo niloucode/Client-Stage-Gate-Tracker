@@ -11,7 +11,11 @@ import {
 	LayoutDashboard,
 	FolderKanban,
 	Users,
+	Plus,
 } from "lucide-react";
+import Sidebar from "@/shared/ui/sidebar";
+import TopNav from "@/shared/ui/TopNav";
+import { Button } from "@/shared/ui/button";
 
 interface Client {
 	id: string;
@@ -29,7 +33,7 @@ interface ClientListProps {
 	onEditClient?: (client: Client) => void;
 }
 
-const PLACEHOLDER_CLIENTS: Client[] = Array.from({ length: 5 }, (_, i) => ({
+const PLACEHOLDER_CLIENTS: Client[] = Array.from({ length: 10 }, (_, i) => ({
 	id: String(i + 1),
 	name: "Client Name\nInput Over Flow",
 	email: "Email input. Will not overflow",
@@ -45,7 +49,7 @@ const NAV_LINKS = [
 	{ label: "Clients", icon: Users },
 ];
 
-export default function ClientList({
+export default function ClientPage({
 	clients = PLACEHOLDER_CLIENTS,
 	onViewMembers,
 	onEditClient,
@@ -57,127 +61,26 @@ export default function ClientList({
 
 	return (
 		<>
-			<style>{`
-        .client-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .client-scroll::-webkit-scrollbar-track { background: #f1f0f8; border-radius: 9999px; }
-        .client-scroll::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 9999px; }
-        .client-scroll::-webkit-scrollbar-thumb:hover { background: #9c99b8; }
-      `}</style>
-
-			<div className="flex h-screen w-full overflow-hidden bg-white">
-				{/* Sidebar */}
-				<aside
-					className="flex w-[200px] shrink-0 flex-col bg-white"
-					style={{ borderRight: "1px solid #c7c4d8" }}
-				>
-					{/* Logo */}
-					<div className="flex items-center gap-3 px-4 py-5">
-						<div
-							className="flex h-8 w-8 items-center justify-center rounded"
-							style={{ backgroundColor: "#dce2f3" }}
-						>
-							<span className="text-xs font-bold" style={{ color: "#151c27" }}>
-								A
-							</span>
-						</div>
-						<div className="flex flex-col">
-							<span
-								className="text-base font-bold"
-								style={{ color: "#151c27" }}
-							>
-								Asceoft
-							</span>
-							<span
-								className="text-[11px] font-medium"
-								style={{ color: "#464555" }}
-							>
-								STUDIO PORTAL
-							</span>
-						</div>
-					</div>
-
-					{/* Nav */}
-					<nav className="flex flex-col gap-1 px-2 pt-2">
-						{NAV_LINKS.map(({ label, icon: Icon }) => {
-							const isActive = label === "Clients";
-							return (
-								<div
-									key={label}
-									className="relative flex cursor-pointer items-center gap-3 rounded px-3 py-2 transition-colors hover:bg-gray-50"
-								>
-									{isActive && (
-										<span
-											className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r"
-											style={{ backgroundColor: "#3525cd" }}
-										/>
-									)}
-									<Icon
-										className="h-[18px] w-[18px]"
-										style={{ color: isActive ? "#151c27" : "#464555" }}
-									/>
-									<span
-										className="text-[13px]"
-										style={{ color: isActive ? "#151c27" : "#464555" }}
-									>
-										{label}
-									</span>
-								</div>
-							);
-						})}
-					</nav>
-				</aside>
-
-				{/* Main */}
+			<Sidebar>
+				<TopNav breadcrumbs={["Acesoft", "Project Alpha", "Project Structure"]} />
 				<div className="flex flex-1 flex-col overflow-hidden">
-					{/* Top nav */}
-					<header
-						className="flex h-[57px] shrink-0 items-center justify-between px-6"
-						style={{
-							backgroundColor: "#ffffff",
-							borderBottom: "1px solid #c7c4d8",
-						}}
-					>
-						<div className="flex items-center gap-1 text-[13px]">
-							<span style={{ color: "#464555" }}>Asceoft</span>
-							<ChevronRight className="h-3 w-3" style={{ color: "#777587" }} />
-							<span style={{ color: "#3525cd" }}>Profile</span>
-						</div>
-						<div className="flex items-center gap-3">
-							<div
-								className="h-6 w-px"
-								style={{ backgroundColor: "#c7c4d8" }}
-							/>
-							<div
-								className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white"
-								style={{
-									backgroundColor: "#4f46e5",
-									border: "1px solid #c7c4d8",
-								}}
-							>
-								AM
-							</div>
-						</div>
-					</header>
-
-					{/* Page content */}
 					<main className="flex flex-1 flex-col overflow-hidden px-8 py-8">
-						{/* Page header */}
 						<div className="mb-6">
 							<h1
 								className="text-4xl font-extrabold tracking-wide"
 								style={{ color: "#151c27" }}
 							>
-								CLIENT LIST
+								Client List
 							</h1>
 							<p className="mt-1 text-base" style={{ color: "#464555" }}>
 								View the clients your company is working with.
 							</p>
 						</div>
 
+						<div className="mb-5 flex justify-between items-center max-h-10">
 						{/* Search only — no Add Client for Product Team */}
-						<div className="mb-5">
 							<div
-								className="flex max-w-[749px] items-center gap-2 rounded-full bg-white px-4 py-3"
+								className="flex w-[749px] items-center gap-2 rounded-full bg-white px-4 py-2"
 								style={{ border: "1px solid #c7c4d8" }}
 							>
 								<Search
@@ -191,16 +94,19 @@ export default function ClientList({
 									style={{ color: "#151c27" }}
 								/>
 							</div>
+							<Button className="max-w-35 flex justify-center items-center gap-3">
+								<Plus size={14} strokeWidth={3}></Plus>
+								Add Client
+							</Button>
 						</div>
-
 						{/* Table */}
 						<div
 							className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-white"
 							style={{ border: "1px solid #c7c4d8" }}
 						>
 							{/* Unified scroll area for both X & Y axes */}
-							<div className="client-scroll flex-1 overflow-auto">
-								<div className="flex min-w-[1200px] flex-col">
+							<div className="client-scroll max-h-[calc(100vh-290px)] flex-1 overflow-auto">
+								<div className="flex flex-col">
 									{/* Table header (sticky top) */}
 									<div
 										className="sticky top-0 z-10 grid shrink-0 items-center px-6 py-3 text-[11px] font-bold"
@@ -288,7 +194,7 @@ export default function ClientList({
 													</span>
 													<button
 														onClick={() => toggleCode(client.id)}
-														className="flex items-center justify-center rounded p-0.5 transition-colors hover:bg-gray-100"
+														className="ml-auto mr-8 flex items-center justify-center rounded p-0.5 transition-colors hover:bg-gray-100"
 														aria-label={
 															visibleCodes[client.id]
 																? "Hide code"
@@ -334,7 +240,7 @@ export default function ClientList({
 						</div>
 					</main>
 				</div>
-			</div>
+			</Sidebar>
 		</>
 	);
 }
