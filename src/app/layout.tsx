@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/features/auth";
 import { QueryProvider } from "@/shared/query/client";
+import { ToastProvider } from "@/shared/ui/toast";
 import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -33,7 +34,11 @@ export default function RootLayout({
 		>
 			<body className="min-h-full flex flex-col">
 				<QueryProvider>
-					<AuthProvider>{children}</AuthProvider>
+					<AuthProvider>
+							<ToastProvider>
+								{children}
+							</ToastProvider>
+					</AuthProvider>
 				</QueryProvider>
 			</body>
 		</html>

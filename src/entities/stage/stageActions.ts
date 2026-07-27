@@ -34,7 +34,8 @@ export async function createStage(
 			data: {
 				name: stageName,
 				number: nextStageNumber,
-				end_date: endDate,
+				start_date: startDate,
+				finish_date: endDate,
 				project_id: projectId,
 			},
 		});
@@ -155,7 +156,8 @@ export async function updateStage(
 			},
 			data: {
 				name: stageName,
-				end_date: endDate,
+				start_date: startDate,
+				finish_date: endDate,
 			},
 		});
 		return { success: true, data: updatedStage };
@@ -323,7 +325,7 @@ export async function getStageTree(stageId: string) {
 		const phaseIds = phases.map((p) => p.phase_id);
 		const modules = await prisma.modules.findMany({
 			where: { phase_id: { in: phaseIds }, is_deleted: false },
-			orderBy: { creation_date: "asc" },
+			orderBy: { start_date: "asc" },
 		});
 
 		const moduleIds = modules.map(
@@ -333,7 +335,7 @@ export async function getStageTree(stageId: string) {
 			where: { module_id: { in: moduleIds }, is_deleted: false },
 			orderBy: [
 				{ number: { sort: "asc", nulls: "last" } },
-				{ creation_date: "asc" },
+				{ start_date: "asc" },
 			],
 		});
 
@@ -345,13 +347,13 @@ export async function getStageTree(stageId: string) {
 		let tickets: {
 			workflow_id: string;
 			status: string;
-			end_date: Date | null;
+			finish_date: Date | null;
 		}[] = [];
 		if (workflowIds.length > 0) {
 			try {
 				tickets = (await prisma.tickets.findMany({
 					where: { workflow_id: { in: workflowIds }, is_deleted: false },
-					select: { workflow_id: true, status: true, end_date: true },
+					select: { workflow_id: true, status: true, finish_date: true },
 				})) as any[];
 			} catch (err) {
 				console.error("Failed to fetch tickets for stage tree:", err);
@@ -362,19 +364,19 @@ export async function getStageTree(stageId: string) {
 		// Group tickets by workflow
 		const ticketsByWorkflow = new Map<
 			string,
-			{ status: string; end_date: Date | null }[]
+			{ status: string; finish_date: Date | null }[]
 		>();
 		for (const t of tickets) {
 			const wfId = (t as Record<string, unknown>).workflow_id as string;
 			const list = ticketsByWorkflow.get(wfId) ?? [];
-			list.push({ status: t.status, end_date: t.end_date });
+			list.push({ status: t.status, finish_date: t.finish_date });
 			ticketsByWorkflow.set(wfId, list);
 		}
 
-		// ── Compute ticketCount, progress, and computed end_date per workflow ──
+		// ── Compute ticketCount, progress, and computed finish_date per workflow ──
 		const workflowStats = new Map<
 			string,
-			{ ticketCount: number; progress: number; computedEndDate: Date | null }
+			{ ticketCount: number; progress: number; computedFinishDate: Date | null }
 		>();
 		for (const wf of workflows) {
 			const wfId = (wf as Record<string, unknown>).workflow_id as string;
@@ -383,16 +385,16 @@ export async function getStageTree(stageId: string) {
 			const finished = wfTickets.filter((t) => t.status === "FINISHED").length;
 			const progress = total > 0 ? Math.round((finished / total) * 100) : 0;
 
-			// End date = max end_date of finished tickets, but only when ALL are finished
+			// Finish date = max finish_date of finished tickets, but only when ALL are finished
 			const allFinished = total > 0 && finished === total;
-			let computedEndDate: Date | null = null;
+			let computedFinishDate: Date | null = null;
 			if (allFinished) {
 				for (const t of wfTickets) {
 					if (
-						t.end_date &&
-						(!computedEndDate || t.end_date > computedEndDate)
+						t.finish_date &&
+						(!computedFinishDate || t.finish_date > computedFinishDate)
 					) {
-						computedEndDate = t.end_date;
+						computedFinishDate = t.finish_date;
 					}
 				}
 			}
@@ -400,7 +402,7 @@ export async function getStageTree(stageId: string) {
 			workflowStats.set(wfId, {
 				ticketCount: total,
 				progress,
-				computedEndDate,
+				computedFinishDate,
 			});
 		}
 
@@ -412,14 +414,14 @@ export async function getStageTree(stageId: string) {
 			const stats = workflowStats.get(wfId) ?? {
 				ticketCount: 0,
 				progress: 0,
-				computedEndDate: null,
+				computedFinishDate: null,
 			};
 			const list = workflowsByModule.get(wfModId) ?? [];
 			list.push({
 				...wf,
 				ticketCount: stats.ticketCount,
 				progress: stats.progress,
-				end_date: stats.computedEndDate, // override DB end_date with computed value
+				finish_date: stats.computedFinishDate, // override DB finish_date with computed value
 			});
 			workflowsByModule.set(wfModId, list);
 		}
@@ -430,21 +432,21 @@ export async function getStageTree(stageId: string) {
 			const modId = (mod as Record<string, unknown>).module_id as string;
 			const modWorkflows = workflowsByModule.get(modId) ?? [];
 
-			// Module end_date = max of workflow end_dates, but only if ALL are finished
-			let modEndDate: Date | null = null;
+			// Module finish_date = max of workflow finish_dates, but only if ALL are finished
+			let modFinishDate: Date | null = null;
 			let allWfsFinished = modWorkflows.length > 0;
 			for (const w of modWorkflows) {
-				const ce = (w as Record<string, unknown>).end_date as Date | null;
+				const ce = (w as Record<string, unknown>).finish_date as Date | null;
 				if (!ce) {
 					allWfsFinished = false;
 					break;
 				}
-				if (!modEndDate || ce > modEndDate) modEndDate = ce;
+				if (!modFinishDate || ce > modFinishDate) modFinishDate = ce;
 			}
-			if (!allWfsFinished) modEndDate = null;
+			if (!allWfsFinished) modFinishDate = null;
 
 			const list = modulesByPhase.get(modPhaseId) ?? [];
-			list.push({ ...mod, workflows: modWorkflows, end_date: modEndDate });
+			list.push({ ...mod, workflows: modWorkflows, finish_date: modFinishDate });
 			modulesByPhase.set(modPhaseId, list);
 		}
 
@@ -452,20 +454,20 @@ export async function getStageTree(stageId: string) {
 			const phId = (p as Record<string, unknown>).phase_id as string;
 			const phModules = modulesByPhase.get(phId) ?? [];
 
-			// Phase end_date = max of module end_dates, but only if ALL are finished
-			let phEndDate: Date | null = null;
+			// Phase finish_date = max of module finish_dates, but only if ALL are finished
+			let phFinishDate: Date | null = null;
 			let allModsFinished = phModules.length > 0;
 			for (const m of phModules) {
-				const ce = (m as Record<string, unknown>).end_date as Date | null;
+				const ce = (m as Record<string, unknown>).finish_date as Date | null;
 				if (!ce) {
 					allModsFinished = false;
 					break;
 				}
-				if (!phEndDate || ce > phEndDate) phEndDate = ce;
+				if (!phFinishDate || ce > phFinishDate) phFinishDate = ce;
 			}
-			if (!allModsFinished) phEndDate = null;
+			if (!allModsFinished) phFinishDate = null;
 
-			return { ...p, modules: phModules, end_date: phEndDate };
+			return { ...p, modules: phModules, finish_date: phFinishDate };
 		});
 
 		return { ...stage, phases: phasesWithModules };

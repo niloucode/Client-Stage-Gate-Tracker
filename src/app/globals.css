@@ -1,35 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #FAF8FF;
   --foreground: #131B2E;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-hanken-grotesk), system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), monospace;
+@theme {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+
+	--color-red-100: #FEE2E2;
+	--color-red-500: #EF4444;
+	--color-red-600: #DC2626;
+
+	/* Green / Success */
+	--color-green-100: #DCFCE7;
+	--color-green-500: #22C55E;
+	--color-green-600: #16A34A;
+
+	/* Yellow/Amber / Warning */
+	--color-yellow-100: #FEF3C7;
+	--color-yellow-500: #F59E0B;
+	--color-yellow-600: #D97706;
+	--color-brand-25: #F2F3FF;
+	--color-brand-50: #F4F5FB;
+	--color-brand-100: #DCE2F3;
+	--color-brand-200: #DAD7FF;
+	--color-brand-500: #4F46E5;
+	--color-brand-600: #3525CD;
+	--color-brand-900: #0B1C30;
+
+	--color-neutral-surface: #FFFFFF;
+	--color-neutral-border: #C7C4D8;
+	--color-neutral-muted: #464555;
+	--color-neutral-main: #151C27;
+
+	--font-sans: var(--font-hanken-grotesk), "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+	--font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+	--font-display: "Plus Jakarta Sans", sans-serif;
+
+	--text-2xs: 0.6875rem;
+	--text-2xs--line-height: 1rem;
+
+	--radius-pill: 9999px;
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* Drag and drop styles */
 .drag-over {
   border-color: #4F46E5 !important;
   background-color: rgba(79, 70, 229, 0.05) !important;
@@ -37,20 +69,15 @@ body {
   transform: scale(1.02);
 }
 
-/* Drag and drop styles for workflows */
 .drag-over-workflow {
   border-left: 2px solid #4F46E5 !important;
   background-color: rgba(79, 70, 229, 0.05) !important;
 }
 
-/* Make draggable items show cursor */
-[ draggable="true"] {
+[draggable="true"] {
   cursor: grab;
 }
 
-[ draggable="true"]:active {
+[draggable="true"]:active {
   cursor: grabbing;
 }
-
-
-

@@ -173,8 +173,8 @@ Project
 project_id    UUID PK
 name          String
 description   String?
-creation_date DateTime      @default(now() AT UTC)
-end_date      DateTime?
+start_date    DateTime?
+finish_date   DateTime?
 deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -188,8 +188,8 @@ number        Int?                         @@unique([project_id, number]) — nu
 name          String
 description   String?
 project_id    UUID → Projects
-creation_date DateTime
-end_date      DateTime?
+start_date    DateTime?
+finish_date   DateTime?
 deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -203,8 +203,8 @@ number        Int?                         @@unique([stage_id, number]) — null
 name          String
 description   String?
 stage_id      UUID → Stages
-creation_date DateTime
-end_date      DateTime?
+start_date    DateTime?
+finish_date   DateTime?
 deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -216,8 +216,8 @@ deleted_at    DateTime?
 module_id     UUID PK
 name          String
 phase_id      UUID → Phases
-creation_date DateTime
-end_date      DateTime?
+start_date    DateTime?
+finish_date   DateTime?
 deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
@@ -231,14 +231,14 @@ name          String
 is_approved   Boolean   @default(false)
 number        Int?                       @@unique([number, module_id]) — nullable; set to null on soft-delete; remaining workflows renumbered to close gap
 module_id     UUID → Modules
-creation_date DateTime
-end_date      DateTime?
+start_date    DateTime?
+finish_date   DateTime?
 deadline_date DateTime?
 is_deleted    Boolean   @default(false)
 deleted_at    DateTime?
 ```
 
-> **Note**: `Workflows.number` is used for drag-and-drop reordering within a module. It is auto-assigned on creation (`createWorkflow()`) and reordered via `reorderWorkflow()` (insertion-based null-shift-reassign algorithm). It is set to `null` on soft-delete to release the slot. The `getStageTree` query orders workflows by `number` (nulls last) with `creation_date` as fallback.
+> **Note**: `Workflows.number` is used for drag-and-drop reordering within a module. It is auto-assigned on creation (`createWorkflow()`) and reordered via `reorderWorkflow()` (insertion-based null-shift-reassign algorithm). It is set to `null` on soft-delete to release the slot. The `getStageTree` query orders workflows by `number` (nulls last) with `start_date` as fallback.
 
 ### `Tickets`
 
@@ -252,8 +252,8 @@ watcher_id      UUID? → Profiles              (single watcher, informational)
 api_route       String?                       (optional API endpoint path)
 api_method      ApiMethod?                    (GET | POST | PUT | DELETE)
 assignment_date DateTime
-creation_date   DateTime
-end_date        DateTime?                     (set to now() when status → FINISHED; null otherwise)
+start_date      DateTime?
+finish_date     DateTime?                     (set to now() when status → FINISHED; null otherwise)
 deadline_date   DateTime?
 ```
 
@@ -564,30 +564,30 @@ The permissions matrix references features with no corresponding tables yet:
 ### ticketActions.ts — diff-ing + history writes
 - `updateTicket()` uses a diff-ing approach: fetches existing `name`, `status`, `watcher_id`, `TicketAssigned`, and `TicketTags`, computes `toAdd` / `toRemove` for assignees, tags, and watcher, and applies only the needed creates and deletes. The original `assigned_date` is preserved for unchanged entries.
 - After the update, `updateTicket()` writes `HistoryEvent` rows for every changed field: RENAMED, FINISHED / UPDATED_STATUS, ASSIGNED, UNASSIGNED, and WATCHER_CHANGED.
-- `updateTicketStatus()` (drag-and-drop) is wrapped in `prisma.$transaction` so the ticket status change and HistoryEvent write are atomic — if either fails, both roll back. Sets `end_date: new Date()` when status → FINISHED, and `null` otherwise.
+- `updateTicketStatus()` (drag-and-drop) is wrapped in `prisma.$transaction` so the ticket status change and HistoryEvent write are atomic — if either fails, both roll back. Sets `finish_date: new Date()` when status → FINISHED, and `null` otherwise.
 - `createTicket()`, `cascadeSoftDeleteTicket()`, and `createCommentWithImages()` each write their respective HistoryEvent rows (CREATED, DELETE, COMMENT_ADDED) alongside their primary mutation.
 
 ### `deadline_date` column
 All hierarchy models (Projects, Stages, Phases, Modules, Workflows, and Tickets) now include a `deadline_date DateTime?` column. This is an **editable user-set deadline** — distinct from:
-- `creation_date`: auto-set on create, never edited (Date Created in the UI)
-- `end_date`: **computed** by `getStageTree()`, not editable in the UI. Represents the date the last ticket under that entity was finished (see below).
+- `start_date`: the proposed/planned start date for the entity, user-set on create/edit, displayed as "Start Date" in the UI.
+- `finish_date`: **computed** by `getStageTree()`, not editable in the UI. Represents the date the last ticket under that entity was finished (see below).
 
 The Zod schemas (`phaseCreateSchema`, `moduleCreateSchema`, `workflowCreateSchema`) all include `deadline_date: z.date().optional().nullable()`. All server actions (`createPhase`, `updatePhase`, `createModule`, `updateModule`, `createWorkflow`, `updateWorkflow`) accept and persist `deadlineDate`.
 
-### `getStageTree()` — computed `end_date` + ticket progress
+### `getStageTree()` — computed `finish_date` + ticket progress
 `getStageTree()` in `stageActions.ts` is the single source of truth for the stage editor's nested data. It performs **4 batched queries** (stage → phases → modules → workflows) plus a **5th query** for tickets, then assembles everything in-memory:
 
 1. Fetches all non-deleted tickets for the stage's workflows
 2. Groups tickets by `workflow_id`
-3. Per workflow: computes `ticketCount`, `progress` (finished/total × 100), and `end_date`
+3. Per workflow: computes `ticketCount`, `progress` (finished/total × 100), and `finish_date`
 
-**End date rule**: A workflow's computed `end_date` is set **only when ALL its tickets are FINISHED** (`finished === total > 0`). If any ticket is not finished, `end_date` is `null` → renders as "Unfinished" in the UI. When all are finished, `end_date` = max `end_date` of the finished tickets.
+**Finish date rule**: A workflow's computed `finish_date` is set **only when ALL its tickets are FINISHED** (`finished === total > 0`). If any ticket is not finished, `finish_date` is `null` → renders as "Unfinished" in the UI. When all are finished, `finish_date` = max `finish_date` of the finished tickets.
 
 This rule **propagates upward**:
-- **Module end_date**: only set when ALL its workflows are finished (all have non-null end_date); otherwise null.
-- **Phase end_date**: only set when ALL its modules are finished; otherwise null.
+- **Module finish_date**: only set when ALL its workflows are finished (all have non-null finish_date); otherwise null.
+- **Phase finish_date**: only set when ALL its modules are finished; otherwise null.
 
-Adding a new unfinished workflow/module to an already-finished parent immediately resets the parent's end_date to null.
+Adding a new unfinished workflow/module to an already-finished parent immediately resets the parent's finish_date to null.
 
 **Progress bars** in the WorkflowsList UI show:
 - Gray bar with "- %" when `ticketCount === 0`
@@ -607,7 +607,7 @@ This approach avoids the per-row unique-constraint checks that would fail with a
 
 The mutations (`useReorderPhase`, `useReorderWorkflow`) invalidate `stageKeys.tree(stageId)` on success. The UI guards against dragging an entity whose `number` is `null`.
 
-`getStageTree()` orders both phases and workflows by `[{ number: { sort: 'asc', nulls: 'last' } }, { creation_date: 'asc' }]` — numbered items sort first, unnumbered ones fall back to creation order.
+`getStageTree()` orders both phases and workflows by `[{ number: { sort: 'asc', nulls: 'last' } }, { start_date: 'asc' }]` — numbered items sort first, unnumbered ones fall back to creation order.
 
 ### Profiles soft-delete (not yet implemented)
 - Behavior documented in Section 7. Currently `Profiles` has `is_deleted` and `deleted_at` columns but no soft-delete workflow is built. Because of this, profile queries (e.g. `getProfileByEmail` in `profileActions.ts`) do not filter on `is_deleted` — all profiles are assumed active. If soft-delete is implemented later, all profile lookups must add `where: { is_deleted: false }` and the duplicate-email check in `ClientSignupForm` + `StaffSignupForm` must account for soft-deleted users who should be able to re-register.
@@ -713,7 +713,7 @@ The log collapses to the first 4 entries with a "Show all N entries" toggle. Sta
 
 ### Zod Schemas
 
-All create/update inputs are validated via Zod schemas in `shared/schemas/`. Schemas use **snake_case** field names matching the database columns. UI types in `features/stage-editor/types.ts` also use snake_case for DB-originating fields (`phase_id`, `start_date`, `creation_date`), with only computed UI fields (`ticketCount`, `progress`) in camelCase.
+All create/update inputs are validated via Zod schemas in `shared/schemas/`. Schemas use **snake_case** field names matching the database columns. UI types in `features/stage-editor/types.ts` also use snake_case for DB-originating fields (`phase_id`, `start_date`, `finish_date`), with only computed UI fields (`ticketCount`, `progress`) in camelCase.
 
 ---
 
@@ -754,16 +754,16 @@ Every entity has three datetime concepts displayed in the UI:
 
 | Field | DB column | Editable | Description |
 |---|---|---|---|
-| Date Created | `creation_date` | No | Auto-set on creation. Displayed as `"Jan 15, 2025, 2:30 PM"`. |
+| Date Created | `start_date` | Yes | The proposed/planned start date. User-set on create/edit. Nullable. |
 | Deadline Date | `deadline_date` | Yes | User-set via `datetime-local` input in modals and ActivePhaseDetails. Nullable. |
-| End Date | `end_date` (computed) | No | Computed by `getStageTree()` — the date the last ticket was finished (only when ALL sub-tickets are finished). Renders as "Unfinished" if null. |
+| Finish Date | `finish_date` (computed) | No | Computed by `getStageTree()` — the date the last ticket was finished (only when ALL sub-tickets are finished). Renders as "Unfinished" if null. |
 
 ### `getStageTree()` data flow
 
 1. Fetches stage → phases → modules → workflows (4 queries, ordered)
 2. Fetches all non-deleted tickets for those workflows (5th query)
-3. Groups tickets by workflow, computes per-workflow: `ticketCount`, `progress` (finished/total %), `end_date` (only when all tickets finished)
-4. Assembles nested tree, propagating `end_date` upward (workflow → module → phase) using the "all finished" rule
+3. Groups tickets by workflow, computes per-workflow: `ticketCount`, `progress` (finished/total %), `finish_date` (only when all tickets finished)
+4. Assembles nested tree, propagating `finish_date` upward (workflow → module → phase) using the "all finished" rule
 
 ### Modals — validation UI
 
@@ -787,7 +787,7 @@ All 7 modals (Add/Edit/Delete for Phase, Module, Workflow + standalone DeletePha
 WorkflowsList renders per-workflow:
 - **Ticket count**: `{N} Tickets` with star icon
 - **Progress bar**: indigo bar with `{progress}%` when tickets exist; gray bar with `- %` when `ticketCount === 0`
-- **Date badge**: `creation_date – end_date (or "Unfinished")` — compact interval view
+- **Date badge**: `start_date – finish_date (or "Unfinished")` — compact interval view
 - **Deadline**: shown under workflow title as `Deadline: {datetime}` or `——` if null
 
 ---
@@ -884,3 +884,332 @@ export async function updateWorkflow(
 ```
 
 All signatures pass through to their respective TanStack mutations, which forward `params.deadline_date` from the Zod-validated form data.
+
+---
+
+## 17. Project Entity Layer
+
+A new entity layer at `src/entities/project/` handles project CRUD and member management.
+
+### `projectActions.ts` (Server Actions)
+
+```typescript
+"use server";
+
+selectProjects()         → Project[]       // all non-deleted, ordered by name
+getProjectById(id)       → Project | null  // single project
+createProject(data)      → { success, data?, error? }  // creates + assigns creator as Project Owner
+updateProject(data)      → { success, data?, error? }  // PATCH update, only provided fields
+softDeleteProject(id, name) → { success, error? }      // requires confirmation name to match
+getProjectMembers(id)    → RoleAssignment[]  // includes Users (profile) + Roles
+searchProfilesForProject(query) → Profile[]  // searches first_name/last_name/email, limit 20
+addProjectMember(projectId, profileId, roleName) → { success, error? }
+removeProjectMember(projectId, profileId) → { success, error? }  // last-owner guard
+```
+
+**Key design decisions:**
+- `createProject()` gets the current user from the server-side Supabase session (`createClient()` from `@/lib/supabase/server`) — the user ID is never accepted from the client.
+- The creator is automatically assigned the `"Project Owner"` role via a `RoleAssignments` row in a Prisma `$transaction`.
+- `softDeleteProject()` requires the user to type the exact project name to confirm — the `confirmation_name` is compared server-side to prevent CSRF/malicious deletions.
+- `removeProjectMember()` prevents removing the last remaining Project Owner by counting `RoleAssignments` with the owner role before deletion.
+
+### Zod Schemas (`src/shared/schemas/project.ts`)
+
+```typescript
+projectCreateSchema = {
+  name:          String (min 1, required),
+  description:   String (optional, default ""),
+  start_date:    Date? (optional),
+  deadline_date: Date? (optional),
+}
+
+projectUpdateSchema = projectCreateSchema.partial() + {
+  project_id: String (UUID, required),
+}
+
+projectDeleteSchema = {
+  project_id:       String (UUID, required),
+  confirmation_name: String (min 1, required),
+}
+```
+
+### TanStack Query hooks (`queries.ts`)
+
+| Hook | Query Key | Description |
+|---|---|---|
+| `useProjects()` | `["projects","list"]` | Fetches all active projects |
+| `useProject(id)` | `["projects","detail",id]` | Fetches single project by ID |
+| `useProjectMembers(projectId)` | `["projects","detail",projectId,"members"]` | Fetches project members with role info |
+| `useProfileSearch()` | manual trigger | Search profiles for member addition |
+
+### TanStack Mutation hooks (`mutations.ts`)
+
+| Hook | Invalidates | Optimistic |
+|---|---|---|
+| `useCreateProject()` | `["projects","list"]` | No |
+| `useUpdateProject()` | `["projects","list"]` + `["projects","detail",id]` | No |
+| `useDeleteProject()` | `["projects","list"]` | No |
+| `useAddProjectMember()` | `["projects","detail",id,"members"]` | No |
+| `useRemoveProjectMember()` | `["projects","detail",id,"members"]` | Yes — removes row from cache immediately, restores on error |
+
+### Project Manager Feature (`features/project-manager/`)
+
+Three modals in `ui/modals/`:
+
+| Modal | Mode | Key Behavior |
+|---|---|---|
+| `EditProjectModal` | Edit / Add | Pre-populates fields when editing; empty fields for create. Validates `name` (required). |
+| `ManageMembersModal` | View/Manage | Debounced search (300ms). Member list with avatar, name, email, role badge. Remove button disabled for last Project Owner. Optimistic removal. |
+| `DeleteProjectModal` | Confirm | Type project name to confirm. Delete button disabled until name matches exactly. |
+
+### Projects Page (`/projects`)
+
+The workspace projects page at `src/app/(app)/(workspace)/projects/page.tsx` displays:
+- A "New Project" button
+- List of all active projects with Edit, Members, Delete action buttons
+- Empty state with a call-to-action when no projects exist
+- All three modals wired via `useState` state management
+- Mutations through the entity layer hooks
+- The `/projects/new` route redirects to `/projects?action=create`
+
+### Files Added
+
+```
+src/entities/project/
+├── index.ts                 # barrel export
+├── projectActions.ts        # server actions (9 functions)
+├── queries.ts               # TanStack Query hooks
+└── mutations.ts             # TanStack Mutation hooks (5 hooks)
+
+src/features/project-manager/
+└── ui/modals/
+    ├── index.ts             # barrel export
+    ├── EditProjectModal.tsx
+    ├── ManageMembersModal.tsx
+    └── DeleteProjectModal.tsx
+```
+
+### Updated Files
+
+```
+src/shared/schemas/project.ts          # +projectCreateSchema, projectUpdateSchema, projectDeleteSchema
+src/shared/schemas/index.ts            # +project schema exports
+src/shared/query/keys.ts               # +projectKeys
+src/app/(app)/(workspace)/projects/page.tsx    # full implementation
+src/app/(app)/(workspace)/projects/new/page.tsx # redirect to /projects?action=create
+```
+
+---
+
+## 18. Project Owner Dashboard
+
+The dashboard at `/projects` provides a filtered view of projects owned by the current user, grouped by computed status.
+
+### Database Status Column
+
+The `Projects` table has a **`status` column** of type `ProjectStatus` (DB enum with values `PENDING`, `ACTIVE`, `COMPLETED`). This column is synchronized automatically by the dashboard server action.
+
+### Computed Project Status
+
+`selectProjectsByOwner()` computes the correct status from the relationship between `Contracts` and `Stages`, then **updates the DB if the stored value differs**:
+
+| Status | Condition |
+|---|---|
+| **PENDING** | Project exists, but the associated `Contracts` record lacks one or both signatures (`client_signature` or `project_owner_signature`) |
+| **ACTIVE** | Contract is fully signed (both signatures present), but not all associated `Stages` have a `finish_date` (or there are no stages yet) |
+| **COMPLETED** | Contract fully signed AND every `Stage` under the project has `finish_date IS NOT NULL` |
+
+### Server Action
+
+```typescript
+selectProjectsByOwner(): Promise<ProjectWithStatus[]>
+```
+
+- Gets the current user from the server-side Supabase session (`createClient()`)
+- Queries `RoleAssignments` where `user_id` matches and the role is `"Project Owner"`
+- For each owned project, fetches the related `Contracts` (signature status) and `Stages` (finish status)
+- Computes the correct status, updates the DB if the stored `status` column differs, and returns the project with both `status` and `project_status` fields
+
+### Types
+
+```typescript
+type ProjectStatus = "PENDING" | "ACTIVE" | "COMPLETED";
+
+interface ProjectWithStatus {
+  project_id: string;
+  name: string;
+  description: string | null;
+  start_date: Date | null;
+  finish_date: Date | null;
+  deadline_date: Date | null;
+  is_deleted: boolean;
+  deleted_at: Date | null;
+  status: ProjectStatus;        // synced DB column
+  project_status: ProjectStatus; // computed (always matches status)
+  client_name: string | null;
+  client_id: string | null;
+}
+```
+
+### Query Hook
+
+```typescript
+useOwnedProjects(): UseQueryResult<ProjectWithStatus[]>
+```
+
+Uses query key `["projects", "list", "owned"]`.
+
+### UI Components
+
+The dashboard feature lives at `src/features/project-dashboard/`:
+
+| Component | Description |
+|---|---|
+| `ProjectDashboard` | Main dashboard with header, three collapsible sections (Active → Pending → Completed), modal wiring |
+| `ProjectSection` | Collapsible section wrapper with status icon, title, count badge, expand/collapse toggle (darker arrow), empty state |
+| `ProjectCard` | Individual bordered card (`flex flex-col h-full`) with project name (2-line clamp), ALL CAPS status badge (PENDING/ACTIVE/COMPLETED) with colored icon, "Client" label + name, "Description" label + italic text (2-line clamp, shows "(No description)" when null), date timeline with calendar icons (shows "starting — deadline" when both null), bottom-pinned timeline row (`mt-auto`), three-dot menu (fixed positioning, flips above if near screen bottom) |
+
+**Menu ellipsis actions** (each card, accessible via three-dot button):
+- **Edit project details** → opens `EditProjectModal` (from `features/project-manager`)
+- **Manage project members** → opens `ManageMembersModal`
+- **Delete Project** → opens `DeleteProjectModal`
+
+**Status icons** (colored SVGs next to status badge):
+- **PENDING**: Clock/hourglass outline (yellow `#CA8A04`)
+- **ACTIVE**: Play triangle (indigo `#4F46E5`)
+- **COMPLETED**: Checkmark circle (green `#16A34A`)
+
+**Status filtering**: Uses the stored `Projects.status` column (DB enum `ProjectStatus`), read directly by `selectProjectsByOwner()`. The `grouped` useMemo filters by `project_status`. Sections ordered: Active → Pending → Completed.
+
+### Files Added
+
+```
+src/features/project-dashboard/
+├── index.ts
+└── ui/
+    ├── ProjectDashboard.tsx
+    ├── ProjectSection.tsx
+    └── ProjectCard.tsx
+```
+
+### Updated Files
+
+```
+src/entities/project/projectActions.ts   # +selectProjectsByOwner(), ProjectStatus, ProjectWithStatus
+src/entities/project/queries.ts          # +useOwnedProjects()
+src/entities/project/index.ts            # +exports for new types and hooks
+src/app/(app)/(workspace)/projects/page.tsx   # replaced with ProjectDashboard
+```
+
+### UI Behaviors
+
+- **Project cards**: Rendered as individual bordered cards (`flex flex-col h-full`) in a responsive CSS grid (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`). Each card has:
+  - Title (2-line clamp via `line-clamp-2`, consistent `min-h-[2.5rem]`)
+  - Status badge (ALL CAPS: `PENDING`/`ACTIVE`/`COMPLETED`) on the top-right with colored SVG icon
+  - "Client" label + name (always visible, `"—"` if null)
+  - "Description" label + italic text (2-line clamp, shows `"(No description)"` in gray when null)
+  - Date timeline with calendar icons (shows `"starting — deadline"` placeholder when both dates null)
+  - Dark divider (`border-[#E2E8F0]`), bottom row pinned via `mt-auto`
+  - Three-dot menu (fixed positioning, flips above if near screen bottom, consistent 4px gap)
+- **Date inputs**: Use `<input type="datetime-local">` (with time picker) in Edit Project and Create Project modals
+- **Character count**: Project Name input shows `{n}/50` counter in the lower-right, matching the pattern from stage-editor modals. Zod schema enforces `.max(50)`. Description has `.max(2000)`.
+- **Multi-section expansion**: All three status sections (Active, Pending, Completed) can be expanded simultaneously via a `Set<ProjectStatus>` state. Default state: all three open. Order: Active → Pending → Completed.
+- **Search empty state**: When the Manage Members search query is non-empty, search is not loading, and no results are found, a dashed-border "No users found" placeholder is displayed
+- **Menu dropdown**: Uses `z-[100]` with fixed positioning (computed from `getBoundingClientRect()`). Checks available space below (`200px` threshold); if insufficient, flips above with same 4px gap. Each card's menu managed by `useState` — one at a time (auto-closes on outside click via `mousedown` listener).
+- **Manage Members table**: Columns: NAME | DEPARTMENT | ROLE | ACTION. Non-client members only (client profiles filtered out via `!m.Users.client_id`). Count excludes clients. Widen modal (`max-w-2xl`). Search results styled consistently with member table rows.
+- **Client dropdown**: Custom dropdown (not native `<select>`) matching ticket-manager pattern: button trigger with chevron, `max-h-48 overflow-y-auto` options list showing ~6 items with scrolling, selected item highlighted in indigo.
+- **Client required**: In Create mode, client field is required with red border + inline error message. Hidden in Edit mode (immutable after creation).
+- **Auto-open members**: After creating a project, the Manage Members modal auto-opens for the new project.
+
+---
+
+## 19. Client Assignment & Auto-Provisioning
+
+### Client Dropdown in Create Project
+
+The `EditProjectModal` (in Create mode) shows a **Client** dropdown populated from `clientSelectAll()`. Selecting a client is optional. In Edit mode, the client field is hidden (clients cannot be changed after creation).
+
+### Project Creation with Client
+
+When a project is created with a `client_id`, the `createProject()` server action performs these steps in a single `$transaction`:
+
+1. Creates the `Projects` row
+2. Assigns the creator as **Project Owner** via `RoleAssignments`
+3. Creates a blank **`Contracts`** row with the `client_id` and `project_id` (all other fields default to `NULL`)
+4. Finds all `Profiles` where `client_id` matches the selected client
+5. Assigns each such profile the **Client Viewer** role via `RoleAssignments`
+
+### Zod Schema
+
+```typescript
+projectCreateSchema = {
+  name:          String (min 1, max 50, required),
+  description:   String (max 2000, optional, default ""),
+  client_id:     UUID String (optional, nullable) — links to Clients table,
+  start_date:    Date? (optional),
+  deadline_date: Date? (optional),
+}
+```
+
+### Manage Members Modal (Table Layout)
+
+The modal now uses a `<table>` matching the Figma design with columns:
+- **NAME** — avatar initials + full name + email
+- **DEPARTMENT** — department name or "—"
+- **Assigned To** — role badge (e.g. "Project Owner", "Client Viewer", "Project Team Member")
+- **ACTION** — remove button (disabled for last Project Owner)
+
+Role names from Supabase: `Finance Member`, `Project Team Member`, `Client Viewer`, `Project Owner`
+
+### Auto-Assignment Logic (profile → client → projects)
+
+When a new `Profiles` row is created with a `client_id`, it should be auto-assigned to all existing projects that belong to that client. This logic lives in the profile creation flow (signup): query all `Projects` that have a `Contracts` record with the matching `client_id`, then create `RoleAssignments` rows with the **Client Viewer** role for each.
+
+### Files Added/Modified
+
+```
+src/entities/client/clientActions.ts          # +clientSelectAll()
+src/shared/schemas/project.ts                  # +client_id field
+src/entities/project/projectActions.ts          # +client_id handling, Contract creation, client profile assignment
+src/features/project-manager/ui/modals/EditProjectModal.tsx   # +Client dropdown (Create mode)
+src/features/project-manager/ui/modals/ManageMembersModal.tsx  # table layout, "Project Team Member" default role
+```
+
+---
+
+## 20. Security & Authorization
+
+All server actions in `src/entities/project/projectActions.ts` enforce authentication and authorization:
+
+### Auth Helpers
+
+```typescript
+getCurrentUserId(): Promise<string | null>         // returns user ID from server-side Supabase session, or null
+requireProjectMember(projectId, userId): Promise<boolean> // checks RoleAssignments for any role
+requireProjectOwner(projectId, userId): Promise<boolean>  // checks RoleAssignments for "Project Owner" role
+```
+
+### Function Auth Coverage
+
+| Server Action | Auth Gate | Authorization |
+|---|---|---|
+| `createProject()` | Supabase session (`createClient().auth.getUser()`) | Creator auto-assigned as Project Owner |
+| `selectProjectsByOwner()` | Supabase session | Only returns projects where caller holds Project Owner role |
+| `selectProjects()` | `getCurrentUserId()` | All authenticated users (returns empty if unauthenticated) |
+| `getProjectById()` | `getCurrentUserId()` | All authenticated users |
+| `updateProject()` | `getCurrentUserId()` + `requireProjectMember()` | Must be a project member |
+| `softDeleteProject()` | `getCurrentUserId()` + `requireProjectOwner()` | Must be the Project Owner + name confirmation |
+| `getProjectMembers()` | `getCurrentUserId()` + `requireProjectMember()` | Must be a project member |
+| `addProjectMember()` | `getCurrentUserId()` + `requireProjectOwner()` | Only Project Owner can add members (default role: Project Team Member) |
+| `removeProjectMember()` | `getCurrentUserId()` + `requireProjectOwner()` | Only Project Owner can remove members (last-owner guard prevents removing sole owner) |
+| `searchProfilesForProject()` | `getCurrentUserId()` | All authenticated users (returns empty if unauthenticated) |
+
+### Client Profile Handling
+
+- Client profiles (`Profiles.client_id IS NOT NULL`) are filtered out of search results and member lists
+- When creating a project with a client, all profiles linked to that client are auto-assigned as "Client Viewer"
+- Role names from Supabase: `Finance Member`, `Project Team Member`, `Client Viewer`, `Project Owner`
+
+### Delete Project Confirmation
+
+Requires typing the exact project name to confirm deletion. The server-side check compares `confirmationName` against the stored `project.name`. Combined with the `requireProjectOwner` auth gate, this prevents accidental or unauthorized deletion.

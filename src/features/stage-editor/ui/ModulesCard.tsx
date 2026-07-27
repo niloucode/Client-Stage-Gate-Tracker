@@ -64,36 +64,36 @@ export function ModulesCard({
 
 	const handleAddModule = async (data: {
 		name: string;
-		creation_date: Date | null;
+		start_date: Date | null;
 		deadline_date: Date | null;
-		end_date: Date | null;
+		finish_date: Date | null;
 	}) => {
 		if (activePhase === null || !currentPhase) return;
 		await createModuleMutation.mutateAsync({
 			phaseId: currentPhase.phase_id,
 			stageId,
 			name: data.name,
-			creation_date: data.creation_date ?? undefined,
+			start_date: data.start_date ?? undefined,
 			deadline_date: data.deadline_date ?? undefined,
-			end_date: data.end_date ?? undefined,
+			finish_date: data.finish_date ?? undefined,
 		});
 		setIsAddOpen(false);
 	};
 
 	const handleSaveModule = async (data: {
 		name: string;
-		creation_date: Date | null;
+		start_date: Date | null;
 		deadline_date: Date | null;
-		end_date: Date | null;
+		finish_date: Date | null;
 	}) => {
 		if (!editingModule) return;
 		await updateModuleMutation.mutateAsync({
 			moduleId: editingModule.module_id,
 			stageId,
 			name: data.name,
-			creation_date: data.creation_date ?? undefined,
+			start_date: data.start_date ?? undefined,
 			deadline_date: data.deadline_date ?? undefined,
-			end_date: data.end_date ?? undefined,
+			finish_date: data.finish_date ?? undefined,
 		});
 		setEditingModule(null);
 	};
@@ -221,9 +221,9 @@ export function ModulesCard({
 										{/* Date Badge */}
 										<div className="px-3 py-1 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md">
 											<span className="font-medium text-xs text-slate-400">
-												{formatDateTime(module.creation_date)} –{" "}
-												{module.end_date
-													? formatDateTime(module.end_date)
+												{formatDateTime(module.start_date)} –{" "}
+												{module.finish_date
+													? formatDateTime(module.finish_date)
 													: "Unfinished"}
 											</span>
 										</div>

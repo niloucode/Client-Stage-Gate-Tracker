@@ -6,9 +6,9 @@ import { Label } from "@/shared/ui/label";
 
 interface AddModuleFormData {
 	name: string;
-	creation_date: Date | null;
+	start_date: Date | null;
 	deadline_date: Date | null;
-	end_date: Date | null;
+	finish_date: Date | null;
 }
 
 interface AddModuleProps {
@@ -20,9 +20,9 @@ interface AddModuleProps {
 
 const emptyFormData: AddModuleFormData = {
 	name: "",
-	creation_date: null,
+	start_date: null,
 	deadline_date: null,
-	end_date: null,
+	finish_date: null,
 };
 
 type FieldErrors = Partial<Record<keyof AddModuleFormData, string>>;
@@ -43,34 +43,34 @@ export function AddModule({
 		setFormData((prev) => {
 			if (
 				next &&
-				prev.end_date &&
-				next.getTime() + MIN_GAP_MS > prev.end_date.getTime()
+				prev.finish_date &&
+				next.getTime() + MIN_GAP_MS > prev.finish_date.getTime()
 			) {
 				return {
 					...prev,
-					creation_date: next,
-					end_date: new Date(next.getTime() + MIN_GAP_MS),
+					start_date: next,
+					finish_date: new Date(next.getTime() + MIN_GAP_MS),
 				};
 			}
-			return { ...prev, creation_date: next };
+			return { ...prev, start_date: next };
 		});
 	};
 
-	const handleEndDate = (d: Date | null) => {
+	const handleFinishDate = (d: Date | null) => {
 		const next = d ? new Date(d) : null;
 		setFormData((prev) => {
 			if (
 				next &&
-				prev.creation_date &&
-				prev.creation_date.getTime() + MIN_GAP_MS > next.getTime()
+				prev.start_date &&
+				prev.start_date.getTime() + MIN_GAP_MS > next.getTime()
 			) {
 				return {
 					...prev,
-					end_date: next,
-					creation_date: new Date(next.getTime() - MIN_GAP_MS),
+					finish_date: next,
+					start_date: new Date(next.getTime() - MIN_GAP_MS),
 				};
 			}
-			return { ...prev, end_date: next };
+			return { ...prev, finish_date: next };
 		});
 	};
 

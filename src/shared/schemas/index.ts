@@ -28,6 +28,9 @@ export {
 	moduleUpdateSchema,
 	workflowCreateSchema,
 	workflowUpdateSchema,
+	projectCreateSchema,
+	projectUpdateSchema,
+	projectDeleteSchema,
 } from "./project";
 export type {
 	PhaseCreateInput,
@@ -36,6 +39,9 @@ export type {
 	ModuleUpdateInput,
 	WorkflowCreateInput,
 	WorkflowUpdateInput,
+	ProjectCreateInput,
+	ProjectUpdateInput,
+	ProjectDeleteInput,
 } from "./project";
 
 export { tagSchema, tagCreateSchema, tagUpdateSchema } from "./tag";

@@ -7,6 +7,13 @@ export async function clientSelect(){
     return await prisma.clients.findFirst()
 }
 
+export async function clientSelectAll(){
+    return await prisma.clients.findMany({
+        where: { is_deleted: false },
+        orderBy: { client_name: "asc" },
+    })
+}
+
 export async function clientSelectByID(clientID: string){
     return await prisma.clients.findFirst({
         where: {

@@ -1,25 +1,27 @@
-"use client";
+"use client"
 
-import { useState, useRef, useEffect } from "react";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Tag } from "@/entities/types";
+import { useState, useRef, useEffect } from "react"
+import { Input } from "@/shared/ui/input"
+import { Label } from "@/shared/ui/label"
+import { Tag } from "@/entities/types"
 
-import { XIcon, ChevronDownIcon, EyeIcon } from "@/shared/ui/icons";
-import { useProfiles } from "@/entities/profile/queries";
-import { createClient } from "@/lib/supabase/client";
-import type { CreateTicketParams } from "@/shared/schemas";
+import { XIcon, ChevronDownIcon, EyeIcon } from "@/shared/ui/icons"
+import { useProfiles } from "@/entities/profile/queries"
+import { createClient } from "@/lib/supabase/client"
+import type { CreateTicketParams } from "@/shared/schemas"
+
+import { Backdrop } from "@/shared/ui/backdrop"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 /** Fields the modal collects — everything except workflow_id and status (added by TicketBoard). */
-type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
+type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">
 
 interface CreateTicketModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onCreateTicket: (data: CreateTicketFormData) => Promise<void>;
-	tags: Tag[];
+	isOpen: boolean
+	onClose: () => void
+	onCreateTicket: (data: CreateTicketFormData) => Promise<void>
+	tags: Tag[]
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -30,52 +32,52 @@ export default function TicketModalCreate({
 	onCreateTicket,
 	tags,
 }: CreateTicketModalProps) {
-	const [title, setTitle] = useState("");
-	const [description, setDescription] = useState("");
-	const [deadline, setDeadline] = useState("");
-	const today = new Date().toISOString().split("T")[0];
+	const [title, setTitle] = useState("")
+	const [description, setDescription] = useState("")
+	const [deadline, setDeadline] = useState("")
+	const today = new Date().toISOString().split("T")[0]
 
-	const [selectedTags, setSelectedTags] = useState<string[]>([]);
-	const [tagsOpen, setTagsOpen] = useState(false);
-	const tagsRef = useRef<HTMLDivElement>(null);
+	const [selectedTags, setSelectedTags] = useState<string[]>([])
+	const [tagsOpen, setTagsOpen] = useState(false)
+	const tagsRef = useRef<HTMLDivElement>(null)
 
-	const { data: profiles = [] } = useProfiles();
+	const { data: profiles = [] } = useProfiles()
 
-	const [assignedOpen, setAssignedOpen] = useState(false);
-	const [assignedIds, setAssignedIds] = useState<string[]>([]);
-	const [watcherId, setWatcherId] = useState("");
-	const [watcherOpen, setWatcherOpen] = useState(false);
-	const assignedRef = useRef<HTMLDivElement>(null);
-	const watcherRef = useRef<HTMLDivElement>(null);
+	const [assignedOpen, setAssignedOpen] = useState(false)
+	const [assignedIds, setAssignedIds] = useState<string[]>([])
+	const [watcherId, setWatcherId] = useState("")
+	const [watcherOpen, setWatcherOpen] = useState(false)
+	const assignedRef = useRef<HTMLDivElement>(null)
+	const watcherRef = useRef<HTMLDivElement>(null)
 
-	const [imageFiles, setImageFiles] = useState<File[]>([]);
-	const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+	const [imageFiles, setImageFiles] = useState<File[]>([])
+	const [imagePreviews, setImagePreviews] = useState<string[]>([])
 
 	const [apiMethod, setApiMethod] = useState<"GET" | "POST" | "PUT" | "DELETE">(
 		"GET",
-	);
-	const [apiRoute, setApiRoute] = useState("");
+	)
+	const [apiRoute, setApiRoute] = useState("")
 
 	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
 			if (tagsRef.current && !tagsRef.current.contains(e.target as Node)) {
-				setTagsOpen(false);
+				setTagsOpen(false)
 			}
 			if (assignedRef.current && !assignedRef.current.contains(e.target as Node)) {
-				setAssignedOpen(false);
+				setAssignedOpen(false)
 			}
 			if (watcherRef.current && !watcherRef.current.contains(e.target as Node)) {
-				setWatcherOpen(false);
+				setWatcherOpen(false)
 			}
 		}
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
+		document.addEventListener("mousedown", handleClickOutside)
+		return () => document.removeEventListener("mousedown", handleClickOutside)
+	}, [])
 
 	function toggleTag(tagId: string) {
 		setSelectedTags((prev) =>
 			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId],
-		);
+		)
 	}
 
 	function toggleAssigned(profileId: string) {
@@ -83,72 +85,72 @@ export default function TicketModalCreate({
 			prev.includes(profileId)
 				? prev.filter((id) => id !== profileId)
 				: [...prev, profileId],
-		);
+		)
 	}
 
 	const isApiTagSelected = selectedTags.some(
 		(tagId) =>
 			tags.find((t) => t.tag_id === tagId)?.name?.toLowerCase() === "api",
-	);
+	)
 
 	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-		const files = e.target.files;
-		if (!files || files.length === 0) return;
-		const newFiles: File[] = [];
-		const newPreviews: string[] = [];
+		const files = e.target.files
+		if (!files || files.length === 0) return
+		const newFiles: File[] = []
+		const newPreviews: string[] = []
 		for (const file of Array.from(files)) {
 			if (file.size > 5 * 1024 * 1024) {
-				alert(`Image "${file.name}" must be under 5MB.`);
-				continue;
+				alert(`Image "${file.name}" must be under 5MB.`)
+				continue
 			}
-			newFiles.push(file);
-			newPreviews.push(URL.createObjectURL(file));
+			newFiles.push(file)
+			newPreviews.push(URL.createObjectURL(file))
 		}
 		if (newFiles.length > 0) {
-			setImageFiles((prev) => [...prev, ...newFiles]);
-			setImagePreviews((prev) => [...prev, ...newPreviews]);
+			setImageFiles((prev) => [...prev, ...newFiles])
+			setImagePreviews((prev) => [...prev, ...newPreviews])
 		}
-		e.target.value = "";
+		e.target.value = ""
 	}
 
 	function removeCreateImage(index: number) {
-		URL.revokeObjectURL(imagePreviews[index]);
-		setImageFiles((prev) => prev.filter((_, i) => i !== index));
-		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+		URL.revokeObjectURL(imagePreviews[index])
+		setImageFiles((prev) => prev.filter((_, i) => i !== index))
+		setImagePreviews((prev) => prev.filter((_, i) => i !== index))
 	}
 
 		async function handleSubmit(e: React.FormEvent) {
-		e.preventDefault();
-		if (!title.trim()) return;
+		e.preventDefault()
+		if (!title.trim()) return
 
-		const imageUrls: string[] = [];
+		const imageUrls: string[] = []
 
 		// Upload images to Supabase
 		if (imageFiles.length > 0) {
 			try {
-				const supabase = createClient();
+				const supabase = createClient()
 				for (const file of imageFiles) {
-					const fileExt = file.name.split(".").pop();
-					const fileName = `${crypto.randomUUID()}.${fileExt}`;
-					const filePath = `tickets/${fileName}`;
+					const fileExt = file.name.split(".").pop()
+					const fileName = `${crypto.randomUUID()}.${fileExt}`
+					const filePath = `tickets/${fileName}`
 
 					const { error } = await supabase.storage
 						.from("images")
 						.upload(filePath, file, {
 							cacheControl: "3600",
 							upsert: false,
-						});
+						})
 
-					if (error) throw new Error(`Failed to upload image: ${error.message}`);
+					if (error) throw new Error(`Failed to upload image: ${error.message}`)
 
 					const {
 						data: { publicUrl },
-					} = supabase.storage.from("images").getPublicUrl(filePath);
+					} = supabase.storage.from("images").getPublicUrl(filePath)
 
-					imageUrls.push(publicUrl);
+					imageUrls.push(publicUrl)
 				}
 			} catch (err) {
-				console.error("Image upload failed:", err);
+				console.error("Image upload failed:", err)
 			}
 		}
 
@@ -162,26 +164,22 @@ export default function TicketModalCreate({
 			api_route: apiRoute || null,
 			api_method: apiMethod || null,
 			image_urls: imageUrls,
-		});
+		})
 
-		setTitle("");
-		setDescription("");
-		setDeadline("");
-		setWatcherId("");
-		setSelectedTags([]);
-		setAssignedIds([]);
-		setImageFiles([]);
-		setImagePreviews([]);
-		setApiMethod("GET");
-		setApiRoute("");
-		onClose();
+		setTitle("")
+		setDescription("")
+		setDeadline("")
+		setWatcherId("")
+		setSelectedTags([])
+		setAssignedIds([])
+		setImageFiles([])
+		setImagePreviews([])
+		setApiMethod("GET")
+		setApiRoute("")
+		onClose()
 	}
 
-	function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
-		if (e.target === e.currentTarget) onClose();
-	}
-
-	if (!isOpen) return null;
+	if (!isOpen) return null
 
 	const colorClasses = {
 		indigo: "bg-indigo-50 text-indigo-700",
@@ -192,13 +190,10 @@ export default function TicketModalCreate({
 		purple: "bg-purple-50 text-purple-700",
 		pink: "bg-pink-50 text-pink-700",
 		gray: "bg-gray-50 text-gray-700",
-	};
+	}
 
 	return (
-		<div
-			className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-			onClick={handleBackdropClick}
-		>
+		<Backdrop isOpen={isOpen} onClose={onClose}>
 			<div className="bg-white rounded-2xl w-full max-w-153 max-h-[92vh] flex flex-col shadow-2xl">
 				{/* Modal header */}
 				<div className="flex items-center justify-between px-6 pt-6 pb-5 shrink-0">
@@ -261,7 +256,7 @@ export default function TicketModalCreate({
 											<span className="text-gray-400">Assign to...</span>
 										) : (
 											assignedIds.map((profileId) => {
-												const profile = profiles.find((p) => p.profile_id === profileId);
+												const profile = profiles.find((p) => p.profile_id === profileId)
 												return (
 													<span
 														key={profileId}
@@ -271,14 +266,14 @@ export default function TicketModalCreate({
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
 															onClick={(e) => {
-																e.stopPropagation();
-																toggleAssigned(profileId);
+																e.stopPropagation()
+																toggleAssigned(profileId)
 															}}
 														>
 															×
 														</span>
 													</span>
-												);
+												)
 											})
 										)}
 									</div>
@@ -336,7 +331,8 @@ export default function TicketModalCreate({
 								{watcherOpen && (
 									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
 										<div
-											onClick={() => { setWatcherId(""); setWatcherOpen(false); }}
+											onClick={() => { setWatcherId("") 
+												setWatcherOpen(false) }}
 											className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
 										>
 											<span className="text-gray-400">None</span>
@@ -344,7 +340,8 @@ export default function TicketModalCreate({
 										{profiles.map((profile) => (
 											<div
 												key={profile.profile_id}
-												onClick={() => { setWatcherId(profile.profile_id); setWatcherOpen(false); }}
+												onClick={() => { setWatcherId(profile.profile_id) 
+													setWatcherOpen(false) }}
 												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
 											>
 												<div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
@@ -378,7 +375,7 @@ export default function TicketModalCreate({
 											<span className="text-gray-400">Select tags...</span>
 										) : (
 											selectedTags.map((tag_id) => {
-												const tag = tags.find((t) => t.tag_id === tag_id);
+												const tag = tags.find((t) => t.tag_id === tag_id)
 												return (
 													<span
 														key={tag_id}
@@ -392,14 +389,14 @@ export default function TicketModalCreate({
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
 															onClick={(e) => {
-																e.stopPropagation();
-																toggleTag(tag_id);
+																e.stopPropagation()
+																toggleTag(tag_id)
 															}}
 														>
 															×
 														</span>
 													</span>
-												);
+												)
 											})
 										)}
 									</div>
@@ -539,7 +536,7 @@ export default function TicketModalCreate({
 					<button
 						type="button"
 						onClick={onClose}
-						className="px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+						className="cursor-pointer px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
 					>
 						Cancel
 					</button>
@@ -547,12 +544,12 @@ export default function TicketModalCreate({
 						type="button"
 						onClick={handleSubmit}
 						disabled={!title.trim()}
-						className="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+						className="cursor-pointer px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
 					>
 						Create Ticket
 					</button>
 				</div>
 			</div>
-		</div>
-	);
+		</Backdrop>
+	)
 }

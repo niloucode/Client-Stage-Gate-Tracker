@@ -7,9 +7,9 @@ import { Label } from "@/shared/ui/label";
 interface AddPhaseFormData {
 	name: string;
 	description: string;
-	creation_date: Date | null;
+	start_date: Date | null;
 	deadline_date: Date | null;
-	end_date: Date | null;
+	finish_date: Date | null;
 }
 
 interface AddPhaseProps {
@@ -21,9 +21,9 @@ interface AddPhaseProps {
 const emptyFormData: AddPhaseFormData = {
 	name: "",
 	description: "",
-	creation_date: null,
+	start_date: null,
 	deadline_date: null,
-	end_date: null,
+	finish_date: null,
 };
 
 type FieldErrors = Partial<Record<keyof AddPhaseFormData, string>>;

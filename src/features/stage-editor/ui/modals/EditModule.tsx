@@ -7,9 +7,9 @@ import { moduleCreateSchema } from "@/shared/schemas";
 
 interface EditModuleFormData {
 	name: string;
-	creation_date: Date | null;
+	start_date: Date | null;
 	deadline_date: Date | null;
-	end_date: Date | null;
+	finish_date: Date | null;
 }
 
 interface EditModuleProps {
@@ -22,9 +22,9 @@ interface EditModuleProps {
 
 const toFormData = (module: Module | null): EditModuleFormData => ({
 	name: module?.name ?? "",
-	creation_date: module?.creation_date ?? null,
+	start_date: module?.start_date ?? null,
 	deadline_date: module?.deadline_date ?? null,
-	end_date: module?.end_date ?? null,
+	finish_date: module?.finish_date ?? null,
 });
 
 type FieldErrors = Partial<Record<"name", string>>;

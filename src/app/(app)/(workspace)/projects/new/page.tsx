@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function NewProjectPage() {
-  return <div>New Project</div>;
+	redirect("/projects?action=create");
 }
