@@ -42,12 +42,12 @@ export default function UIPage() {
         {/* ── Button ── */}
         <Section title="Button">
           <Row label="primary">
-            <Button variant="primary" className="w-40">Sign In</Button>
-            <Button variant="primary" className="w-40" disabled>Disabled</Button>
+            <Button variant="violet" className="w-40">Sign In</Button>
+            <Button variant="violet" className="w-40" disabled>Disabled</Button>
           </Row>
           <Row label="ghost">
-            <Button variant="ghost" className="w-40">Cancel</Button>
-            <Button variant="ghost" className="w-40" disabled>Disabled</Button>
+            <Button variant="transparent" className="w-40">Cancel</Button>
+            <Button variant="transparent" className="w-40" disabled>Disabled</Button>
           </Row>
         </Section>
 
