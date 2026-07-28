@@ -15,9 +15,9 @@ interface ClientData {
 }
 
 interface EditClientModalProps {
-	isOpen: boolean
+	isOpen: boolean;
 	initialData?: Partial<ClientData>;
-	onClose?: () => void;
+	onClose: () => void;
 	onSubmit?: (data: ClientData) => void;
 }
 
