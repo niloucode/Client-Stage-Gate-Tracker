@@ -35,13 +35,12 @@ const DEFAULT_MENU_ITEMS: ProfileMenuItem[] = [
 
 export default function TopNav({
   breadcrumbs,
-  menuItems = DEFAULT_MENU_ITEMS,
-  onLogout,
+  menuItems = DEFAULT_MENU_ITEMS
 }: TopNavProps) {
 	const [open, setOpen] = useState(false)
 	const containerRef = useRef<HTMLDivElement>(null)
 
-	const { user } = useAuth();
+	const { user, logout} = useAuth();
 	const [departmentName, setDepartmentName] = useState<string>("No Department");
 
 	useEffect(() => {
@@ -192,7 +191,7 @@ export default function TopNav({
 
             <button
               type="button"
-              onClick={onLogout}
+              onClick={logout}
               className="mt-3 w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 
 			  text-white text-sm font-medium tracking-wide transition-colors"
             >

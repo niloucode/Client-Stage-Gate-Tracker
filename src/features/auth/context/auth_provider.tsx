@@ -34,13 +34,15 @@ interface prop {
 }
 
 interface AuthContextValue {
-	user: ProfileType | null;
-	isLoading: boolean;
+  user: ProfileType | null;
+  logout: () => Promise<void>; // or () => void if synchronous
+  isLoading: boolean;
 }
 
 const auth_context = createContext<AuthContextValue>({
-	user: null,
-	isLoading: true,
+  user: null,
+  logout: async () => {}, // dummy function so consumer hooks never run into null checks
+  isLoading: true,
 });
 
 export function AuthProvider({ children }: prop) {
@@ -57,6 +59,22 @@ export function AuthProvider({ children }: prop) {
 
 	const pathnameRef = useRef(pathname);
 	pathnameRef.current = pathname;
+
+	const logout = async () => {
+        try {
+            // 1. Sign out from Supabase (clears local auth tokens)
+            await supabase.auth.signOut();
+            
+            // 2. Clear TanStack Query cache so stale user/profile data is wiped immediately
+            queryClient.clear();
+
+            // 3. Redirect user to login page
+            router.push("/login");
+            router.refresh();
+        } catch (error) {
+            console.error("Error during logout:", error);
+        }
+    };
 
 	useEffect(() => {
 		const {
@@ -93,7 +111,7 @@ export function AuthProvider({ children }: prop) {
 	}, []);
 
 	return (
-		<auth_context.Provider value={{ user: user ?? null, isLoading }}>
+		<auth_context.Provider value={{ user: user ?? null, isLoading, logout }}>
 			{children}
 		</auth_context.Provider>
 	);
