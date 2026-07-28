@@ -5,7 +5,8 @@ import type { Phase } from "../types";
 import { DeletePhase } from "@/features/stage-editor/ui/modals/DeletePhase";
 import { Label } from "@/shared/ui/label";
 import { useUpdatePhase, useDeletePhase } from "@/entities/phase/mutations";
-import { ClipboardList,ChevronDown } from "lucide-react"
+import { ClipboardList,ChevronDown,Dot } from "lucide-react"
+import { Button } from "@/shared/ui/button"
 
 interface ActivePhaseDetailsProps {
 	activePhase: number | null;
@@ -131,7 +132,8 @@ export function ActivePhaseDetails({
 							<h2 className="text-base font-semibold text-[#0F172A]">
 								Active Phase Details
 							</h2>
-							<span className="ml-8 px-2.5 py-1 bg-brand-500 text-background rounded-md text-[10px] font-bold tracking-wide">
+							<Dot/>
+							<span className="px-2.5 py-1 bg-brand-500 text-background rounded-md text-[10px] font-bold tracking-wide">
 								PHASE {activePhase}
 							</span>
 							<span className="text-sm font-normal ml-1">
@@ -238,18 +240,15 @@ export function ActivePhaseDetails({
 								</svg>
 								Delete Phase
 							</button>
-
-							<button
+							
+							<Button
+								icon="save"
 								onClick={handleSave}
 								disabled={!isDirty}
-								className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all shadow-sm ${
-									isDirty
-										? "bg-brand-500 text-neutral-surface hover:bg-[#4338CA]"
-										: "bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed"
-								}`}
-							>
+								variant={!isDirty ? "disabled" : "violet"}>
+								
 								Save Phase
-							</button>
+							</Button>
 						</div>
 					</div>
 				)}

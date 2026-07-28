@@ -160,15 +160,16 @@ export function EditProjectModal({
 				isOpen={isOpen}
 				onClose={onClose}
 				title={isEditMode ? "Edit Project" : "Create New Project"}
-				width="max-w-xl"
-				footer={<div>
+				subtitle={"Fill in the details for this project."}
+				width="xl"
+				footer={<>
 					<Button onClick={handleClose} variant="transparency">
 						Cancel
 					</Button>
 					<Button onClick={handleSubmit}>
 						{isEditMode ? "Save Changes" : "Create Project"}
 					</Button>
-				</div>}>
+				</>}>
 					<div key={formKey}>
 					<div className="space-y-4 p-6">
 					{/* Project Name */}

@@ -11,6 +11,8 @@ import {
 	useDeleteModule,
 } from "@/entities/module/mutations";
 
+import { Button } from "@/shared/ui/button"
+
 interface ModulesCardProps {
 	activePhase: number | null;
 	phases: Phase[];
@@ -138,25 +140,11 @@ export function ModulesCard({
 				<h3 className="text-sm font-semibold text-[#0F172A]">
 					Modules {currentPhase && `(Phase ${activePhase})`}
 				</h3>
-				<button
-					onClick={openCreateModuleModal}
-					disabled={activePhase === null}
-					className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-all shadow-sm ${
-						activePhase === null
-							? "bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed"
-							: "bg-brand-500 text-neutral-surface hover:bg-[#4338CA]"
-					}`}
-				>
-					<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-						<path
-							d="M7 2V12M2 7H12"
-							stroke={activePhase === null ? "#94A3B8" : "neutral-surface"}
-							strokeWidth="1.5"
-							strokeLinecap="round"
-						/>
-					</svg>
+				<Button
+					icon="add"
+					onClick={openCreateModuleModal}>
 					Add Module
-				</button>
+				</Button>
 			</div>
 
 			{/* Module Cards */}

@@ -96,7 +96,7 @@ function EditorContent({
 						Define project phases, modules, and workflows.
 					</p>
 				</div>
-				<Button onClick={() => stepperRef.current?.openCreateModal()}><Plus></Plus>Add Phase</Button>
+				<Button icon="add" onClick={() => stepperRef.current?.openCreateModal()}>Add Phase</Button>
 			</div>
 
 			<PhaseStepper

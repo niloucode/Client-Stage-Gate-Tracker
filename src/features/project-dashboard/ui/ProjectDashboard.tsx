@@ -20,7 +20,7 @@ import { ProjectCard } from "./ProjectCard"
 import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas"
 import { useToast } from "@/shared/ui/toast"
 
-import {LucidePlus} from "lucide-react"
+import { Button } from "@/shared/ui/button"
 
 interface ModalState {
 	project_id: string
@@ -147,20 +147,14 @@ export function ProjectDashboard() {
 	return (
 		<div className="">
 			{/* Page Header */}
-			<div className="flex align-middle mb-6">
+			<div className="flex justify-between items-end align-middle mb-6">
 				<div>
 					<h1 className="text-4xl font-bold text-foreground tracking-tight">Projects</h1>
 					<p className="text-m text-neutral-border mt-1">
 						Manage and track the projects assigned to you.
 					</p>
 				</div>
-				<button
-					onClick={() => setShowAddModal(true)}
-					className="cursor-pointer font-semibold text-sm flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-brand-500 text-neutral-surface rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
-				>
-					<LucidePlus size={15} strokeWidth={3}/>
-					<span>Add Project</span>
-				</button>
+				<Button icon="add" onClick={() => setShowAddModal(true)}>Add Project</Button>
 			</div>
 
 			{/* Project Sections */}

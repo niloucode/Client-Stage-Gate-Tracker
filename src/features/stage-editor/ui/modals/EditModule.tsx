@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import type { Module } from "../../types";
 import { Label } from "@/shared/ui/label";
 import { moduleCreateSchema } from "@/shared/schemas";
+import { Modal } from "@/shared/ui/modal"
+import { Button } from "@/shared/ui/button"
 
 interface EditModuleFormData {
 	name: string;
@@ -46,7 +48,7 @@ export function EditModule({
 		setFieldErrors({});
 	}, [module]);
 
-	const handleSave = () => {
+	const handleSubmit = () => {
 		const result = moduleCreateSchema.safeParse(formData);
 		if (!result.success) {
 			const flattened = result.error.flatten().fieldErrors;
@@ -64,27 +66,23 @@ export function EditModule({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-md p-6 relative">
-				<button
-					onClick={onClose}
-					className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#475569] transition-colors"
-				>
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<path
-							d="M15 5L5 15M5 5L15 15"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-						/>
-					</svg>
-				</button>
-
-				<h2 className="text-xl font-bold text-[#0F172A] mb-2">Edit Module</h2>
-				<p className="text-sm text-neutral-subtle mb-6">
-					Update the module details below.
-				</p>
-
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			title={"Edit Module"}
+			subtitle={"Update the module details below."}
+			width="xl"
+			footer={<>
+			<Button className="mr-auto" icon="delete" variant="red" onClick={onDelete}> 
+				Delete Module 
+			</Button>
+			<Button variant="transparency" onClick={onClose}>
+				Cancel
+			</Button>
+			<Button icon="add" onClick={handleSubmit}>
+				Edit module
+			</Button>
+			</>}>
 				<div className="space-y-4">
 					<div>
 						<Label required error={!!fieldErrors.name}>
@@ -139,39 +137,6 @@ export function EditModule({
 						/>
 					</div>
 				</div>
-
-				<div className="flex justify-between items-center mt-6 pt-4 border-t border-[#F1F5F9]">
-					<button
-						onClick={onDelete}
-						className="px-4 py-2 text-sm font-semibold text-[#EF4444] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center gap-2"
-					>
-						<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-							<path
-								d="M12 4L4 12M4 4L12 12"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-							/>
-						</svg>
-						Delete Module
-					</button>
-
-					<div className="flex gap-3 ml-auto">
-						<button
-							onClick={onClose}
-							className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
-						>
-							Cancel
-						</button>
-						<button
-							onClick={handleSave}
-							className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
-						>
-							Save Changes
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
+		</Modal>
 	);
 }

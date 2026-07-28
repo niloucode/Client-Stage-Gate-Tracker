@@ -34,7 +34,7 @@ export type ProjectDeleteInput = z.infer<typeof projectDeleteSchema>;
 // ── Phase ────────────────────────────────────────────────────────────────────
 
 const basePhase = z.object({
-  name: z.string().min(1, "Phase name is required").max(20, "Phase name must be 20 characters or less"),
+  name: z.string().min(1, "Phase name cannot be empty").max(20, "Phase name must be 20 characters or less"),
   description: z.string().optional().default(""),
   start_date: z.date().optional().nullable(),
   deadline_date: z.date().optional().nullable(),

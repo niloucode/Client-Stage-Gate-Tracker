@@ -8,7 +8,7 @@ import { useToast } from "@/shared/ui/toast"
 import { ProfileDisplay } from "@/shared/schemas/profile"
 import { Backdrop } from "@/shared/ui/backdrop"
 import { Modal } from "@/shared/ui/modal"
-import { Button } from "@/shared/ui/button"
+import { Searching, Lacking } from "@/shared/ui/search-status"
 
 interface ManageMembersModalProps {
 	isOpen: boolean
@@ -145,7 +145,8 @@ export function ManageMembersModal({
 			isOpen={isOpen}
 			onClose={onClose}
 			title="Manage Project Members"
-			width="min-w-md max-w-md">
+			subtitle={"Find and remove members for this project."}
+			width="xl">
 					{/* Search Input */}
 			<div className="mt-6">
 
@@ -164,13 +165,13 @@ export function ManageMembersModal({
 				</div>
 			</div>
 			{(searchQuery.trim().length > 0)&&
-			<div className="absolute z-10 bg-neutral-surface mt-1 w-116 drop-shadow-2xl border-b border-l border-r border-brand-100 rounded">
+			<div className="absolute z-10 bg-neutral-surface mt-1 overflow-y-auto h-60 w-[33rem] drop-shadow-2xl border-b border-l border-r border-brand-100 rounded">
 				{ isSearching ? (
-					<div className="flex justify-center text-foreground text-[12px] py-2">Searching...</div>
+					<Searching/>
 				) : searchQuery.trim().length > 0 && searchResults.length === 0 ? (
-					<div className="flex justify-center text-foreground text-[12px] py-2">No users found</div>
+					<Lacking/>
 				) : searchResults.length > 0 ? (
-					<div className="flex mr-auto ml-auto flex-col max-h-60 gap-y-2 overflow-y-auto items-center ">
+					<div className="flex mr-auto ml-auto flex-col gap-y-2 items-center ">
 						{searchResults.map((profile) => {
 							const isAlreadyMember = memberIds.has(profile.profile_id)
 							return (
@@ -216,16 +217,14 @@ export function ManageMembersModal({
 			</div>}
 
 			{/* Current Members - Table Layout */}
-			<div className="mt-1 w-full">
+			<div className="mt-1 h-80 w-full">
 				
 				{(membersLoading || members?.length === 0) && (
-				<p className="h-80 text-xs text-neutral-subtle flex justify-center items-center">
-					{membersLoading ? "Loading members..." : "No members found."}
-				</p>
+					membersLoading ? <Searching /> : <Lacking />
 				)}
 
 				{!membersLoading && members && members.filter(m => !m.Users.client_id).length > 0 && (
-					<div className="h-80 rounded-lg overflow-y-auto ">
+					<div className="rounded-lg overflow-y-auto ">
 						<table className="w-full border-collapse">
 							<thead className="sticky top-0">
 								<tr className="bg-neutral-surface border-b border-brand-100">
@@ -291,35 +290,5 @@ export function ManageMembersModal({
 				)}
 			</div>
 		</Modal>
-	)
-
-	return (
-		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div className="bg-neutral-surface rounded-xl shadow-xl w-lg relative p-6">
-				<div className="h-[2em] bg-neutral-surface rounded-t-xl flex items-center">
-					<h2 className="text-l font font-bold text-foreground">
-						
-					</h2>
-
-					<button
-						onClick={onClose}
-						className="ml-auto text-brand-200 hover:text-foreground transition-colors"
-					>
-						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-							<path
-								d="M15 5L5 15M5 5L15 15"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-							/>
-						</svg>
-					</button>
-				</div>
-
-				<div className="border-t border-[#F1F5F9] my-3 -mx-6"></div>
-
-				
-			</div>
-		</Backdrop>
 	)
 }
