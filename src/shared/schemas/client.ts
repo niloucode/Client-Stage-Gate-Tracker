@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const clientSchema = z.object({
   client_id: z.string().uuid(),
-  client_name: z.string().min(1),
+  client_name: z.string().trim().min(1),
   tin: z.string().min(1),
   billing_address: z.string(),
   is_deleted: z.boolean().default(false),

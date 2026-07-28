@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes } from "react";
 
-type ButtonVariant = "primary" | "ghost";
-type ButtonSize = "sm" | "md" | "lg";
+type ButtonVariant = "violet" | "red" | "transparency" |"disabled"
+type ButtonSize = "sm" | "md" | "lg"
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -9,10 +9,14 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    "bg-brand-500 hover:bg-brand-600 active:bg-brand-900 text-neutral-surface font-medium focus-visible:ring-2 focus-visible:ring-brand-500/50",
-  ghost:
-    "bg-transparent text-brand-600 hover:bg-brand-25 hover:text-brand-900 active:bg-brand-200/50 focus-visible:ring-2 focus-visible:ring-brand-500/50",
+  	violet:
+    	"bg-brand-500 hover:bg-brand-600 active:bg-brand-900 text-neutral-surface font-medium focus-visible:ring-2 focus-visible:ring-brand-500/50",
+	red:
+		"bg-red-600 hover:bg-red-500 active:bg-red-600 text-neutral-surface font-medium focus-visible:ring-2 focus-visible:ring-brand-500/50",
+	transparency:
+		"text-foreground font-medium focus-visible:ring-2 focus-visible:ring-brand-500/50",
+	disabled:
+    	"bg-brand-100 text-neutral-border focus-visible:ring-2 focus-visible:ring-brand-500/50",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -22,7 +26,7 @@ const sizeStyles: Record<ButtonSize, string> = {
 };
 
 export function Button({
-  variant = "primary",
+  variant = "violet",
   size = "md",
   className = "",
   children,

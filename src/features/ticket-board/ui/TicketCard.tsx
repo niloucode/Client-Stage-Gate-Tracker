@@ -79,9 +79,9 @@ export function TicketCardContent({
 								<div className="w-2 h-2 mr-2 bg-brand-600 rounded-full rounded-full uppercase"/>
 						):<></>} */}
 						{/* Title */}
-						<p className="text-l font-semibold text-gray-900 line-clamp-2 leading-snug break-words">
+						<span className="text-l font-semibold text-gray-900 line-clamp-2 leading-snug break-all">
 							{ticket.name}
-						</p>
+						</span>
 					</div>
 					{/* <span className="text-xs font-semibold text-brand-600 shrink-0">{ticket.ticket_id}</span> */}
 					<div className="flex gap-1.5 items-center ml-auto" ref={menuRef}>

@@ -5,7 +5,7 @@ import type { Phase } from "../types";
 import { DeletePhase } from "@/features/stage-editor/ui/modals/DeletePhase";
 import { Label } from "@/shared/ui/label";
 import { useUpdatePhase, useDeletePhase } from "@/entities/phase/mutations";
-import { ClipboardList } from "lucide-react"
+import { ClipboardList,ChevronDown } from "lucide-react"
 
 interface ActivePhaseDetailsProps {
 	activePhase: number | null;
@@ -124,38 +124,22 @@ export function ActivePhaseDetails({
 					onClick={() => setIsExpanded(!isExpanded)}
 				>
 					<div className="flex items-center gap-3">
-						<svg
-							width="12"
-							height="8"
-							viewBox="0 0 12 8"
-							fill="none"
-							className={`transform transition-transform ${isExpanded ? "" : "-rotate-90"}`}
-						>
-							<path
-								d="M1 1L6 6L11 1"
-								stroke="#64748B"
-								strokeWidth="1.5"
-								strokeLinecap="round"
-							/>
-						</svg>
+						<ChevronDown className={`transform transition-transform ${isExpanded ? "" : "-rotate-90"}`}/>
+						
 						<div className="flex items-center gap-2">
 							<ClipboardList />
 							<h2 className="text-base font-semibold text-[#0F172A]">
 								Active Phase Details
 							</h2>
-							<span className="text-sm text-neutral-subtle font-normal ml-1">
-								{currentPhase?.name || `Phase ${activePhase}`}
+							<span className="ml-8 px-2.5 py-1 bg-brand-500 text-background rounded-md text-[10px] font-bold tracking-wide">
+								PHASE {activePhase}
+							</span>
+							<span className="text-sm font-normal ml-1">
+								{currentPhase.name}
 							</span>
 						</div>
 					</div>
 
-					<div className="flex items-center gap-3">
-						<div className="px-2.5 py-1 bg-[#EFF6FF] text-brand-500 rounded-md">
-							<span className="text-[10px] font-bold tracking-wide">
-								PHASE {activePhase}
-							</span>
-						</div>
-					</div>
 				</div>
 
 				{isExpanded && (

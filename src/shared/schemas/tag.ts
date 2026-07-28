@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const tagSchema = z.object({
   tag_id: z.string().uuid(),
-  name: z.string().min(1, "Tag name is required"),
+  name: z.string().trim().min(1, "Tag name is required"),
   description: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   is_deleted: z.boolean().default(false),

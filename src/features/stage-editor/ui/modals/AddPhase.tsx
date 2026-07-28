@@ -1,21 +1,22 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { phaseCreateSchema } from "@/shared/schemas";
-import { Label } from "@/shared/ui/label";
+import { useState } from "react"
+import { phaseCreateSchema } from "@/shared/schemas"
+import { Label } from "@/shared/ui/label"
+import { Backdrop } from "@/shared/ui/backdrop"
 
 interface AddPhaseFormData {
-	name: string;
-	description: string;
-	start_date: Date | null;
-	deadline_date: Date | null;
-	finish_date: Date | null;
+	name: string
+	description: string
+	start_date: Date | null
+	deadline_date: Date | null
+	finish_date: Date | null
 }
 
 interface AddPhaseProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onSubmit: (data: AddPhaseFormData) => void;
+	isOpen: boolean
+	onClose: () => void
+	onSubmit: (data: AddPhaseFormData) => void
 }
 
 const emptyFormData: AddPhaseFormData = {
@@ -24,41 +25,41 @@ const emptyFormData: AddPhaseFormData = {
 	start_date: null,
 	deadline_date: null,
 	finish_date: null,
-};
+}
 
-type FieldErrors = Partial<Record<keyof AddPhaseFormData, string>>;
+type FieldErrors = Partial<Record<keyof AddPhaseFormData, string>>
 
 export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
-	const [formData, setFormData] = useState<AddPhaseFormData>(emptyFormData);
-	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+	const [formData, setFormData] = useState<AddPhaseFormData>(emptyFormData)
+	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
-	if (!isOpen) return null;
+	if (!isOpen) return null
 
 	const handleClose = () => {
-		setFormData(emptyFormData);
-		setFieldErrors({});
-		onClose();
-	};
+		setFormData(emptyFormData)
+		setFieldErrors({})
+		onClose()
+	}
 
 	const handleSubmit = () => {
-		const result = phaseCreateSchema.safeParse(formData);
+		const result = phaseCreateSchema.safeParse(formData)
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: FieldErrors = {};
+			const flattened = result.error.flatten().fieldErrors
+			const mapped: FieldErrors = {}
 			for (const [key, msgs] of Object.entries(flattened)) {
 				if (msgs && msgs.length > 0)
-					mapped[key as keyof AddPhaseFormData] = msgs[0];
+					mapped[key as keyof AddPhaseFormData] = msgs[0]
 			}
-			setFieldErrors(mapped);
-			return;
+			setFieldErrors(mapped)
+			return
 		}
-		onSubmit(formData);
-		setFormData(emptyFormData);
-		setFieldErrors({});
-	};
+		onSubmit(formData)
+		setFormData(emptyFormData)
+		setFieldErrors({})
+	}
 
 	return (
-		<div className="fixed inset-0 bg-foregroundal-main/50 flex items-center justify-center z-50">
+		<Backdrop isOpen={isOpen} onClose={handleClose}>
 			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-md p-6 relative">
 				<button
 					onClick={handleClose}
@@ -167,6 +168,6 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 					</button>
 				</div>
 			</div>
-		</div>
-	);
+		</Backdrop>
+	)
 }

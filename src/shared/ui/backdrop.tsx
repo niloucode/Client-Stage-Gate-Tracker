@@ -32,7 +32,7 @@ export function Backdrop({ isOpen, onClose, children }: BackdropProps) {
 			e.stopPropagation()
 			onClose()
 		}}
-		className={`cursor-default fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 transition-all duration-300 ease-in ${
+		className={`cursor-default fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-all duration-150 ${
 			visible ? "opacity-100" : "opacity-0"}`}
     >
 		<div

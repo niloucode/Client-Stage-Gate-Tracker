@@ -3,7 +3,7 @@ import { z } from "zod";
 // ── Project ──────────────────────────────────────────────────────────────────
 
 const baseProject = z.object({
-  name: z.string().min(1, "Project name is required").max(50, "Project name must be 50 characters or less"),
+  name: z.string().trim().min(1, "Project name is required").max(50, "Project name must be 50 characters or less"),
   description: z.string().max(160, "Description must be 160 characters or less").optional().default(""),
   client_id: z.string().uuid("Invalid client ID").optional().nullable(),
   start_date: z.date().optional().nullable(),
