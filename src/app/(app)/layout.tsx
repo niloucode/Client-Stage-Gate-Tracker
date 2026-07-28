@@ -2,19 +2,8 @@
 import type { Metadata } from "next";
 import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "@/app/globals.css";
-
-const hankenGrotesk = Hanken_Grotesk({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-hanken-grotesk",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
-});
+import Sidebar from "@/shared/ui/sidebar";
+import TopNav from "@/shared/ui/topnav";
 
 export const metadata: Metadata = {
   title: "Client Stage Gate Tracker",
@@ -27,9 +16,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // <html lang="en" className={`${hankenGrotesk.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
-    //   <body className="font-['Hanken_Grotesk'] antialiased" suppressHydrationWarning>{children}</body>
-    // </html>
-		<>{children}</>
+	<Sidebar>
+		<TopNav breadcrumbs={["Acesoft", "Project Alpha", "Project Structure"]} />
+			<div className="min-h-[80vh] max-w-[90vw] mx-auto p-8">
+				<>{children}</>
+			</div>
+	</Sidebar>
   );
 }

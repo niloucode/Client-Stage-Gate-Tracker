@@ -138,14 +138,14 @@ export function ProjectDashboard() {
 
 	if (error) {
 		return (
-			<div className="p-8 max-w-[1550px] mx-auto">
+			<div className="min-h-[40vw] flex items-center justify-center">
 				<p className="text-sm text-red-500">Failed to load projects. Please try again.</p>
 			</div>
 		)
 	}
-
+	
 	return (
-		<div className="p-8 flex-6 max-w-[1550px] mx-auto">
+		<div className="">
 			{/* Page Header */}
 			<div className="flex align-middle pb-6 mb-6 border-b border-[#E2E8F0]">
 				<div>

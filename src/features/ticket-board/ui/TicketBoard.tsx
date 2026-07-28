@@ -13,8 +13,6 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 
-// Components
-import TopNav from "@/shared/ui/TopNav";
 import TicketColumn from "./TicketColumn";
 import { TicketCardContent } from "./TicketCard";
 import TicketModalCreate from "./TicketModalCreate";
@@ -255,10 +253,8 @@ export default function TicketBoard({
 	}
 
 	return (
-		<div className="flex flex-col overflow-hidden">
-			<TopNav breadcrumbs={["Acesoft", "Project Alpha", "Tickets"]} />
-
-			<div className="flex items-center justify-between px-6 py-5 shrink-0">
+		<>
+			<div className="flex items-center justify-between mb-5 shrink-0">
 				<div className="flex items-center gap-2">
 					{stageId && projectId ? (
 						<Link
@@ -298,8 +294,8 @@ export default function TicketBoard({
 				onDragStart={handleDragStart}
 				onDragEnd={handleDragEnd}
 			>
-				<div className="w-full h-full flex-1 overflow-x-auto px-6 pb-6">
-					<div className="grid grid-cols-3 gap-5 w-full h-full min-w-[800px]">
+				<div className="w-full flex-1 overflow-x-auto pb-6">
+					<div className="grid grid-cols-3 gap-5 flex-1 w-full min-h-0 max-h-[80vh] min-w-[30vw]">
 						{COLUMNS.map((column) => (
 							<TicketColumn
 								key={column.id}
@@ -348,6 +344,6 @@ export default function TicketBoard({
 				onDelete={handleDeleteTag}
 				tags={tags}
 			/>
-		</div>
+		</>
 	);
 }

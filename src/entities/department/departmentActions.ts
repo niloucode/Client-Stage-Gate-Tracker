@@ -13,3 +13,22 @@ export async function departmentSelectByName(deptName: string){
         }
     })
 }
+
+export async function getDepartmentById(departmentId?: string) {
+  if (!departmentId) return null;
+
+  try {
+    return await prisma.department.findUnique({
+      where: {
+        department_id: departmentId,
+      },
+      select: {
+        department_id: true,
+        name: true, // Direct property on the departments table
+      },
+    });
+  } catch (error) {
+    console.error("Failed to fetch department:", error);
+    return null; // Return null instead of [] on error
+  }
+}

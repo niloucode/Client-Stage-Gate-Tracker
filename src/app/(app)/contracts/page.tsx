@@ -6,8 +6,6 @@ import SignatoriesCard, {
 } from "@/features/contracts/ui/SignatoriesCard";
 import ExecuteAgreementCard from "@/features/contracts/ui/ExecuteAgreementCard";
 import { ExecutedBanner } from "@/features/contracts/ui/ExecutedBanner";
-import Sidebar from "@/shared/ui/sidebar";
-import TopNav from "@/shared/ui/TopNav";
 import { useContract } from "@/entities/contract";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -155,8 +153,6 @@ export default function ContractPage() {
 	};
 
 	return (
-		<Sidebar>
-			<TopNav breadcrumbs={["Acesoft", "Project Alpha", "Project Structure"]} />
 			<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
 				<div className="mx-auto max-w-6xl">
 					{allSigned && (
@@ -202,6 +198,5 @@ export default function ContractPage() {
 					</div>
 				</div>
 			</div>
-		</Sidebar>
 	);
 }

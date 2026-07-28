@@ -32,12 +32,12 @@ export function Backdrop({ isOpen, onClose, children }: BackdropProps) {
 			e.stopPropagation()
 			onClose()
 		}}
-		className={`cursor-default fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-all duration-100 ease-out ${
+		className={`cursor-default fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-all duration-300 ease-in ${
 			visible ? "opacity-100" : "opacity-0"}`}
     >
 		<div
 			onClick={(e) => e.stopPropagation()}
-			className={`transition-all duration-100 ease-out transform ${
+			className={`transition-all duration-300 ease-in transform ${
 			visible ? "opacity-100" : "opacity-0"}`}
 		>
 			{children}

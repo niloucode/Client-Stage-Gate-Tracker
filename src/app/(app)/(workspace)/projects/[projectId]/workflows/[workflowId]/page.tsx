@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { TicketBoard } from '@/features/ticket-board/ui';
-import Sidebar from '@/shared/ui/sidebar';
 
 export default async function TicketsPage({ params }: {
     params: Promise<{ projectId: string; workflowId: string }>;
@@ -28,8 +27,7 @@ export default async function TicketsPage({ params }: {
   const stageId = (phase.stage_id as string) ?? '';
 
   return (
-    <Sidebar>
-      <main className="flex-1 h-full overflow-hidden">
+      <main className="flex-1 overflow-hidden">
         <TicketBoard
           workflow_id={workflowId}
           workflowName={workflowName}
@@ -37,6 +35,5 @@ export default async function TicketsPage({ params }: {
           stageId={stageId}
         />
       </main>
-    </Sidebar>
   );
 }
