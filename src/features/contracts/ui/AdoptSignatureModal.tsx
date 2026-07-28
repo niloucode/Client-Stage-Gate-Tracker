@@ -55,13 +55,13 @@ export function AdoptSignatureModal({
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+			className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4"
 			onMouseDown={(e) => {
 				if (e.target === e.currentTarget) onCancel();
 			}}
 		>
 			<link rel="stylesheet" href={GOOGLE_FONTS_HREF} />
-			<div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl">
+			<div className="w-full max-w-xl overflow-hidden rounded-xl bg-neutral-surface shadow-2xl">
 				{/* Header */}
 				<div className="flex items-center justify-between border-b border-[#E5E3F1] px-6 py-4">
 					<h2 className="text-lg font-semibold text-[#181724]">
@@ -132,13 +132,13 @@ export function AdoptSignatureModal({
             </button>*/}
 					</div>
 
-					<div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-lg border border-[#E5E3F1] bg-white px-6 py-8">
+					<div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-lg border border-[#E5E3F1] bg-neutral-surface px-6 py-8">
 						<div className="min-w-0 overflow-hidden">
 							<div className="mb-1 text-[10px] font-semibold tracking-wide text-[#4338CA]">
 								SIGNED BY:
 							</div>
 							<div
-								className="overflow-visible whitespace-nowrap text-[#181724]"
+								className="overflow-visible neutral-surfacespace-nowrap text-[#181724]"
 								style={{
 									fontFamily: currentStyle.font,
 									fontSize: "clamp(18px, 5vw, 30px)",
@@ -156,7 +156,7 @@ export function AdoptSignatureModal({
 								DS:
 							</div>
 							<div
-								className="whitespace-nowrap text-[#181724]"
+								className="neutral-surfacespace-nowrap text-[#181724]"
 								style={{
 									fontFamily: currentStyle.font,
 									fontSize: "30px",
@@ -184,14 +184,14 @@ export function AdoptSignatureModal({
 						type="button"
 						onClick={handleAdopt}
 						disabled={!canAdopt}
-						className="rounded-md bg-[#4338CA] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#372FB0] disabled:cursor-not-allowed disabled:opacity-40"
+						className="rounded-md bg-[#4338CA] px-5 py-2.5 text-sm font-semibold text-neutral-surface transition-colors hover:bg-[#372FB0] disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						Adopt and Sign
 					</button>
 					<button
 						type="button"
 						onClick={onCancel}
-						className="rounded-md border border-[#D6D3E8] bg-white px-5 py-2.5 text-sm font-semibold text-[#3F3D52] hover:bg-[#F2F1FA]"
+						className="rounded-md border border-[#D6D3E8] bg-neutral-surface px-5 py-2.5 text-sm font-semibold text-[#3F3D52] hover:bg-[#F2F1FA]"
 					>
 						Cancel
 					</button>

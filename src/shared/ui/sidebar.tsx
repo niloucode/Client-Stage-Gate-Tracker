@@ -34,7 +34,7 @@ export const navItems = [
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
   <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
-    <div className="w-8 h-8 flex-shrink-0 bg-gray-900 rounded-lg flex items-center justify-center text-white">
+    <div className="w-8 h-8 flex-shrink-0 bg-gray-900 rounded-lg flex items-center justify-center text-neutral-surface">
       <Boxes className="w-5 h-5" />
     </div>
     {!collapsed && (
@@ -129,12 +129,12 @@ export default function SidebarLayout({
 
   return (
     <div
-      className={`${hanken.variable} ${jetbrains.variable} flex min-h-screen w-full bg-[#FAF8FF]`}
+      className={`${hanken.variable} ${jetbrains.variable} flex min-h-screen w-full`}
     >
       {/* Sidebar */}
       <div
         className={`
-          relative flex flex-col bg-white border-r border-gray-200
+          relative flex flex-col bg-neutral-surface border-r border-brand-100
           transition-all duration-300 ease-in-out
           ${collapsed ? "w-16" : "w-52"}
         `}
@@ -162,7 +162,7 @@ export default function SidebarLayout({
         {collapsed && (
           <button
             onClick={() => setCollapsed(false)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 shadow-sm"
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-neutral-surface border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 shadow-sm"
             aria-label="Expand sidebar"
           >
             <ChevronRight className="w-3.5 h-3.5" />

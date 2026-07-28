@@ -266,7 +266,7 @@ export function StaffSignupForm() {
 						id="department"
 						value={department}
 						onChange={(e) => setDepartment(e.target.value)}
-						className={`w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${fieldErrors.department ? "border-red-400 focus:ring-red-400" : ""} ${department ? "text-gray-900" : "text-gray-400"}`}
+						className={`w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-neutral-surface text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent ${fieldErrors.department ? "border-red-400 focus:ring-red-400" : ""} ${department ? "text-gray-900" : "text-gray-400"}`}
 					>
 						<option value="" disabled>
 							Select...
@@ -346,7 +346,7 @@ export function StaffSignupForm() {
 					<div className="w-full border-t border-gray-200" />
 				</div>
 				<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-					<span className="bg-[#F8F9FB] px-3 text-gray-400">OR</span>
+					<span className="bg-background px-3 text-gray-400">OR</span>
 				</div>
 			</div>
 
@@ -355,7 +355,7 @@ export function StaffSignupForm() {
 				Already have an account?{" "}
 				<Link
 					href="/login"
-					className="text-indigo-600 hover:text-indigo-500 transition-colors"
+					className="text-brand-600 hover:text-brand-500 transition-colors"
 				>
 					Sign in
 				</Link>

@@ -42,7 +42,7 @@ export function SignatoriesCard({
 
 	return (
 		<div
-			className={`rounded-2xl border border-[#E6E4F0] bg-white p-6 shadow-sm ${className}`}
+			className={`rounded-2xl border border-[#E6E4F0] bg-neutral-surface p-6 shadow-sm ${className}`}
 		>
 			<div className="mb-5 flex items-center justify-between">
 				<h2 className="text-base font-semibold text-[#181724]">Signatories</h2>

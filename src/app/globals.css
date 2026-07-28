@@ -2,8 +2,8 @@
 @plugin "tailwindcss-animate";
 
 :root {
-  --background: #FAF8FF;
-  --foreground: #131B2E;
+  --background: #F2F2F0;
+  --foreground: #141528;
 }
 
 @theme {
@@ -12,29 +12,31 @@
 
 	--color-red-100: #FEE2E2;
 	--color-red-500: #EF4444;
-	--color-red-600: #DC2626;
+	--color-red-600: #BA1A1A;
 
 	/* Green / Success */
-	--color-green-100: #DCFCE7;
+	--color-green-100: #BAE9D4;
 	--color-green-500: #22C55E;
-	--color-green-600: #16A34A;
+	--color-green-600: #326316;
 
 	/* Yellow/Amber / Warning */
 	--color-yellow-100: #FEF3C7;
 	--color-yellow-500: #F59E0B;
 	--color-yellow-600: #D97706;
-	--color-brand-25: #F2F3FF;
-	--color-brand-50: #F4F5FB;
-	--color-brand-100: #DCE2F3;
-	--color-brand-200: #DAD7FF;
-	--color-brand-500: #4F46E5;
-	--color-brand-600: #3525CD;
+
+	--color-brand-25: #F7F9FF;
+	--color-brand-50: #F2F3FF;
+	--color-brand-100: #CFC2D4;
+	--color-brand-200: #AE87BB;
+	--color-brand-500: #6B1FA8;
+	--color-brand-600: #500086;
 	--color-brand-900: #0B1C30;
 
 	--color-neutral-surface: #FFFFFF;
-	--color-neutral-border: #C7C4D8;
-	--color-neutral-muted: #464555;
-	--color-neutral-main: #151C27;
+	--color-neutral-subtle: #EEEEEC;
+	--color-neutral-border: #7E7384;
+	--color-neutral-muted: #343434;
+	--color-neutral-main: #1A1C1B;
 
 	--font-sans: var(--font-hanken-grotesk), "Hanken Grotesk", system-ui, -apple-system, sans-serif;
 	--font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;

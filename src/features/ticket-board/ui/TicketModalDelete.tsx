@@ -28,7 +28,7 @@ export default function TicketModalDelete({
 	return (
 		<Backdrop isOpen={isOpen} onClose={onClose}>
 			<div
-				className="bg-white rounded-xl max-w-sm w-full p-6 shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-150"
+				className="bg-neutral-surface rounded-xl max-w-sm w-full p-6 shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-150"
 				onClick={(e) => e.stopPropagation()}
 			>
 				<h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Ticket?</h3>
@@ -46,7 +46,7 @@ export default function TicketModalDelete({
 					</button>
 					<button
 						onClick={onConfirm}
-						className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+						className="px-4 py-2 text-sm font-medium text-neutral-surface bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
 					>
 						Delete
 					</button>

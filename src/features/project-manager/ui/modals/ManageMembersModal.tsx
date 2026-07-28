@@ -16,14 +16,14 @@ interface ManageMembersModalProps {
 
 const DEPARTMENT_STYLES: Record<string,string> = {
 	"Project Owner":"bg-[#FFDAD7] text-[#410004]",
-	"Project Team":"bg-[#4F46E5] text-[#DAD7FF]",
+	"Project Team":"bg-brand-500 text-[#DAD7FF]",
 	"Finance Team":"bg-[#BAE9D4] text-[#00714D]",
 }
 
 export function DepartmentDisplay({departmentName}:{departmentName:string})
 {
-	return <span className={`px-2 py-0.5 rounded-xl text-xs 
-		${DEPARTMENT_STYLES[departmentName]}`}>{departmentName}</span>
+	return <div className={`px-2 w-25 text-center py-0.5 rounded-xl text-xs 
+		${DEPARTMENT_STYLES[departmentName]}`}>{departmentName}</div>
 }
 
 export function ManageMembersModal({
@@ -140,15 +140,15 @@ export function ManageMembersModal({
 
 	return (
 		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div className="bg-white rounded-xl shadow-xl w-lg relative p-6">
-				<div className="h-[2em] bg-white rounded-t-xl flex items-center">
-					<h2 className="text-l font font-bold text-[#0F172A]">
+			<div className="bg-neutral-surface rounded-xl shadow-xl w-lg relative p-6">
+				<div className="h-[2em] bg-neutral-surface rounded-t-xl flex items-center">
+					<h2 className="text-l font font-bold text-foreground">
 						Manage Project Members
 					</h2>
 
 					<button
 						onClick={onClose}
-						className="ml-auto text-[#94A3B8] hover:text-[#475569] transition-colors"
+						className="ml-auto text-brand-200 hover:text-foreground transition-colors"
 					>
 						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
 							<path
@@ -177,35 +177,35 @@ export function ManageMembersModal({
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 								placeholder="Search for people to add"
-								className="w-full pl-9 pr-3 py-2 bg-white border border-[#CBD5E1] rounded text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+								className="w-full pl-9 pr-3 py-2 bg-neutral-surface border border-brand-100 rounded text-sm text-foreground placeholder:text-brand-100 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 							/>
 						</div>
 					</div>
 					{(searchQuery.trim().length > 0)&&
-					<div className="absolute z-10 bg-white mt-1 w-116 drop-shadow-2xl border-b border-l border-r border-[#E2E8F0] rounded">
+					<div className="absolute z-10 bg-neutral-surface mt-1 w-116 drop-shadow-2xl border-b border-l border-r border-brand-100 rounded">
 						{ isSearching ? (
-							<div className="flex justify-center text-[#414247] text-[12px] py-2">Searching...</div>
+							<div className="flex justify-center text-foreground text-[12px] py-2">Searching...</div>
 						) : searchQuery.trim().length > 0 && searchResults.length === 0 ? (
-							<div className="flex justify-center text-[#414247] text-[12px] py-2">No users found</div>
+							<div className="flex justify-center text-foreground text-[12px] py-2">No users found</div>
 						) : searchResults.length > 0 ? (
-							<div className="flex mr-auto ml-auto flex-col divide-y divide-[#E2E8F0] w-110 max-h-48 overflow-y-auto items-center ">
+							<div className="flex mr-auto ml-auto flex-col max-h-60 gap-y-2 overflow-y-auto items-center ">
 								{searchResults.map((profile) => {
 									const isAlreadyMember = memberIds.has(profile.profile_id)
 									return (
 										<div
 											key={profile.profile_id}
-											className="flex w-110 items-center align-items px-4 py-2.5"
+											className="flex w-full items-center align-items px-2 py-2.5"
 										>
 											<div className="flex items-center gap-3 min-w-0">
-												<div className="w-8 h-8 rounded-full bg-[#E2E8F0] flex items-center justify-center text-[#64748B] text-xs font-semibold flex-shrink-0">
+												<div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-neutral-subtle text-xs font-semibold flex-shrink-0">
 													{profile.first_name[0]}
 													{profile.last_name[0]}
 												</div>
 												<div className="">
-													<p className="text-sm font-medium text-[#0F172A] truncate">
+													<p className="text-sm font-medium text-surface truncate">
 														{profile.first_name} {profile.last_name}
 													</p>
-													<p className="text-xs text-[#94A3B8] truncate">
+													<p className="text-xs text-neutral-border truncate">
 														{profile.email}
 													</p>
 												</div>
@@ -218,10 +218,10 @@ export function ManageMembersModal({
 													handleAddMember(profile.profile_id,profile.first_name)
 												}
 												disabled={isAlreadyMember}
-												className={`w-15 ml-2 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all  ${
+												className={`w-10 ml-4 mr-2 py-1 text-[10px] font-semibold rounded-lg transition-all  ${
 													isAlreadyMember
-														? "bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed"
-														: "bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF]"
+														? "bg-brand-100 text-brand-25 cursor-not-allowed"
+														: "bg-brand-500 text-brand-25 hover:bg-text-neutral-border"
 												}`}
 											>
 												{isAlreadyMember ? "Added" : "Add"}
@@ -237,7 +237,7 @@ export function ManageMembersModal({
 					<div className="mt-1 w-full">
 						
 						{(membersLoading || members?.length === 0) && (
-						<p className="h-80 text-xs text-[#64748B] flex justify-center items-center">
+						<p className="h-80 text-xs text-neutral-subtle flex justify-center items-center">
 							{membersLoading ? "Loading members..." : "No members found."}
 						</p>
 						)}
@@ -246,13 +246,13 @@ export function ManageMembersModal({
 							<div className="h-80 rounded-lg overflow-y-auto ">
 								<table className="w-full border-collapse">
 									<thead className="sticky top-0">
-										<tr className="bg-[#FFFFFF] border-b border-[#E2E8F0]">
-											<th className="text-left text-xs py-2 font-semibold text-[#64748B]">NAME</th>
-											<th className="text-left w-[120px] py-2 text-xs font-semibold text-[#64748B]">DEPARTMENT</th>
-											<th className="text-center w-[20px] py-2 text-xs font-semibold text-[#64748B]"></th>
+										<tr className="bg-neutral-surface border-b border-brand-100">
+											<th className="text-left text-xs py-2 font-semibold text-brand-200">NAME</th>
+											<th className="text-left w-[120px] py-2 text-xs font-semibold text-brand-200">DEPARTMENT</th>
+											<th className="text-center w-[20px] py-2 text-xs font-semibold text-brand-200"></th>
 										</tr>
 									</thead>
-									<tbody className="divide-y divide-[#F1F5F9]">
+									<tbody className="">
 										{members
 											.filter((m) => !m.Users.client_id) // Exclude client profiles
 											.map((member) => {
@@ -264,7 +264,7 @@ export function ManageMembersModal({
 												<tr key={`${member.role_id}-${member.user_id}`} className="align-top h-9">
 													<td className="py-3 align-middle">
 														<div className="flex gap-3">
-															<div className="w-8 h-8 rounded-full bg-[#E2E8F0] flex items-center justify-center text-[#64748B] text-xs font-semibold flex-shrink-0">
+															<div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-neutral-subtle text-xs font-semibold flex-shrink-0">
 																{member.Users.first_name[0]}{member.Users.last_name[0]}
 															</div>
 														<div>
@@ -277,7 +277,7 @@ export function ManageMembersModal({
 														</div>
 														</div>
 													</td>
-													<td className="py-3 text-sm text-[#64748B] align-middle">
+													<td className="py-3 text-sm text-neutral-subtle align-middle">
 														{member.Users.Department &&<DepartmentDisplay departmentName={member.Users.Department.name}/>}
 													</td>
 													<td className="py-3 px-3 text-right align-middle">
@@ -291,7 +291,7 @@ export function ManageMembersModal({
 														}
 														className={`p-1.5 rounded-lg transition-colors ${
 															cannotRemove
-															? "text-[#CBD5E1] cursor-not-allowed"
+															? "text-brand-100 cursor-not-allowed"
 															: "text-[#94A3B8] hover:text-[#EF4444] hover:bg-[#FEE2E2]"
 														}`}
 														>

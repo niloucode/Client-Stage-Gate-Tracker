@@ -97,13 +97,13 @@ export function ProjectCard({
 
 	const statusClass =
 		project.project_status === "ACTIVE"
-			? "bg-[#4F46E5] text-[#DAD7FF]" : 
+			? "bg-brand-500 text-[#DAD7FF]" : 
 		project.project_status === "PENDING"
 			? "bg-[#FFDAD7] text-[#6d0007]" :
 			"bg-[#BAE9D4] text-[#00714D]";
 
 	return (
-		<div className="bg-white cursor-pointer rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none">
+		<div className="bg-neutral-surface cursor-pointer rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none">
 			{/* Project Head: Name left, Status badge top-right */}
 			<div className="flex items-start justify-between gap-2 mb-3">
 				<h3 className="text-m font-semibold text-[#0F172A] max-w-[80%] break-all line-clamp-2">
@@ -134,7 +134,7 @@ export function ProjectCard({
 
 			{/* Client Name — always shown */}
 			<div className="mb-2 mt-auto">
-				<p className="text-xs text-[#4F46E5]">
+				<p className="text-xs text-brand-500">
 					{project.client_name ?? "—"}
 				</p>
 			</div>
@@ -181,7 +181,7 @@ export function ProjectCard({
 					{menuOpen && menuPos && (
 						<div
 							ref={menuRef}
-							className="fixed w-56 bg-white rounded-xl shadow-lg border border-[#E2E8F0] py-1 z-[100]"
+							className="fixed w-56 bg-neutral-surface rounded-xl shadow-lg border border-[#E2E8F0] py-1 z-[100]"
 							style={{ top: menuPos.top, right: menuPos.right }}
 						>
 							<button

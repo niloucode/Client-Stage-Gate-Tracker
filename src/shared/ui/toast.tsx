@@ -116,7 +116,7 @@ export function Toast({
 			: 'translate-x-full opacity-0 pointer-events-none'
 	}`}
 	>
-        <div className={"overflow-hidden rounded-l-2xl drop-shadow-2xl ml-auto flex items-center bg-white h-full w-72"}>
+        <div className={"overflow-hidden rounded-l-2xl drop-shadow-2xl ml-auto flex items-center bg-neutral-surface h-full w-72"}>
 			<div className={"h-full w-[10px]"}
             	style={{backgroundColor:colorComponent}}>
 			</div>

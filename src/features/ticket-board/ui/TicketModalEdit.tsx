@@ -338,16 +338,16 @@ export default function TicketModalEdit({
 	return (
 		<>
 			<div
-				className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+				className={`fixed inset-0 bg-foreground/30 z-40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
 				onClick={onClose}
 			/>
 
 			<div
-				className={`fixed top-0 right-0 h-full w-[520px] bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+				className={`fixed top-0 right-0 h-full w-[520px] bg-neutral-surface shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
 			>
 				{/* Header */}
 				<div className="flex items-start gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
-					<span className="text-xs font-semibold text-indigo-600 shrink-0">
+					<span className="text-xs font-semibold text-brand-600 shrink-0">
 						{ticket.ticket_id.slice(0, 8)}
 					</span>
 					{editing === "title" ? (
@@ -366,7 +366,7 @@ export default function TicketModalEdit({
 									setEditing(null);
 								}
 							}}
-							className="flex-1 min-w-0 text-sm font-semibold text-gray-900 border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 break-all"
+							className="flex-1 min-w-0 text-sm font-semibold text-gray-900 border border-indigo-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500 break-all"
 						/>
 					<p className="text-xs text-gray-400 text-right mt-0.5">{titleDraft.length}/50</p>
 					</>
@@ -394,13 +394,13 @@ export default function TicketModalEdit({
 					<div className="relative">
 						<button
 							onClick={() => setEditing(editing === "status" ? null : "status")}
-							className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+							className="flex items-center gap-2 bg-brand-600 hover:bg-indigo-700 text-neutral-surface text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
 						>
 							{statusLabel(ticket.status)}
 							<span>▾</span>
 						</button>
 						{editing === "status" && (
-							<div className="absolute z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
+							<div className="absolute z-50 mt-1 min-w-[160px] bg-neutral-surface border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
 								{STATUSES.map((s) => (
 									<button
 										key={s}
@@ -425,7 +425,7 @@ export default function TicketModalEdit({
 								<div className="flex flex-col gap-1.5">
 									{ticket.TicketAssigned.map((a) => (
 										<div key={a.profile_id} className="flex items-center gap-2 group">
-											<div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+											<div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
 												{`${a.Profiles?.first_name ?? "U"} ${a.Profiles?.last_name ?? ""}`
 													.trim()
 													.split(" ")
@@ -462,13 +462,13 @@ export default function TicketModalEdit({
 								<div className="relative mt-2" ref={assignDropdownRef}>
 									<button
 										onClick={() => setShowAssignDropdown((v) => !v)}
-										className="flex items-center gap-1 text-xs text-indigo-600 hover:bg-indigo-50 font-medium transition-colors border border-indigo-200 rounded-lg px-2.5 py-1"
+										className="flex items-center gap-1 text-xs text-brand-600 hover:bg-indigo-50 font-medium transition-colors border border-indigo-200 rounded-lg px-2.5 py-1"
 									>
 										+ Add Assignee
 									</button>
 
 									{showAssignDropdown && (
-										<div className="absolute z-10 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
+										<div className="absolute z-10 mt-1 w-48 bg-neutral-surface border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
 											{availableProfiles.map((profile) => (
 												<button
 													key={profile.profile_id}
@@ -493,7 +493,7 @@ export default function TicketModalEdit({
 													}}
 													className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 transition-colors"
 												>
-													<div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+													<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
 														{`${profile.first_name} ${profile.last_name}`
 															.split(" ")
 															.map((n: string) => n[0])
@@ -517,7 +517,7 @@ export default function TicketModalEdit({
 							>
 								{watcher ? (
 									<div className="flex items-center gap-2">
-										<div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold text-white">
+										<div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface">
 											{`${watcher.first_name} ${watcher.last_name}`
 												.split(" ")
 												.map((n: string) => n[0])
@@ -526,11 +526,11 @@ export default function TicketModalEdit({
 										<span className="text-sm text-gray-700 font-medium">{`${watcher.first_name} ${watcher.last_name}`}</span>
 									</div>
 								) : (
-									<span className="text-sm text-indigo-500 font-medium">Unassigned</span>
+									<span className="text-sm text-brand-500 font-medium">Unassigned</span>
 								)}
 							</div>
 							{editing === "watcher" && (
-								<div className="absolute z-50 mt-1 min-w-[160px] bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
+								<div className="absolute z-50 mt-1 min-w-[160px] bg-neutral-surface border border-gray-200 rounded-lg shadow-lg py-1 max-h-48 overflow-y-auto">
 									<button
 										onClick={() => {
 											setWatcher("");
@@ -549,7 +549,7 @@ export default function TicketModalEdit({
 											}}
 											className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
 										>
-											<div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+											<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
 												{`${u.first_name} ${u.last_name}`.split(" ").map((n) => n[0]).join("")}
 											</div>
 											{`${u.first_name} ${u.last_name}`}
@@ -586,7 +586,7 @@ export default function TicketModalEdit({
 							type="datetime-local"
 							value={deadlineDraft || (ticket.deadline_date ? new Date(ticket.deadline_date).toISOString().slice(0, 16) : "")}
 							onChange={(e) => { setDeadlineDraft(e.target.value); commitDeadline(); }}
-							className="text-sm text-gray-900 border border-gray-200 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+							className="text-sm text-gray-900 border border-gray-200 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
 						/>
 					</div>
 
@@ -634,7 +634,7 @@ export default function TicketModalEdit({
 								})}
 								<button
 									onClick={() => setEditing(editing === "tags" ? null : "tags")}
-									className="text-xs text-indigo-600 hover:text-indigo-700 font-medium px-1.5 py-0.5 rounded border border-indigo-200 hover:bg-indigo-50"
+									className="text-xs text-brand-600 hover:text-indigo-700 font-medium px-1.5 py-0.5 rounded border border-indigo-200 hover:bg-indigo-50"
 								>
 									+ Add
 								</button>
@@ -678,7 +678,7 @@ export default function TicketModalEdit({
 										onChange={(e) =>
 											setApiMethod(e.target.value as "GET" | "POST" | "PUT" | "DELETE")
 										}
-										className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+										className="w-full rounded-lg border border-gray-200 bg-neutral-surface px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
 									>
 										{["GET", "POST", "PUT", "DELETE"].map((m) => (
 											<option key={m}>{m}</option>
@@ -701,7 +701,7 @@ export default function TicketModalEdit({
 							{editing !== "description" && (
 								<button
 									onClick={() => startEdit("description")}
-									className="text-xs text-indigo-600 font-medium hover:text-indigo-700"
+									className="text-xs text-brand-600 font-medium hover:text-indigo-700"
 								>
 									Edit
 								</button>
@@ -714,12 +714,12 @@ export default function TicketModalEdit({
 									value={descDraft}
 									onChange={(e) => setDescDraft(e.target.value)}
 									rows={5}
-									className="w-full text-sm text-gray-600 border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none break-words"
+									className="w-full text-sm text-gray-600 border border-indigo-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none break-words"
 								/>
 								<div className="flex gap-2">
 									<button
 										onClick={commitDesc}
-										className="text-xs font-medium bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700"
+										className="text-xs font-medium bg-brand-600 text-neutral-surface px-3 py-1.5 rounded-md hover:bg-indigo-700"
 									>
 										Save
 									</button>
@@ -733,7 +733,7 @@ export default function TicketModalEdit({
 							</div>
 						) : (
 							<p
-								className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap break-words cursor-pointer hover:text-gray-800"
+								className="text-sm text-gray-600 leading-relaxed neutral-surfacespace-pre-wrap break-words cursor-pointer hover:text-gray-800"
 								onClick={() => startEdit("description")}
 							>
 								{ticket.description || (
@@ -757,11 +757,11 @@ export default function TicketModalEdit({
             {/*              <div*/}
             {/*                  className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${*/}
             {/*                      subtask.completed*/}
-            {/*                          ? 'bg-indigo-600 border-indigo-600'*/}
+            {/*                          ? 'bg-brand-600 border-brand-600'*/}
             {/*                          : 'border-gray-300 group-hover:border-gray-400'*/}
             {/*                  }`}*/}
             {/*              >*/}
-            {/*                {subtask.completed && <CheckIcon className="text-white" />}*/}
+            {/*                {subtask.completed && <CheckIcon className="text-neutral-surface" />}*/}
             {/*              </div>*/}
             {/*              <span*/}
             {/*                  className={`text-sm flex-1 ${*/}
@@ -772,7 +772,7 @@ export default function TicketModalEdit({
             {/*            </span>*/}
             {/*              {subtask.assignee ? (*/}
             {/*                  <div*/}
-            {/*                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 ${subtask.assignee.bgColor}`}*/}
+            {/*                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-neutral-surface shrink-0 ${subtask.assignee.bgColor}`}*/}
             {/*                      title={subtask.assignee.name}*/}
             {/*                  >*/}
             {/*                    {subtask.assignee.initials}*/}
@@ -800,7 +800,7 @@ export default function TicketModalEdit({
 							<div className="space-y-3 mb-4">
 								{comments.map((comment) => (
 									<div key={comment.comment_id} className="flex gap-2.5">
-										<div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5">
+										<div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0 mt-0.5">
 											{getInitials(
 												comment.Profiles.first_name + " " + comment.Profiles.last_name,
 											)}
@@ -839,7 +839,7 @@ export default function TicketModalEdit({
 						)}
 
 						{/* Comment input */}
-						<div className="border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-shadow">
+						<div className="border border-gray-200 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-transparent transition-shadow">
 							{/* 1. NEW MULTIPLE PREVIEWS BLOCK GOES HERE (Right above the textarea) */}
 							{commentImagePreviews.length > 0 && (
 								<div className="px-3 pt-2.5 pb-0 flex flex-wrap gap-2">
@@ -853,7 +853,7 @@ export default function TicketModalEdit({
 											<button
 												type="button"
 												onClick={() => removeImage(idx)}
-												className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-700 text-white flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
+												className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-700 text-neutral-surface flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
 											>
 												×
 											</button>
@@ -877,7 +877,7 @@ export default function TicketModalEdit({
 						)}
 							<div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 bg-gray-50/50">
 								<label
-									className="cursor-pointer text-gray-400 hover:text-indigo-500 transition-colors"
+									className="cursor-pointer text-gray-400 hover:text-brand-500 transition-colors"
 									title="Attach images (jpg, png · Max 5MB)"
 								>
 									<svg
@@ -909,7 +909,7 @@ export default function TicketModalEdit({
 									disabled={
 										(!commentText.trim() && commentImages.length === 0) || isSubmitting
 									}
-									className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors"
+									className="text-xs font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors"
 								>
 									{isSubmitting ? "Posting..." : "Comment"}
 								</button>
@@ -919,7 +919,7 @@ export default function TicketModalEdit({
 				</div>
 
 				{/* Footer save button */}
-				<div className="flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-white">
+				<div className="flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-neutral-surface">
 					<button
 						onClick={onClose}
 						className="text-sm font-medium text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100"
@@ -928,7 +928,7 @@ export default function TicketModalEdit({
 					</button>
 					<button
 						onClick={handleSave}
-						className="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
+						className="text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
 					>
 						Save Changes
 					</button>

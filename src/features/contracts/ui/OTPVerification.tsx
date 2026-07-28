@@ -145,7 +145,7 @@ export function OTPVerification({
 				<button
 					type="button"
 					onClick={triggerOTP}
-					className="w-full rounded-lg bg-[#4338CA] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3730A3]"
+					className="w-full rounded-lg bg-[#4338CA] py-2.5 text-sm font-semibold text-neutral-surface transition-colors hover:bg-[#3730A3]"
 				>
 					Request OTP
 				</button>
@@ -194,7 +194,7 @@ export function OTPVerification({
 						className={`h-10 w-full rounded-lg border text-center text-sm font-semibold outline-none transition-colors focus:ring-2 focus:ring-[#4338CA] ${
 							otpState === "error"
 								? "border-red-400 bg-red-50 text-red-600 focus:ring-red-400"
-								: "border-[#C4BFE6] bg-white text-[#181724]"
+								: "border-[#C4BFE6] bg-neutral-surface text-[#181724]"
 						}`}
 					/>
 				))}
@@ -213,7 +213,7 @@ export function OTPVerification({
 				type="button"
 				onClick={handleVerify}
 				disabled={!allFilled || isVerifying}
-				className={`w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-colors ${
+				className={`w-full rounded-lg py-2.5 text-sm font-semibold text-neutral-surface transition-colors ${
 					allFilled && !isVerifying
 						? "bg-[#4338CA] hover:bg-[#3730A3]"
 						: "cursor-not-allowed bg-[#A8A3D0]"

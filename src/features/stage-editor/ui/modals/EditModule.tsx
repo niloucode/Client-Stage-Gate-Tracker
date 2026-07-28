@@ -64,8 +64,8 @@ export function EditModule({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-			<div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
+		<div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
+			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-md p-6 relative">
 				<button
 					onClick={onClose}
 					className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#475569] transition-colors"
@@ -81,7 +81,7 @@ export function EditModule({
 				</button>
 
 				<h2 className="text-xl font-bold text-[#0F172A] mb-2">Edit Module</h2>
-				<p className="text-sm text-[#64748B] mb-6">
+				<p className="text-sm text-neutral-subtle mb-6">
 					Update the module details below.
 				</p>
 
@@ -99,7 +99,7 @@ export function EditModule({
 								setFieldErrors({});
 							}}
 							placeholder="e.g., Authentication & Identity"
-							className={`w-full px-3 py-2 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-[#CBD5E1]"}`}
+							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
 						/>
 						<div className="flex justify-between mt-1">
 							{fieldErrors.name ? (
@@ -135,7 +135,7 @@ export function EditModule({
 										: null,
 								})
 							}
-							className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+							className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 				</div>
@@ -159,13 +159,13 @@ export function EditModule({
 					<div className="flex gap-3 ml-auto">
 						<button
 							onClick={onClose}
-							className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+							className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
 						>
 							Cancel
 						</button>
 						<button
 							onClick={handleSave}
-							className="px-4 py-2 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+							className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 						>
 							Save Changes
 						</button>

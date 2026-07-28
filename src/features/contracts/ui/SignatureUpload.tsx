@@ -122,7 +122,7 @@ export function SignatureUpload({
 					type="button"
 					onClick={handleClear}
 					aria-label="Remove signature"
-					className="absolute right-2 top-2 rounded-full bg-white p-1 shadow-sm hover:bg-red-50"
+					className="absolute right-2 top-2 rounded-full bg-neutral-surface p-1 shadow-sm hover:bg-red-50"
 				>
 					<X className="h-3.5 w-3.5 text-[#6E6B82]" />
 				</button>

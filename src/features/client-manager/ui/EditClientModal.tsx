@@ -59,7 +59,7 @@ export default function EditClientModal({
 					</h3>
 					<button
 						onClick={onClose}
-						className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-black/10"
+						className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-foreground/10"
 						aria-label="Close"
 					>
 						<X className="h-4 w-4" style={{ color: "#464555" }} />
@@ -76,7 +76,7 @@ export default function EditClientModal({
 							maxLength={CLIENT_NAME_MAX}
 							value={clientName}
 							onChange={(e) => setClientName(e.target.value)}
-							className="w-full rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
+							className="w-full rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
 							style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 						/>
 						<span className="text-base" style={{ color: "#737280" }}>
@@ -91,7 +91,7 @@ export default function EditClientModal({
 							<input
 								type="text"
 								defaultValue={initialData?.tin ?? "4444444444"}
-								className="w-full rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
+								className="w-full rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
 								style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 							/>
 						</div>
@@ -100,7 +100,7 @@ export default function EditClientModal({
 							<input
 								type="email"
 								defaultValue={initialData?.email ?? "contact@client.com"}
-								className="w-full rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
+								className="w-full rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
 								style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 							/>
 						</div>
@@ -112,7 +112,7 @@ export default function EditClientModal({
 						<input
 							type="tel"
 							defaultValue={initialData?.contactNumber ?? "+1 (555) 000-0000"}
-							className="w-full rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
+							className="w-full rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
 							style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 						/>
 					</div>
@@ -123,7 +123,7 @@ export default function EditClientModal({
 						<textarea
 							defaultValue={initialData?.billingAddress ?? "4050 Oz Street"}
 							rows={4}
-							className="w-full resize-none rounded-md bg-white px-4 py-3 text-base outline-none focus:ring-1 focus:ring-indigo-500"
+							className="w-full resize-none rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
 							style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 						/>
 					</div>
@@ -136,13 +136,13 @@ export default function EditClientModal({
 				>
 					<button
 						onClick={onClose}
-						className="rounded-md px-5 py-3 text-base font-bold transition-colors hover:bg-black/5"
+						className="rounded-md px-5 py-3 text-base font-bold transition-colors hover:bg-foreground/5"
 						style={{ border: "1px solid #c7c4d8", color: "#464555" }}
 					>
 						Cancel
 					</button>
 					<button
-						className="rounded-xl px-5 py-3 text-base font-bold text-white transition-colors hover:opacity-90"
+						className="rounded-xl px-5 py-3 text-base font-bold text-neutral-surface transition-colors hover:opacity-90"
 						style={{ backgroundColor: "#4f46e5" }}
 					>
 						Save Changes

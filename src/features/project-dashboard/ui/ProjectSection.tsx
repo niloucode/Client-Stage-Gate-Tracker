@@ -23,23 +23,23 @@ const STATUS_CONFIG: Record<
     }
 > = {
     PENDING: {
-        icolor: "text-[#6d0007]",
-        color: "text-[#6d0007]",
-        bg: "bg-[#FFDAD7]",
+        icolor: "text-red-600",
+        color: "text-red-600",
+        bg: "bg-red-100",
         emptyText: "No pending projects.",
         icon: CircleEllipsis,
     },
     ACTIVE: {
-        icolor: "text-[#4F46E5]",
-        color: "text-[#DAD7FF]",
-        bg: "bg-[#4F46E5]",
+        icolor: "text-brand-500",
+        color: "text-brand-100",
+        bg: "bg-brand-500",
         emptyText: "No active projects.",
         icon: Layers,
     },
     COMPLETED: {
-        icolor: "text-[#00714D]",
-        color: "text-[#00714D]",
-        bg: "bg-[#BAE9D4]",
+        icolor: "text-green-600",
+        color: "text-green-600",
+        bg: "bg-green-100",
         emptyText: "No completed projects yet.",
         icon: CheckCircle2,
     },
@@ -62,11 +62,11 @@ export function ProjectSection({
             <button
                 type="button"
                 onClick={onToggle}
-                className="cursor-pointer select-none rounded-xl border border-[#C7C4D8] w-full flex items-center justify-between px-5 py-3 bg-[#EFF4FF] transition-colors hover:bg-[#e4ebfc]"
+                className="rounded-md cursor-pointer select-none border border-brand-100 w-full flex items-center justify-between px-5 py-3 bg-brand-25 transition-colors hover:bg-brand-50"
             >
                 <div className="flex items-center gap-2">
                     <IconComponent size={18} className={config.icolor} />
-                    <h2 className="text-[23px] font-semibold text-[#0F172A]">{title}</h2>
+                    <h2 className="text-[23px] font-semibold text-foreground">{title}</h2>
                     <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.color} ${config.bg}`}
                     >
@@ -75,7 +75,7 @@ export function ProjectSection({
                 </div>
                 <ChevronDown
                     size={20}
-                    className={`text-[#64748B] transform transition-transform duration-300 ease-in-out ${
+                    className={`text-neutral-subtle transform transition-transform duration-300 ease-in-out ${
                         isExpanded ? "rotate-180" : ""
                     }`}
                 />
@@ -89,7 +89,7 @@ export function ProjectSection({
             >
                 <div className="overflow-hidden">
                     {projects.length === 0 ? (
-                        <p className="text-sm text-[#94A3B8] px-5 py-8 text-center">
+                        <p className="text-sm text-foreground px-5 py-8 text-center">
                             {config.emptyText}
                         </p>
                     ) : (

@@ -214,7 +214,7 @@ export function ContractViewer({
 	return (
 		<>
 			<div
-				className={`flex flex-col overflow-hidden rounded-2xl border border-[#E6E4F0] bg-white shadow-sm ${className}`}
+				className={`flex flex-col overflow-hidden rounded-2xl border border-[#E6E4F0] bg-neutral-surface shadow-sm ${className}`}
 			>
 				{/* Toolbar */}
 				<div className="flex items-center justify-between gap-3 border-b border-[#E6E4F0] px-4 py-3">
@@ -222,7 +222,7 @@ export function ContractViewer({
 						<FileText className="h-5 w-5 shrink-0 text-[#4338CA]" />
 						<input
 							type="text"
-							className="truncate text-sm font-medium text-[#181724] border border-transparent hover:border-black"
+							className="truncate text-sm font-medium text-[#181724] border border-transparent hover:border-foreground"
 							value={changeName}
 							onChange={(e) => setChangeName(e.target.value)}
 							//trigger saving when I click enter
@@ -290,7 +290,7 @@ export function ContractViewer({
 						) : (
 							<button
 								onClick={() => inputRef.current?.click()}
-								className="flex items-center gap-1.5 rounded-lg bg-[#4338CA] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#3730A3]"
+								className="flex items-center gap-1.5 rounded-lg bg-[#4338CA] px-3 py-1.5 text-xs font-medium text-neutral-surface hover:bg-[#3730A3]"
 							>
 								<Upload className="h-3.5 w-3.5" />
 								Upload Contract
@@ -320,7 +320,7 @@ export function ContractViewer({
 							<embed
 								src={`${fileUrl}#toolbar=0`}
 								type="application/pdf"
-								className="aspect-[8.5/11] w-full rounded-lg border border-[#E6E4F0] bg-white shadow-sm"
+								className="aspect-[8.5/11] w-full rounded-lg border border-[#E6E4F0] bg-neutral-surface shadow-sm"
 							/>
 						</div>
 					</div>
@@ -359,8 +359,8 @@ export function ContractViewer({
 
 			{pendingFile &&
 				createPortal(
-					<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-						<div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+					<div className="fixed inset-0 z-50 flex items-center justify-center bg-foregroundal-main/40 px-4">
+						<div className="w-full max-w-sm rounded-2xl bg-neutral-surface p-6 shadow-xl">
 							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFFBEB]">
 								<AlertTriangle className="h-5 w-5 text-[#B45309]" />
 							</div>
@@ -398,7 +398,7 @@ export function ContractViewer({
 								<button
 									onClick={confirmUpload}
 									disabled={!contractName.trim()}
-									className="flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-white hover:bg-[#3730A3] disabled:cursor-not-allowed disabled:opacity-50"
+									className="flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-neutral-surface hover:bg-[#3730A3] disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									Yes, upload
 								</button>
@@ -411,8 +411,8 @@ export function ContractViewer({
 			{removeRequested &&
 				file &&
 				createPortal(
-					<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-						<div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+					<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/70 backdrop-blur-sm px-4">
+						<div className="w-full max-w-sm rounded-2xl bg-neutral-surface p-6 shadow-xl">
 							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FEF2F2]">
 								<AlertTriangle className="h-5 w-5 text-[#DC2626]" />
 							</div>
@@ -445,8 +445,8 @@ export function ContractViewer({
 									disabled={removeConfirmText !== file.name}
 									className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-colors disabled:opacity-100 disabled:visible ${
 										removeConfirmText !== file.name
-											? "border-[#E6E4F0] bg-white text-[#6E6B82] cursor-not-allowed"
-											: "flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-white hover:bg-[#3730A3]"
+											? "border-[#E6E4F0] bg-neutral-surface text-[#6E6B82] cursor-not-allowed"
+											: "flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-neutral-surface hover:bg-[#3730A3]"
 									}`}
 								>
 									Remove

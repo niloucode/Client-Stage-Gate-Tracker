@@ -23,7 +23,7 @@ export default function TagModalDelete({
 		<>
 			<Backdrop onClick={onClose} />
 			<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-				<div className="bg-white rounded-xl shadow-2xl w-full max-w-sm">
+				<div className="bg-neutral-surface rounded-xl shadow-2xl w-full max-w-sm">
 					{/* Header */}
 					<div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
 						<h2 className="text-base font-semibold text-gray-900">Delete Tag</h2>
@@ -51,7 +51,7 @@ export default function TagModalDelete({
 						</button>
 						<button
 							onClick={handleDelete}
-							className="text-sm font-semibold text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors"
+							className="text-sm font-semibold text-neutral-surface bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors"
 						>
 							Yes, Delete
 						</button>

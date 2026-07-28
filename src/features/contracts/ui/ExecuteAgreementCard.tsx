@@ -56,7 +56,7 @@ export function ExecuteAgreementCard({
 
 	if (signed) {
 		return (
-			<div className="rounded-2xl border border-[#E6E4F0] bg-white p-6 shadow-sm">
+			<div className="rounded-2xl border border-[#E6E4F0] bg-neutral-surface p-6 shadow-sm">
 				<p className="text-sm font-medium text-[#15803D]">
 					✓ You have signed this contract.
 				</p>
@@ -66,7 +66,7 @@ export function ExecuteAgreementCard({
 
 	return (
 		<div
-			className={`rounded-2xl border border-[#E6E4F0] bg-white p-6 shadow-sm ${className}`}
+			className={`rounded-2xl border border-[#E6E4F0] bg-neutral-surface p-6 shadow-sm ${className}`}
 		>
 			<h2 className="mb-1 text-base font-semibold text-[#181724]">
 				Execute Agreement

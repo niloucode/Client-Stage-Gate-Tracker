@@ -58,8 +58,8 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 	};
 
 	return (
-		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-			<div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
+		<div className="fixed inset-0 bg-foregroundal-main/50 flex items-center justify-center z-50">
+			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-md p-6 relative">
 				<button
 					onClick={handleClose}
 					className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#475569] transition-colors"
@@ -77,7 +77,7 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 				<h2 className="text-xl font-bold text-[#0F172A] mb-2">
 					Create New Phase
 				</h2>
-				<p className="text-sm text-[#64748B] mb-6">
+				<p className="text-sm text-neutral-subtle mb-6">
 					Fill in the details to create a new phase in the pipeline.
 				</p>
 
@@ -94,7 +94,7 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 								setFormData({ ...formData, name: e.target.value })
 							}
 							placeholder="e.g., Discovery"
-							className={`w-full px-3 py-2 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-[#CBD5E1]"}`}
+							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
 						/>
 						<div className="flex justify-between mt-1">
 							{fieldErrors.name ? (
@@ -119,7 +119,7 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 							}
 							placeholder="Describe the objectives and scope of this phase..."
 							rows={3}
-							className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+							className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 
@@ -147,7 +147,7 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 										: null,
 								})
 							}
-							className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+							className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 				</div>
@@ -155,13 +155,13 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 				<div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#F1F5F9]">
 					<button
 						onClick={handleClose}
-						className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+						className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
 					>
 						Cancel
 					</button>
 					<button
 						onClick={handleSubmit}
-						className="px-4 py-2 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+						className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 					>
 						Create Phase
 					</button>

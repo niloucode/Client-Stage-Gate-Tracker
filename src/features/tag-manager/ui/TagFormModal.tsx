@@ -46,7 +46,7 @@ export default function TagFormModal({
 		<>
 			<Backdrop onClick={onClose} />
 			<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-				<div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+				<div className="bg-neutral-surface rounded-xl shadow-2xl w-full max-w-md">
 					{/* Header */}
 					<div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
 						<h2 className="text-base font-semibold text-gray-900">
@@ -67,7 +67,7 @@ export default function TagFormModal({
 								onChange={(e) => setName(e.target.value)}
 								placeholder="e.g. Production"
 								maxLength={10}
-								className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+								className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
 							/>
 							<div className="flex mt-0.5 text-xs">
 								{error && <span className="text-red-500">{error}</span>}
@@ -85,7 +85,7 @@ export default function TagFormModal({
 								placeholder="Used for critical infrastructure."
 								rows={3}
 								maxLength={35}
-								className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+								className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
 							/>
 							<p className="text-xs text-gray-400 text-right mt-0.5">{description.length}/35</p>
 						</div>
@@ -103,7 +103,7 @@ export default function TagFormModal({
 						<button
 							onClick={handleSubmit}
 							disabled={!name.trim()}
-							className="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2 rounded-lg transition-colors"
+							className="text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2 rounded-lg transition-colors"
 						>
 							Save Tag
 						</button>

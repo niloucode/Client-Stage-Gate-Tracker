@@ -56,9 +56,9 @@ export function TicketCardContent({
 			onClick={() => onSelect(ticket)}
 			className={[
 				// (ticket.deadline_date && ticket.deadline_date < today) ? "bg-[#FFEEEE]": 
-				"bg-white",
-				"flex overflow-clip rounded h-27 border-2 border-brand-100 cursor-pointer relative ",
-				"hover:bg-brand-100 hover:border-brand-300 transition-colors duration-150 select-none",
+				"bg-neutral-surface",
+				"flex overflow-clip rounded h-27 border border-brand-100 cursor-pointer relative ",
+				"hover:bg-brand-50 hover:border-brand-300 transition-colors duration-150 select-none",
 				
 			].join(" ")}
 		>
@@ -83,7 +83,7 @@ export function TicketCardContent({
 							{ticket.name}
 						</p>
 					</div>
-					{/* <span className="text-xs font-semibold text-indigo-600 shrink-0">{ticket.ticket_id}</span> */}
+					{/* <span className="text-xs font-semibold text-brand-600 shrink-0">{ticket.ticket_id}</span> */}
 					<div className="flex gap-1.5 items-center ml-auto" ref={menuRef}>
 						
 					{/* {(ticket.deadline_date && ticket.deadline_date < today) ? (
@@ -104,7 +104,7 @@ export function TicketCardContent({
 								onSelect(ticket)
 								onEdit(ticket)
 							}}
-							className="h-[14px] w-[14px] cursor-pointer text-gray-700 hover:text-black transition-all duration-300 fade-in"
+							className="h-[14px] w-[14px] cursor-pointer text-gray-700 hover:text-foreground transition-all duration-300 fade-in"
 						><LucidePencil size={14} strokeWidth={2}/>
 						</button>
 						<button
@@ -145,7 +145,7 @@ export function TicketCardContent({
 
 						{ticket.Profiles ? (
 							<div
-								className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white bg-gray-600 shrink-0 {usercolor}`}
+								className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-neutral-surface bg-gray-600 shrink-0 {usercolor}`}
 								title={`${ticket.Profiles?.first_name} ${ticket.Profiles?.last_name}`}
 							>
 								{getInitials(

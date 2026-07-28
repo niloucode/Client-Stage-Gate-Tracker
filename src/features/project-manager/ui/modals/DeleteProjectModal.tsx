@@ -51,7 +51,7 @@ export function DeleteProjectModal({
 
 	return (
 		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
+			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-md p-6 relative">
 				<div className="flex items-center">
 
 					<h2 className="text-xl font-bold text-[#0F172A]">
@@ -72,7 +72,7 @@ export function DeleteProjectModal({
 					</button>
 				</div>
 				<div className="h-px bg-[#dde4ee] -mx-6 my-4" />
-				<p className="text-sm text-[#64748B]">
+				<p className="text-sm text-neutral-subtle">
 					This action cannot be undone. Please type{" "}
 					<strong className="text-[#0F172A]">{projectName}</strong> to
 					confirm.
@@ -87,10 +87,10 @@ export function DeleteProjectModal({
 								setHasAttempted(false);
 							}}
 							placeholder="Project Name"
-							className={`w-full px-3 py-2 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all mt-1.5 ${
+							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all mt-1.5 ${
 								hasAttempted && !namesMatch
 									? "border-red-400 focus:ring-red-400"
-									: "border-[#CBD5E1]"
+									: "border-brand-100"
 							}`}
 						/>
 						{hasAttempted && !namesMatch && (
@@ -109,7 +109,7 @@ export function DeleteProjectModal({
 						disabled={!namesMatch}
 						className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all shadow-sm ${
 							namesMatch
-								? "bg-[#EF4444] text-white hover:bg-[#DC2626]"
+								? "bg-[#EF4444] text-neutral-surface hover:bg-[#DC2626]"
 								: "bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed"
 						}`}
 					>

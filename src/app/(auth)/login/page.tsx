@@ -14,7 +14,7 @@ export default function LoginPage() {
 	return (
 		<div className={`${hanken.className} flex min-h-screen w-full`}>
 			{/* ── Left Panel ── */}
-			<div className="flex flex-col w-full lg:w-[58%] bg-[#F8F9FB] px-10 py-10">
+			<div className="flex flex-col w-full lg:w-[58%] bg-background px-10 py-10">
 				{/* Brand mark */}
 				<div>
 					<Image
@@ -68,7 +68,7 @@ export default function LoginPage() {
 						height={32}
 						unoptimized
 					/>
-					<div className="mt-3 w-8 h-[2px] bg-indigo-500 rounded-full" />
+					<div className="mt-3 w-8 h-[2px] bg-brand-500 rounded-full" />
 				</div>
 			</div>
 		</div>

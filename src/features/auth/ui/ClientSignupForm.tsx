@@ -499,7 +499,7 @@ export function ClientSignupForm() {
 					<div className="w-full border-t border-gray-200" />
 				</div>
 				<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-					<span className="bg-[#F8F9FB] px-3 text-gray-400">OR</span>
+					<span className="bg-background px-3 text-gray-400">OR</span>
 				</div>
 			</div>
 
@@ -507,7 +507,7 @@ export function ClientSignupForm() {
 				Already have an account?{" "}
 				<Link
 					href="/login"
-					className="text-indigo-600 hover:text-indigo-500 transition-colors"
+					className="text-brand-600 hover:text-brand-500 transition-colors"
 				>
 					Sign in
 				</Link>

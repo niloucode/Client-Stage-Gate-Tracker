@@ -183,12 +183,12 @@ export const PhaseStepper = forwardRef<
 
 	return (
 		<>
-			<div className="relative bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8">
+			<div className="relative bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm mb-8">
 				<div className="px-8 py-8 relative">
 					{/* Empty State */}
 					{phases.length === 0 ? (
 						<div className="flex flex-col items-center justify-center py-8 text-center">
-							<p className="text-sm text-[#64748B]">No phases yet</p>
+							<p className="text-sm text-neutral-subtle">No phases yet</p>
 							<p className="text-xs text-[#94A3B8] mt-1">
 								Click Add Phase to create your first phase
 							</p>
@@ -199,7 +199,7 @@ export const PhaseStepper = forwardRef<
 							{showLeftArrow && (
 								<button
 									onClick={() => scroll("left")}
-									className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-[#4F46E5] transition-all flex items-center justify-center"
+									className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-brand-500 transition-all flex items-center justify-center"
 								>
 									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 										<path
@@ -217,7 +217,7 @@ export const PhaseStepper = forwardRef<
 							{showRightArrow && (
 								<button
 									onClick={() => scroll("right")}
-									className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-[#4F46E5] transition-all flex items-center justify-center"
+									className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-brand-500 transition-all flex items-center justify-center"
 								>
 									<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 										<path
@@ -252,7 +252,7 @@ export const PhaseStepper = forwardRef<
 										return (
 											<div
 												key={phase.phase_id}
-												className="relative flex flex-col items-center flex-shrink-0 transition-all duration-200 cursor-grab active:cursor-grabbing hover:scale-105 hover:z-10"
+												className="relative flex flex-col items-center flex-shrink-0 transition-all duration-200 cursor-grab active:cursor-grabbing"
 												style={{
 													width: `${100 / phases.length}%`,
 													minWidth: "140px",
@@ -264,7 +264,7 @@ export const PhaseStepper = forwardRef<
 												onDragLeave={handleDragLeave}
 												onDrop={(e) => handleDrop(e, index)}
 											>
-												<div className="absolute inset-0 rounded-xl border-2 border-transparent transition-all duration-200 pointer-events-none group-hover:border-[#4F46E5]/20" />
+												<div className="absolute inset-0 rounded-xl border-2 border-transparent transition-all duration-200 pointer-events-none group-hover:border-brand-500/20" />
 
 												<div className="relative z-10 flex flex-col items-center group">
 													<button
@@ -277,13 +277,13 @@ export const PhaseStepper = forwardRef<
 														<div
 															className={`
 																w-10 h-10 rounded-full flex items-center justify-center
-																transition-colors duration-200 relative outline outline-[6px] outline-white
+																transition-colors duration-200 relative outline outline-[6px] outline-neutral-surface
 																${
 																	isActive
-																	? "bg-[#4F46E5] border-2 border-[#4F46E5] shadow-lg"
+																	? "bg-brand-500 border-2 border-brand-500 shadow-lg"
 																	: isCompleted
-																	? "bg-[#3525CD] border-2 border-white shadow-md"
-																	: "bg-white border-2 border-[#E2E8F0] group-hover:border-[#4F46E5]"
+																	? "bg-brand-500 border-2 border-neutral-surface shadow-md"
+																	: "bg-neutral-surface border-2 border-brand-100 group-hover:border-brand-500"
 																}
                                 							`}
 														>
@@ -291,7 +291,7 @@ export const PhaseStepper = forwardRef<
 																<span
 																	className={`
 																	font-semibold text-sm
-																	${isActive ? "text-white" : isPending ? "text-[#94A3B8]" : "text-white"}
+																	${isActive ? "text-neutral-surface" : isPending ? "text-neutral-border" : "text-neutral-surface"}
 																	`}
 																>
 																	{phase.number ?? ""}
@@ -329,14 +329,14 @@ export const PhaseStepper = forwardRef<
 														className={`
                                 text-xs font-semibold tracking-wide
                                 max-w-[80px] truncate
-                                ${isActive ? "text-[#4F46E5]" : isPending ? "text-[#94A3B8]" : "text-[#475569]"}
+                                ${isActive ? "text-brand-500" : isPending ? "text-brand-100" : "text-brand-500"}
                               `}
 														title={phase.name}
 													>
 														{phase.name}
 													</div>
 													{phase.start_date && phase.finish_date && (
-														<div className="text-[9px] text-[#94A3B8] mt-0.5 whitespace-nowrap">
+														<div className="text-[9px] text-brand-100 mt-0.5 neutral-surfacespace-nowrap">
 															{phase.start_date.toLocaleDateString("en-US", {
 																month: "short",
 																day: "numeric",
@@ -356,7 +356,7 @@ export const PhaseStepper = forwardRef<
 							</div>
 
 							{/* Connecting Line */}
-							<div className="z-0 absolute left-[calc(8%+20px)] right-[calc(8%+20px)] top-1/2 h-0.5 bg-[#E2E8F0] -translate-y-1/2 pointer-events-none" />
+							<div className="z-0 absolute min-w-[80vw] top-1/2 h-0.5 bg-brand-100 -translate-y-1/2 pointer-events-none" />
 						</>
 					)}
 				</div>

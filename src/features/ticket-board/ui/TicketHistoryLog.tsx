@@ -54,7 +54,7 @@ const ACTION_META: Record<
 	[action.FINISHED]: {
 		Icon: CheckCircleIcon,
 		bg: "bg-indigo-100",
-		text: "text-indigo-600",
+		text: "text-brand-600",
 	},
 	[action.ASSIGNED]: {
 		Icon: UserPlusIcon,
@@ -335,7 +335,7 @@ export default function TicketHistoryLog({
 					{hasMore && (
 						<button
 							onClick={() => setExpanded((v) => !v)}
-							className="mt-3 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+							className="mt-3 text-xs font-medium text-brand-600 hover:text-indigo-700 transition-colors"
 						>
 							{expanded
 								? "Show less"

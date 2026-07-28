@@ -173,7 +173,7 @@ export function WorkflowsList({
 	return (
 		<>
 			{/* Workflows List */}
-			<div className="bg-white">
+			<div className="bg-neutral-surface">
 				{workflows.map((workflow, index) => (
 					<div
 						key={workflow.workflow_id}
@@ -204,7 +204,7 @@ export function WorkflowsList({
 							<div>
 								<Link
 									href={`/projects/${projectId}/workflows/${workflow.workflow_id}`}
-									className="font-normal text-sm text-[#0F172A] hover:text-indigo-600 transition-colors"
+									className="font-normal text-sm text-[#0F172A] hover:text-brand-600 transition-colors"
 								>
 									{workflow.name}
 								</Link>
@@ -233,7 +233,7 @@ export function WorkflowsList({
 										fill="#94A3B8"
 									/>
 								</svg>
-								<span className="text-xs text-[#64748B]">
+								<span className="text-xs text-neutral-subtle">
 									{workflow.ticketCount} Tickets
 								</span>
 							</div>
@@ -251,7 +251,7 @@ export function WorkflowsList({
 									<>
 										<div className="w-20 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
 											<div
-												className="h-full bg-[#4F46E5] rounded-full transition-all"
+												className="h-full bg-brand-500 rounded-full transition-all"
 												style={{ width: `${workflow.progress}%` }}
 											/>
 										</div>
@@ -305,7 +305,7 @@ export function WorkflowsList({
 				{/* Add Workflow Button */}
 				<button
 					onClick={openCreateWorkflowModal}
-					className="w-full m-3 py-2 border-2 border-dashed border-[#CBD5E1] rounded-lg flex items-center justify-center gap-2 hover:bg-[#F8FAFC] hover:border-[#4F46E5] transition-all"
+					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-[#F8FAFC] hover:border-brand-500 transition-all"
 					style={{ width: "calc(100% - 24px)" }}
 				>
 					<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -316,7 +316,7 @@ export function WorkflowsList({
 							strokeLinecap="round"
 						/>
 					</svg>
-					<span className="text-sm font-medium text-[#64748B]">
+					<span className="text-sm font-medium text-neutral-subtle">
 						Add Workflow
 					</span>
 				</button>

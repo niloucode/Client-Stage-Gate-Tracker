@@ -194,7 +194,7 @@ export default function TicketModalCreate({
 
 	return (
 		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div className="bg-white rounded-2xl w-full max-w-153 max-h-[92vh] flex flex-col shadow-2xl">
+			<div className="bg-neutral-surfaceal-surface rounded-2xl w-full max-w-153 max-h-[92vh] flex flex-col shadow-2xl">
 				{/* Modal header */}
 				<div className="flex items-center justify-between px-6 pt-6 pb-5 shrink-0">
 					<h2 className="text-lg font-semibold text-gray-900">New Ticket</h2>
@@ -236,7 +236,7 @@ export default function TicketModalCreate({
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}
 							rows={4}
-							className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+							className="w-full rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
 						/>
 					</div>
 
@@ -249,7 +249,7 @@ export default function TicketModalCreate({
 								<button
 									type="button"
 									onClick={() => setAssignedOpen((o) => !o)}
-									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-9.5"
+									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
 								>
 									<div className="flex flex-wrap gap-1 flex-1">
 										{assignedIds.length === 0 ? (
@@ -281,7 +281,7 @@ export default function TicketModalCreate({
 								</button>
 
 								{assignedOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
 										{profiles.map((profile) => (
 											<div
 												key={profile.profile_id}
@@ -291,17 +291,17 @@ export default function TicketModalCreate({
 												<div
 													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
 														assignedIds.includes(profile.profile_id)
-															? "bg-indigo-600 border-indigo-600"
+															? "bg-brand-600 border-brand-600"
 															: "border-gray-300"
 													}`}
 												>
 													{assignedIds.includes(profile.profile_id) && (
 														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline points="2 6 5 9 10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+															<polyline points="2 6 5 9 10 3" stroke="neutral-surface" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
 														</svg>
 													)}
 												</div>
-												<div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+												<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
 													{(profile.first_name + " " + profile.last_name).split(" ").map((n) => n[0]).join("")}
 												</div>
 												{profile?.first_name + " " + profile?.last_name}
@@ -319,7 +319,7 @@ export default function TicketModalCreate({
 								<button
 									type="button"
 									onClick={() => setWatcherOpen((o) => !o)}
-									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-9.5"
+									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
 								>
 									<span className="text-gray-400">
 										{watcherId
@@ -329,7 +329,7 @@ export default function TicketModalCreate({
 									<ChevronDownIcon />
 								</button>
 								{watcherOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
 										<div
 											onClick={() => { setWatcherId("") 
 												setWatcherOpen(false) }}
@@ -344,7 +344,7 @@ export default function TicketModalCreate({
 													setWatcherOpen(false) }}
 												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
 											>
-												<div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+												<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
 													{(profile.first_name + " " + profile.last_name)
 														.split(" ")
 														.map((n) => n[0])
@@ -368,7 +368,7 @@ export default function TicketModalCreate({
 								<button
 									type="button"
 									onClick={() => setTagsOpen((o) => !o)}
-									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-9.5"
+									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
 								>
 									<div className="flex flex-wrap gap-1 flex-1">
 										{selectedTags.length === 0 ? (
@@ -404,7 +404,7 @@ export default function TicketModalCreate({
 								</button>
 
 								{tagsOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
 										{tags.map((tag) => (
 											<div
 												key={tag.tag_id}
@@ -414,13 +414,13 @@ export default function TicketModalCreate({
 												<div
 													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
 														selectedTags.includes(tag.tag_id)
-															? "bg-indigo-600 border-indigo-600"
+															? "bg-brand-600 border-brand-600"
 															: "border-gray-300"
 													}`}
 												>
 													{selectedTags.includes(tag.tag_id) && (
 														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline points="2 6 5 9 10 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+															<polyline points="2 6 5 9 10 3" stroke="neutral-surface" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
 														</svg>
 													)}
 												</div>
@@ -486,7 +486,7 @@ export default function TicketModalCreate({
 										<button
 											type="button"
 											onClick={() => removeCreateImage(idx)}
-											className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
+											className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-neutral-surface flex items-center justify-center text-[10px] leading-none hover:bg-red-600 transition-colors"
 										>
 											×
 										</button>
@@ -499,7 +499,7 @@ export default function TicketModalCreate({
 					{/* API Details — shown only when the "API" tag is applied */}
 					{isApiTagSelected && (
 						<div className="space-y-3 rounded-lg border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
-							<p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
+							<p className="text-xs font-semibold text-brand-600 uppercase tracking-wide">
 								API Details
 							</p>
 							<div className="grid grid-cols-[110px_1fr] gap-3 items-end">
@@ -510,7 +510,7 @@ export default function TicketModalCreate({
 										onChange={(e) =>
 											setApiMethod(e.target.value as "GET" | "POST" | "PUT" | "DELETE")
 										}
-										className="w-full rounded-lg border border-gray-200 bg-white px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+										className="w-full rounded-lg border border-gray-200 bg-neutral-surface px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
 									>
 										{["GET", "POST", "PUT", "DELETE"].map((m) => (
 											<option key={m}>{m}</option>
@@ -544,7 +544,7 @@ export default function TicketModalCreate({
 						type="button"
 						onClick={handleSubmit}
 						disabled={!title.trim()}
-						className="cursor-pointer px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+						className="cursor-pointer px-5 py-2.5 text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
 					>
 						Create Ticket
 					</button>

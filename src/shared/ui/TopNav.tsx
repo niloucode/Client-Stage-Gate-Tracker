@@ -87,7 +87,7 @@ export default function TopNav({
   }, [])
 
   return (
-    <header className="relative flex items-center justify-between px-8 py-3 border-b-1 border-brand-200 shrink-0">
+    <header className="bg-neutral-surface relative flex items-center justify-between px-8 py-3 border-b-1 border-brand-100 shrink-0">
       <nav className="flex items-center gap-1.5 text-sm">
         {breadcrumbs.map((crumb, i) => {
           const isLast = i === breadcrumbs.length - 1
@@ -101,7 +101,7 @@ export default function TopNav({
               <span
                 className={
                   isLast
-                    ? "text-brand-500 hover:text-indigo-500 cursor-pointer transition-colors"
+                    ? "text-brand-500 hover:text-brand-500 cursor-pointer transition-colors"
                     : "text-gray-700"
                 }
               >
@@ -120,7 +120,7 @@ export default function TopNav({
           aria-expanded={open}
           aria-haspopup="true"
           className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden 
-		  bg-indigo-600 text-xs font-bold text-white ring-2 ring-transparent hover:ring-indigo-200 transition-all"
+		  bg-brand-600 text-xs font-bold text-neutral-surface ring-2 ring-transparent hover:ring-indigo-200 transition-all"
         >
 			{userInitials}
           {/* {userAvatarUrl ? (
@@ -138,11 +138,11 @@ export default function TopNav({
           <div
             role="menu"
             className="absolute right-0 top-[calc(100%+8px)] w-72 drop-shadow-2xl transition-all duration-200 ease-out animate-in fade-in rounded-2xl bg-brand-50 border 
-			border-gray-100 shadow-2xl shadow-black/10 py-6 px-5 z-50"
+			border-gray-100 shadow-2xl shadow-foreground"
           >
-            <div className="flex flex-col items-center text-center pb-4 border-b border-gray-100">
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-indigo-600 flex items-center 
-			  justify-center text-lg font-bold text-white mb-3">
+            <div className="flex flex-col items-center text-center pb-4 border-b border-gray-100 ">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-brand-600 flex items-center 
+			  justify-center text-lg font-bold text-neutral-surface mb-3">
                 {
 				// userAvatarUrl ? (
                 //   <img
@@ -192,8 +192,8 @@ export default function TopNav({
             <button
               type="button"
               onClick={logout}
-              className="mt-3 w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 
-			  text-white text-sm font-medium tracking-wide transition-colors"
+              className="mt-3 w-full py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 
+			  text-neutral-surface text-sm font-medium tracking-wide transition-colors"
             >
               LOG OUT
             </button>

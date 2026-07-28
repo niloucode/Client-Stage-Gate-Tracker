@@ -64,7 +64,7 @@ function MemberAvatar({
 	}
 	return (
 		<div
-			className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+			className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-neutral-surface"
 			style={{ backgroundColor: "#4f46e5", border: "1px solid #c7c4d7" }}
 		>
 			{initials}
@@ -80,7 +80,7 @@ export default function ViewTeamMembersModal({
 	return (
 		<Backdrop isOpen={isOpen} onClose={onClose}>
 			<div
-					className="w-full max-w-[672px] overflow-hidden rounded-xl bg-white shadow-xl"
+					className="w-full max-w-[672px] overflow-hidden rounded-xl bg-neutral-surface shadow-xl"
 					style={{ border: "1px solid #c7c4d7" }}
 				>
 					{/* Header */}
@@ -96,7 +96,7 @@ export default function ViewTeamMembersModal({
 						</h2>
 						<button
 							onClick={onClose}
-							className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-black/10"
+							className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-foreground/10"
 							aria-label="Close"
 						>
 							<X className="h-4 w-4" style={{ color: "#464555" }} />

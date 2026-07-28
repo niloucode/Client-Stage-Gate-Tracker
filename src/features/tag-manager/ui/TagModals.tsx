@@ -63,14 +63,14 @@ export function ColorPicker({
 						style={{
 							backgroundColor: color,
 							borderColor: isSelected ? "#1E1B4B" : "transparent",
-							boxShadow: isSelected ? `0 0 0 2px white, 0 0 0 4px ${color}` : "none",
+							boxShadow: isSelected ? `0 0 0 2px neutral-surface, 0 0 0 4px ${color}` : "none",
 						}}
 						aria-label={color}
 					>
 						{isSelected && (
 							<span
 								style={{
-									color: "white",
+									color: "neutral-surface",
 									fontSize: 10,
 									lineHeight: 1,
 									textShadow: "0 0 2px rgba(0,0,0,0.4)",
@@ -89,7 +89,7 @@ export function ColorPicker({
 // ── Modal backdrop ────────────────────────────────────────────────────────────
 
 export function Backdrop({ onClick }: { onClick: () => void }) {
-	return <div className="fixed inset-0 bg-black/40 z-40" onClick={onClick} />;
+	return <div className="fixed inset-0 bg-foreground/40 z-40" onClick={onClick} />;
 }
 
 // ── Tag List Modal ────────────────────────────────────────────────────────────

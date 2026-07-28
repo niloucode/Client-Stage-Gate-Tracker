@@ -5,6 +5,7 @@ import type { Phase } from "../types";
 import { DeletePhase } from "@/features/stage-editor/ui/modals/DeletePhase";
 import { Label } from "@/shared/ui/label";
 import { useUpdatePhase, useDeletePhase } from "@/entities/phase/mutations";
+import { ClipboardList } from "lucide-react"
 
 interface ActivePhaseDetailsProps {
 	activePhase: number | null;
@@ -62,9 +63,9 @@ export function ActivePhaseDetails({
 
 	if (activePhase === null || !currentPhase) {
 		return (
-			<div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8 relative overflow-hidden">
+			<div className="bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm mb-8 relative overflow-hidden">
 				<div className="p-6 text-center">
-					<p className="text-sm text-[#64748B]">No phase selected</p>
+					<p className="text-sm text-neutral-subtle">No phase selected</p>
 					<p className="text-xs text-[#94A3B8] mt-1">
 						Select a phase from the stepper above or create a new one
 					</p>
@@ -113,9 +114,9 @@ export function ActivePhaseDetails({
 
 	return (
 		<>
-			<div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8 relative overflow-hidden">
+			<div className="bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm mb-8 relative overflow-hidden">
 				{isExpanded && (
-					<div className="absolute left-0 top-0 bottom-0 w-1 bg-[#4F46E5] rounded-l-xl" />
+					<div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-500 rounded-l-xl" />
 				)}
 
 				<div
@@ -138,57 +139,18 @@ export function ActivePhaseDetails({
 							/>
 						</svg>
 						<div className="flex items-center gap-2">
-							<svg
-								width="18"
-								height="22"
-								viewBox="0 0 24 24"
-								fill="none"
-								xmlns="http://www.w3.org/2000/svg"
-							>
-								<rect
-									x="3"
-									y="4"
-									width="18"
-									height="22"
-									rx="2"
-									stroke="#4F46E5"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-								<path
-									d="M8 2V6M16 2V6"
-									stroke="#4F46E5"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-								<path
-									d="M8 10H16"
-									stroke="#4F46E5"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-								<path
-									d="M8 14H12"
-									stroke="#4F46E5"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-							</svg>
+							<ClipboardList />
 							<h2 className="text-base font-semibold text-[#0F172A]">
 								Active Phase Details
 							</h2>
-							<span className="text-sm text-[#64748B] font-normal ml-1">
+							<span className="text-sm text-neutral-subtle font-normal ml-1">
 								{currentPhase?.name || `Phase ${activePhase}`}
 							</span>
 						</div>
 					</div>
 
 					<div className="flex items-center gap-3">
-						<div className="px-2.5 py-1 bg-[#EFF6FF] text-[#4F46E5] rounded-md">
+						<div className="px-2.5 py-1 bg-[#EFF6FF] text-brand-500 rounded-md">
 							<span className="text-[10px] font-bold tracking-wide">
 								PHASE {activePhase}
 							</span>
@@ -212,7 +174,7 @@ export function ActivePhaseDetails({
 										setName(e.target.value);
 										setFieldErrors((prev) => ({ ...prev, name: "" }));
 									}}
-									className={`w-full px-3 py-2 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-[#CBD5E1]"}`}
+									className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
 									onClick={(e) => e.stopPropagation()}
 								/>
 								<div className="flex justify-between mt-1">
@@ -234,7 +196,7 @@ export function ActivePhaseDetails({
 									value={description}
 									onChange={(e) => setDescription(e.target.value)}
 									rows={2}
-									className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+									className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 									onClick={(e) => e.stopPropagation()}
 								/>
 							</div>
@@ -247,7 +209,7 @@ export function ActivePhaseDetails({
 									type="text"
 									value={formatDateTime(currentPhase.start_date)}
 									disabled
-									className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-[#64748B] cursor-not-allowed"
+									className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-neutral-subtle cursor-not-allowed"
 									onClick={(e) => e.stopPropagation()}
 								/>
 							</div>
@@ -261,7 +223,7 @@ export function ActivePhaseDetails({
 											e.target.value ? new Date(e.target.value) : null,
 										)
 									}
-									className="w-full px-3 py-2 bg-white border border-[#CBD5E1] rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all"
+									className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 									onClick={(e) => e.stopPropagation()}
 								/>
 							</div>
@@ -271,7 +233,7 @@ export function ActivePhaseDetails({
 									type="text"
 									value={formatDateTime(currentPhase.finish_date)}
 									disabled
-									className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-[#64748B] cursor-not-allowed"
+									className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-neutral-subtle cursor-not-allowed"
 									onClick={(e) => e.stopPropagation()}
 								/>
 							</div>
@@ -298,7 +260,7 @@ export function ActivePhaseDetails({
 								disabled={!isDirty}
 								className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all shadow-sm ${
 									isDirty
-										? "bg-[#4F46E5] text-white hover:bg-[#4338CA]"
+										? "bg-brand-500 text-neutral-surface hover:bg-[#4338CA]"
 										: "bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed"
 								}`}
 							>

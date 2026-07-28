@@ -156,7 +156,7 @@ export function EditProjectModal({
 	return (
 		<Backdrop isOpen={isOpen} onClose={onClose}>
 			<div key={formKey} className="bg-[#FAF8FF] rounded-xl shadow-xl max-w-lg w-lg  relative">
-				<div className="h-[4em] bg-white rounded-t-xl border-b-1 p-6 flex border-[#C7C4D8]">
+				<div className="h-[4em] bg-neutral-surface rounded-t-xl border-b-1 p-6 flex border-[#C7C4D8]">
 					<h2 className="mt-auto mb-auto text-l font text-[#0F172A]">
 						{isEditMode ? "Edit Project" : "Create New Project"}
 					</h2>
@@ -218,10 +218,10 @@ export function EditProjectModal({
 						}}
 						placeholder="Project Description"
 						rows={4}
-						className={`w-full mt-1 px-3.5 py-2.5 bg-white border rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+						className={`w-full mt-1 px-3.5 py-2.5 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
 							fieldErrors.description
 								? "border-red-400 focus:ring-red-400"
-								: "border-gray-300 focus:ring-indigo-500"
+								: "border-gray-300 focus:ring-brand-500"
 						}`}
 					/>
 				
@@ -239,10 +239,10 @@ export function EditProjectModal({
 						<button
 							type="button"
 							onClick={() => setClientDropdownOpen(!clientDropdownOpen)}
-							className={`cursor-pointer w-full flex items-center justify-between px-3.5 py-2.5 bg-white border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent transition-all mt-1 ${
+							className={`cursor-pointer w-full flex items-center justify-between px-3.5 py-2.5 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent transition-all mt-1 ${
 								fieldErrors.client_id 
 									? "border-red-400 focus:ring-red-400" 
-									: "border-gray-300 focus:ring-indigo-500"
+									: "border-gray-300 focus:ring-brand-500"
 							}`}
 						>
 							<span className={formData.client_id ? "" : "text-[#94A3B8]"}>
@@ -256,7 +256,7 @@ export function EditProjectModal({
 						</button>
 
 						{clientDropdownOpen && (
-							<div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+							<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
 								<div
 									onClick={() => {
 										setFormData({ ...formData, client_id: null });
@@ -336,13 +336,13 @@ export function EditProjectModal({
 				<div className="h-[4em] p-3 border-[#C7C4D8] flex rounded-b-xl justify-end gap-3 bg-[#F2F3FF] border-t-1">
 					<button
 						onClick={handleClose}
-						className="cursor-pointer px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+						className="cursor-pointer px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
 					>
 						Cancel
 					</button>
 					<button
 						onClick={handleSubmit}
-						className="cursor-pointer px-4 py-2 bg-[#4F46E5] text-white text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+						className="cursor-pointer px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 					>
 						{isEditMode ? "Save Changes" : "Create Project"}
 					</button>

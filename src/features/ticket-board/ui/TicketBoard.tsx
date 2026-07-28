@@ -279,7 +279,7 @@ export default function TicketBoard({
 
 					<button
 						onClick={() => setModalOpen(true)}
-						className="flex items-center gap-1.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
+						className="flex items-center gap-1.5 text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
 					>
 						<PlusIcon />
 						New Issue

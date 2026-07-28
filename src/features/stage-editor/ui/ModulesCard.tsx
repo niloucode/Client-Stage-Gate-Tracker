@@ -144,13 +144,13 @@ export function ModulesCard({
 					className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-all shadow-sm ${
 						activePhase === null
 							? "bg-[#E2E8F0] text-[#94A3B8] cursor-not-allowed"
-							: "bg-[#4F46E5] text-white hover:bg-[#4338CA]"
+							: "bg-brand-500 text-neutral-surface hover:bg-[#4338CA]"
 					}`}
 				>
 					<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
 						<path
 							d="M7 2V12M2 7H12"
-							stroke={activePhase === null ? "#94A3B8" : "white"}
+							stroke={activePhase === null ? "#94A3B8" : "neutral-surface"}
 							strokeWidth="1.5"
 							strokeLinecap="round"
 						/>
@@ -162,15 +162,15 @@ export function ModulesCard({
 			{/* Module Cards */}
 			<div className="space-y-4">
 				{activePhase === null ? (
-					<div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-8 text-center">
-						<p className="text-sm text-[#64748B]">No phase selected</p>
+					<div className="bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm p-8 text-center">
+						<p className="text-sm text-neutral-subtle">No phase selected</p>
 						<p className="text-xs text-[#94A3B8] mt-1">
 							Select a phase from the stepper above to manage its modules
 						</p>
 					</div>
 				) : modules.length === 0 ? (
-					<div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-8 text-center">
-						<p className="text-sm text-[#64748B]">
+					<div className="bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm p-8 text-center">
+						<p className="text-sm text-neutral-subtle">
 							No modules yet for this phase.
 						</p>
 						<p className="text-xs text-[#94A3B8] mt-1">
@@ -184,7 +184,7 @@ export function ModulesCard({
 						return (
 							<div
 								key={module.module_id}
-								className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden"
+								className="bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden"
 							>
 								{/* Module Header */}
 								<div className="flex justify-between items-center px-5 py-4 bg-[#F8FAFC] border-b border-[#E2E8F0]">
@@ -284,12 +284,12 @@ export function ModulesCard({
 
 			{/* Delete Confirmation Modal */}
 			{isDeleteConfirmOpen && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-					<div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative">
+				<div className="fixed inset-0 bg-foregroundal-main/50 flex items-center justify-center z-50">
+					<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-sm p-6 relative">
 						<h2 className="text-xl font-bold text-[#0F172A] mb-2">
 							Delete Module
 						</h2>
-						<p className="text-sm text-[#64748B] mb-6">
+						<p className="text-sm text-neutral-subtle mb-6">
 							Are you sure you want to delete this module? This action cannot be
 							undone.
 						</p>
@@ -300,13 +300,13 @@ export function ModulesCard({
 									setIsDeleteConfirmOpen(false);
 									setModuleToDelete(null);
 								}}
-								className="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+								className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
 							>
 								Cancel
 							</button>
 							<button
 								onClick={handleDeleteModule}
-								className="px-4 py-2 bg-[#EF4444] text-white text-sm font-semibold rounded-lg hover:bg-[#DC2626] transition-all shadow-sm"
+								className="px-4 py-2 bg-[#EF4444] text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#DC2626] transition-all shadow-sm"
 							>
 								Delete Module
 							</button>

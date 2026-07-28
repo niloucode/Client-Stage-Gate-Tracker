@@ -147,16 +147,16 @@ export function ProjectDashboard() {
 	return (
 		<div className="">
 			{/* Page Header */}
-			<div className="flex align-middle pb-6 mb-6 border-b border-[#E2E8F0]">
+			<div className="flex align-middle mb-6">
 				<div>
-					<h1 className="text-3xl font-bold text-[#0F172A] tracking-tight">Projects</h1>
-					<p className="text-m text-[#64748B] mt-1">
+					<h1 className="text-4xl font-bold text-foreground tracking-tight">Projects</h1>
+					<p className="text-m text-neutral-border mt-1">
 						Manage and track the projects assigned to you.
 					</p>
 				</div>
 				<button
 					onClick={() => setShowAddModal(true)}
-					className="cursor-pointer font-semibold text-sm flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-[#4F46E5] text-white rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+					className="cursor-pointer font-semibold text-sm flex ml-auto mb-auto mt-auto h-10 items-center gap-2 px-4 py-2 bg-brand-500 text-neutral-surface rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
 				>
 					<LucidePlus size={15} strokeWidth={3}/>
 					<span>Add Project</span>
