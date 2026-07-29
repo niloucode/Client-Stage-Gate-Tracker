@@ -11,6 +11,18 @@ export async function clientSelectAll(){
     return await prisma.clients.findMany({
         where: { is_deleted: false },
         orderBy: { client_name: "asc" },
+        include: {
+            Profiles: {
+                where: { is_deleted: false },
+                select: {
+                    profile_id: true,
+                    first_name: true,
+                    last_name: true,
+                    email: true,
+                    phone: true,
+                }
+            }
+        },
     })
 }
 
@@ -62,6 +74,8 @@ export async function clientUpdate(client: ClientType){
             client_name: client.client_name,
             tin: client.tin,
             billing_address: client.billing_address,
+            email: client.email,
+            phone: client.phone,
             is_deleted: client.is_deleted,
             deleted_at: client.deleted_at
         },
@@ -74,8 +88,23 @@ export async function clientCreate(client: ClientType){
             client_name: client.client_name,
             tin: client.tin,
             billing_address: client.billing_address,
+            email: client.email,
+            phone: client.phone,
             deleted_at: client.deleted_at
         }
+    })
+}
+
+export async function clientSelectProfiles(clientId: string) {
+    return await prisma.profiles.findMany({
+        where: { client_id: clientId, is_deleted: false },
+        select: {
+            profile_id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+            phone: true,
+        },
     })
 }
 

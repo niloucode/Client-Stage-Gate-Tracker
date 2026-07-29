@@ -12,8 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useClients } from "@/entities/client";
-import AddClientModal from "@/features/client-manager/ui/AddClientModal";
-import EditClientModal from "@/features/client-manager/ui/EditClientModal";
+import ClientFormModal from "@/features/client-manager/ui/ClientFormModal";
 import ViewTeamMembersModal from "@/features/client-manager/ui/ViewTeamMembersModal";
 
 interface Client {
@@ -24,6 +23,7 @@ interface Client {
 	billingAddress: string;
 	companyCode: string;
 	tin: string;
+	profiles?: { profile_id: string; first_name: string; last_name: string; email: string; phone: string }[];
 }
 
 const PLACEHOLDER_CLIENTS: Client[] = Array.from({ length: 10 }, (_, i) => ({
@@ -38,15 +38,16 @@ const PLACEHOLDER_CLIENTS: Client[] = Array.from({ length: 10 }, (_, i) => ({
 
 export default function ClientPage() {
 	const { data: clientsData } = useClients()
-	const clients: Client[] = clientsData && clientsData.length > 0
+		const clients: Client[] = clientsData && clientsData.length > 0
 		? clientsData.map((c) => ({
 			id: c.client_id,
 			name: c.client_name,
-			email: "",
-			contactNumber: "",
+			email: c.email ?? "",
+			contactNumber: c.phone ?? "",
 			billingAddress: c.billing_address,
 			companyCode: "",
 			tin: c.tin,
+			profiles: c.Profiles,
 		}))
 		: PLACEHOLDER_CLIENTS;
 	const [showAddModal, setShowAddModal] = useState(false);
@@ -196,20 +197,29 @@ export default function ClientPage() {
 					</div>
 				</div>
 			</main>
-			<AddClientModal
+			<ClientFormModal
 				isOpen={showAddModal}
 				onClose={() => setShowAddModal(false)}
 			/>
 			<ViewTeamMembersModal
 				isOpen={viewMembersClient !== null}
+				members={viewMembersClient?.profiles?.map((p) => ({
+					id: p.profile_id,
+					firstName: p.first_name,
+					lastName: p.last_name,
+					email: p.email,
+					phone: p.phone,
+				}))}
 				onClose={() => setViewMembersClient(null)}
 			/>
-			<EditClientModal
+			<ClientFormModal
 				isOpen={editClient !== null}
 				clientId={editClient?.id}
 				initialData={{
 					clientName: editClient?.name,
 					tin: editClient?.tin,
+					email: editClient?.email,
+					contactNumber: editClient?.contactNumber,
 					billingAddress: editClient?.billingAddress,
 				}}
 				onClose={() => setEditClient(null)}

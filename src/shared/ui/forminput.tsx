@@ -71,7 +71,7 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
           {label}
         </Label>
         {maxLength !== undefined && (
-          <span className="ml-auto mt-auto text-[10px] text-[#94A3B8]">
+          <span className="ml-auto text-[10px] text-muted-foreground">
             {stringValue.length}/{maxLength}
           </span>
         )}
@@ -162,7 +162,7 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
       {/* Error Message Slot */}
       <div className="mt-1 h-1">
         {typeof error === "string" && (
-          <p className="text-xs text-red-500">{error}</p>
+          <p className="text-xs text-destructive">{error}</p>
         )}
       </div>
     </div>

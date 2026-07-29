@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { clientUpdate } from "@/entities/client";
+import { clientSchema } from "@/shared/schemas";
 
 const CLIENT_NAME_MAX = 40;
 
@@ -38,6 +40,7 @@ export default function EditClientModal({
 	const [email, setEmail] = useState(initialData?.email ?? "");
 	const [contactNumber, setContactNumber] = useState(initialData?.contactNumber ?? "");
 	const [billingAddress, setBillingAddress] = useState(initialData?.billingAddress ?? "");
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
@@ -50,16 +53,19 @@ export default function EditClientModal({
 				<div className="flex flex-col gap-5 px-6 py-6">
 					{/* Client Name */}
 					<div className="flex flex-col gap-2">
-						<Label required>Client Name</Label>
+						<div className="flex items-center justify-between">
+							<Label required>Client Name</Label>
+							<span className="text-[10px] text-muted-foreground">{clientName.length}/{CLIENT_NAME_MAX}</span>
+						</div>
 						<Input
-							type="text"
-							maxLength={CLIENT_NAME_MAX}
-							value={clientName}
-							onChange={(e) => setClientName(e.target.value)}
-						/>
-						<span className="text-sm text-muted-foreground">
-							{clientName.length}/{CLIENT_NAME_MAX}
-						</span>
+								type="text"
+								maxLength={CLIENT_NAME_MAX}
+								value={clientName}
+								onChange={(e) => setClientName(e.target.value)}
+							/>
+						{fieldErrors.client_name && (
+							<p className="text-xs text-destructive mt-1">{fieldErrors.client_name}</p>
+						)}
 					</div>
 
 					{/* TIN + Email */}
@@ -71,6 +77,9 @@ export default function EditClientModal({
 								value={tin}
 								onChange={(e) => setTin(e.target.value)}
 							/>
+							{fieldErrors.tin && (
+								<p className="text-xs text-destructive mt-1">{fieldErrors.tin}</p>
+							)}
 						</div>
 						<div className="flex flex-1 flex-col gap-2">
 							<Label required>Email</Label>
@@ -79,17 +88,22 @@ export default function EditClientModal({
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 							/>
+							{fieldErrors.email && (
+								<p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>
+							)}
 						</div>
 					</div>
 
 					{/* Contact Number */}
 					<div className="flex flex-col gap-2">
 						<Label required>Contact Number</Label>
-						<Input
-							type="tel"
+						<PhoneInput
 							value={contactNumber}
-							onChange={(e) => setContactNumber(e.target.value)}
+							onChange={setContactNumber}
 						/>
+						{fieldErrors.phone && (
+							<p className="text-xs text-destructive mt-1">{fieldErrors.phone}</p>
+						)}
 					</div>
 
 					{/* Billing Address */}
@@ -100,6 +114,9 @@ export default function EditClientModal({
 							value={billingAddress}
 							onChange={(e) => setBillingAddress(e.target.value)}
 						/>
+						{fieldErrors.billing_address && (
+							<p className="text-xs text-destructive mt-1">{fieldErrors.billing_address}</p>
+						)}
 					</div>
 				</div>
 
@@ -110,13 +127,26 @@ export default function EditClientModal({
 						</Button>
 						<Button onClick={async () => {
 							if (!clientId) return;
-							await clientUpdate({
+							const result = clientSchema.safeParse({
 								client_id: clientId,
 								client_name: clientName,
 								tin,
+								email,
+								phone: contactNumber,
 								billing_address: billingAddress,
 								is_deleted: false,
 							});
+							if (!result.success) {
+								const flattened = result.error.flatten().fieldErrors
+								const mapped: Record<string, string> = {}
+								for (const [key, msgs] of Object.entries(flattened)) {
+									if (msgs && msgs.length > 0) mapped[key] = msgs[0]
+								}
+								setFieldErrors(mapped)
+								return
+							}
+							setFieldErrors({})
+							await clientUpdate(result.data);
 							onClose();
 						}}>
 							Save Changes

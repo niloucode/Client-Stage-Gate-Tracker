@@ -1,26 +1,39 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { PhoneInput } from "@/components/ui/phone-input"
-import { clientCreate } from "@/entities/client"
+import { clientCreate, clientUpdate } from "@/entities/client"
 import { clientSchema } from "@/shared/schemas"
 
 const CLIENT_NAME_MAX = 40
 
-interface AddClientModalProps {
+interface ClientFormData {
+	clientName: string
+	tin: string
+	email: string
+	contactNumber: string
+	billingAddress: string
+}
+
+interface ClientFormModalProps {
 	isOpen: boolean
+	clientId?: string
+	initialData?: Partial<ClientFormData>
 	onClose: () => void
 }
 
-export default function AddClientModal({
+export default function ClientFormModal({
 	isOpen,
+	clientId,
+	initialData,
 	onClose,
-}: AddClientModalProps) {
+}: ClientFormModalProps) {
+	const isEdit = !!clientId
 	const [clientName, setClientName] = useState("")
 	const [tin, setTin] = useState("")
 	const [email, setEmail] = useState("")
@@ -28,9 +41,20 @@ export default function AddClientModal({
 	const [billingAddress, setBillingAddress] = useState("")
 	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
+	// Reset form when modal opens or client changes
+	useEffect(() => {
+		if (!isOpen) return
+		setClientName(initialData?.clientName ?? "")
+		setTin(initialData?.tin ?? "")
+		setEmail(initialData?.email ?? "")
+		setContactNumber(initialData?.contactNumber ?? "")
+		setBillingAddress(initialData?.billingAddress ?? "")
+		setFieldErrors({})
+	}, [isOpen, clientId, initialData?.clientName, initialData?.tin, initialData?.email, initialData?.contactNumber, initialData?.billingAddress])
+
 	const handleSubmit = async () => {
-		const result = clientSchema.safeParse({
-			client_id: crypto.randomUUID(),
+		const parsed = clientSchema.safeParse({
+			client_id: clientId || crypto.randomUUID(),
 			client_name: clientName,
 			tin,
 			email,
@@ -38,8 +62,8 @@ export default function AddClientModal({
 			billing_address: billingAddress,
 			is_deleted: false,
 		})
-		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors
+		if (!parsed.success) {
+			const flattened = parsed.error.flatten().fieldErrors
 			const mapped: Record<string, string> = {}
 			for (const [key, msgs] of Object.entries(flattened)) {
 				if (msgs && msgs.length > 0) mapped[key] = msgs[0]
@@ -48,7 +72,11 @@ export default function AddClientModal({
 			return
 		}
 		setFieldErrors({})
-		await clientCreate(result.data)
+		if (isEdit) {
+			await clientUpdate(parsed.data)
+		} else {
+			await clientCreate(parsed.data)
+		}
 		onClose()
 	}
 
@@ -56,25 +84,26 @@ export default function AddClientModal({
 		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
 			<DialogContent className="sm:max-w-lg">
 				<DialogHeader>
-					<DialogTitle>Add Client</DialogTitle>
-					<DialogDescription>Fill in the details to add a new client.</DialogDescription>
+					<DialogTitle>{isEdit ? "Edit Client Details" : "Add Client"}</DialogTitle>
+					<DialogDescription>
+						{isEdit ? "Update the client information below." : "Fill in the details to add a new client."}
+					</DialogDescription>
 				</DialogHeader>
 
 				<div className="flex flex-col gap-5 px-6 py-6">
 					{/* Client Name */}
 					<div className="flex flex-col gap-2">
-						<div className="flex items-center justify-between"><Label required>Client Name</Label><span className="text-[10px] text-muted-foreground">{clientName.length}/{CLIENT_NAME_MAX}</span></div>
+						<div className="flex items-center justify-between">
+							<Label required>Client Name</Label>
+							<span className="text-[10px] text-muted-foreground">{clientName.length}/{CLIENT_NAME_MAX}</span>
+						</div>
 						<Input
 							type="text"
 							maxLength={CLIENT_NAME_MAX}
 							placeholder="Acme Corp"
-								value={clientName}
-								onChange={(e) => setClientName(e.target.value)}
-							/>
-							<span className="absolute bottom-1.5 right-2 text-[10px] text-muted-foreground pointer-events-none">
-								{clientName.length}/{CLIENT_NAME_MAX}
-							</span>
-						</div>
+							value={clientName}
+							onChange={(e) => setClientName(e.target.value)}
+						/>
 						{fieldErrors.client_name && (
 							<p className="text-xs text-destructive mt-1">{fieldErrors.client_name}</p>
 						)}
@@ -134,14 +163,15 @@ export default function AddClientModal({
 							<p className="text-xs text-destructive mt-1">{fieldErrors.billing_address}</p>
 						)}
 					</div>
+				</div>
 
 				<DialogFooter className="bg-muted/50 border-t p-6">
 					<div className="flex items-center justify-end gap-3 w-full">
 						<Button variant="ghost" onClick={onClose}>
 							Cancel
 						</Button>
-						<Button icon="add" onClick={handleSubmit}>
-							Add Client
+						<Button icon={isEdit ? undefined : "add"} onClick={handleSubmit}>
+							{isEdit ? "Save Changes" : "Add Client"}
 						</Button>
 					</div>
 				</DialogFooter>

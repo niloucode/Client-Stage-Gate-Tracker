@@ -72,7 +72,7 @@ export function DeleteProjectModal({
 							}`}
 						/>
 						{hasAttempted && !namesMatch && (
-							<p className="text-xs text-red-500 mt-1">
+							<p className="text-xs text-destructive mt-1">
 								Project name does not match.
 							</p>
 						)}

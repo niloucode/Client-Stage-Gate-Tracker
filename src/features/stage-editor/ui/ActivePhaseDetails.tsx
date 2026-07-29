@@ -107,11 +107,11 @@ export function ActivePhaseDetails({
 	};
 
 	const toDateTimeInput = (d: Date | null) =>
-		d
-			? new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-					.toISOString()
-					.slice(0, 16)
-			: "";
+	d
+		? new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+				.toISOString()
+				.slice(0, 16)
+		: "";
 
 	return (
 		<>
@@ -148,9 +148,14 @@ export function ActivePhaseDetails({
 					<div className="p-6 pl-7">
 						<div className="grid grid-cols-1 gap-6">
 							<div>
-								<Label required error={!!fieldErrors.name}>
-									Phase Name
-								</Label>
+								<div className="flex justify-between">
+									<Label required error={!!fieldErrors.name}>
+										Phase Name
+									</Label>
+									<span className="text-[10px] text-muted-foreground">
+										{name.length}/20
+									</span>
+								</div>
 								<input
 									type="text"
 									maxLength={20}
@@ -165,13 +170,10 @@ export function ActivePhaseDetails({
 								/>
 								<div className="flex justify-between mt-1">
 									{fieldErrors.name ? (
-										<p className="text-xs text-red-500">{fieldErrors.name}</p>
+										<p className="text-xs text-destructive">{fieldErrors.name}</p>
 									) : (
 										<span />
 									)}
-									<span className="text-[10px] text-[#94A3B8]">
-										{name.length}/20
-									</span>
 								</div>
 							</div>
 
@@ -182,7 +184,7 @@ export function ActivePhaseDetails({
 									value={description}
 									onChange={(e) => setDescription(e.target.value)}
 									rows={2}
-									className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+									className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 									onClick={(e) => e.stopPropagation()}
 								/>
 							</div>
@@ -209,7 +211,7 @@ export function ActivePhaseDetails({
 											e.target.value ? new Date(e.target.value) : null,
 										)
 									}
-									className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+									className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 									onClick={(e) => e.stopPropagation()}
 								/>
 							</div>

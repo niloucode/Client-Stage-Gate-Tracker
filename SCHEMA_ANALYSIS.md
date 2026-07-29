@@ -46,9 +46,15 @@ client_id       UUID PK
 client_name     String
 tin             String        (Tax ID Number)
 billing_address String
+email           String        @unique? (added during shadcn migration — non-nullable)
+phone           String        @unique? (added during shadcn migration — non-nullable)
+is_deleted      Boolean       @default(false)
+deleted_at      DateTime?
 ```
 
 One client organization can have **many** `Profiles` (e.g., multiple stakeholders from the same company), each with their own login. A client profile is identified by `Profiles.client_id IS NOT NULL`.
+
+**Recent additions**: `email` and `phone` columns were added to store client contact information. These are used in the Client Manager modals and displayed in the client list table. The `PhoneInput` component provides international phone validation via `libphonenumber-js`.
 
 ### `Department`
 
@@ -1213,3 +1219,116 @@ requireProjectOwner(projectId, userId): Promise<boolean>  // checks RoleAssignme
 ### Delete Project Confirmation
 
 Requires typing the exact project name to confirm deletion. The server-side check compares `confirmationName` against the stored `project.name`. Combined with the `requireProjectOwner` auth gate, this prevents accidental or unauthorized deletion.
+
+---
+
+## 21. Client Manager Feature
+
+The client manager feature at `src/features/client-manager/` provides CRUD operations for clients, team member viewing, and client search.
+
+### `ClientFormModal` (merged Add/Edit)
+
+A single modal handling both create and edit modes, determined by the `clientId` prop:
+
+| Mode | `clientId` | Title | Server Action |
+|---|---|---|---|
+| Add | Not provided | "Add Client" | `clientCreate()` |
+| Edit | Provided | "Edit Client Details" | `clientUpdate()` |
+
+- **Fields**: Client Name (required, max 40), TIN (required), Email (required, validated), Contact Number (required, validated via PhoneInput), Billing Address (required)
+- **Validation**: Zod `clientSchema` validates all fields before submit; inline errors with `text-xs text-destructive mt-1`
+- **State reset**: `useEffect` on `[isOpen, clientId, initialData.*]` syncs form fields every time the modal opens
+
+### `PhoneInput` component
+
+`src/components/ui/phone-input.tsx` — a shadcn-styled phone input with:
+- Country code selector (shadcn `<Select>` dropdown)
+- `<Input type="tel">` for the number
+- Live validation via `libphonenumber-js` (validates any country's mobile/landline)
+- Displays formatted number when valid, red border when invalid
+- Replaces all raw `type="tel"` inputs across the project (AddClientModal, EditClientModal, StaffSignupForm)
+
+### `ViewTeamMembersModal`
+
+Displays profiles linked to a client. Data fetched via `clientSelectAll()` which now includes `Profile` records via Prisma `include`. The modal receives real data mapped to a `TeamMember` interface.
+
+### Client Search
+
+The clients page (`/clients`) has client-side search filtering: typing in the search bar filters the client list by name (case-insensitive).
+
+### Entity Layer Updates
+
+| Function | Action |
+|---|---|
+| `clientCreate()` | Now persists `email` and `phone` fields |
+| `clientUpdate()` | Now persists `email` and `phone` fields |
+| `clientSelectAll()` | Now includes nested `Profiles` (id, name, email, phone) |
+| `clientSelectProfiles(clientId)` | New — fetches profiles by `client_id` |
+
+---
+
+## 22. shadcn UI Migration
+
+The project underwent a full migration from custom UI components to [shadcn/ui](https://ui.shadcn.com) with base-nova style.
+
+### Replaced Components
+
+| Old Custom Component | shadcn Replacement | Files Updated |
+|---|---|---|
+| `Button` (shared/ui/button) | `Button` (variant: default/destructive/ghost/link) | 15 files, 26 usages |
+| `Modal` + `Backdrop` | `Dialog` / `AlertDialog` | 12 files |
+| `Toast` (context-based) | `Toast` (shadcn/Toaster pattern) | 3 files |
+| `Input` (shared/ui/input) | `Input` | 15+ files |
+| `Label` (shared/ui/label) | `Label` (extended with required/error props) | 15+ files |
+
+### Component Customizations
+
+- **`Button`**: Extended with `icon="add"` (renders `<Plus />`) and `icon="delete"` (renders `<Trash2 />`) props for common actions
+- **`Label`**: Extended with `required` and `error` props; added `mb-1` bottom margin; required asterisk always uses `text-destructive` (red)
+- **DialogHeader/DialogFooter**: Both set to `p-6` padding
+
+### Theme Alignment
+
+- Font: **Hanken Grotesk** (body), JetBrains Mono (monospace — replaced Geist which was overriding)
+- Border radius: `--radius: 0.625rem` → `--radius-md = 0.5rem` (matches project's `rounded-lg`)
+- Button sizing: Default height `h-10` with `px-4` padding (matches original `py-2.5 px-4`)
+
+### Standardized Patterns
+
+| Pattern | Format | Coverage |
+|---|---|---|
+| Field validation errors | `<p className="text-xs text-destructive mt-1">` | ~54 error elements across 19 files |
+| Character counters | `<span className="text-[10px] text-muted-foreground ml-auto">` in label row | 12 counters across 9 files |
+
+### Files Deleted
+
+```
+src/shared/ui/button.tsx
+src/shared/ui/input.tsx
+src/shared/ui/label.tsx
+src/shared/ui/modal.tsx
+src/shared/ui/backdrop.tsx
+src/shared/ui/toast.tsx
+src/features/ticket-board/ui/TicketModalDelete.tsx
+```
+
+---
+
+## 23. Code Quality Improvements
+
+### Unused Code Removed
+- `TruckElectricIcon` import from contracts page
+- `NAV_LINKS` constant and associated lucide icons from clients page
+- Various unused imports across 10+ files (`useEffect`, `Label`, `Button`, `Workflow`, `ProfileDisplay`, `DialogDescription`)
+- Unused variables across 8+ files (handleStartDate, handleFinishDate, isUploading, isOverdue, etc.)
+
+### Form State Reset
+Modals now properly reset their form state when opened with new data via `useEffect` on `[isOpen, dataKey]`:
+
+| Modal | Reset Trigger |
+|---|---|
+| `ClientFormModal` | `[isOpen, clientId, initialData.*]` |
+| `TagFormModal` | `[isOpen, initial?.name, initial?.description, initial?.color]` |
+| `EditProjectModal` | `[isOpen, project]` (existing) |
+
+This prevents stale data from persisting when opening the modal for different records.

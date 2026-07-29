@@ -87,9 +87,14 @@ export function EditWorkflow({
 
 				<div className="space-y-4">
 					<div>
-						<Label required error={!!fieldErrors.name}>
-							Workflow Name
-						</Label>
+						<div className="flex justify-between items-center">
+							<Label required error={!!fieldErrors.name}>
+								Workflow Name
+							</Label>
+							<span className="text-[10px] text-muted-foreground">
+								{formData.name.length}/35
+							</span>
+						</div>
 						<input
 							type="text"
 							maxLength={35}
@@ -103,13 +108,10 @@ export function EditWorkflow({
 						/>
 						<div className="flex justify-between mt-1">
 							{fieldErrors.name ? (
-								<p className="text-xs text-red-500">{fieldErrors.name}</p>
+								<p className="text-xs text-destructive">{fieldErrors.name}</p>
 							) : (
 								<span />
 							)}
-							<span className="text-[10px] text-[#94A3B8]">
-								{formData.name.length}/35
-							</span>
 						</div>
 					</div>
 
@@ -135,7 +137,7 @@ export function EditWorkflow({
 										: null,
 								})
 							}
-							className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 				</div>

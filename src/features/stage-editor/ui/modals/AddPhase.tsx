@@ -71,10 +71,10 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 					<Label required error={!!fieldErrors.name}>
 						Phase Name
 					</Label>
-						<span className="text-[10px] text-[#94A3B8]">
+						<span className="text-[10px] text-muted-foreground">
 							{formData.name.length}/20
 						</span>
-						</div>
+					</div>
 					<input
 						type="text"
 						maxLength={20}
@@ -87,7 +87,7 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 					/>
 					<div className="flex justify-between mt-1">
 						{fieldErrors.name ? (
-							<p className="text-xs text-red-500">{fieldErrors.name}</p>
+							<p className="text-xs text-destructive">{fieldErrors.name}</p>
 						) : (
 							<span />
 						)}
@@ -105,7 +105,7 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 						}
 						placeholder="Describe the objectives and scope of this phase..."
 						rows={3}
-						className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+						className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] resize-none focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 					/>
 				</div>
 
@@ -133,7 +133,7 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 									: null,
 							})
 						}
-						className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+						className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 					/>
 				</div>
 				<DialogFooter>

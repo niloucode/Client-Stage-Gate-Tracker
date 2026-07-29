@@ -377,27 +377,29 @@ export default function TicketModalEdit({
 				<div className="flex flex-col text-2xl h-[7rem] gap-3 px-5 py-3.5 border-b border-gray-100 shrink-0 relative">
 					<>{editing === "title" ? (
 						<div className="flex-1 min-w-0 flex items-center gap-2">
-							<Textarea
-								ref={titleRef as any}
-								value={titleDraft}
-								maxLength={50}
-								rows={2}
-								onChange={(e) => setTitleDraft(e.target.value)}
-								onBlur={commitTitle}
-								onKeyDown={(e) => {
-								if (e.key === "Enter" && !e.shiftKey) {
-									e.preventDefault();
-									commitTitle();
-								}
-								if (e.key === "Escape") {
-									setEditing(null);
-								}
-								}}
-								className="flex-1 text-2xl min-w-0 font-bold text-gray-900 border border-brand-300 rounded-md px-1 py-0.5 focus:outline-none focus:ring-2 focus:ring-brand-500 break-all resize-none leading-tight bg-transparent"
-							/>
-							<span className="text-sm text-gray-400 shrink-0 self-end mb-1">
-								{titleDraft.length}/50
-							</span>
+							<div className="relative flex-1 min-w-0">
+								<Textarea
+									ref={titleRef as any}
+									value={titleDraft}
+									maxLength={50}
+									rows={2}
+									onChange={(e) => setTitleDraft(e.target.value)}
+									onBlur={commitTitle}
+									onKeyDown={(e) => {
+									if (e.key === "Enter" && !e.shiftKey) {
+										e.preventDefault();
+										commitTitle();
+									}
+									if (e.key === "Escape") {
+										setEditing(null);
+									}
+									}}
+									className="flex-1 text-2xl min-w-0 font-bold text-gray-900 border border-brand-300 rounded-md px-1 py-0.5 pr-14 focus:outline-none focus:ring-2 focus:ring-brand-500 break-all resize-none leading-tight bg-transparent"
+								/>
+								<span className="absolute bottom-1 right-2 text-[10px] text-muted-foreground pointer-events-none">
+									{titleDraft.length}/50
+								</span>
+							</div>
 						</div>
 					) : (
 						<div
@@ -971,7 +973,7 @@ export default function TicketModalEdit({
 				className="w-full px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none resize-none bg-transparent"
 			/>
 			{commentError && (
-				<p className="px-3 pb-1 text-xs text-red-500">{commentError}</p>
+				<p className="px-3 pb-1 text-xs text-destructive">{commentError}</p>
 			)}
 			<div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 bg-gray-50/50">
 				<label

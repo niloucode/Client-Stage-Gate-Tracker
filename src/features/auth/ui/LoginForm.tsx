@@ -97,7 +97,7 @@ export function LoginForm() {
 						className={fieldErrClass("email")}
 					/>
 					{fieldErrors.email && (
-						<p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
+						<p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>
 					)}
 				</div>
 
@@ -121,13 +121,13 @@ export function LoginForm() {
 						className={fieldErrClass("password")}
 					/>
 					{fieldErrors.password && (
-						<p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
+						<p className="text-xs text-destructive mt-1">{fieldErrors.password}</p>
 					)}
 				</div>
 
 				{error && (
 					<p
-						className="text-sm text-red-600 bg-red-50 border border-red-200
+						className="text-sm text-destructive bg-red-50 border border-red-200
             rounded-md px-3 py-2"
 					>
 						{error}

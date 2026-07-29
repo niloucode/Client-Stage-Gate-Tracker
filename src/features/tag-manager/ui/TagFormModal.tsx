@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Tag } from "@/entities/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,14 @@ export default function TagFormModal({
 	const [description, setDescription] = useState(initial?.description ?? "");
 	const [color, setColor] = useState(initial?.color ?? "#3B82F6");
 
+	// Reset form when modal opens or initial data changes
+	useEffect(() => {
+		if (!isOpen) return
+		setName(initial?.name ?? "")
+		setDescription(initial?.description ?? "")
+		setColor(initial?.color ?? "#3B82F6")
+	}, [isOpen, initial?.name, initial?.description, initial?.color])
+
 	async function handleSubmit() {
 		await onSubmit({
 			tag_id: initial?.tag_id,
@@ -57,9 +65,10 @@ export default function TagFormModal({
 				{/* Body */}
 				<div className="space-y-5">
 					<div>
-						<Label required>
-							Tag Name
-						</Label>
+						<div className="flex justify-between items-center">
+							<Label required>Tag Name</Label>
+							<span className="text-[10px] text-muted-foreground">{name.length}/10</span>
+						</div>
 						<Input
 							type="text"
 							value={name}
@@ -67,16 +76,13 @@ export default function TagFormModal({
 							placeholder="e.g. Production"
 							maxLength={10}
 						/>
-						<div className="flex mt-0.5 text-xs">
-							{error && <span className="text-red-500">{error}</span>}
-							<span className="text-gray-400 ml-auto">{name.length}/10</span>
-						</div>
 					</div>
 
 					<div>
-						<Label>
-							Description
-						</Label>
+						<div className="flex justify-between items-center">
+							<Label>Description</Label>
+							<span className="text-[10px] text-muted-foreground">{description.length}/35</span>
+						</div>
 						<Textarea
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}
@@ -84,7 +90,6 @@ export default function TagFormModal({
 							rows={3}
 							maxLength={35}
 						/>
-						<p className="text-xs text-gray-400 text-right mt-0.5">{description.length}/35</p>
 					</div>
 
 					<div>
