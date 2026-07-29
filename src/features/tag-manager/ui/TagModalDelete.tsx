@@ -3,8 +3,9 @@ import type { Tag } from "@/entities/types";
 import {
 	Backdrop,
 	CloseButton,
-	TagBadge,
 } from "@/features/tag-manager/ui/TagModals";
+
+import { TagBadge } from "@/shared/ui"
 
 export default function TagModalDelete({
 	tag,

@@ -13,6 +13,8 @@ import {
 	useReorderWorkflow,
 } from "@/entities/workflow/mutations";
 
+import { Pencil, X, Plus } from "lucide-react"
+
 interface WorkflowsListProps {
 	workflows: Workflow[];
 	moduleId: string;
@@ -268,34 +270,13 @@ export function WorkflowsList({
 									onClick={() => openEditWorkflowModal(workflow)}
 									title="Edit workflow"
 								>
-									<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-										<path
-											d="M8.5 1.5L10.5 3.5L3.5 10.5L1 11L1.5 8.5L8.5 1.5Z"
-											stroke="#94A3B8"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										/>
-										<path
-											d="M7 2.5L9.5 5"
-											stroke="#94A3B8"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-										/>
-									</svg>
+									<Pencil size={12} className={"text-brand-200"}/>
 								</button>
 								<button
 									onClick={() => confirmDelete(workflow)}
 									title="Delete workflow"
 								>
-									<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-										<path
-											d="M9 3L3 9M3 3L9 9"
-											stroke="#94A3B8"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-										/>
-									</svg>
+									<X size={12} className={"text-brand-200"}/>
 								</button>
 							</div>
 						</div>
@@ -308,15 +289,8 @@ export function WorkflowsList({
 					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-[#F8FAFC] hover:border-brand-500 transition-all"
 					style={{ width: "calc(100% - 24px)" }}
 				>
-					<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-						<path
-							d="M6 1V11M1 6H11"
-							stroke="#94A3B8"
-							strokeWidth="1.5"
-							strokeLinecap="round"
-						/>
-					</svg>
-					<span className="text-sm font-medium text-neutral-subtle">
+					<Plus size={16} className={"text-brand-200"}/>
+					<span className="text-sm font-medium text-neutral-border">
 						Add Workflow
 					</span>
 				</button>

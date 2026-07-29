@@ -1,36 +1,26 @@
-import type { Tag } from "@/entities/types";
+import type { Tag } from "@/entities/types"
 import {
 	Backdrop,
 	CloseButton,
-	TagBadge,
-} from "@/features/tag-manager/ui/TagModals";
+} from "@/features/tag-manager/ui/TagModals"
+import { TagBadge } from "@/shared/ui/tagbadge"
 
 export default function TagListModal({
 	tags,
 	onClose,
-	onCreateTag,
 	onEditTag,
 	onRequestDeleteTag,
 }: {
-	tags: Tag[];
-	onClose: () => void;
-	onCreateTag: () => void;
-	onEditTag: (tag: Tag) => void;
-	onRequestDeleteTag: (tag: Tag) => void;
+	tags: Tag[]
+	onClose: () => void
+	onEditTag: (tag: Tag) => void
+	onRequestDeleteTag: (tag: Tag) => void
 }) {
 	return (
-		<>
-			<Backdrop onClick={onClose} />
-			<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-				<div className="bg-neutral-surface rounded-xl shadow-2xl w-full max-w-2xl min-h-[65vh] max-h-[65vh] flex flex-col overflow-hidden">
-					{/* Header */}
-					<div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-						<h2 className="text-base font-semibold text-gray-900">Tags</h2>
-						<CloseButton onClick={onClose} />
-					</div>
-
+		<div className="flex flex-col items-center ">
+			{/* Header */}
 					{/* Table Body Area */}
-					<div className="flex-1 overflow-y-auto px-6 flex flex-col">
+					<div className="overflow-hidden w-[32rem] flex flex-col">
 						{/* Purple-tinted header — sticky, sits above the scroll area */}
 						<table className="w-full table-fixed mt-4">
 							<colgroup>
@@ -51,18 +41,18 @@ export default function TagListModal({
 						</table>
 
 						{/* Scrollable rows */}
-						<div className="tag-scroll flex-1 overflow-y-auto">
+						<div className="tag-scroll overflow-y-auto">
 							<style>{`
-                                .tag-scroll::-webkit-scrollbar { width: 5px; }
-                                .tag-scroll::-webkit-scrollbar-track { background: #F5F3FF; border-radius: 99px; }
-                                .tag-scroll::-webkit-scrollbar-thumb { background: #C7D2FE; border-radius: 99px; }
-                                .tag-scroll::-webkit-scrollbar-thumb:hover { background: #A5B4FC; }
+                                .tag-scroll::-webkit-scrollbar { width: 5px }
+                                .tag-scroll::-webkit-scrollbar-track { background: #F5F3FF border-radius: 99px }
+                                .tag-scroll::-webkit-scrollbar-thumb { background: #C7D2FE border-radius: 99px }
+                                .tag-scroll::-webkit-scrollbar-thumb:hover { background: #A5B4FC }
                             `}</style>
 							<table className="w-full table-fixed">
 								<colgroup>
-									<col style={{ width: "28%" }} />
-									<col style={{ width: "48%" }} />
-									<col style={{ width: "24%" }} />
+									<col style={{ width: "10%" }} />
+									<col style={{ width: "20%" }} />
+									<col style={{ width: "10%" }} />
 								</colgroup>
 								<tbody className="divide-y divide-gray-200">
 									{tags.length === 0 && (
@@ -136,30 +126,6 @@ export default function TagListModal({
 
 					{/* Footer Divider */}
 					<div className="h-px bg-gray-100 shrink-0" />
-
-					{/* Footer */}
-					<div className="px-6 py-4 flex justify-end shrink-0 bg-gray-50/50">
-						<button
-							onClick={onCreateTag}
-							className="flex items-center gap-1.5 text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors shadow-sm"
-						>
-							<svg
-								width="13"
-								height="13"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth={2.5}
-								strokeLinecap="round"
-							>
-								<line x1="12" y1="5" x2="12" y2="19" />
-								<line x1="5" y1="12" x2="19" y2="12" />
-							</svg>
-							Create Tag
-						</button>
-					</div>
-				</div>
-			</div>
-		</>
-	);
+		</div>
+	)
 }

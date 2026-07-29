@@ -75,7 +75,7 @@ export function ProjectSection({
                 </div>
                 <ChevronDown
                     size={20}
-                    className={`text-neutral-subtle transform transition-transform duration-300 ease-in-out ${
+                    className={`text-neutral-border transform transition-transform duration-300 ease-in-out ${
                         isExpanded ? "rotate-180" : ""
                     }`}
                 />

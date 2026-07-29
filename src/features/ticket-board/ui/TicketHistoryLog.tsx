@@ -5,69 +5,70 @@ import { action } from "@/lib/generated/prisma";
 import { useTicketHistory } from "../model/queries";
 import type { TicketHistoryEntry } from "../model/types";
 import {
-	PlusCircleIcon,
-	CheckCircleIcon,
-	StatusChangeIcon,
-	PencilIcon,
-	MessageIcon,
-	UserPlusIcon,
-	UserMinusIcon,
-	TrashIcon,
-	EyeIcon,
-} from "@/shared/ui/icons";
+  PlusCircle,
+  CheckCircle,
+  RefreshCw, // standard Lucide equivalent for StatusChange
+  Pencil,
+  MessageSquare, // standard Lucide equivalent for Message
+  UserPlus,
+  UserMinus,
+  Trash2, // standard Lucide clean trash icon (or use Trash)
+  Eye,
+  LucideIcon
+} from "lucide-react";
 
 // ── Icon + colour mapping per action ─────────────────────────────────────────
 
 const ACTION_META: Record<
 	action,
 	{
-		Icon: (props: { className?: string }) => ReactElement;
+		Icon: LucideIcon;
 		bg: string;
 		text: string;
 	}
 > = {
 	[action.CREATED]: {
-		Icon: PlusCircleIcon,
+		Icon: PlusCircle,
 		bg: "bg-green-100",
 		text: "text-green-600",
 	},
 	[action.UPDATED_STATUS]: {
-		Icon: StatusChangeIcon,
+		Icon: RefreshCw,
 		bg: "bg-blue-100",
 		text: "text-blue-600",
 	},
 	[action.RENAMED]: {
-		Icon: PencilIcon,
+		Icon: Pencil,
 		bg: "bg-amber-100",
 		text: "text-amber-600",
 	},
 	[action.COMMENT_ADDED]: {
-		Icon: MessageIcon,
+		Icon: MessageSquare,
 		bg: "bg-gray-100",
 		text: "text-gray-500",
 	},
 	[action.WATCHER_CHANGED]: {
-		Icon: EyeIcon,
+		Icon: Eye,
 		bg: "bg-violet-100",
 		text: "text-violet-600",
 	},
 	[action.FINISHED]: {
-		Icon: CheckCircleIcon,
+		Icon: CheckCircle,
 		bg: "bg-indigo-100",
 		text: "text-brand-600",
 	},
 	[action.ASSIGNED]: {
-		Icon: UserPlusIcon,
+		Icon: UserPlus,
 		bg: "bg-teal-100",
 		text: "text-teal-600",
 	},
 	[action.UNASSIGNED]: {
-		Icon: UserMinusIcon,
+		Icon: UserMinus,
 		bg: "bg-gray-100",
 		text: "text-gray-500",
 	},
 	[action.DELETE]: {
-		Icon: TrashIcon,
+		Icon: Trash2,
 		bg: "bg-red-100",
 		text: "text-red-600",
 	},
@@ -310,8 +311,7 @@ export default function TicketHistoryLog({
 	const hasMore = history.length > INITIAL_VISIBLE;
 
 	return (
-		<div className="px-5 py-4 border-b border-gray-100">
-			<h3 className="text-sm font-semibold text-gray-900 mb-3">Activity</h3>
+		<div className="px-5 pb-4 border-b border-gray-100">
 
 			{isLoading ? (
 				<p className="text-sm text-gray-400">Loading activity…</p>

@@ -2,9 +2,7 @@
 
 import { useState } from "react"
 import { phaseCreateSchema } from "@/shared/schemas"
-import { Label } from "@/shared/ui/label"
-import { Modal } from "@/shared/ui/modal"
-import { Button } from "@/shared/ui/button"
+import { Label, Button, Modal } from "@/shared/ui/"
 
 interface AddPhaseFormData {
 	name: string
@@ -65,7 +63,6 @@ export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
 			onClose={onClose}
 			title={"Create New Phase"}
 			subtitle={"Fill in the details to create a new phase."}
-			width="xl"
 			footer={<>
 			<Button onClick={handleClose} variant="transparency">
 				Cancel

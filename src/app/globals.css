@@ -42,6 +42,8 @@
 	--font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 	--font-display: "Plus Jakarta Sans", sans-serif;
 
+	--drop-shadow-b-xl: 0 2px 4px rgba(0, 0, 0, 0.05);
+
 	--text-2xs: 0.6875rem;
 	--text-2xs--line-height: 1rem;
 

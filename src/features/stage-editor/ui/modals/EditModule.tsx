@@ -71,7 +71,7 @@ export function EditModule({
 			onClose={onClose}
 			title={"Edit Module"}
 			subtitle={"Update the module details below."}
-			width="xl"
+			
 			footer={<>
 			<Button className="mr-auto" icon="delete" variant="red" onClick={onDelete}> 
 				Delete Module 

@@ -43,7 +43,7 @@ import type { CreateTicketParams } from "@/shared/schemas";
 type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
 
 // Icons
-import { TagsIcon, PlusIcon } from "@/shared/ui/icons";
+import { Tag, Plus } from "lucide-react";
 import { useAuth } from "@/features/auth";
 
 // ── Main board ────────────────────────────────────────────────────────────────
@@ -273,7 +273,7 @@ export default function TicketBoard({
 						onClick={() => setTagManagerOpen(true)}
 						className="flex items-center gap-1.5 text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
 					>
-						<TagsIcon />
+						<Tag />
 						Tags
 					</button>
 
@@ -281,7 +281,7 @@ export default function TicketBoard({
 						onClick={() => setModalOpen(true)}
 						className="flex items-center gap-1.5 text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
 					>
-						<PlusIcon />
+						<Plus />
 						New Issue
 					</button>
 				</div>
@@ -295,7 +295,7 @@ export default function TicketBoard({
 				onDragEnd={handleDragEnd}
 			>
 				<div className="w-full flex-1 overflow-x-auto pb-6">
-					<div className="grid grid-cols-3 gap-5 flex-1 w-full min-h-0 max-h-[80vh] min-w-[30vw]">
+					<div className="grid grid-cols-3 gap-10 flex-1 w-full min-h-0 max-h-[80vh] min-w-[30vw]">
 						{COLUMNS.map((column) => (
 							<TicketColumn
 								key={column.id}

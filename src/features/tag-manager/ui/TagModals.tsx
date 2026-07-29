@@ -1,11 +1,12 @@
-"use client";
+"use client"
 
-import type { Tag } from "@/entities/types";
-import { getPastelStyle, TAG_COLORS } from "@/shared/lib/colors";
-import { useState } from "react";
-import TagModalDelete from "@/features/tag-manager/ui/TagModalDelete";
-import TagListModal from "@/features/tag-manager/ui/TagListModal";
-import TagFormModal from "@/features/tag-manager/ui/TagFormModal";
+import type { Tag } from "@/entities/types"
+import { TAG_COLORS } from "@/shared/lib/colors"
+import { useState } from "react"
+import TagModalDelete from "@/features/tag-manager/ui/TagModalDelete"
+import TagListModal from "@/features/tag-manager/ui/TagListModal"
+import TagFormModal from "@/features/tag-manager/ui/TagFormModal"
+import{ Modal,Button } from "@/shared/ui/"
 
 export function CloseButton({ onClick }: { onClick: () => void }) {
 	return (
@@ -27,19 +28,7 @@ export function CloseButton({ onClick }: { onClick: () => void }) {
 				<line x1="6" y1="6" x2="18" y2="18" />
 			</svg>
 		</button>
-	);
-}
-
-export function TagBadge({ tag }: { tag: Tag }) {
-	const { bg, text, border } = getPastelStyle(tag?.color ?? "#06B6D4");
-	return (
-		<span
-			className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
-			style={{ backgroundColor: bg, color: text, borderColor: border }}
-		>
-			{tag.name}
-		</span>
-	);
+	)
 }
 
 // ── Color picker ──────────────────────────────────────────────────────────────
@@ -48,13 +37,13 @@ export function ColorPicker({
 	value,
 	onChange,
 }: {
-	value: string;
-	onChange: (c: string) => void;
+	value: string
+	onChange: (c: string) => void
 }) {
 	return (
 		<div className="grid grid-cols-9 gap-1.5">
 			{TAG_COLORS.map((color) => {
-				const isSelected = value === color;
+				const isSelected = value === color
 				return (
 					<button
 						key={color}
@@ -80,16 +69,16 @@ export function ColorPicker({
 							</span>
 						)}
 					</button>
-				);
+				)
 			})}
 		</div>
-	);
+	)
 }
 
 // ── Modal backdrop ────────────────────────────────────────────────────────────
 
 export function Backdrop({ onClick }: { onClick: () => void }) {
-	return <div className="fixed inset-0 bg-foreground/40 z-40" onClick={onClick} />;
+	return <div className="fixed inset-0 bg-foreground/40 z-40" onClick={onClick} />
 }
 
 // ── Tag List Modal ────────────────────────────────────────────────────────────
@@ -101,39 +90,39 @@ export function TagManager({
 	onDelete,
 	tags,
 }: {
-	isOpen: boolean;
-	onClose: () => void;
+	isOpen: boolean
+	onClose: () => void
 	onSave: ({
 		name,
 		tag_id,
 		description,
 		color,
 	}: {
-		name: string;
-		tag_id?: string;
-		description?: string;
-		color?: string;
-	}) => Promise<{ error?: string }>;
-	onDelete: (tag_id: string) => void;
-	tags: Tag[];
+		name: string
+		tag_id?: string
+		description?: string
+		color?: string
+	}) => Promise<{ error?: string }>
+	onDelete: (tag_id: string) => void
+	tags: Tag[]
 }) {
 	const [view, setView] = useState<"list" | "create" | "edit" | "delete" | null>(
 		"list",
-	);
-	const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
-	const [formError, setFormError] = useState<string | null>(null);
+	)
+	const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
+	const [formError, setFormError] = useState<string | null>(null)
 
-	if (!isOpen) return null;
+	if (!isOpen) return null
 
 	function handleClose() {
-		setView("list");
-		setSelectedTag(null);
-		onClose();
+		setView("list")
+		setSelectedTag(null)
+		onClose()
 	}
 
 	function handleEditTag(tag: Tag) {
-		setSelectedTag(tag);
-		setView("edit");
+		setSelectedTag(tag)
+		setView("edit")
 	}
 
 	async function handleSaveTag({
@@ -142,49 +131,65 @@ export function TagManager({
 		description,
 		color,
 	}: {
-		name: string;
-		tag_id?: string;
-		description?: string;
-		color?: string;
+		name: string
+		tag_id?: string
+		description?: string
+		color?: string
 	}): Promise<{ error?: string }> {
-		if (!name.trim()) return {};
+		if (!name.trim()) return {}
 		const result = await onSave({
 			name: name.trim(),
 			description: description?.trim() ?? "",
 			color: color,
 			tag_id: tag_id ?? "",
-		});
+		})
 		if (result?.error) {
-			setFormError(result.error);
-			return result;
+			setFormError(result.error)
+			return result
 		}
-		setFormError(null);
-		setView("list");
-		setSelectedTag(null);
-		return {};
+		setFormError(null)
+		setView("list")
+		setSelectedTag(null)
+		return {}
 	}
 
 	function handleConfirmDelete(tag_id: string) {
-		onDelete(tag_id);
-		setView("list");
-		setSelectedTag(null);
+		onDelete(tag_id)
+		setView("list")
+		setSelectedTag(null)
 	}
 
 	function handleRequestDelete(tag: Tag) {
-		setSelectedTag(tag);
-		setView("delete");
+		setSelectedTag(tag)
+		setView("delete")
 	}
 
 	if (view === "list") {
 		return (
-			<TagListModal
-				tags={tags}
-				onClose={handleClose}
-				onCreateTag={() => setView("create")}
-				onEditTag={handleEditTag}
-				onRequestDeleteTag={handleRequestDelete}
-			/>
-		);
+			<Modal
+				  isOpen={isOpen}
+				  onClose={onClose}
+				  title={"Tags"}
+				  subtitle="Fill in the details for this project."
+				  footer={
+					<>
+						<Button onClick={handleClose} variant="transparency">
+							Cancel
+						</Button>
+						<Button onClick={()=> setView("create")} icon="add">
+							Create Tag
+						</Button>
+					</>
+				  }
+				>
+				<TagListModal
+					tags={tags}
+					onClose={handleClose}
+					onEditTag={handleEditTag}
+					onRequestDeleteTag={handleRequestDelete}
+				/>
+			</Modal>
+		)
 	}
 
 	if (view === "create") {
@@ -192,10 +197,13 @@ export function TagManager({
 			<TagFormModal
 				mode="create"
 				error={formError}
-				onClose={() => { setView("list"); setFormError(null); }}
+				onClose={() => { 
+					setView("list") 
+					setFormError(null) 
+				}}
 				onSubmit={handleSaveTag}
 			/>
-		);
+		)
 	}
 
 	if (view === "edit" && selectedTag) {
@@ -204,10 +212,13 @@ export function TagManager({
 				mode="edit"
 				initial={selectedTag}
 				error={formError}
-				onClose={() => { setView("list"); setFormError(null); }}
+				onClose={() => { 
+					setView("list") 
+					setFormError(null) 
+				}}
 				onSubmit={handleSaveTag}
 			/>
-		);
+		)
 	}
 
 	if (view === "delete" && selectedTag) {
@@ -217,8 +228,8 @@ export function TagManager({
 				onClose={() => setView("list")}
 				onConfirm={handleConfirmDelete}
 			/>
-		);
+		)
 	}
 
-	return null;
+	return null
 }

@@ -8,7 +8,7 @@ export function Modal({
 	subtitle,
     children, 
     footer, 
-    width = "xl",
+    width = "[36rem]",
     containerClassName = "bg-neutral-surface"
 }: {
     isOpen: boolean;
@@ -20,8 +20,6 @@ export function Modal({
     width?: string;
     containerClassName?: string;
 }) {
-	if (width==="xl")
-		width="[36rem]"
     return (
         <Backdrop isOpen={isOpen} onClose={onClose}>
             <div className={`${"w-"+width} ${"min-w-"+width} ${"max-w-"+width} ${containerClassName} rounded-xl shadow-xl relative p-6`}>
@@ -40,7 +38,7 @@ export function Modal({
 					</div>
                     <button
                         onClick={onClose}
-                        className="text-[#94A3B8] hover:text-[#475569] transition-colors"
+                        className="text-neutral-border hover:text-foreground transition-colors"
                     >
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                             <path

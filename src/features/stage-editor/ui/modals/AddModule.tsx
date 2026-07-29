@@ -107,7 +107,7 @@ export function AddModule({
 			onClose={onClose}
 			title={"Create New Module"}
 			subtitle={`Fill in the details to create a new module for Phase ${activePhase}.`}
-			width="xl"
+			
 			footer={<>
 			<Button onClick={handleClose} variant="transparency">
 				Cancel

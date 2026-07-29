@@ -25,25 +25,24 @@ export default function TicketColumn({
 	const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
 	return (
-		<div className="flex flex-col h-full w-full select-none bg-neutral-surface border border-brand-100 rounded-xl min-h-0">
+		<div className="flex flex-col h-full w-full select-none rounded-xl min-h-0">
     {/* Column header - shrink-0 keeps header fixed size */}
-			<div className="flex h-16 shrink-0 items-center gap-2 p-4">
-				<span className={`w-2 h-2 rounded-full ${column.dotColor}`} />
-				<span className="text-lg font-semibold text-brand-900">{column.title}</span>
-				<span className="ml-auto text-xs font-semibold text-brand-900 bg-brand-100 w-5 h-5 flex items-center justify-center rounded-full">
+			<div className="flex h-16 shrink-0 items-center gap-2">
+				<span className="text-2xl font-semibold text-brand-900">{column.title}</span>
+				<span className={`text-xs ${column.dotColor} ${column.textColor} font-semibold w-5 h-5 flex items-center justify-center rounded-full`}>
 					{tickets.length}
 				</span>
 			</div>
 
-			<div className="border-brand-100 border-b shrink-0"></div>
+			<div className="shrink-0"></div>
 
 			{/* Container + cards drop zone */}
 			{/* min-h-0 allows overflow-auto to trigger internal scrolling when cards overflow */}
 			<div
 				ref={setNodeRef}
-				className={`flex flex-col items-center gap-2 flex-1 min-h-0 rounded-xl p-2.5 max-h-[70vh] overflow-y-auto transition-colors duration-150 ${
+				className={`flex flex-col items-center gap-2 flex-1 min-h-[70vh] rounded-xl max-h-[70vh] overflow-y-auto transition-colors duration-150 ${
 					isOver ? "border bg-indigo-50 border-indigo-200" :
-					"border border-brand-25 bg-neutral-surface"
+					""
 				}`}
 			>
 				{tickets.map((ticket) => (

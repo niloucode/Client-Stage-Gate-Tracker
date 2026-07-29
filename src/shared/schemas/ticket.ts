@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const ticketCreateSchema = z.object({
   name: z.string().trim().min(1, "Ticket name is required").max(50, "Ticket name must be 50 characters or less"),
-  description: z.string().optional().nullable(),
+  description: z.string().max(160, "Description must be 160 characters or less").optional().nullable(),
   deadline_date: z.date({ message: "Deadline is required" }),
   watcher_id: z.string().uuid().optional().nullable(),
   tagIds: z.array(z.string().uuid()).optional().nullable(),

@@ -146,7 +146,7 @@ export function ManageMembersModal({
 			onClose={onClose}
 			title="Manage Project Members"
 			subtitle={"Find and remove members for this project."}
-			width="xl">
+			>
 					{/* Search Input */}
 			<div className="mt-6">
 

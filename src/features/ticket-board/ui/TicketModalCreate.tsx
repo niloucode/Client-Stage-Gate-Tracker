@@ -1,16 +1,13 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Input } from "@/shared/ui/input"
-import { Label } from "@/shared/ui/label"
+import { Input, Label, Backdrop, FormInput } from "@/shared/ui"
 import { Tag } from "@/entities/types"
 
-import { XIcon, ChevronDownIcon, EyeIcon } from "@/shared/ui/icons"
+import { X, ChevronDown } from "lucide-react"
 import { useProfiles } from "@/entities/profile/queries"
 import { createClient } from "@/lib/supabase/client"
 import type { CreateTicketParams } from "@/shared/schemas"
-
-import { Backdrop } from "@/shared/ui/backdrop"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -194,7 +191,7 @@ export default function TicketModalCreate({
 
 	return (
 		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div className="bg-neutral-surfaceal-surface rounded-2xl w-full max-w-153 max-h-[92vh] flex flex-col shadow-2xl">
+			<div className="bg-neutral-surface rounded-2xl w-full max-w-153 max-h-[92vh] flex flex-col shadow-2xl">
 				{/* Modal header */}
 				<div className="flex items-center justify-between px-6 pt-6 pb-5 shrink-0">
 					<h2 className="text-lg font-semibold text-gray-900">New Ticket</h2>
@@ -202,7 +199,7 @@ export default function TicketModalCreate({
 						onClick={onClose}
 						className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
 					>
-						<XIcon />
+						<X />
 					</button>
 				</div>
 
@@ -214,31 +211,25 @@ export default function TicketModalCreate({
 					className="flex-1 overflow-y-auto px-6 py-5 space-y-5"
 				>
 					{/* Ticket Name */}
-					<div className="space-y-1.5">
-						<Label>
-							Ticket Name <span className="text-red-500">*</span>
-						</Label>
-						<Input
-							placeholder="e.g., Update Landing Page Hero"
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							maxLength={50}
-							required
-						/>
-						<p className="text-xs text-gray-500 text-right">{title.length}/50</p>
-					</div>
+					<FormInput
+					label="Ticket Name"
+					required
+					placeholder="e.g., Update Landing Page Hero"
+					value={title}
+					onChange={(e) => setTitle(e.target.value)}
+					maxLength={50}
+					/>
 
 					{/* Description */}
-					<div className="space-y-1.5">
-						<Label>Description</Label>
-						<textarea
-							placeholder="Provide detailed information about this ticket..."
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							rows={4}
-							className="w-full rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
-						/>
-					</div>
+					<FormInput
+					variant="textarea"
+					label="Description"
+					placeholder="Provide detailed information about this ticket..."
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+					rows={4}
+					maxLength={160}
+					/>
 
 					{/* Assigned to + Watchers row */}
 					<div className="grid grid-cols-2 gap-4">
@@ -277,7 +268,7 @@ export default function TicketModalCreate({
 											})
 										)}
 									</div>
-									<ChevronDownIcon />
+									<ChevronDown />
 								</button>
 
 								{assignedOpen && (
@@ -326,7 +317,7 @@ export default function TicketModalCreate({
 											? profiles.find((p) => p.profile_id === watcherId)?.first_name + " " + profiles.find((p) => p.profile_id === watcherId)?.last_name
 											: "Add watchers..."}
 									</span>
-									<ChevronDownIcon />
+									<ChevronDown />
 								</button>
 								{watcherOpen && (
 									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
@@ -368,7 +359,7 @@ export default function TicketModalCreate({
 								<button
 									type="button"
 									onClick={() => setTagsOpen((o) => !o)}
-									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
+									className="w-full flex items-center overflow-x-hidden justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
 								>
 									<div className="flex flex-wrap gap-1 flex-1">
 										{selectedTags.length === 0 ? (
@@ -400,7 +391,7 @@ export default function TicketModalCreate({
 											})
 										)}
 									</div>
-									<ChevronDownIcon />
+									<ChevronDown />
 								</button>
 
 								{tagsOpen && (

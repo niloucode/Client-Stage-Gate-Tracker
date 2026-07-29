@@ -5,10 +5,12 @@ import { useDraggable } from "@dnd-kit/core"
 
 import { type Ticket } from "@/entities/types"
 import TicketModalDelete from "./TicketModalDelete"
-import { CalendarIcon, AlertTriangleIcon, MoreHorizontalIcon } from "@/shared/ui/icons"
+import { Calendar, AlertTriangle, MoreHorizontal, Dot } from "lucide-react"
 import { getInitials } from "@/shared/lib/strings"
 import { LucidePencil, LucideTrash2 } from "lucide-react"
 import { status } from "@/lib/generated/prisma"
+
+
 /**
  * Renders the internal visual contents, layout, and contextual menus of a single ticket.
  * This subcomponent manages its own drop-down actions menu (Edit/Delete) and localized
@@ -57,46 +59,25 @@ export function TicketCardContent({
 			className={[
 				// (ticket.deadline_date && ticket.deadline_date < today) ? "bg-[#FFEEEE]": 
 				"bg-neutral-surface",
-				"flex overflow-clip rounded h-27 border border-brand-100 cursor-pointer relative ",
+				"flex overflow-clip rounded-xl h-35 border-3 border-neutral-subtle cursor-pointer relative ",
 				"hover:bg-brand-50 hover:border-brand-300 transition-colors duration-150 select-none",
 				
 			].join(" ")}
 		>
 			{(ticket.deadline_date && ticket.deadline_date < today) ? (
-										<div className={"w-[3px] h-full "+((ticket.deadline_date && ticket.deadline_date < today) ? "bg-red-500" : "")}></div>
+				<div className={"w-[3px] h-full "+((ticket.deadline_date && ticket.deadline_date < today) ? "bg-red-500" : "")}></div>
+			) : ticket.status === status.IN_PROGRESS ? (
+				<div className={"w-[3px] h-full "+((ticket.status === status.IN_PROGRESS) ? "bg-brand-500" : "")}></div>
+			):<></>}
 
-						) : ticket.status === status.IN_PROGRESS ? (
-										<div className={"w-[3px] h-full "+((ticket.status === status.IN_PROGRESS) ? "bg-brand-500" : "")}></div>
-
-						):<></>}
-			<div className="w-full flex flex-col p-4">
+			<div className="w-full flex flex-col p-6">
 				<div className="flex mb-2.5 gap-1">
-					<div className="flex items-center">
-						{/* Top row: ID + badges + menu */}
-						{/* {(ticket.deadline_date && ticket.deadline_date < today) ? (
-								<div className="w-2 h-2 mr-2 bg-red-600 rounded-full rounded-full uppercase"/>
-							) : ticket.status === status.IN_PROGRESS ? (
-								<div className="w-2 h-2 mr-2 bg-brand-600 rounded-full rounded-full uppercase"/>
-						):<></>} */}
-						{/* Title */}
-						<span className="text-l font-semibold text-gray-900 line-clamp-2 leading-snug break-all">
+					<div className="flex items-start">
+						<span className="text-xl text-gray-900 pr-5 line-clamp-2 leading-none break-all">
 							{ticket.name}
 						</span>
 					</div>
-					{/* <span className="text-xs font-semibold text-brand-600 shrink-0">{ticket.ticket_id}</span> */}
-					<div className="flex gap-1.5 items-center ml-auto" ref={menuRef}>
-						
-					{/* {(ticket.deadline_date && ticket.deadline_date < today) ? (
-						<span className="text-[8px] font-bold tracking-wide bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase">
-							Overdue
-						</span>
-					) : ticket.status === status.IN_PROGRESS ? (
-						<span className="text-[8px] font-bold tracking-wide bg-brand-200 text-brand-600 px-2 py-0.5 rounded-full uppercase">
-							Active
-						</span>
-					):<></>} */}
-					{/* {ticket.isFlagged && <FlagIcon className="text-red-500" />} */}
-
+					<div className="flex gap-1.5 mt-0.5 items-start ml-auto" ref={menuRef}>
 						<button
 							onClick={(e) => {
 								e.stopPropagation()
@@ -121,28 +102,7 @@ export function TicketCardContent({
 
 				{/* Bottom row: deadline + assignee avatar */}
 				{
-					<div className="mt-auto h-3 flex items-center justify-between">
-						{ticket.deadline_date ? (
-							<div
-								className={`flex items-center gap-1 text-xs font-medium ${
-									ticket.deadline_date < today ? "text-red-500" : "text-gray-400"
-								}`}
-							>
-								{ticket.deadline_date < today ? (
-									<AlertTriangleIcon className="text-red-500" />
-								) : (
-									<CalendarIcon />
-								)}
-								{ticket.deadline_date.toLocaleDateString("en-US", {
-									month: "short",
-									day: "2-digit",
-									year: "numeric",
-								})}
-							</div>
-						) : (
-							<div />
-						)}
-
+					<div className="mt-auto h-3 flex items-center">
 						{ticket.Profiles ? (
 							<div
 								className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-neutral-surface bg-gray-600 shrink-0 {usercolor}`}
@@ -155,6 +115,29 @@ export function TicketCardContent({
 						) : (
 							<div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-200" />
 						)}
+						{ticket.deadline_date ? (
+							<div
+								className={`ml-3 flex items-center text-xs font-medium ${
+									ticket.deadline_date < today ? "text-red-500" : "text-gray-400"
+								}`}
+							>
+								{/* {ticket.deadline_date < today ? (
+									<AlertTriangle className="text-red-500" />
+								) : (
+									<Calendar />
+								)} */}
+								{ticket.deadline_date.toLocaleDateString("en-US", {
+									month: "short",
+									day: "2-digit",
+									year: "numeric",
+								})}
+								{ticket.deadline_date < today ? <><Dot/>Overdue</> :""}
+							</div>
+						) : (
+							<div />
+						)}
+
+						
 					</div>
 				}
 
