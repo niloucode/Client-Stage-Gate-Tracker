@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Module, Phase, Workflow } from "../types";
+import type { Module, Phase } from "../types";
 import { WorkflowsList } from "./WorkflowsList";
 import { AddModule } from "@/features/stage-editor/ui/modals/AddModule";
 import { EditModule } from "@/features/stage-editor/ui/modals/EditModule";
@@ -11,7 +11,8 @@ import {
 	useDeleteModule,
 } from "@/entities/module/mutations";
 
-import { Button } from "@/shared/ui/button"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 interface ModulesCardProps {
 	activePhase: number | null;
@@ -141,9 +142,8 @@ export function ModulesCard({
 					Modules {currentPhase && `(Phase ${activePhase})`}
 				</h3>
 				<Button
-					icon="add"
 					onClick={openCreateModuleModal}>
-					Add Module
+					<Plus />Add Module
 				</Button>
 			</div>
 

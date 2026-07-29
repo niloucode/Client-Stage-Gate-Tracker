@@ -1,6 +1,6 @@
-import { Input } from '@/shared/ui/input'
-import { Label } from '@/shared/ui/label'
-import { Button } from '@/shared/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import { Hanken_Grotesk } from 'next/font/google'
 //import TicketsShowcase from './TicketsShowcase'
 
@@ -42,12 +42,12 @@ export default function UIPage() {
         {/* ── Button ── */}
         <Section title="Button">
           <Row label="primary">
-            <Button variant="violet" className="w-40">Sign In</Button>
-            <Button variant="violet" className="w-40" disabled>Disabled</Button>
+            <Button variant="default" className="w-40">Sign In</Button>
+            <Button variant="default" className="w-40" disabled>Disabled</Button>
           </Row>
           <Row label="ghost">
-            <Button variant="transparent" className="w-40">Cancel</Button>
-            <Button variant="transparent" className="w-40" disabled>Disabled</Button>
+            <Button variant="ghost" className="w-40">Cancel</Button>
+            <Button variant="ghost" className="w-40" disabled>Disabled</Button>
           </Row>
         </Section>
 
@@ -92,7 +92,7 @@ export default function UIPage() {
                 <Label htmlFor="ex-password" className="mb-1.5">Password</Label>
                 <Input id="ex-password" type="password" defaultValue="secret" />
               </div>
-              <Button variant="primary">Sign In</Button>
+              <Button variant="default">Sign In</Button>
               <Button variant="ghost">Sign up for an account</Button>
             </div>
           </Row>

@@ -4,10 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import { useProjectMembers, useAddProjectMember, useRemoveProjectMember } from "@/entities/project"
 import { searchProfilesForProject } from "@/entities/project/projectActions"
 import { LucideSearch } from "lucide-react"
-import { useToast } from "@/shared/ui/toast"
-import { ProfileDisplay } from "@/shared/schemas/profile"
-import { Backdrop } from "@/shared/ui/backdrop"
-import { Modal } from "@/shared/ui/modal"
+import { toast } from "@/components/ui/toast"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Searching, Lacking } from "@/shared/ui/search-status"
 
 interface ManageMembersModalProps {
@@ -105,8 +103,6 @@ export function ManageMembersModal({
 		}
 	}, [searchQuery])
 
-	const { showToast } = useToast() 
-
 	const handleAddMember = async (profileId : string, firstName : string, roleName: string = "Project Team Member") => {
 		const result = await addMemberMutation.mutateAsync({ projectId, profileId, roleName })
 		if (!result.success) {
@@ -115,15 +111,13 @@ export function ManageMembersModal({
 		}
 		setSearchQuery("")
 		setSearchResults([])
-		showToast("Given access",firstName+" successfully added","check")
+		toast.add({ title: "Given access", description: firstName+" successfully added" })
 	}
 
 	const handleRemoveMember = (profileId : string, firstName : string) => {
 		removeMemberMutation.mutate({ projectId, profileId })
-		showToast("Removed Access",firstName+" successfully removed","check")
+		toast.add({ title: "Removed Access", description: firstName+" successfully removed" })
 	}
-
-	if (!isOpen) return null
 
 	// Find which profile IDs are already members to disable them in search results
 	const memberIds = new Set(
@@ -141,12 +135,12 @@ export function ManageMembersModal({
 	).length
 
 	return (
-		<Modal 
-			isOpen={isOpen}
-			onClose={onClose}
-			title="Manage Project Members"
-			subtitle={"Find and remove members for this project."}
-			>
+		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+			<DialogContent className="sm:max-w-[36rem]">
+				<DialogHeader>
+					<DialogTitle>Manage Project Members</DialogTitle>
+					<DialogDescription>Find and remove members for this project.</DialogDescription>
+				</DialogHeader>
 					{/* Search Input */}
 			<div className="mt-6">
 
@@ -289,6 +283,7 @@ export function ManageMembersModal({
 					</div>
 				)}
 			</div>
-		</Modal>
+			</DialogContent>
+		</Dialog>
 	)
 }

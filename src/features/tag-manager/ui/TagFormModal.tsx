@@ -1,8 +1,11 @@
 import { useState } from "react";
 import type { Tag } from "@/entities/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
-	Backdrop,
-	CloseButton,
 	ColorPicker,
 } from "@/features/tag-manager/ui/TagModals";
 
@@ -12,6 +15,7 @@ export default function TagFormModal({
 	error,
 	onClose,
 	onSubmit,
+	isOpen,
 }: {
 	mode: "create" | "edit";
 	initial?: Tag;
@@ -28,6 +32,7 @@ export default function TagFormModal({
 		description?: string;
 		color?: string;
 	}) => Promise<{ error?: string }>;
+	isOpen?: boolean;
 }) {
 	const [name, setName] = useState(initial?.name ?? "");
 	const [description, setDescription] = useState(initial?.description ?? "");
@@ -43,73 +48,62 @@ export default function TagFormModal({
 	}
 
 	return (
-		<>
-			<Backdrop onClick={onClose} />
-			<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-				<div className="bg-neutral-surface rounded-xl shadow-2xl w-full max-w-md">
-					{/* Header */}
-					<div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-						<h2 className="text-base font-semibold text-gray-900">
-							{mode === "create" ? "Create Tag" : "Edit Tag"}
-						</h2>
-						<CloseButton onClick={onClose} />
-					</div>
+		<Dialog open={isOpen ?? true} onOpenChange={(open) => { if (!open) onClose() }}>
+			<DialogContent className="sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle>{mode === "create" ? "Create Tag" : "Edit Tag"}</DialogTitle>
+				</DialogHeader>
 
-					{/* Body */}
-					<div className="px-6 py-5 space-y-5">
-						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-1.5">
-								Tag Name
-							</label>
-							<input
-								type="text"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								placeholder="e.g. Production"
-								maxLength={10}
-								className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-							/>
-							<div className="flex mt-0.5 text-xs">
-								{error && <span className="text-red-500">{error}</span>}
-								<span className="text-gray-400 ml-auto">{name.length}/10</span>
-							</div>
-						</div>
-
-						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-1.5">
-								Description
-							</label>
-							<textarea
-								value={description}
-								onChange={(e) => setDescription(e.target.value)}
-								placeholder="Used for critical infrastructure."
-								rows={3}
-								maxLength={35}
-								className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
-							/>
-							<p className="text-xs text-gray-400 text-right mt-0.5">{description.length}/35</p>
-						</div>
-
-						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-2">
-								Tag Color
-							</label>
-							<ColorPicker value={color} onChange={setColor} />
+				{/* Body */}
+				<div className="space-y-5">
+					<div>
+						<Label required>
+							Tag Name
+						</Label>
+						<Input
+							type="text"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="e.g. Production"
+							maxLength={10}
+						/>
+						<div className="flex mt-0.5 text-xs">
+							{error && <span className="text-red-500">{error}</span>}
+							<span className="text-gray-400 ml-auto">{name.length}/10</span>
 						</div>
 					</div>
 
-					{/* Footer */}
-					<div className="px-6 py-4 border-t border-gray-100 flex justify-end">
-						<button
-							onClick={handleSubmit}
-							disabled={!name.trim()}
-							className="text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2 rounded-lg transition-colors"
-						>
-							Save Tag
-						</button>
+					<div>
+						<Label>
+							Description
+						</Label>
+						<Textarea
+							value={description}
+							onChange={(e) => setDescription(e.target.value)}
+							placeholder="Used for critical infrastructure."
+							rows={3}
+							maxLength={35}
+						/>
+						<p className="text-xs text-gray-400 text-right mt-0.5">{description.length}/35</p>
+					</div>
+
+					<div>
+						<Label>
+							Tag Color
+						</Label>
+						<ColorPicker value={color} onChange={setColor} />
 					</div>
 				</div>
-			</div>
-		</>
+
+				<DialogFooter>
+					<Button
+						onClick={handleSubmit}
+						disabled={!name.trim()}
+					>
+						Save Tag
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }

@@ -1,8 +1,4 @@
 import type { Tag } from "@/entities/types"
-import {
-	Backdrop,
-	CloseButton,
-} from "@/features/tag-manager/ui/TagModals"
 import { TagBadge } from "@/shared/ui/tagbadge"
 
 export default function TagListModal({
@@ -50,9 +46,9 @@ export default function TagListModal({
                             `}</style>
 							<table className="w-full table-fixed">
 								<colgroup>
-									<col style={{ width: "10%" }} />
-									<col style={{ width: "20%" }} />
-									<col style={{ width: "10%" }} />
+									<col style={{ width: "28%" }} />
+									<col style={{ width: "48%" }} />
+									<col style={{ width: "24%" }} />
 								</colgroup>
 								<tbody className="divide-y divide-gray-200">
 									{tags.length === 0 && (

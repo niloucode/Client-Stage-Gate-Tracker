@@ -10,7 +10,7 @@ import {
 import type { Phase } from "@/features/stage-editor/types"
 import { useStageTree } from "@/entities/stage/queries"
 import { Plus } from "lucide-react"
-import { Button } from "@/shared/ui/button"
+import { Button } from "@/components/ui/button"
 
 interface PageParams {
 	projectId: string
@@ -96,7 +96,7 @@ function EditorContent({
 						Define project phases, modules, and workflows.
 					</p>
 				</div>
-				<Button icon="add" onClick={() => stepperRef.current?.openCreateModal()}>Add Phase</Button>
+				<Button onClick={() => stepperRef.current?.openCreateModal()}><Plus />Add Phase</Button>
 			</div>
 
 			<PhaseStepper

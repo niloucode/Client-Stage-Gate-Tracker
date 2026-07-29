@@ -1,6 +1,6 @@
 import React from "react";
-import { Label } from "./label"; // Adjust path as needed
-import { Input } from "./input";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 // 1. Shared Layout Props
 interface BaseFormFieldProps {
@@ -153,7 +153,6 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
           type={props.type ?? "text"}
           value={stringValue}
           maxLength={maxLength}
-          error={error}
           placeholder={props.placeholder}
           onChange={(e) => handleValueChange(e, props.onChange)}
           className="mt-1"

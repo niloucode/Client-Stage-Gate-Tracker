@@ -15,7 +15,6 @@ import {
 	getProjectOwnerByProjectId,
 	getRoleAssignmentByProfileProjectId,
 } from "@/entities/roleAssignment";
-import { TruckElectricIcon } from "lucide-react";
 
 //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 // export default function ContractPage({
@@ -37,7 +36,7 @@ export default function ContractPage() {
 	//UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 	//const {projectId} = params
 	const projectId = searchParams.get("projectId") ?? "";
-	const { data: contract } = useContract(projectId || undefined);
+	const { data: contract, isLoading, error } = useContract(projectId || undefined);
 	const clientId = contract?.client_id ?? searchParams.get("clientId") ?? "";
 	const userSigned =
 		userRole == "Client Viewer"
@@ -152,10 +151,34 @@ export default function ContractPage() {
 		}
 	};
 
-	return (
+	if (isLoading) {
+		return (
 			<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
 				<div className="mx-auto max-w-6xl">
-					{allSigned && (
+					<div className="flex items-center justify-center py-20">
+						<p className="text-muted-foreground">Loading contract...</p>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
+				<div className="mx-auto max-w-6xl">
+					<div className="flex items-center justify-center py-20">
+						<p className="text-destructive">Failed to load contract. Please try again.</p>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
+			<div className="mx-auto max-w-6xl">
+				{allSigned && (
 						<ExecutedBanner
 							executedAt={executedDate || undefined}
 							className="mb-6"

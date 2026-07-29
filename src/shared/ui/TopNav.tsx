@@ -1,9 +1,18 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { ChevronRight, User, Settings, Bell } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ChevronRight, User } from "lucide-react"
 import { useAuth } from "@/features/auth"
 import { getDepartmentById } from "@/entities/department/departmentActions"
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 
 interface ProfileMenuItem {
   label: string
@@ -37,8 +46,6 @@ export default function TopNav({
   breadcrumbs,
   menuItems = DEFAULT_MENU_ITEMS
 }: TopNavProps) {
-	const [open, setOpen] = useState(false)
-	const containerRef = useRef<HTMLDivElement>(null)
 
 	const { user, logout} = useAuth();
 	const [departmentName, setDepartmentName] = useState<string>("No Department");
@@ -66,26 +73,6 @@ export default function TopNav({
 		? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
 		: "";
 
-	useEffect(() => {
-		function handleClickOutside(e: MouseEvent) {
-		if (
-			containerRef.current &&
-			!containerRef.current.contains(e.target as Node)
-		) {
-			setOpen(false)
-		}
-		}
-		function handleEscape(e: KeyboardEvent) {
-		if (e.key === "Escape") setOpen(false)
-		}
-		document.addEventListener("mousedown", handleClickOutside)
-		document.addEventListener("keydown", handleEscape)
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside)
-			document.removeEventListener("keydown", handleEscape)
-		}
-  }, [])
-
   return (
     <header className="bg-neutral-surface relative flex items-center justify-between px-8 py-3 border-b-1 border-brand-100 shrink-0">
       <nav className="flex items-center gap-1.5 text-sm">
@@ -112,93 +99,60 @@ export default function TopNav({
         })}
       </nav>
 
-      <div className="flex items-center gap-3" ref={containerRef}>
+      <div className="flex items-center gap-3">
         <div className="w-px h-5 bg-gray-200" />
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-haspopup="true"
-          className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden 
-		  bg-brand-600 text-xs font-bold text-neutral-surface ring-2 ring-transparent hover:ring-indigo-200 transition-all"
-        >
-			{userInitials}
-          {/* {userAvatarUrl ? (
-            <img
-              src={userAvatarUrl}
-              alt={userName}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            
-          )} */}
-        </button>
+		<DropdownMenu>
+			<DropdownMenuTrigger className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden bg-brand-600 text-xs font-bold text-neutral-surface ring-2 ring-transparent hover:ring-indigo-200 transition-all data-[popup-open]:ring-indigo-200">
+				{userInitials}
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="end" className="w-72">
+				<div className="flex flex-col items-center text-center pb-4 border-b border-gray-100 px-4 pt-4">
+					<Avatar className="w-16 h-16 text-lg mb-3">
+						<AvatarFallback className="bg-brand-600 text-neutral-surface text-lg font-bold">
+							{userInitials}
+						</AvatarFallback>
+					</Avatar>
+					<div className="text-foreground font-semibold text-base">
+						{userName}
+					</div>
+					<Badge variant="secondary" className="mt-1.5 text-[11px] font-medium tracking-wide uppercase">
+						{departmentName}
+					</Badge>
+					<div className="mt-1.5 text-xs text-muted-foreground">{userEmail}</div>
+				</div>
 
-        {open && (
-          <div
-            role="menu"
-            className="absolute right-0 top-[calc(100%+8px)] w-72 drop-shadow-2xl transition-all duration-200 ease-out animate-in fade-in rounded-2xl bg-brand-50 border 
-			border-gray-100 shadow-2xl shadow-foreground"
-          >
-            <div className="flex flex-col items-center text-center pb-4 border-b border-gray-100 ">
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-brand-600 flex items-center 
-			  justify-center text-lg font-bold text-neutral-surface mb-3">
-                {
-				// userAvatarUrl ? (
-                //   <img
-                //     src={userAvatarUrl}
-                //     alt={userName}
-                //     className="w-full h-full object-cover"
-                //   />
-                // ) : 
-                  userInitials
-                // )
-				}
-              </div>
-              <div className="text-gray-900 font-semibold text-base">
-                {userName}
-              </div>
-              <span className="mt-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 
-			  text-[11px] font-medium tracking-wide">
-                {departmentName.toUpperCase()}
-              </span>
-              <div className="mt-1.5 text-xs text-gray-400">{userEmail}</div>
-            </div>
+				<div className="py-2">
+					{menuItems.map((item) => {
+						const Icon = ICONS[item.icon]
+						return (
+							<button
+								key={item.label}
+								type="button"
+								onClick={item.onClick}
+								className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+							>
+								<span className="flex items-center gap-2.5">
+									<Icon className="w-4 h-4 stroke-[1.8]" />
+									{item.label}
+								</span>
+								<ChevronRight className="w-3 h-3 text-muted-foreground" />
+							</button>
+						)
+					})}
+				</div>
 
-            <div className="py-2">
-              {menuItems.map((item) => {
-                const Icon = ICONS[item.icon]
-                return (
-                  <button
-                    key={item.label}
-                    type="button"
-                    role="menuitem"
-                    onClick={item.onClick}
-                    className="w-full flex items-center justify-between px-1 py-2.5 text-sm 
-					text-gray-600 hover:text-gray-900 transition-colors group"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4 stroke-[1.8]" />
-                      {item.label}
-                    </span>
-                    <span className="text-gray-300 group-hover:text-gray-500 transition-colors">
-                      <ChevronRight className="w-3 h-3" />
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-
-            <button
-              type="button"
-              onClick={logout}
-              className="mt-3 w-full py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 
-			  text-neutral-surface text-sm font-medium tracking-wide transition-colors"
-            >
-              LOG OUT
-            </button>
-          </div>
-        )}
+				<DropdownMenuSeparator />
+				<div className="px-4 py-2">
+					<button
+						type="button"
+						onClick={logout}
+						className="w-full py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm font-medium tracking-wide transition-colors"
+					>
+						LOG OUT
+					</button>
+				</div>
+			</DropdownMenuContent>
+		</DropdownMenu>
       </div>
     </header>
   )

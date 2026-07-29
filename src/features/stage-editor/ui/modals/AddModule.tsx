@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { moduleCreateSchema } from "@/shared/schemas"
-import { Label } from "@/shared/ui/label"
-import { Modal } from "@/shared/ui/modal"
-import { Button } from "@/shared/ui/button"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 interface AddModuleFormData {
 	name: string
@@ -76,7 +77,6 @@ export function AddModule({
 		})
 	}
 
-	if (!isOpen) return null
 
 	const handleClose = () => {
 		setFormData(emptyFormData)
@@ -102,75 +102,76 @@ export function AddModule({
 	}
 
 	return (
-		<Modal
-			isOpen={isOpen}
-			onClose={onClose}
-			title={"Create New Module"}
-			subtitle={`Fill in the details to create a new module for Phase ${activePhase}.`}
-			
-			footer={<>
-			<Button onClick={handleClose} variant="transparency">
-				Cancel
-			</Button>
-			<Button icon="add" onClick={handleSubmit}>
-				{"Add Module"}
-			</Button>
-			</>}>
-			<div className="space-y-4">
-				<div>
-					<Label required error={!!fieldErrors.name}>
-						Module Name
-					</Label>
-					<input
-						type="text"
-						maxLength={35}
-						value={formData.name}
-						onChange={(e) =>
-							setFormData({ ...formData, name: e.target.value })
-						}
-						placeholder="e.g., Authentication & Identity"
-						className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
-					/>
-					<div className="flex justify-between mt-1">
-						{fieldErrors.name ? (
-							<p className="text-xs text-red-500">{fieldErrors.name}</p>
-						) : (
-							<span />
-						)}
-						<span className="text-[10px] text-[#94A3B8]">
-							{formData.name.length}/35
-						</span>
+		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose() }}>
+			<DialogContent className="sm:max-w-[36rem]">
+				<DialogHeader>
+					<DialogTitle>{"Create New Module"}</DialogTitle>
+					<DialogDescription>{`Fill in the details to create a new module for Phase ${activePhase}.`}</DialogDescription>
+				</DialogHeader>
+				<div className="space-y-4">
+					<div>
+						<Label required error={!!fieldErrors.name}>
+							Module Name
+						</Label>
+						<input
+							type="text"
+							maxLength={35}
+							value={formData.name}
+							onChange={(e) =>
+								setFormData({ ...formData, name: e.target.value })
+							}
+							placeholder="e.g., Authentication & Identity"
+							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
+						/>
+						<div className="flex justify-between mt-1">
+							{fieldErrors.name ? (
+								<p className="text-xs text-red-500">{fieldErrors.name}</p>
+							) : (
+								<span />
+							)}
+							<span className="text-[10px] text-[#94A3B8]">
+								{formData.name.length}/35
+							</span>
+						</div>
+					</div>
+
+					<div>
+						<label className="block text-xs font-semibold text-[#475569] mb-1.5">
+							Deadline Date
+						</label>
+						<input
+							type="datetime-local"
+							value={
+								formData.deadline_date
+									? new Date(
+											formData.deadline_date.getTime() -
+												formData.deadline_date.getTimezoneOffset() * 60000,
+										)
+											.toISOString()
+											.slice(0, 16)
+									: ""
+							}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									deadline_date: e.target.value
+										? new Date(e.target.value)
+										: null,
+								})
+							}
+							className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+						/>
 					</div>
 				</div>
-
-				<div>
-					<label className="block text-xs font-semibold text-[#475569] mb-1.5">
-						Deadline Date
-					</label>
-					<input
-						type="datetime-local"
-						value={
-							formData.deadline_date
-								? new Date(
-										formData.deadline_date.getTime() -
-											formData.deadline_date.getTimezoneOffset() * 60000,
-									)
-										.toISOString()
-										.slice(0, 16)
-								: ""
-						}
-						onChange={(e) =>
-							setFormData({
-								...formData,
-								deadline_date: e.target.value
-									? new Date(e.target.value)
-									: null,
-							})
-						}
-						className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-					/>
-				</div>
-			</div>
-		</Modal>
+				<DialogFooter>
+					<Button onClick={handleClose} variant="ghost">
+						Cancel
+					</Button>
+					<Button onClick={handleSubmit}>
+						<Plus />{"Add Module"}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	)
 }

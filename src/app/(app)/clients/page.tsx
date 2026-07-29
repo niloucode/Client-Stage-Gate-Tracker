@@ -7,13 +7,14 @@ import {
 	Pencil,
 	Eye,
 	EyeOff,
-	ChevronRight,
-	LayoutDashboard,
-	FolderKanban,
-	Users,
 	Plus,
 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useClients } from "@/entities/client";
+import AddClientModal from "@/features/client-manager/ui/AddClientModal";
+import EditClientModal from "@/features/client-manager/ui/EditClientModal";
+import ViewTeamMembersModal from "@/features/client-manager/ui/ViewTeamMembersModal";
 
 interface Client {
 	id: string;
@@ -23,12 +24,6 @@ interface Client {
 	billingAddress: string;
 	companyCode: string;
 	tin: string;
-}
-
-interface ClientListProps {
-	clients?: Client[];
-	onViewMembers?: (client: Client) => void;
-	onEditClient?: (client: Client) => void;
 }
 
 const PLACEHOLDER_CLIENTS: Client[] = Array.from({ length: 10 }, (_, i) => ({
@@ -41,74 +36,69 @@ const PLACEHOLDER_CLIENTS: Client[] = Array.from({ length: 10 }, (_, i) => ({
 	tin: "TIN INPUT",
 }));
 
-const NAV_LINKS = [
-	{ label: "Dashboard", icon: LayoutDashboard },
-	{ label: "Projects", icon: FolderKanban },
-	{ label: "Clients", icon: Users },
-];
-
-export default function ClientPage({
-	clients = PLACEHOLDER_CLIENTS,
-	onViewMembers,
-	onEditClient,
-}: ClientListProps) {
-	// All codes hidden by default for Product Team
+export default function ClientPage() {
+	const { data: clientsData } = useClients()
+	const clients: Client[] = clientsData && clientsData.length > 0
+		? clientsData.map((c) => ({
+			id: c.client_id,
+			name: c.client_name,
+			email: "",
+			contactNumber: "",
+			billingAddress: c.billing_address,
+			companyCode: "",
+			tin: c.tin,
+		}))
+		: PLACEHOLDER_CLIENTS;
+	const [showAddModal, setShowAddModal] = useState(false);
+	const [viewMembersClient, setViewMembersClient] = useState<Client | null>(null);
+	const [editClient, setEditClient] = useState<Client | null>(null);
+	const [searchQuery, setSearchQuery] = useState("");
 	const [visibleCodes, setVisibleCodes] = useState<Record<string, boolean>>({});
 	const toggleCode = (id: string) =>
 		setVisibleCodes((prev) => ({ ...prev, [id]: !prev[id] }));
+	const filteredClients = clients.filter((c) =>
+		c.name.toLowerCase().includes(searchQuery.toLowerCase())
+	);
 
 	return (
 		<>
 			<main className="flex flex-1 flex-col overflow-hidden">
 				<div className="mb-6">
-					<h1
-						className="text-4xl font-bold tracking-wide text-foreground">
+					<h1 className="text-4xl font-bold tracking-wide text-foreground">
 						Client List
 					</h1>
-					<p className="mt-1 text-base text-neutral-border">
+					<p className="mt-1 text-base text-muted-foreground">
 						View the clients your company is working with.
 					</p>
 				</div>
 
 				<div className="mb-5 flex justify-between items-center max-h-10">
-				{/* Search only — no Add Client for Product Team */}
-					<div
-						className="flex w-[749px] items-center gap-2 rounded-full bg-neutral-surface px-4 py-2"
-						style={{ border: "1px solid #c7c4d8" }}
-					>
-						<Search
-							className="h-[18px] w-[18px] shrink-0"
-							style={{ color: "#777587" }}
-						/>
-						<input
+					<div className="flex w-[749px] items-center gap-2 rounded-full border border-border bg-neutral-surface px-4 py-2">
+						<Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
+						<Input
 							type="text"
 							placeholder="Search for client name..."
-							className="flex-1 bg-transparent text-base outline-none"
-							style={{ color: "#151c27" }}
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0"
 						/>
 					</div>
-					<Button className="max-w-35 flex justify-center items-center gap-3">
-						<Plus size={14} strokeWidth={3}></Plus>
+					<Button className="flex items-center gap-3" onClick={() => setShowAddModal(true)}>
+						<Plus size={14} strokeWidth={3} />
 						Add Client
 					</Button>
 				</div>
+
 				{/* Table */}
-				<div
-					className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-neutral-surface"
-					style={{ border: "1px solid #c7c4d8" }}
-				>
-					{/* Unified scroll area for both X & Y axes */}
+				<div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-neutral-surface">
 					<div className="client-scroll max-h-[calc(60vh)] flex-1 overflow-auto">
 						<div className="flex flex-col">
 							{/* Table header (sticky top) */}
 							<div
-								className="sticky top-0 z-10 grid shrink-0 items-center px-6 py-3 text-[11px] font-bold"
+								className="sticky top-0 z-10 grid shrink-0 items-center px-6 py-3 text-[11px] font-bold text-muted-foreground border-b border-border"
 								style={{
-									gridTemplateColumns:
-										"226px 198px 1fr 1fr 1fr 113px 141px",
-									backgroundColor: "#f8f9ff", // Solid color so rows don't show through on vertical scroll
-									borderBottom: "1px solid #c7c4d8",
-									color: "#777587",
+									gridTemplateColumns: "226px 198px 1fr 1fr 1fr 113px 141px",
+									backgroundColor: "#f8f9ff",
 								}}
 							>
 								<span>CLIENT NAME</span>
@@ -122,108 +112,82 @@ export default function ClientPage({
 
 							{/* Rows */}
 							<div className="flex flex-col">
-								{clients.map((client, i) => (
+								{filteredClients.map((client, i) => (
 									<div
 										key={client.id}
-										className="grid items-center px-6 py-5 transition-colors hover:bg-gray-50"
+										className="grid items-center px-6 py-5 transition-colors hover:bg-muted/50"
 										style={{
-											gridTemplateColumns:
-												"226px 198px 1fr 1fr 1fr 113px 141px",
-											borderBottom:
-												i < clients.length - 1
-													? "1px solid #c7c4d8"
-													: "none",
+											gridTemplateColumns: "226px 198px 1fr 1fr 1fr 113px 141px",
+											borderBottom: i < clients.length - 1 ? "1px solid hsl(var(--border))" : "none",
 										}}
 									>
 										{/* Client Name */}
-										<span
-											className="neutral-surfacespace-pre-line text-base font-bold"
-											style={{ color: "#151c27" }}
-										>
+										<span className="whitespace-pre-line text-base font-bold text-foreground">
 											{client.name}
 										</span>
 
 										{/* TIN */}
-										<span
-											className="text-base"
-											style={{ color: "#151c27" }}
-										>
+										<span className="text-base text-foreground">
 											{client.tin}
 										</span>
 
 										{/* Email */}
-										<span
-											className="truncate text-base"
-											style={{ color: "#464555" }}
-										>
+										<span className="truncate text-base text-muted-foreground">
 											{client.email}
 										</span>
 
 										{/* Contact */}
-										<span
-											className="text-base"
-											style={{ color: "#464555" }}
-										>
+										<span className="text-base text-muted-foreground">
 											{client.contactNumber}
 										</span>
 
 										{/* Billing Address */}
-										<span
-											className="neutral-surfacespace-pre-line text-base"
-											style={{ color: "#464555" }}
-										>
+										<span className="whitespace-pre-line text-base text-muted-foreground">
 											{client.billingAddress}
 										</span>
 
 										{/* Company Code */}
 										<div className="flex items-center gap-2">
-											<span
-												className="text-base"
-												style={{ color: "#464555" }}
-											>
+											<span className="text-base text-muted-foreground">
 												{visibleCodes[client.id]
 													? client.companyCode
 													: "••••••"}
 											</span>
-											<button
+											<Button
+												variant="ghost"
+												size="icon-sm"
 												onClick={() => toggleCode(client.id)}
-												className="ml-auto mr-8 flex items-center justify-center rounded p-0.5 transition-colors hover:bg-gray-100"
-												aria-label={
-													visibleCodes[client.id]
-														? "Hide code"
-														: "Show code"
-												}
+												aria-label={visibleCodes[client.id] ? "Hide code" : "Show code"}
+												className="ml-auto mr-8"
 											>
 												{visibleCodes[client.id] ? (
-													<Eye
-														className="h-4 w-4"
-														style={{ color: "#1e1e1e" }}
-													/>
+													<Eye className="h-4 w-4" />
 												) : (
-													<EyeOff
-														className="h-4 w-4"
-														style={{ color: "#464555" }}
-													/>
+													<EyeOff className="h-4 w-4" />
 												)}
-											</button>
+											</Button>
 										</div>
 
 										{/* Actions */}
 										<div className="flex items-center gap-3">
-											<button
-												onClick={() => onViewMembers?.(client)}
-												className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+											<Button
+												variant="ghost"
+												size="icon-sm"
+												onClick={() => setViewMembersClient(client)}
 												aria-label="View team members"
+												className="rounded-full"
 											>
-												<User className="h-4 w-4 text-black" />
-											</button>
-											<button
-												onClick={() => onEditClient?.(client)}
-												className="flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+												<User className="h-4 w-4" />
+											</Button>
+											<Button
+												variant="ghost"
+												size="icon-sm"
+												onClick={() => setEditClient(client)}
 												aria-label="Edit client"
+												className="rounded-full"
 											>
-												<Pencil className="h-4 w-4 text-black" />
-											</button>
+												<Pencil className="h-4 w-4" />
+											</Button>
 										</div>
 									</div>
 								))}
@@ -232,6 +196,24 @@ export default function ClientPage({
 					</div>
 				</div>
 			</main>
+			<AddClientModal
+				isOpen={showAddModal}
+				onClose={() => setShowAddModal(false)}
+			/>
+			<ViewTeamMembersModal
+				isOpen={viewMembersClient !== null}
+				onClose={() => setViewMembersClient(null)}
+			/>
+			<EditClientModal
+				isOpen={editClient !== null}
+				clientId={editClient?.id}
+				initialData={{
+					clientName: editClient?.name,
+					tin: editClient?.tin,
+					billingAddress: editClient?.billingAddress,
+				}}
+				onClose={() => setEditClient(null)}
+			/>
 		</>
 	);
 }

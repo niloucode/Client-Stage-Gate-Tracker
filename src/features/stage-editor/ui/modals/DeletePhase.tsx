@@ -1,5 +1,16 @@
 "use client";
 
+import {
+	AlertDialog,
+	AlertDialogContent,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogCancel,
+	AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+
 interface DeletePhaseProps {
 	isOpen: boolean;
 	phaseLabel?: string;
@@ -13,34 +24,23 @@ export function DeletePhase({
 	onConfirm,
 	onCancel,
 }: DeletePhaseProps) {
-	if (!isOpen) return null;
-
 	return (
-		<div className="fixed inset-0 bg-foreground/50 flex items-center justify-center z-50">
-			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-sm p-6 relative">
-				<h2 className="text-xl font-bold text-[#0F172A] mb-2">
-					Delete {phaseLabel ?? "Phase"}
-				</h2>
-				<p className="text-sm text-neutral-subtle mb-6">
-					Are you sure you want to delete this phase? This action cannot be
-					undone.
-				</p>
-
-				<div className="flex justify-end gap-3">
-					<button
-						onClick={onCancel}
-						className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
-					>
-						Cancel
-					</button>
-					<button
-						onClick={onConfirm}
-						className="px-4 py-2 bg-[#EF4444] text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#DC2626] transition-all shadow-sm"
-					>
-						Delete Phase
-					</button>
-				</div>
-			</div>
-		</div>
+		<AlertDialog open={isOpen} onOpenChange={(open) => { if (!open) onCancel() }}>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>Delete {phaseLabel ?? "Phase"}</AlertDialogTitle>
+					<AlertDialogDescription>
+						Are you sure you want to delete this phase? This action cannot be
+						undone.
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+					<AlertDialogAction onClick={onConfirm} icon="delete" className="bg-destructive hover:bg-destructive/90">
+						Delete {phaseLabel ?? "Phase"}
+					</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
 	);
 }

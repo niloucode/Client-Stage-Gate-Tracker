@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Label } from "@/shared/ui/label";
-import { Backdrop } from "@/shared/ui/backdrop"
-import { Modal } from "@/shared/ui/modal"
-import { Button } from "@/shared/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 interface DeleteProjectModalProps {
 	isOpen: boolean;
@@ -22,8 +20,7 @@ export function DeleteProjectModal({
 	const [typedName, setTypedName] = useState("");
 	const [hasAttempted, setHasAttempted] = useState(false);
 
-	const namesMatch =
-		typedName.trim() === projectName && typedName.trim().length > 0;
+	const namesMatch = typedName === projectName;
 
 	// Reset state when the modal opens/closes or project changes
 	const handleClose = () => {
@@ -49,19 +46,10 @@ export function DeleteProjectModal({
 		onConfirm();
 	};
 
-	if (!isOpen) return null;
-
 	return (
-		<Modal 
-			isOpen={isOpen}
-			onClose={onClose}
-			title="Delete Project"
-			footer={<Button
-					onClick={handleConfirm}
-					disabled={!namesMatch}
-					variant={namesMatch ? "red" : "disabled"}>
-						Delete Project
-					</Button>}>
+		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+			<DialogContent className="sm:max-w-sm">
+				<DialogHeader><DialogTitle>Delete Project</DialogTitle></DialogHeader>
 			<p className="text-sm text-neutral-border">
 					This action cannot be undone. Please type{" "}
 					<span className="font-bold text-foreground">{projectName}</span> to
@@ -90,6 +78,16 @@ export function DeleteProjectModal({
 						)}
 					</div>
 				</div>
-		</Modal>
+		<DialogFooter>
+				<Button
+					onClick={handleConfirm}
+					disabled={!namesMatch}
+					variant="destructive"
+					icon="delete">
+						Delete Project
+					</Button>
+			</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }

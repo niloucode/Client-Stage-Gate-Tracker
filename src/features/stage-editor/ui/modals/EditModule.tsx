@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import type { Module } from "../../types";
-import { Label } from "@/shared/ui/label";
+import { Label } from "@/components/ui/label";
 import { moduleCreateSchema } from "@/shared/schemas";
-import { Modal } from "@/shared/ui/modal"
-import { Button } from "@/shared/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Trash2, Plus } from "lucide-react"
 
 interface EditModuleFormData {
 	name: string;
@@ -63,26 +64,13 @@ export function EditModule({
 		onSave(formData);
 	};
 
-	if (!isOpen) return null;
-
 	return (
-		<Modal
-			isOpen={isOpen}
-			onClose={onClose}
-			title={"Edit Module"}
-			subtitle={"Update the module details below."}
-			
-			footer={<>
-			<Button className="mr-auto" icon="delete" variant="red" onClick={onDelete}> 
-				Delete Module 
-			</Button>
-			<Button variant="transparency" onClick={onClose}>
-				Cancel
-			</Button>
-			<Button icon="add" onClick={handleSubmit}>
-				Edit module
-			</Button>
-			</>}>
+		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+			<DialogContent className="sm:max-w-[36rem]">
+				<DialogHeader>
+					<DialogTitle>Edit Module</DialogTitle>
+					<DialogDescription>Update the module details below.</DialogDescription>
+				</DialogHeader>
 				<div className="space-y-4">
 					<div>
 						<Label required error={!!fieldErrors.name}>
@@ -137,6 +125,18 @@ export function EditModule({
 						/>
 					</div>
 				</div>
-		</Modal>
+				<DialogFooter>
+				<Button className="mr-auto" variant="destructive" onClick={onDelete}>
+					<Trash2 />Delete Module 
+				</Button>
+				<Button variant="ghost" onClick={onClose}>
+					Cancel
+				</Button>
+				<Button onClick={handleSubmit}>
+					<Plus />Edit module
+				</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }

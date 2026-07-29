@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import type { Phase } from "../types";
 import { DeletePhase } from "@/features/stage-editor/ui/modals/DeletePhase";
-import { Label } from "@/shared/ui/label";
+import { Label } from "@/components/ui/label";
 import { useUpdatePhase, useDeletePhase } from "@/entities/phase/mutations";
-import { ClipboardList,ChevronDown,Dot } from "lucide-react"
-import { Button } from "@/shared/ui/button"
+import { ClipboardList,ChevronDown,Dot, Save } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface ActivePhaseDetailsProps {
 	activePhase: number | null;
@@ -242,12 +242,10 @@ export function ActivePhaseDetails({
 							</button>
 							
 							<Button
-								icon="save"
 								onClick={handleSave}
 								disabled={!isDirty}
-								variant={!isDirty ? "disabled" : "violet"}>
-								
-								Save Phase
+								variant="default">
+								<Save />Save Phase
 							</Button>
 						</div>
 					</div>

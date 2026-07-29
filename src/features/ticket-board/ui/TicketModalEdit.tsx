@@ -4,7 +4,10 @@ import { Ticket, Tag } from "@/entities/types";
 
 import { useState, useRef, useEffect } from "react";
 import { CommentParentType, status as status } from "@/lib/generated/prisma";
-import { Input } from "@/shared/ui/input";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { SquarePen } from "lucide-react"
 
 import { useAuth } from "@/features/auth";
@@ -363,18 +366,18 @@ export default function TicketModalEdit({
 					<span className="text-xs font-semibold text-brand-600 shrink-0">
 						{"TICKET " + "..."+ticket.ticket_id.slice(0, 16)}
 					</span>
-					<button
+					<Button variant="ghost" size="icon-sm"
 						onClick={onClose}
 					>
 						<X className="text-neutral-border hover:text-foreground transition-all duration-300 fade-in"/>
-					</button>
+					</Button>
 				</div>
 
 				{/* Status bar */}
 				<div className="flex flex-col text-2xl h-[7rem] gap-3 px-5 py-3.5 border-b border-gray-100 shrink-0 relative">
 					<>{editing === "title" ? (
 						<div className="flex-1 min-w-0 flex items-center gap-2">
-							<textarea
+							<Textarea
 								ref={titleRef as any}
 								value={titleDraft}
 								maxLength={50}
@@ -468,7 +471,7 @@ export default function TicketModalEdit({
 					<div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-4 border-b border-gray-100">
 						{/* Assigned To */}
 						<div>
-							<p className="text-xs text-neutral-border font-bold mb-1.5">ASSIGNED TO</p>
+							<Label className="text-xs text-neutral-border font-bold">ASSIGNED TO</Label>
 
 							<div className="flex flex-wrap items-center gap-1.5">
 								{/* Assigned Members Badges */}
@@ -578,7 +581,7 @@ export default function TicketModalEdit({
 							</div>
 						{/* Watcher */}
 						<div className="relative">
-							<p className="text-xs text-neutral-border font-bold mb-1.5">WATCHER</p>
+							<Label className="text-xs text-neutral-border font-bold">WATCHER</Label>
 							<div
 								ref={watcherRef}
 								className="cursor-pointer"
@@ -632,7 +635,7 @@ export default function TicketModalEdit({
 
 					{/* Deadline */}
 					<div>
-						<p className="text-xs text-neutral-border font-bold">DEADLINE</p>
+						<Label className="text-xs text-neutral-border font-bold">DEADLINE</Label>
 						
 						{editing === "deadline" ? (
 							<input
@@ -681,7 +684,7 @@ export default function TicketModalEdit({
 					</div>
 					
 					<div className="relative" ref={statusRef}>
-						<p className="text-xs text-neutral-border font-bold mb-1.5">STATUS</p>
+						<Label className="text-xs text-neutral-border font-bold">STATUS</Label>
 						<div className="flex items-center">
 							<div className="h-1 w-1 mr-2 bg-brand-600">
 							</div>
@@ -710,7 +713,7 @@ export default function TicketModalEdit({
 					{/* API Details — visible only when the "API" tag is applied */}
 						{isApiTagSelected && (
 							<div className="col-span-2 space-y-2">
-						<p className="text-xs text-neutral-border font-bold mb-1.5">API DETAILS</p>
+						<Label className="text-xs text-neutral-border font-bold">API DETAILS</Label>
 								{/* TODO: save apiMethod and apiRoute fields to ticket record on backend */}
 								{apiMethod && apiRoute && (
 									<div className="inline-flex items-center gap-1.5 bg-gray-900 rounded-md px-2.5 py-1.5">
@@ -743,7 +746,7 @@ export default function TicketModalEdit({
 
 						{/* Start Date */}
 					<div>
-						<p className="text-xs text-neutral-border font-bold mb-1.5">START DATE</p>
+						<Label className="text-xs text-neutral-border font-bold">START DATE</Label>
 						<p className="text-sm text-gray-700">
 							{ticket.start_date
 								? new Date(ticket.start_date).toLocaleString()
@@ -753,7 +756,7 @@ export default function TicketModalEdit({
 
 					{/* Finish Date */}
 					<div>
-						<p className="text-xs text-neutral-border font-bold mb-1.5">FINISH DATE</p>
+						<Label className="text-xs text-neutral-border font-bold">FINISH DATE</Label>
 						<p className="text-sm text-gray-700">
 							{ticket.finish_date
 								? new Date(ticket.finish_date).toLocaleString()

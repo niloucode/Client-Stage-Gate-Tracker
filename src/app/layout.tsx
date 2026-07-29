@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/features/auth";
 import { QueryProvider } from "@/shared/query/client";
-import { ToastProvider } from "@/shared/ui/toast";
+import { Toaster } from "@/components/ui/toast";
 import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
 const hankenGrotesk = Hanken_Grotesk({
-	variable: "--font-hanken-grotesk",
+	variable: "--font-hanken",
 	subsets: ["latin"],
 	display: "swap",
 });
@@ -30,14 +31,13 @@ export default function RootLayout({
 	return (
 		<html
 			lang="en"
-			className={`${hankenGrotesk.variable} ${jetbrainsMono.variable} h-full antialiased`}
+			className={cn("h-full", "antialiased", hankenGrotesk.variable, jetbrainsMono.variable, "font-sans")}
 		>
 			<body className="min-h-full flex flex-col">
 				<QueryProvider>
 					<AuthProvider>
-							<ToastProvider>
+					<Toaster />
 								{children}
-							</ToastProvider>
 					</AuthProvider>
 				</QueryProvider>
 			</body>

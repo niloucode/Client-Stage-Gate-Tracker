@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/features/auth";
+import { Button } from "@/components/ui/button";
 
 type OTPState = "default" | "sent" | "verified" | "error";
 
@@ -160,18 +161,15 @@ export function OTPVerification({
 				<p className="text-xs font-medium text-[#181724]">
 					Security Verification
 				</p>
-				<button
+				<Button
 					type="button"
 					onClick={triggerOTP}
 					disabled={countdown > 0}
-					className={`text-xs font-medium transition-colors ${
-						countdown > 0
-							? "cursor-default text-[#9C9AB0]"
-							: "text-[#4338CA] hover:underline"
-					}`}
+					variant="default"
+					className="w-full"
 				>
 					{countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
-				</button>
+				</Button>
 			</div>
 
 			<p className="text-[11px] text-[#9C9AB0]">

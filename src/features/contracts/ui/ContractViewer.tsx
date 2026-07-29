@@ -12,6 +12,9 @@ import {
 	X,
 	AlertTriangle,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { getContractUrl } from "@/entities/contract";
 import {
 	useUploadContract,
@@ -56,8 +59,10 @@ export function ContractViewer({
 
 	// Revoke the object URL whenever it changes or the component unmounts
 	useEffect(() => {
-		setContractName(file && fileUrl ? file.name : "");
-		setChangeName(file && fileUrl ? file.name : "");
+		if (file && fileUrl) {
+			setContractName((prev) => (prev || file.name));
+			setChangeName((prev) => (prev || file.name));
+		}
 	}, [file, fileUrl]);
 
 	useEffect(() => {
@@ -213,9 +218,8 @@ export function ContractViewer({
 
 	return (
 		<>
-			<div
-				className={`flex flex-col overflow-hidden rounded-2xl border border-[#E6E4F0] bg-neutral-surface shadow-sm ${className}`}
-			>
+			<Card className={`flex flex-col overflow-hidden ${className}`}>
+				<CardContent className="flex flex-col overflow-hidden p-0">
 				{/* Toolbar */}
 				<div className="flex items-center justify-between gap-3 border-b border-[#E6E4F0] px-4 py-3">
 					<div className="flex min-w-0 items-center gap-2">
@@ -243,26 +247,15 @@ export function ContractViewer({
 					<div className="flex shrink-0 items-center gap-1">
 						{fileUrl ? (
 							<>
-								<button
-									onClick={zoomOut}
-									aria-label="Zoom out"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
+								<Button variant="ghost" size="icon" onClick={zoomOut} aria-label="Zoom out">
 									<ZoomOut className="h-4 w-4" />
-								</button>
-								<button
-									onClick={() => setZoom(100)}
-									className="min-w-[3.25rem] rounded-lg px-1.5 py-1 text-xs font-medium text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
+								</Button>
+								<Button variant="ghost" size="sm" onClick={() => setZoom(100)} className="min-w-[3.25rem]">
 									{zoom}%
-								</button>
-								<button
-									onClick={zoomIn}
-									aria-label="Zoom in"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
+								</Button>
+								<Button variant="ghost" size="icon" onClick={zoomIn} aria-label="Zoom in">
 									<ZoomIn className="h-4 w-4" />
-								</button>
+								</Button>
 								<span className="mx-1 h-4 w-px bg-[#E6E4F0]" />
 								<a
 									href={fileUrl}
@@ -272,29 +265,18 @@ export function ContractViewer({
 								>
 									<Download className="h-4 w-4" />
 								</a>
-								<button
-									onClick={handlePrint}
-									aria-label="Print"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
+								<Button variant="ghost" size="icon" onClick={handlePrint} aria-label="Print">
 									<Printer className="h-4 w-4" />
-								</button>
-								<button
-									onClick={requestRemove}
-									aria-label="Remove document"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#FEF2F2] hover:text-[#DC2626]"
-								>
+								</Button>
+								<Button variant="ghost" size="icon" onClick={requestRemove} aria-label="Remove document" className="hover:bg-[#FEF2F2] hover:text-[#DC2626]">
 									<X className="h-4 w-4" />
-								</button>
+								</Button>
 							</>
 						) : (
-							<button
-								onClick={() => inputRef.current?.click()}
-								className="flex items-center gap-1.5 rounded-lg bg-[#4338CA] px-3 py-1.5 text-xs font-medium text-neutral-surface hover:bg-[#3730A3]"
-							>
-								<Upload className="h-3.5 w-3.5" />
-								Upload Contract
-							</button>
+							<Button variant="default" size="sm" onClick={() => inputRef.current?.click()}>
+								<Upload size={14} />
+								Upload
+							</Button>
 						)}
 					</div>
 				</div>
@@ -355,7 +337,8 @@ export function ContractViewer({
 						</div>
 					</div>
 				)}
-			</div>
+				</CardContent>
+			</Card>
 
 			{pendingFile &&
 				createPortal(
@@ -380,28 +363,21 @@ export function ContractViewer({
 								{/* ALSO ADDED THIS */}
 								Contract name
 							</label>
-							<input
+							<Input
 								value={contractName}
 								onChange={(e) => setContractName(e.target.value)}
 								placeholder="e.g. Input Contract Name here"
 								autoFocus
-								className="mt-1.5 w-full rounded-lg border border-[#E6E4F0] px-3 py-2 text-sm text-[#181724] outline-none focus:border-[#4338CA]"
+								className="mt-1.5"
 							/>
 
 							<div className="mt-5 flex gap-2">
-								<button
-									onClick={cancelUpload}
-									className="flex-1 rounded-lg border border-[#E6E4F0] py-2 text-sm font-medium text-[#6E6B82] hover:bg-[#F6F5FB]"
-								>
+								<Button variant="ghost" onClick={cancelUpload} className="flex-1">
 									Cancel
-								</button>
-								<button
-									onClick={confirmUpload}
-									disabled={!contractName.trim()}
-									className="flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-neutral-surface hover:bg-[#3730A3] disabled:cursor-not-allowed disabled:opacity-50"
-								>
+								</Button>
+								<Button variant="default" onClick={confirmUpload} disabled={!contractName.trim()} className="flex-1">
 									Yes, upload
-								</button>
+								</Button>
 							</div>
 						</div>
 					</div>,
@@ -425,32 +401,21 @@ export function ContractViewer({
 								from view. To confirm, type the file name below.
 							</p>
 
-							<input
+							<Input
 								value={removeConfirmText}
 								onChange={(e) => setRemoveConfirmText(e.target.value)}
 								placeholder={file.name}
 								autoFocus
-								className="mt-4 w-full rounded-lg border border-[#E6E4F0] px-3 py-2 text-sm text-[#181724] outline-none focus:border-[#DC2626]"
+								className="mt-4 focus-visible:border-[#DC2626]"
 							/>
 
 							<div className="mt-5 flex gap-2">
-								<button
-									onClick={cancelRemove}
-									className="flex-1 rounded-lg border border-[#E6E4F0] py-2 text-sm font-medium text-[#6E6B82] hover:bg-[#F6F5FB]"
-								>
+								<Button variant="ghost" onClick={cancelRemove} className="flex-1">
 									Cancel
-								</button>
-								<button
-									onClick={confirmRemove}
-									disabled={removeConfirmText !== file.name}
-									className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-colors disabled:opacity-100 disabled:visible ${
-										removeConfirmText !== file.name
-											? "border-[#E6E4F0] bg-neutral-surface text-[#6E6B82] cursor-not-allowed"
-											: "flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-neutral-surface hover:bg-[#3730A3]"
-									}`}
-								>
+								</Button>
+								<Button variant="default" onClick={confirmRemove} disabled={removeConfirmText !== file.name} className="flex-1">
 									Remove
-								</button>
+								</Button>
 							</div>
 						</div>
 					</div>,

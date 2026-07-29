@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from "react"
 import { projectCreateSchema } from "@/shared/schemas"
 import { clientSelectAll } from "@/entities/client/clientActions"
-import { Modal, Button, FormInput, SelectOption } from "@/shared/ui/"
+import { FormInput, SelectOption } from "@/shared/ui/"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 interface EditProjectFormData {
   name: string
@@ -116,8 +118,6 @@ export function EditProjectModal({
 
   const formKey = isEditMode ? project.project_id : "new"
 
-  if (!isOpen) return null
-
   const handleClose = () => {
     setFormData(emptyFormData)
     setFieldErrors({})
@@ -131,16 +131,6 @@ export function EditProjectModal({
   }
 
   const handleSubmit = () => {
-    if (isEditMode && !formData.name) {
-      setFieldErrors((prev) => ({ ...prev, name: "Project name is required" }))
-      return
-    }
-
-    if (!isEditMode && !formData.client_id) {
-      setFieldErrors((prev) => ({ ...prev, client_id: "Please select a client" }))
-      return
-    }
-
     const result = projectCreateSchema.safeParse(formData)
     if (!result.success) {
       const flattened = result.error.flatten().fieldErrors
@@ -167,103 +157,102 @@ export function EditProjectModal({
   ]
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={isEditMode ? "Edit Project" : "Create New Project"}
-      subtitle="Fill in the details for this project."
-      footer={
-        <>
-          <Button onClick={handleClose} variant="transparency">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>{isEditMode ? "Edit Project" : "Create New Project"}</DialogTitle>
+          <DialogDescription>Fill in the details for this project.</DialogDescription>
+        </DialogHeader>
+        <div key={formKey}>
+          <div className="space-y-4 p-6">
+            {/* Project Name */}
+            <FormInput
+              variant="input"
+              label="Project Name"
+              required
+              maxLength={50}
+              value={formData.name}
+              placeholder="Project Name"
+              error={fieldErrors.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onClearError={() => clearFieldError("name")}
+            />
+
+            {/* Description */}
+            <FormInput
+              variant="textarea"
+              label="Description"
+              maxLength={160}
+              rows={4}
+              value={formData.description}
+              placeholder="Project Description"
+              error={fieldErrors.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onClearError={() => clearFieldError("description")}
+            />
+
+            {/* Client Selection (Create Mode Only) */}
+            {!isEditMode && (
+              <FormInput
+                variant="select"
+                label="Client"
+                required
+                placeholder="Select client..."
+                options={clientOptions}
+                value={formData.client_id}
+                isOpen={clientDropdownOpen}
+                onToggleOpen={() => setClientDropdownOpen(!clientDropdownOpen)}
+                onSelect={(val) => setFormData({ ...formData, client_id: val })}
+                error={fieldErrors.client_id}
+                onClearError={() => clearFieldError("client_id")}
+              />
+            )}
+
+            {/* Dates Section */}
+            <div className="flex gap-4">
+              <FormInput
+                variant="datetime-local"
+                label="Start Date"
+                type="datetime-local"
+                value={toDateInput(formData.start_date)}
+                error={fieldErrors.start_date}
+                containerClassName="flex-1"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    start_date: e.target.value ? new Date(e.target.value) : null,
+                  })
+                }
+                onClearError={() => clearFieldError("start_date")}
+              />
+
+              <FormInput
+                variant="datetime-local"
+                label="Deadline Date"
+                type="datetime-local"
+                value={toDateInput(formData.deadline_date)}
+                error={fieldErrors.deadline_date}
+                containerClassName="flex-1"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    deadline_date: e.target.value ? new Date(e.target.value) : null,
+                  })
+                }
+                onClearError={() => clearFieldError("deadline_date")}
+              />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleClose} variant="ghost">
             Cancel
           </Button>
           <Button onClick={handleSubmit}>
             {isEditMode ? "Save Changes" : "Create Project"}
           </Button>
-        </>
-      }
-    >
-      <div key={formKey}>
-        <div className="space-y-4 p-6">
-          {/* Project Name */}
-          <FormInput
-            variant="input"
-            label="Project Name"
-            required
-            maxLength={50}
-            value={formData.name}
-            placeholder="Project Name"
-            error={fieldErrors.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            onClearError={() => clearFieldError("name")}
-          />
-
-          {/* Description */}
-          <FormInput
-            variant="textarea"
-            label="Description"
-            maxLength={160}
-            rows={4}
-            value={formData.description}
-            placeholder="Project Description"
-            error={fieldErrors.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            onClearError={() => clearFieldError("description")}
-          />
-
-          {/* Client Selection (Create Mode Only) */}
-          {!isEditMode && (
-            <FormInput
-              variant="select"
-              label="Client"
-              required
-              placeholder="Select client..."
-              options={clientOptions}
-              value={formData.client_id}
-              isOpen={clientDropdownOpen}
-              onToggleOpen={() => setClientDropdownOpen(!clientDropdownOpen)}
-              onSelect={(val) => setFormData({ ...formData, client_id: val })}
-              error={fieldErrors.client_id}
-              onClearError={() => clearFieldError("client_id")}
-            />
-          )}
-
-          {/* Dates Section */}
-          <div className="flex gap-4">
-            <FormInput
-              variant="datetime-local"
-              label="Start Date"
-              type="datetime-local"
-              value={toDateInput(formData.start_date)}
-              error={fieldErrors.start_date}
-              containerClassName="flex-1"
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  start_date: e.target.value ? new Date(e.target.value) : null,
-                })
-              }
-              onClearError={() => clearFieldError("start_date")}
-            />
-
-            <FormInput
-              variant="datetime-local"
-              label="Deadline Date"
-              type="datetime-local"
-              value={toDateInput(formData.deadline_date)}
-              error={fieldErrors.deadline_date}
-              containerClassName="flex-1"
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  deadline_date: e.target.value ? new Date(e.target.value) : null,
-                })
-              }
-              onClearError={() => clearFieldError("deadline_date")}
-            />
-          </div>
-        </div>
-      </div>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

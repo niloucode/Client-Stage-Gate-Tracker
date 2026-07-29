@@ -12,9 +12,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Button } from "@/shared/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProfileType } from "@/shared/types";

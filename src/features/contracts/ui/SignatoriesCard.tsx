@@ -1,4 +1,7 @@
 import { CheckCircle2, Clock3 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export type SignatoryStatus = "signed" | "pending";
 
@@ -41,15 +44,12 @@ export function SignatoriesCard({
 	const completed = signatories.filter((s) => s.status === "signed").length;
 
 	return (
-		<div
-			className={`rounded-2xl border border-[#E6E4F0] bg-neutral-surface p-6 shadow-sm ${className}`}
-		>
-			<div className="mb-5 flex items-center justify-between">
-				<h2 className="text-base font-semibold text-[#181724]">Signatories</h2>
-				<span className="rounded-full bg-[#EEF0FF] px-2.5 py-1 text-xs font-medium text-[#4338CA]">
-					{completed} / {signatories.length} completed
-				</span>
-			</div>
+		<Card className={className}>
+			<CardHeader className="flex flex-row items-center justify-between">
+				<CardTitle>Signatories</CardTitle>
+				<Badge variant="secondary">{completed} / {signatories.length} completed</Badge>
+			</CardHeader>
+			<CardContent>
 
 			<ul className="flex flex-col gap-4">
 				{signatories.map((person, i) => {
@@ -57,12 +57,14 @@ export function SignatoriesCard({
 					const isSigned = person.status === "signed";
 					return (
 						<li key={person.id} className="flex items-start gap-3">
-							<div
-								style={{ backgroundColor: palette.bg, color: palette.text }}
-								className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
-							>
-								{initialsFor(person.name)}
-							</div>
+							<Avatar className="h-10 w-10">
+								<AvatarFallback
+									className="text-sm font-semibold"
+									style={{ backgroundColor: palette.bg, color: palette.text }}
+								>
+									{initialsFor(person.name)}
+								</AvatarFallback>
+							</Avatar>
 
 							<div className="min-w-0 flex-1">
 								<p className="truncate text-sm font-medium text-[#181724]">
@@ -96,7 +98,8 @@ export function SignatoriesCard({
 					);
 				})}
 			</ul>
-		</div>
+		</CardContent>
+		</Card>
 	);
 }
 

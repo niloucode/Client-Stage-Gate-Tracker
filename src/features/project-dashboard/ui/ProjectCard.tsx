@@ -1,8 +1,15 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
 import type { ProjectWithStatus } from "@/entities/project"
-import { Calendar, EllipsisVertical } from "lucide-react"
+import { Calendar, EllipsisVertical, Pencil, Users, Trash2 } from "lucide-react"
+
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 
 interface ProjectCardProps {
 	project: ProjectWithStatus
@@ -30,58 +37,6 @@ export function ProjectCard({
 	onManageMembers,
 	onDelete,
 }: ProjectCardProps) {
-	const [menuOpen, setMenuOpen] = useState(false)
-	const [menuPos, setMenuPos] = useState<{ 
-		top: number 
-		right: number 
-	} | null>(null)
-	const menuBtnRef = useRef<HTMLButtonElement>(null)
-	const menuRef = useRef<HTMLDivElement>(null)
-
-	useEffect(() => {
-		if (!menuOpen) return
-		const handleClick = (e: MouseEvent) => {
-			if (
-				menuRef.current &&
-				!menuRef.current.contains(e.target as Node) &&
-				menuBtnRef.current &&
-				!menuBtnRef.current.contains(e.target as Node)
-			) {
-				setMenuOpen(false)
-			}
-		}
-		document.addEventListener("mousedown", handleClick)
-		return () => document.removeEventListener("mousedown", handleClick)
-	}, [menuOpen])
-
-	useEffect(() => {
-		if (!menuOpen) return
-
-		const handleDismiss = () => {
-			setMenuOpen(false)
-		}
-
-		window.addEventListener('scroll', handleDismiss, true)
-		window.addEventListener('resize', handleDismiss)
-
-		return () => {
-			window.removeEventListener('scroll', handleDismiss, true)
-			window.removeEventListener('resize', handleDismiss)
-		}
-	}, [menuOpen])
-
-	const handleMenuClick = useCallback(() => {
-		if (menuBtnRef.current) {
-			const rect = menuBtnRef.current.getBoundingClientRect()
-			const dropdownHeight = 200 // approximate dropdown height in px
-			const spaceBelow = window.innerHeight - rect.bottom
-			const top = spaceBelow >= dropdownHeight
-				? rect.bottom + 4
-				: rect.top - dropdownHeight + 50
-			setMenuPos({ top, right: window.innerWidth - rect.right })
-		}
-		setMenuOpen((prev) => !prev)
-	}, [])
 
 	const statusLabel =
 		project.project_status === "ACTIVE"
@@ -159,58 +114,27 @@ export function ProjectCard({
 				</div>
 
 				{/* Menu Ellipsis — bottom right */}
-				<div className="relative flex-shrink-0 ml-2">
-					<button
-						ref={menuBtnRef}
-						onClick={handleMenuClick}
-						className="cursor-pointer p-1.5 rounded-lg hover:bg-[#F1F5F9] transition-colors text-[#94A3B8] hover:text-[#475569]"
-					>
-						<EllipsisVertical size={16}/>
-					</button>
-
-					{menuOpen && menuPos && (
-						<div
-							ref={menuRef}
-							className="fixed w-56 bg-neutral-surface rounded-xl shadow-lg border border-[#E2E8F0] py-1 z-[100]"
-							style={{ top: menuPos.top, right: menuPos.right }}
-						>
-							<button
-								onClick={() => { 
-									setMenuOpen(false) 
-									onEdit() }}
-								className="cursor-pointer  w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
-							>
-								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-									<path d="M11.5 1.5L14.5 4.5L5.5 13.5L2 14L2.5 10.5L11.5 1.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-								</svg>
+				<div className="flex-shrink-0 ml-2">
+					<DropdownMenu>
+						<DropdownMenuTrigger className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#475569] hover:bg-[#F1F5F9] transition-colors data-[popup-open]:bg-[#F1F5F9]">
+							<EllipsisVertical size={16}/>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="w-56">
+							<DropdownMenuItem onClick={onEdit}>
+								<Pencil size={16} />
 								Edit project details
-							</button>
-							<button
-								onClick={() => { 
-									setMenuOpen(false) 
-									onManageMembers() }}
-								className="cursor-pointer  w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#0F172A] hover:bg-[#F8FAFC] transition-colors"
-							>
-								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-									<path d="M8 10C9.933 10 11.5 8.433 11.5 6.5C11.5 4.567 9.933 3 8 3C6.067 3 4.5 4.567 4.5 6.5C4.5 8.433 6.067 10 8 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-									<path d="M2 14C3.5 11.5 5.5 10.5 8 10.5C10.5 10.5 12.5 11.5 14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-								</svg>
+							</DropdownMenuItem>
+							<DropdownMenuItem onClick={onManageMembers}>
+								<Users size={16} />
 								Manage project members
-							</button>
-							<div className="border-t border-[#F1F5F9] my-1" />
-							<button
-								onClick={() => { 
-									setMenuOpen(false) 
-									onDelete() }}
-								className="cursor-pointer  w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
-							>
-								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-									<path d="M2 4H14M5 4V2.5C5 2.22386 5.22386 2 5.5 2H10.5C10.7761 2 11 2.22386 11 2.5V4M6.5 7V11.5M9.5 7V11.5M3.5 4L4.5 13.5C4.5 13.7761 4.72386 14 5 14H11C11.2761 14 11.5 13.7761 11.5 13.5L12.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-								</svg>
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+								<Trash2 size={16} />
 								Delete Project
-							</button>
-						</div>
-					)}
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				</div>
 			</div>
 		</div>

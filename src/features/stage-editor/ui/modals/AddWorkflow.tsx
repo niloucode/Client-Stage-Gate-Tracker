@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { workflowCreateSchema } from "@/shared/schemas";
-import { Label } from "@/shared/ui/label";
+import { Label } from "@/components/ui/label";
 
 interface AddWorkflowFormData {
 	name: string;

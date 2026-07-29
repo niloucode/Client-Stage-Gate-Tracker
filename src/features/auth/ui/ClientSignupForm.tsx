@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Button } from "@/shared/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
 import { clientSignupSchema, type ClientSignupInput } from "@/shared/schemas";
 import { createClient } from "@/lib/supabase/client";

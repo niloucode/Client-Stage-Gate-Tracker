@@ -1,6 +1,6 @@
  "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
 import {
 	useOwnedProjects,
 	useCreateProject,
@@ -18,9 +18,10 @@ import { ProjectSection } from "./ProjectSection"
 import { ProjectCard } from "./ProjectCard"
 
 import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas"
-import { useToast } from "@/shared/ui/toast"
+import { toast } from "@/components/ui/toast"
 
-import { Button } from "@/shared/ui/button"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 interface ModalState {
 	project_id: string
@@ -87,8 +88,6 @@ export function ProjectDashboard() {
 		})
 	}
 
-	const { showToast } = useToast()
-
 	// Modal debugger
 	// useEffect(() =>
 	// {showToast("Project Deleted","Project successfully deleted","delete")},[])
@@ -98,7 +97,7 @@ export function ProjectDashboard() {
 		if (result.success && result.data) {
 			setShowAddModal(false)
 			setManageMembersProjectId(result.data.project_id)
-			showToast("Project Added","Project successfully added","check")
+			toast.add({ title: "Project Added", description: "Project successfully added" })
 		}
 	}
 
@@ -106,7 +105,7 @@ export function ProjectDashboard() {
 		const result = await updateMutation.mutateAsync(data)
 		if (result.success) {
 			setEditProject(null)
-			showToast("Project Edited","Project successfully edited","check")
+			toast.add({ title: "Project Edited", description: "Project successfully edited" })
 		}
 	}
 
@@ -118,7 +117,7 @@ export function ProjectDashboard() {
 		})
 		if (result.success) {
 			setDeleteProject(null)
-			showToast("Project Deleted","Project successfully deleted","delete")
+			toast.add({ title: "Project Deleted", description: "Project successfully deleted" })
 		}
 	}
 
@@ -154,7 +153,7 @@ export function ProjectDashboard() {
 						Manage and track the projects assigned to you.
 					</p>
 				</div>
-				<Button icon="add" onClick={() => setShowAddModal(true)}>Add Project</Button>
+				<Button onClick={() => setShowAddModal(true)}><Plus />Add Project</Button>
 			</div>
 
 			{/* Project Sections */}

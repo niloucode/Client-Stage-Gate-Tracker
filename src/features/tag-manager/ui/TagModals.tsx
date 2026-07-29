@@ -6,7 +6,9 @@ import { useState } from "react"
 import TagModalDelete from "@/features/tag-manager/ui/TagModalDelete"
 import TagListModal from "@/features/tag-manager/ui/TagListModal"
 import TagFormModal from "@/features/tag-manager/ui/TagFormModal"
-import{ Modal,Button } from "@/shared/ui/"
+import{ Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 export function CloseButton({ onClick }: { onClick: () => void }) {
 	return (
@@ -112,8 +114,6 @@ export function TagManager({
 	const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
 	const [formError, setFormError] = useState<string | null>(null)
 
-	if (!isOpen) return null
-
 	function handleClose() {
 		setView("list")
 		setSelectedTag(null)
@@ -166,29 +166,24 @@ export function TagManager({
 
 	if (view === "list") {
 		return (
-			<Modal
-				  isOpen={isOpen}
-				  onClose={onClose}
-				  title={"Tags"}
-				  subtitle="Fill in the details for this project."
-				  footer={
-					<>
-						<Button onClick={handleClose} variant="transparency">
-							Cancel
-						</Button>
-						<Button onClick={()=> setView("create")} icon="add">
-							Create Tag
-						</Button>
-					</>
-				  }
-				>
-				<TagListModal
-					tags={tags}
-					onClose={handleClose}
-					onEditTag={handleEditTag}
-					onRequestDeleteTag={handleRequestDelete}
-				/>
-			</Modal>
+			<Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose() }}>
+				<DialogContent className="sm:max-w-lg">
+					<DialogHeader>
+						<DialogTitle>Tags</DialogTitle>
+						<DialogDescription>Fill in the details for this project.</DialogDescription>
+					</DialogHeader>
+					<TagListModal
+						tags={tags}
+						onClose={handleClose}
+						onEditTag={handleEditTag}
+						onRequestDeleteTag={handleRequestDelete}
+					/>
+					<DialogFooter>
+						<Button onClick={handleClose} variant="ghost">Cancel</Button>
+						<Button onClick={()=> setView("create")}><Plus />Create Tag</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		)
 	}
 

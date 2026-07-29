@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, forwardRef, InputHTMLAttributes } from "react";
-import { Input } from "@/shared/ui/input";
+import { Input } from "@/components/ui/input";
 
 interface PasswordInputProps extends Omit<
 	InputHTMLAttributes<HTMLInputElement>,

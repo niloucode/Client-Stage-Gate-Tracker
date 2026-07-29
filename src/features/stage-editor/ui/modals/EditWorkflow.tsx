@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { Workflow } from "../../types";
-import { Label } from "@/shared/ui/label";
+import { Label } from "@/components/ui/label";
 import { workflowCreateSchema } from "@/shared/schemas";
 
 interface EditWorkflowFormData {

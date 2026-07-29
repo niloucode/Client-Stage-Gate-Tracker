@@ -1,10 +1,14 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Input, Label, Backdrop, FormInput } from "@/shared/ui"
+import { FormInput } from "@/shared/ui"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Tag } from "@/entities/types"
 
-import { X, ChevronDown } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { ChevronDown } from "lucide-react"
 import { useProfiles } from "@/entities/profile/queries"
 import { createClient } from "@/lib/supabase/client"
 import type { CreateTicketParams } from "@/shared/schemas"
@@ -176,7 +180,6 @@ export default function TicketModalCreate({
 		onClose()
 	}
 
-	if (!isOpen) return null
 
 	const colorClasses = {
 		indigo: "bg-indigo-50 text-indigo-700",
@@ -190,18 +193,13 @@ export default function TicketModalCreate({
 	}
 
 	return (
-		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div className="bg-neutral-surface rounded-2xl w-full max-w-153 max-h-[92vh] flex flex-col shadow-2xl">
+		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+			<DialogContent className="sm:max-w-2xl">
 				{/* Modal header */}
-				<div className="flex items-center justify-between px-6 pt-6 pb-5 shrink-0">
-					<h2 className="text-lg font-semibold text-gray-900">New Ticket</h2>
-					<button
-						onClick={onClose}
-						className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
-					>
-						<X />
-					</button>
-				</div>
+				<DialogHeader>
+					<DialogTitle>New Ticket</DialogTitle>
+					<DialogDescription>Create a new ticket for the board.</DialogDescription>
+				</DialogHeader>
 
 				<div className="h-px bg-gray-100 shrink-0" />
 
@@ -256,10 +254,7 @@ export default function TicketModalCreate({
 														{profile?.first_name + " " + profile?.last_name}
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
-															onClick={(e) => {
-																e.stopPropagation()
-																toggleAssigned(profileId)
-															}}
+															onClick={() => toggleAssigned(profileId)}
 														>
 															×
 														</span>
@@ -379,10 +374,7 @@ export default function TicketModalCreate({
 														{tag?.name}
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
-															onClick={(e) => {
-																e.stopPropagation()
-																toggleTag(tag_id)
-															}}
+															onClick={() => toggleTag(tag_id)}
 														>
 															×
 														</span>
@@ -522,25 +514,15 @@ export default function TicketModalCreate({
 				</form>
 
 				{/* Footer */}
-				<div className="h-px bg-gray-100 shrink-0" />
-				<div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0">
-					<button
-						type="button"
-						onClick={onClose}
-						className="cursor-pointer px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-					>
+				<DialogFooter>
+					<Button onClick={onClose} variant="ghost">
 						Cancel
-					</button>
-					<button
-						type="button"
-						onClick={handleSubmit}
-						disabled={!title.trim()}
-						className="cursor-pointer px-5 py-2.5 text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-					>
+					</Button>
+					<Button onClick={handleSubmit} disabled={!title.trim()}>
 						Create Ticket
-					</button>
-				</div>
-			</div>
-		</Backdrop>
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	)
 }
