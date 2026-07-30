@@ -158,7 +158,7 @@ export function EditProjectModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Edit Project" : "Create New Project"}</DialogTitle>
           <DialogDescription>Fill in the details for this project.</DialogDescription>

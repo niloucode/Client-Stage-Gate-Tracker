@@ -13,10 +13,10 @@ export default function TagListModal({
 	onRequestDeleteTag: (tag: Tag) => void
 }) {
 	return (
-		<div className="flex flex-col items-center ">
+		<div className="flex flex-col px-6 items-center ">
 			{/* Header */}
 					{/* Table Body Area */}
-					<div className="overflow-hidden w-[32rem] flex flex-col">
+					<div className="overflow-hidden flex flex-col">
 						{/* Purple-tinted header — sticky, sits above the scroll area */}
 						<table className="w-full table-fixed mt-4">
 							<colgroup>
@@ -26,12 +26,11 @@ export default function TagListModal({
 							</colgroup>
 							<thead>
 								<tr
-									className="text-xs font-semibold tracking-wider"
-									style={{ backgroundColor: "#EEF2FF", color: "#6366F1" }}
+									className="text-xs font-semibold tracking-wider bg-neutral-subtle text-foreground"
 								>
-									<th className="text-left py-2.5 px-3 rounded-l-lg">{tags.length} Tags</th>
+									<th className="text-left py-2.5 px-3">NAME</th>
+									<th className="text-left py-2.5 px-3">DESCRIPTION</th>
 									<th className="text-left py-2.5 px-3"></th>
-									<th className="text-left py-2.5 px-3 rounded-r-lg"></th>
 								</tr>
 							</thead>
 						</table>

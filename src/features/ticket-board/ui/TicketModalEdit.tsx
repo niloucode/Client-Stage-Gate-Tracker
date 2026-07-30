@@ -972,9 +972,6 @@ export default function TicketModalEdit({
 				rows={2}
 				className="w-full px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none resize-none bg-transparent"
 			/>
-			{commentError && (
-				<p className="px-3 pb-1 text-xs text-destructive">{commentError}</p>
-			)}
 			<div className="flex items-center justify-between px-3 py-2 border-t border-gray-100 bg-gray-50/50">
 				<label
 					className="cursor-pointer text-gray-400 hover:text-brand-500 transition-colors"
@@ -1002,24 +999,31 @@ export default function TicketModalEdit({
 						onChange={handleCommentImageChange}
 						className="sr-only"
 					/>
+					
 				</label>
-				<button
-					type="button"
-					onClick={handleAddComment}
-					disabled={
-						(!commentText.trim() && commentImages.length === 0) || isSubmitting
-					}
-					className="text-xs font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors"
-				>
-					{isSubmitting ? "Posting..." : "Comment"}
-				</button>
+				<div className="flex items-center">
+					{true && (
+						<p className="px-3 pb-1 text-xs text-destructive">{commentError}</p>
+					)}
+					<button
+						type="button"
+						onClick={handleAddComment}
+						disabled={
+							(!commentText.trim() && commentImages.length === 0) || isSubmitting
+						}
+						className="text-xs font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors"
+					>
+						{isSubmitting ? "Posting..." : "Comment"}
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>
 	)}	
+		<div className="h-[4rem]"></div>
 
 		{/* Footer save button */}
-		<div className="flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-neutral-surface">
+		<div className="fixed bottom-0 left-0 w-full flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-neutral-surface">
 			<button
 				onClick={onClose}
 				className="text-sm font-medium text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100"

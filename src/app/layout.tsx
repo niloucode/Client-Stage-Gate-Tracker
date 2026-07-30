@@ -31,7 +31,7 @@ export default function RootLayout({
 	return (
 		<html
 			lang="en"
-			className={cn("h-full", "antialiased", hankenGrotesk.variable, jetbrainsMono.variable, "font-sans")}
+			className={cn(hankenGrotesk.variable, jetbrainsMono.variable)}
 		>
 			<body className="min-h-full flex flex-col">
 				<QueryProvider>

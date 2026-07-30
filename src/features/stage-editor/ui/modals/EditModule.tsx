@@ -7,6 +7,7 @@ import { moduleCreateSchema } from "@/shared/schemas";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Trash2, Plus } from "lucide-react"
+import { FormInput } from "@/shared/ui/"
 
 interface EditModuleFormData {
 	name: string;
@@ -66,66 +67,47 @@ export function EditModule({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-			<DialogContent className="sm:max-w-[36rem]">
+			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Edit Module</DialogTitle>
 					<DialogDescription>Update the module details below.</DialogDescription>
 				</DialogHeader>
-				<div className="space-y-4">
-					<div>
-						<div className="flex justify-between items-center">
-							<Label required error={!!fieldErrors.name}>
-								Module Name
-							</Label>
-							<span className="text-[10px] text-muted-foreground">
-								{formData.name.length}/35
-							</span>
-						</div>
-						<input
-							type="text"
-							maxLength={35}
-							value={formData.name}
-							onChange={(e) => {
-								setFormData({ ...formData, name: e.target.value });
-								setFieldErrors({});
-							}}
-							placeholder="e.g., Authentication & Identity"
-							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
-						/>
-						<div className="flex justify-between mt-1">
-							{fieldErrors.name ? (
-								<p className="text-xs text-destructive">{fieldErrors.name}</p>
-							) : (
-								<span />
-							)}
-						</div>
-					</div>
-
-					<div>
-						<Label>Deadline Date</Label>
-						<input
-							type="datetime-local"
-							value={
-								formData.deadline_date
-									? new Date(
-											formData.deadline_date.getTime() -
-												formData.deadline_date.getTimezoneOffset() * 60000,
-										)
-											.toISOString()
-											.slice(0, 16)
-									: ""
-							}
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									deadline_date: e.target.value
-										? new Date(e.target.value)
-										: null,
-								})
-							}
-							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-						/>
-					</div>
+				<div className="space-y-4 p-6">
+					<FormInput
+						variant="input"
+						label="Module Name"
+						required
+						maxLength={35}
+						value={formData.name}
+						placeholder="Module Name"
+						error={fieldErrors.name}
+						onChange={(e) => {
+							setFormData({ ...formData, name: e.target.value });
+							setFieldErrors({});
+						}}
+					/>
+					<FormInput
+						variant="datetime-local"
+						label="Start Date"
+						type="datetime-local"
+						value={formData.deadline_date
+							? new Date(
+									formData.deadline_date.getTime() -
+										formData.deadline_date.getTimezoneOffset() * 60000,
+								)
+									.toISOString()
+									.slice(0, 16)
+							: ""}
+						containerClassName="flex-1"
+						onChange={(e) =>
+							setFormData({
+								...formData,
+								deadline_date: e.target.value
+									? new Date(e.target.value)
+									: null,
+							})
+						}
+					/>
 				</div>
 				<DialogFooter>
 				<Button className="mr-auto" variant="destructive" onClick={onDelete}>

@@ -23,14 +23,14 @@ export default function TagModalDelete({
 		<AlertDialog open={isOpen ?? true} onOpenChange={(open) => { if (!open) onClose() }}>
 			<AlertDialogContent>
 				<AlertDialogHeader>
-					<AlertDialogTitle>Remove Tag</AlertDialogTitle>
+					<AlertDialogTitle> Delete Tag</AlertDialogTitle>
 					<AlertDialogDescription>
-						Are you sure you want to remove the tag, <TagBadge tag={tag} />?
+						Are you sure you want to delete the tag, <TagBadge tag={tag} />? This action cannot be undone.
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
-					<AlertDialogAction onClick={handleConfirm} icon="delete">Remove</AlertDialogAction>
+                    <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+					<AlertDialogAction onClick={handleConfirm} icon="delete" className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>

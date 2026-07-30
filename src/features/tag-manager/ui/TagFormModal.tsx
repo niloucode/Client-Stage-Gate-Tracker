@@ -57,13 +57,13 @@ export default function TagFormModal({
 
 	return (
 		<Dialog open={isOpen ?? true} onOpenChange={(open) => { if (!open) onClose() }}>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>{mode === "create" ? "Create Tag" : "Edit Tag"}</DialogTitle>
 				</DialogHeader>
 
 				{/* Body */}
-				<div className="space-y-5">
+				<div className="space-y-5 px-6">
 					<div>
 						<div className="flex justify-between items-center">
 							<Label required>Tag Name</Label>
@@ -92,10 +92,10 @@ export default function TagFormModal({
 						/>
 					</div>
 
-					<div>
-						<Label>
-							Tag Color
-						</Label>
+					<Label>
+						Tag Color
+					</Label>
+					<div className="flex flex-col items-center">
 						<ColorPicker value={color} onChange={setColor} />
 					</div>
 				</div>

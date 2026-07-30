@@ -10,9 +10,69 @@ import {
 	useUpdateModule,
 	useDeleteModule,
 } from "@/entities/module/mutations";
+import { Button } from "@/components/ui/button";
+import { Plus, Clock } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+// --- INLINE DATE LOGIC & HELPERS ---
+type WorkflowStatus = "not_started" | "started" | "ended";
+
+const formatDateTime = (date: Date | null | undefined) => {
+	if (!date) return "——";
+	return new Date(date).toLocaleString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+		hour12: true,
+	});
+};
+
+function getActualStart(module: any): Date | null {
+	return module.actual_start_date || module.start_date || null;
+}
+
+function getWorkflowStatus(module: any): WorkflowStatus {
+	if (module.finish_date) return "ended";
+	const actualStart = getActualStart(module);
+	const now = new Date();
+	if (actualStart && new Date(actualStart) <= now) return "started";
+	return "not_started";
+}
+
+function getStartDelayDays(plannedStart: Date | null | undefined, actualStart: Date | null | undefined): number {
+	if (!plannedStart || !actualStart) return 0;
+	const diffTime = new Date(actualStart).getTime() - new Date(plannedStart).getTime();
+	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+	return diffDays > 0 ? diffDays : 0;
+}
+
+function getDeadlineState(
+	module: any,
+	status: WorkflowStatus
+): "upcoming" | "approaching" | "overdue" | "on-time" | "late" {
+	if (!module.deadline_date) return "upcoming";
+	
+	const dl = new Date(module.deadline_date);
+	
+	if (status === "ended") {
+		if (!module.finish_date) return "on-time";
+		return new Date(module.finish_date) > dl ? "late" : "on-time";
+	}
+	
+	const now = new Date();
+	now.setHours(0, 0, 0, 0);
+	const dlDate = new Date(dl);
+	dlDate.setHours(0, 0, 0, 0);
+	
+	const diffTime = dlDate.getTime() - now.getTime();
+	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+	
+	if (diffDays < 0) return "overdue";
+	if (diffDays <= 3) return "approaching";
+	return "upcoming";
+}
+// -----------------------------------
 
 interface ModulesCardProps {
 	activePhase: number | null;
@@ -29,9 +89,7 @@ export function ModulesCard({
 }: ModulesCardProps) {
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [editingModule, setEditingModule] = useState<Module | null>(null);
-	const [expandedModules, setExpandedModules] = useState<Set<string>>(
-		new Set(),
-	);
+	const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 	const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
@@ -39,7 +97,6 @@ export function ModulesCard({
 	const updateModuleMutation = useUpdateModule();
 	const deleteModuleMutation = useDeleteModule();
 
-	// Get modules for the current active phase
 	const currentPhase =
 		activePhase !== null
 			? (phases.find((p) => p.number === activePhase) ?? null)
@@ -52,18 +109,6 @@ export function ModulesCard({
 	};
 
 	const openEditModuleModal = (module: Module) => setEditingModule(module);
-
-	const formatDateTime = (date: Date | null) => {
-		if (!date) return "——";
-		return date.toLocaleString("en-US", {
-			month: "short",
-			day: "numeric",
-			year: "numeric",
-			hour: "numeric",
-			minute: "2-digit",
-			hour12: true,
-		});
-	};
 
 	const handleAddModule = async (data: {
 		name: string;
@@ -134,16 +179,25 @@ export function ModulesCard({
 		setModuleToDelete(null);
 	};
 
+	const getDeadlineColorClass = (state: string) => {
+		switch (state) {
+			case 'approaching': return 'text-amber-500 font-medium';
+			case 'overdue': return 'text-red-500 font-bold';
+			case 'late': return 'text-red-500 font-bold';
+			case 'on-time': return 'text-emerald-500 font-medium';
+			default: return 'text-[#8392a6]';
+		}
+	};
+
 	return (
-		<div className="mb-8">
+		<div className="mx-auto mb-8">
 			{/* Header with Add Module button */}
 			<div className="flex justify-between items-center mb-4">
-				<h3 className="text-sm font-semibold text-[#0F172A]">
-					Modules {currentPhase && `(Phase ${activePhase})`}
+				<h3 className="text-2xl font-semibold text-[#0F172A]">
+					Modules
 				</h3>
-				<Button
-					onClick={openCreateModuleModal}>
-					<Plus />Add Module
+				<Button onClick={openCreateModuleModal}>
+					<Plus className="mr-2 h-4 w-4" /> Add Module
 				</Button>
 			</div>
 
@@ -168,6 +222,13 @@ export function ModulesCard({
 				) : (
 					modules.map((module) => {
 						const isExpanded = expandedModules.has(module.module_id);
+						
+						// Contextual logic driven by inline helpers
+						const status = getWorkflowStatus(module); 
+						const actualStart = getActualStart(module);
+						const delayDays = getStartDelayDays(module.start_date, actualStart);
+						const deadlineState = getDeadlineState(module, status);
+						const deadlineColorClass = getDeadlineColorClass(deadlineState);
 
 						return (
 							<div
@@ -199,20 +260,45 @@ export function ModulesCard({
 											<h4 className="font-semibold text-sm text-[#0F172A]">
 												{module.name}
 											</h4>
-											<p className="text-xs text-[#8392a6] mt-0.5">
-												Deadline: {formatDateTime(module.deadline_date)}
-											</p>
+											<div className="flex items-center gap-1 mt-0.5">
+												{deadlineState === 'approaching' && <Clock className="w-3 h-3 text-amber-500" />}
+												<p className={`text-xs ${deadlineColorClass}`}>
+												{status === 'not_started' && (
+													<>Starting: {formatDateTime(module.start_date)}</>
+												)}
+												
+												{status === 'started' && (
+													<>
+														Started: {formatDateTime(actualStart)} 
+														{delayDays > 0 && <span className="text-amber-600 ml-1">({delayDays} days late)</span>}
+													</>
+												)}
+
+												{status === 'ended' && (
+													<>
+														Started: {formatDateTime(actualStart)} – Ended: {formatDateTime(module.finish_date)}
+													</>
+												)}
+													
+												</p>
+											</div>
 										</div>
 									</div>
 
 									<div className="flex items-center gap-3">
-										{/* Date Badge */}
-										<div className="px-3 py-1 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md">
-											<span className="font-medium text-xs text-slate-400">
-												{formatDateTime(module.start_date)} –{" "}
-												{module.finish_date
-													? formatDateTime(module.finish_date)
-													: "Unfinished"}
+										{/* Contextual Date Badge */}
+										<div 
+											className="px-3 py-1.5 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md"
+											title={status !== 'not_started' && module.start_date ? `Planned Start: ${formatDateTime(module.start_date)}` : undefined}
+										>
+											<span className="font-medium text-xs text-slate-600 flex items-center gap-1">
+												{deadlineState === 'overdue' ? 'Overdue: ' : 'Deadline: '} 
+													{formatDateTime(module.deadline_date)}
+													{status === 'ended' && (
+														<span className="ml-1 opacity-80">
+															({deadlineState === 'late' ? 'Late' : 'On-time'})
+														</span>
+													)}
 											</span>
 										</div>
 

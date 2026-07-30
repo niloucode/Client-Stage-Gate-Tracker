@@ -4,7 +4,6 @@ import { use, useState, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
 	PhaseStepper,
-	ActivePhaseDetails,
 	ModulesCard,
 } from "@/features/stage-editor"
 import type { Phase } from "@/features/stage-editor/types"
@@ -105,12 +104,6 @@ function EditorContent({
 				stageId={stageId}
 				activePhase={activePhase}
 				setActivePhase={setActivePhase}
-			/>
-
-			<ActivePhaseDetails
-				activePhase={activePhase}
-				phases={phases}
-				stageId={stageId}
 			/>
 
 			<ModulesCard

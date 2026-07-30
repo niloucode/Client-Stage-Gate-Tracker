@@ -48,14 +48,14 @@ export function DeleteProjectModal({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-			<DialogContent className="sm:max-w-sm">
+			<DialogContent>
 				<DialogHeader><DialogTitle>Delete Project</DialogTitle></DialogHeader>
-			<p className="text-sm text-neutral-border">
-					This action cannot be undone. Please type{" "}
-					<span className="font-bold text-foreground">{projectName}</span> to
-					confirm.
-				</p>
-				<div className="">
+				<div className="px-6 space-y-4">
+					<p className="text-sm text-neutral-border">
+						This action cannot be undone. Please type{" "}
+						<span className="font-bold text-foreground">{projectName}</span>
+						 to confirm.
+					</p>
 					<div>
 						<input
 							type="text"

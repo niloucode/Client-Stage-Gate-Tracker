@@ -8,7 +8,8 @@ import TagListModal from "@/features/tag-manager/ui/TagListModal"
 import TagFormModal from "@/features/tag-manager/ui/TagFormModal"
 import{ Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus,Check } from "lucide-react"
+import { Label } from "@/components/ui/label"
 
 export function CloseButton({ onClick }: { onClick: () => void }) {
 	return (
@@ -24,8 +25,7 @@ export function CloseButton({ onClick }: { onClick: () => void }) {
 				fill="none"
 				stroke="currentColor"
 				strokeWidth={2.5}
-				strokeLinecap="round"
-			>
+				strokeLinecap="round">
 				<line x1="18" y1="6" x2="6" y2="18" />
 				<line x1="6" y1="6" x2="18" y2="18" />
 			</svg>
@@ -43,32 +43,22 @@ export function ColorPicker({
 	onChange: (c: string) => void
 }) {
 	return (
-		<div className="grid grid-cols-9 gap-1.5">
+		<div className="grid grid-cols-9 gap-1.5 w-full h-[5rem] mt-2">
 			{TAG_COLORS.map((color) => {
 				const isSelected = value === color
 				return (
 					<button
 						key={color}
 						onClick={() => onChange(color)}
-						className="w-7 h-7 rounded-md transition-all hover:scale-110 border-2"
+						className="rounded-md transition-all border-2 min-h-[2rem] flex justify-center items-center"
 						style={{
 							backgroundColor: color,
-							borderColor: isSelected ? "#1E1B4B" : "transparent",
 							boxShadow: isSelected ? `0 0 0 2px neutral-surface, 0 0 0 4px ${color}` : "none",
 						}}
 						aria-label={color}
 					>
 						{isSelected && (
-							<span
-								style={{
-									color: "neutral-surface",
-									fontSize: 10,
-									lineHeight: 1,
-									textShadow: "0 0 2px rgba(0,0,0,0.4)",
-								}}
-							>
-								✓
-							</span>
+							<Check color={"background"}></Check>
 						)}
 					</button>
 				)

@@ -70,11 +70,16 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
         <Label required={required} error={hasError}>
           {label}
         </Label>
-        {maxLength !== undefined && (
-          <span className="ml-auto text-[10px] text-muted-foreground">
-            {stringValue.length}/{maxLength}
-          </span>
-        )}
+		<div className="ml-auto flex items-center">
+			{typeof error === "string" && (
+				<div className="text-xs text-destructive">{error}</div>
+			)}
+			{maxLength !== undefined && (
+				<span className="ml-2 text-[10px] text-muted-foreground">
+					{stringValue.length}/{maxLength}
+				</span>
+			)}
+		</div>
       </div>
 
       {/* Variant 1: Textarea */}
@@ -155,16 +160,11 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
           maxLength={maxLength}
           placeholder={props.placeholder}
           onChange={(e) => handleValueChange(e, props.onChange)}
-          className="mt-1"
+          className={`mt-1 ${hasError
+              ? "border-red-400 focus:ring-red-400"
+              : "border-gray-300 focus:ring-brand-500"}`}
         />
       )}
-
-      {/* Error Message Slot */}
-      <div className="mt-1 h-1">
-        {typeof error === "string" && (
-          <p className="text-xs text-destructive">{error}</p>
-        )}
-      </div>
     </div>
   );
 };
