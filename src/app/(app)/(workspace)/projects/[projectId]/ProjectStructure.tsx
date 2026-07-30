@@ -22,10 +22,12 @@ import {
 	LogOut,
 	EyeIcon,
 	Lock,
+	Workflow,
+	Ticket,
 } from "lucide-react";
 import { StageSequence, Stage } from "./StageSequence";
 
-// ─── Brand colours (as-is from ProjectStructure file — no replacement applied here) ───
+// ─── Brand colours ────────────────────────────────────────────────────────────
 const BRAND = "#6b1fa8";
 const BRAND_DARK = "#500086";
 const BRAND_LIGHT = "#f1daff";
@@ -67,24 +69,15 @@ interface ProjectStructureProps {
 	onViewGateOverview?: () => void;
 	onViewEntireStage?: () => void;
 	showAddStageButton?: boolean;
-	/** Avatar initials for top-right user pill */
 	userInitials?: string;
 }
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-
-const NAV_ITEMS = [
-	{ label: "Dashboard", icon: LayoutDashboard },
-	{ label: "Projects", icon: FolderKanban },
-	{ label: "Clients", icon: Users },
-];
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 
 function StatCard({ label, done, total, icon }: StatItem) {
 	return (
 		<div
-			className="flex flex-1 items-center gap-4 rounded-xl bg-white p-4"
+			className="flex items-center gap-4 rounded-xl bg-white p-4"
 			style={{ border: "1px solid #e5e3e0" }}
 		>
 			<div
@@ -93,17 +86,17 @@ function StatCard({ label, done, total, icon }: StatItem) {
 			>
 				{icon}
 			</div>
-			<div>
-				<p className="text-[12px] font-semibold" style={{ color: "#6b6b6b" }}>
+			<div className="min-w-0 flex-1">
+				<p className="text-[12px] font-semibold truncate" style={{ color: "#6b6b6b" }}>
 					{label}
 				</p>
 				<p
-					className="text-[24px] font-semibold leading-tight"
+					className="text-[20px] sm:text-[24px] font-semibold leading-tight"
 					style={{ color: BRAND_DARK }}
 				>
 					{done}{" "}
 					<span
-						className="text-[14px] font-normal"
+						className="text-[13px] sm:text-[14px] font-normal"
 						style={{ color: "#6b6b6b" }}
 					>
 						/ {total}
@@ -119,26 +112,26 @@ function StatCard({ label, done, total, icon }: StatItem) {
 function TicketRow({ code, title, dateRange }: Ticket) {
 	return (
 		<div
-			className="flex items-center justify-between rounded bg-white px-4 py-3"
+			className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded bg-white px-4 py-3"
 			style={{ border: "1px solid #e5e3e0" }}
 		>
-			<div className="flex items-center gap-3">
+			<div className="flex items-center gap-3 min-w-0">
 				<span
-					className="rounded px-2 py-1 text-[12px] font-bold"
+					className="shrink-0 rounded px-2 py-1 text-[12px] font-bold"
 					style={{
-						backgroundColor: `${BRAND_DARK}0D`,
+						backgroundColor: "rgba(80, 0, 134, 0.05)",
 						border: `1px solid ${BRAND_DARK}`,
 						color: BRAND_DARK,
 					}}
 				>
 					{code}
 				</span>
-				<span className="text-[14px] font-medium" style={{ color: "#1a1a1a" }}>
+				<span className="text-[14px] font-medium truncate" style={{ color: "#1a1a1a" }}>
 					{title}
 				</span>
 			</div>
 			<span
-				className="rounded-full px-3 py-1 text-[12px] font-semibold"
+				className="self-start sm:self-auto shrink-0 rounded-full px-3 py-1 text-[11px] sm:text-[12px] font-semibold"
 				style={{ backgroundColor: "#efedf1", color: "#7e7384" }}
 			>
 				{dateRange}
@@ -150,15 +143,16 @@ function TicketRow({ code, title, dateRange }: Ticket) {
 // ─── Default data ─────────────────────────────────────────────────────────────
 
 const DEFAULT_STAGES: Stage[] = [
-	{ id: "1", stageNumber: 1, stageName: "Stage Name", approved: true },
+	{ id: "1", stageNumber: 1, stageName: "Discovery & UX", approved: true },
 	{
 		id: "2",
 		stageNumber: 2,
-		stageName: "Stage Name",
+		stageName: "Visual Identity",
 		approved: true,
 		current: true,
 	},
-	{ id: "3", stageNumber: 3, stageName: "Stage Name", approved: false },
+	{ id: "3", stageNumber: 3, stageName: "Core Page Design", approved: false },
+	{ id: "4", stageNumber: 4, stageName: "Development", approved: false },
 ];
 
 const DEFAULT_STATS: StatItem[] = [
@@ -178,7 +172,7 @@ const DEFAULT_STATS: StatItem[] = [
 		done: 12,
 		total: 15,
 		icon: (
-			<Package className="h-[13px] w-[13px]" style={{ color: BRAND_DARK }} />
+			<LayoutDashboard className="h-[13px] w-[13px]" style={{ color: BRAND_DARK }} />
 		),
 	},
 	{
@@ -186,14 +180,14 @@ const DEFAULT_STATS: StatItem[] = [
 		done: 8,
 		total: 10,
 		icon: (
-			<GitMerge className="h-[15px] w-[13px]" style={{ color: BRAND_DARK }} />
+			<Workflow className="h-[15px] w-[13px]" style={{ color: BRAND_DARK }} />
 		),
 	},
 	{
 		label: "Tickets Done",
 		done: 12,
 		total: 15,
-		icon: <Tag className="h-[12px] w-[15px]" style={{ color: BRAND_DARK }} />,
+		icon: <Ticket className="h-[12px] w-[15px]" style={{ color: BRAND_DARK }} />,
 	},
 ];
 
@@ -260,29 +254,29 @@ export function ProjectStructure({
 	);
 
 	return (
-		<div className="flex flex-1 flex-col overflow-hidden">
-			{/* Scrollable content */}
-			<main className="flex-1 overflow-y-auto px-10 py-8">
-				{/* Page title */}
+		<div className="flex flex-1 flex-col overflow-x-hidden min-w-0">
+			{/* Responsive scrollable main content wrapper */}
+			<main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
+				{/* Responsive Page title */}
 				<h1
-					className="mb-6 text-[40px] font-bold leading-tight"
+					className="mb-6 text-[28px] sm:text-[36px] lg:text-[40px] font-bold leading-tight break-words"
 					style={{ color: "#1a1a1a" }}
 				>
 					{projectName}
 				</h1>
 
-				{/* ── Section 1: Overall Progress ── */}
-				<div className="mb-6 flex gap-6">
+				{/* ── Section 1: Overall Progress & Access ── */}
+				<div className="mb-6 flex flex-col xl:flex-row gap-6">
 					{/* Overall progress card */}
 					<div
-						className="flex flex-1 flex-col justify-between rounded-lg bg-white p-6"
+						className="flex flex-1 flex-col justify-between rounded-lg bg-white p-5 sm:p-6"
 						style={{ border: "1px solid #e5e3e0" }}
 					>
-						<div className="flex items-start justify-between">
+						<div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
 							<div>
 								<div className="flex items-center gap-2 mb-2">
 									<BarChart2
-										className="h-2.5 w-2.5"
+										className="h-3 w-3"
 										style={{ color: "#4c4352" }}
 									/>
 									<span
@@ -294,13 +288,13 @@ export function ProjectStructure({
 								</div>
 								<div className="flex items-baseline gap-1">
 									<span
-										className="text-[40px] font-bold leading-none"
+										className="text-[32px] sm:text-[40px] font-bold leading-none"
 										style={{ color: "#1b1b1f" }}
 									>
 										{overallProgress}
 									</span>
 									<span
-										className="text-[24px] font-semibold"
+										className="text-[20px] sm:text-[24px] font-semibold"
 										style={{ color: "#4c4352" }}
 									>
 										%
@@ -309,24 +303,24 @@ export function ProjectStructure({
 							</div>
 							<button
 								onClick={onProjectDashboard}
-								className="flex items-center gap-2 rounded px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-gray-50"
+								className="flex items-center justify-center gap-2 rounded px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-gray-50 self-start sm:self-auto"
 								style={{
 									border: `1px solid ${BRAND_DARK}`,
 									color: BRAND_DARK,
 								}}
 							>
-								<LayoutDashboard className="h-2.5 w-2.5" />
+								<LayoutDashboard className="h-3 w-3" />
 								Project Dashboard
 							</button>
 						</div>
 
 						{/* Progress bar */}
 						<div
-							className="mt-4 h-3 w-full overflow-hidden rounded-full"
+							className="mt-6 h-3 w-full overflow-hidden rounded-full"
 							style={{ backgroundColor: "#efedf1" }}
 						>
 							<div
-								className="h-full rounded-full"
+								className="h-full rounded-full transition-all duration-500"
 								style={{
 									width: `${overallProgress}%`,
 									backgroundColor: "#2d6c00",
@@ -337,7 +331,7 @@ export function ProjectStructure({
 
 					{/* Project access card */}
 					<div
-						className="flex w-[340px] shrink-0 flex-col gap-3 rounded-lg bg-white p-6"
+						className="flex w-full xl:w-[340px] shrink-0 flex-col gap-3 rounded-lg bg-white p-5 sm:p-6"
 						style={{ border: "1px solid #e5e3e0" }}
 					>
 						<div className="flex items-center gap-2">
@@ -352,43 +346,45 @@ export function ProjectStructure({
 								PROJECT ACCESS
 							</span>
 						</div>
-						<button
-							onClick={onViewContract}
-							className="flex items-center gap-2 rounded px-3 py-2.5 text-[12px] font-semibold transition-colors hover:bg-gray-50"
-							style={{ border: `1px solid ${BRAND_DARK}`, color: BRAND_DARK }}
-						>
-							<EyeIcon className="h-3 w-3" />
-							View Contract
-						</button>
-						<button
-							onClick={onCredentialsRepo}
-							className="flex items-center gap-2 rounded px-3 py-2.5 text-[12px] font-semibold transition-opacity hover:opacity-80"
-							style={{
-								backgroundColor: `${BRAND}0D`,
-								border: `1px solid ${BRAND}`,
-								color: BRAND,
-							}}
-						>
-							<Key className="h-3 w-3" />
-							Credentials Repository
-						</button>
-						<button
-							onClick={onIssueReport}
-							className="flex items-center gap-3 rounded px-3 py-3 text-[12px] font-semibold transition-opacity hover:opacity-80"
-							style={{
-								backgroundColor: "#ffdad6",
-								border: "1px solid #f1b3b0",
-								color: "#93000a",
-							}}
-						>
-							<Bug className="h-3 w-3" />
-							Issue Reporting
-						</button>
+						<div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-3">
+							<button
+								onClick={onViewContract}
+								className="flex items-center justify-center gap-2 rounded px-3 py-2.5 text-[12px] font-semibold transition-colors hover:bg-gray-50"
+								style={{ border: `1px solid ${BRAND_DARK}`, color: BRAND_DARK }}
+							>
+								<EyeIcon className="h-3 w-3" />
+								View Contract
+							</button>
+							<button
+								onClick={onCredentialsRepo}
+								className="flex items-center justify-center gap-2 rounded px-3 py-2.5 text-[12px] font-semibold transition-opacity hover:opacity-80"
+								style={{
+									backgroundColor: `${BRAND}0D`,
+									border: `1px solid ${BRAND}`,
+									color: BRAND,
+								}}
+							>
+								<Key className="h-3 w-3" />
+								Credentials Repository
+							</button>
+							<button
+								onClick={onIssueReport}
+								className="flex items-center justify-center gap-2 rounded px-3 py-2.5 text-[12px] font-semibold transition-opacity hover:opacity-80"
+								style={{
+									backgroundColor: "#ffdad6",
+									border: "1px solid #f1b3b0",
+									color: "#93000a",
+								}}
+							>
+								<Bug className="h-3 w-3" />
+								Issue Reporting
+							</button>
+						</div>
 					</div>
 				</div>
 
 				{/* ── Section 2: Stage Sequence ── */}
-				<div className="mb-6">
+				<div className="mb-6 w-full overflow-hidden">
 					<StageSequence
 						stages={stages}
 						selectedId={selectedStageId}
@@ -400,43 +396,48 @@ export function ProjectStructure({
 
 				{/* ── Section 3: Current Stage Detail ── */}
 				<div
-					className="mb-6 rounded-[28px] bg-white p-8"
+					className="mb-6 rounded-[20px] sm:rounded-[28px] bg-white p-5 sm:p-8"
 					style={{ border: "1px solid #e5e3e0" }}
 				>
-					{/* Stage header */}
-					<div className="mb-6 flex items-start justify-between">
-						<div className="flex items-start gap-5">
+					{/* Fully Responsive Stage Header */}
+					<div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+						<div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5 min-w-0 flex-1">
+							{/* Stage Number Circle */}
 							<div
-								className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[112px] text-[40px] font-bold"
+								className="flex h-14 w-14 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-full text-[24px] sm:text-[40px] font-bold"
 								style={{
-									border: `1px solid ${BRAND_LIGHT}`,
+									border: `5px solid ${BRAND_LIGHT}`,
 									color: BRAND_DARK,
 								}}
 							>
 								{currentStageNumber}
 							</div>
-							<div>
+							
+							{/* Responsive Stage Title & Description */}
+							<div className="min-w-0 flex-1">
 								<h2
-									className="text-[32px] font-semibold leading-tight"
+									className="text-[20px] sm:text-[28px] lg:text-[32px] font-semibold leading-tight break-words"
 									style={{ color: "#1a1a1a" }}
 								>
 									{currentStageName}
 								</h2>
-								<p className="mt-1 text-base" style={{ color: "#4c4352" }}>
+								<p className="mt-1 text-xs sm:text-sm lg:text-base leading-relaxed break-words" style={{ color: "#4c4352" }}>
 									{currentStageDescription}
 								</p>
 							</div>
 						</div>
+
+						{/* Responsive Date Tag */}
 						<div
-							className="flex shrink-0 items-center gap-2 rounded-xl px-4 py-3"
+							className="flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 sm:py-3 self-start lg:self-auto max-w-full"
 							style={{ backgroundColor: BRAND_LIGHT }}
 						>
 							<Calendar
-								className="h-[10px] w-[11px]"
+								className="h-3.5 w-3.5 shrink-0"
 								style={{ color: "#2d004f" }}
 							/>
 							<span
-								className="text-[12px] font-semibold whitespace-nowrap"
+								className="text-[11px] sm:text-[12px] font-semibold break-words sm:whitespace-nowrap"
 								style={{ color: "#2d004f" }}
 							>
 								{currentStageDateRange}
@@ -444,42 +445,42 @@ export function ProjectStructure({
 						</div>
 					</div>
 
-					{/* Stats row */}
-					<div className="mb-6 flex gap-4">
+					{/* Stats Row Responsive Grid */}
+					<div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 						{stats.map((stat) => (
 							<StatCard key={stat.label} {...stat} />
 						))}
 					</div>
 
-					{/* Current phase preview */}
+					{/* Current Phase Preview */}
 					<div
-						className="rounded-lg p-6"
+						className="rounded-lg p-4 sm:p-6"
 						style={{
 							backgroundColor: "#f7f5f2",
 							border: "1px solid #e5e3e0",
 						}}
 					>
-						<div className="mb-4 flex items-start justify-between">
+						<div className="mb-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
 							<div>
 								<h3
-									className="text-[24px] font-semibold"
+									className="text-[20px] sm:text-[24px] font-semibold"
 									style={{ color: "#1a1a1a" }}
 								>
 									{currentPhaseName}
 								</h3>
-								<p className="mt-1 text-[14px]" style={{ color: "#4c4352" }}>
+								<p className="mt-1 text-[13px] sm:text-[14px]" style={{ color: "#4c4352" }}>
 									{currentPhaseDescription}
 								</p>
 							</div>
-							<div className="text-right">
+							<div className="sm:text-right self-start sm:self-auto">
 								<p
-									className="text-[12px] font-semibold"
+									className="text-[11px] sm:text-[12px] font-semibold"
 									style={{ color: BRAND_DARK }}
 								>
 									PROGRESS
 								</p>
 								<p
-									className="text-[24px] font-semibold"
+									className="text-[20px] sm:text-[24px] font-semibold"
 									style={{ color: BRAND_DARK }}
 								>
 									{currentPhaseProgress}%
@@ -493,50 +494,52 @@ export function ProjectStructure({
 						>
 							URGENT TICKETS
 						</p>
-						<div className="grid grid-cols-2 gap-3">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 							{urgentTickets.map((ticket) => (
 								<TicketRow key={ticket.code} {...ticket} />
 							))}
 						</div>
 					</div>
 
-					{/* View entire stage button */}
+					{/* View Entire Stage Button */}
 					<button
 						onClick={onViewEntireStage}
 						className="mt-5 flex w-full items-center justify-center gap-2 rounded px-4 py-3 text-[12px] font-semibold transition-colors hover:bg-gray-50"
-						style={{ border: `1px solid ${BRAND_DARK}`, color: BRAND_DARK }}
+						style={{ border: `2px dotted ${BRAND}`, color: BRAND_DARK }}
 					>
-						<ArrowRight className="h-[11px] w-[10px]" />
+						<ArrowRight className="h-3 w-3" />
 						View Entire Stage Structure
 					</button>
 				</div>
 
 				{/* ── Section 4: Gate Overview ── */}
 				<div
-					className="relative overflow-hidden rounded-lg bg-white p-8"
+					className="relative overflow-hidden rounded-lg bg-white p-6 sm:p-8"
 					style={{ border: "1px solid #e5e3e0" }}
 				>
-					{/* Subtle brand tint on left */}
+					{/* Rhombus colored #6B1FA8 at 5% opacity */}
 					<div
-						className="absolute left-0 top-0 bottom-0 w-[169px]"
-						style={{ backgroundColor: `${BRAND}0D` }}
+						className="absolute -bottom-10 -right-35 h-200 w-36 sm:h-200 sm:w-44 rotate-15 pointer-events-none"
+						style={{ backgroundColor: "#6B1FA8", opacity: 0.05 }}
 					/>
-					<div className="relative flex items-center gap-6">
+
+					{/* Centered Layout */}
+					<div className="relative flex flex-col items-center justify-center text-center gap-3">
 						<div
-							className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl"
+							className="flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl"
 							style={{ backgroundColor: BRAND_DARK }}
 						>
-							<LayoutGrid className="h-[25px] w-[17px] text-white" />
+							<LayoutGrid className="h-5 w-5 sm:h-[25px] sm:w-[17px] text-white" />
 						</div>
 						<div>
 							<h3
-								className="text-[24px] font-semibold cursor-pointer hover:underline"
+								className="text-[20px] sm:text-[24px] font-semibold cursor-pointer hover:underline"
 								style={{ color: BRAND_DARK }}
 								onClick={onViewGateOverview}
 							>
 								View Gate Overview
 							</h3>
-							<p className="mt-1 text-[14px]" style={{ color: "#6b6b6b" }}>
+							<p className="mt-1 text-[13px] sm:text-[14px] max-w-md mx-auto" style={{ color: "#6b6b6b" }}>
 								Review mandatory requirements and compliance milestones for
 								current stage completion.
 							</p>
