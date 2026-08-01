@@ -47,58 +47,61 @@ export function SignatoriesCard({
 		<Card className={className}>
 			<CardHeader className="flex flex-row items-center justify-between">
 				<CardTitle>Signatories</CardTitle>
-				<Badge variant="secondary">{completed} / {signatories.length} completed</Badge>
+				<Badge variant="secondary">
+					{completed} / {signatories.length} completed
+				</Badge>
 			</CardHeader>
 			<CardContent>
+				<ul className="flex flex-col gap-4">
+					{signatories.map((person, i) => {
+						const palette = AVATAR_PALETTE[i % AVATAR_PALETTE.length];
+						const isSigned = person.status === "signed";
+						return (
+							<li key={person.id} className="flex items-start gap-3">
+								<Avatar className="h-10 w-10">
+									<AvatarFallback
+										className="text-sm font-semibold"
+										style={{ backgroundColor: palette.bg, color: palette.text }}
+									>
+										{initialsFor(person.name)}
+									</AvatarFallback>
+								</Avatar>
 
-			<ul className="flex flex-col gap-4">
-				{signatories.map((person, i) => {
-					const palette = AVATAR_PALETTE[i % AVATAR_PALETTE.length];
-					const isSigned = person.status === "signed";
-					return (
-						<li key={person.id} className="flex items-start gap-3">
-							<Avatar className="h-10 w-10">
-								<AvatarFallback
-									className="text-sm font-semibold"
-									style={{ backgroundColor: palette.bg, color: palette.text }}
-								>
-									{initialsFor(person.name)}
-								</AvatarFallback>
-							</Avatar>
-
-							<div className="min-w-0 flex-1">
-								<p className="truncate text-sm font-medium text-[#181724]">
-									{person.name}
-								</p>
-								<p className="truncate text-xs text-[#6E6B82]">{person.role}</p>
-								{isSigned && person.timestamp && (
-									<p className="mt-0.5 text-[11px] text-[#9C9AB0]">
-										Signed {person.timestamp} <br />
-										{person.device} <br />
-										{person.location}
+								<div className="min-w-0 flex-1">
+									<p className="truncate text-sm font-medium text-[#181724]">
+										{person.name}
 									</p>
-								)}
-							</div>
+									<p className="truncate text-xs text-[#6E6B82]">
+										{person.role}
+									</p>
+									{isSigned && person.timestamp && (
+										<p className="mt-0.5 text-[11px] text-[#9C9AB0]">
+											Signed {person.timestamp} <br />
+											{person.device} <br />
+											{person.location}
+										</p>
+									)}
+								</div>
 
-							<span
-								className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium ${
-									isSigned
-										? "bg-[#ECFDF3] text-[#15803D]"
-										: "bg-[#FFFBEB] text-[#B45309]"
-								}`}
-							>
-								{isSigned ? (
-									<CheckCircle2 className="h-3 w-3" />
-								) : (
-									<Clock3 className="h-3 w-3" />
-								)}
-								{isSigned ? "Signed" : "Pending"}
-							</span>
-						</li>
-					);
-				})}
-			</ul>
-		</CardContent>
+								<span
+									className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium ${
+										isSigned
+											? "bg-[#ECFDF3] text-[#15803D]"
+											: "bg-[#FFFBEB] text-[#B45309]"
+									}`}
+								>
+									{isSigned ? (
+										<CheckCircle2 className="h-3 w-3" />
+									) : (
+										<Clock3 className="h-3 w-3" />
+									)}
+									{isSigned ? "Signed" : "Pending"}
+								</span>
+							</li>
+						);
+					})}
+				</ul>
+			</CardContent>
 		</Card>
 	);
 }

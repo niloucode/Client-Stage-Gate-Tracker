@@ -26,6 +26,7 @@ import {
 export default function ContractPage() {
 	const [signatories, setSignatories] = useState<Signatory[]>([]);
 	const [allSigned, setAllSigned] = useState(false);
+	const [canSign, setCanSign] = useState(false);
 	const [userRole, setUserRole] = useState<"Client Viewer" | "Project Owner">(
 		"Client Viewer",
 	);
@@ -36,7 +37,11 @@ export default function ContractPage() {
 	//UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 	//const {projectId} = params
 	const projectId = searchParams.get("projectId") ?? "";
-	const { data: contract, isLoading, error } = useContract(projectId || undefined);
+	const {
+		data: contract,
+		isLoading,
+		error,
+	} = useContract(projectId || undefined);
 	const clientId = contract?.client_id ?? searchParams.get("clientId") ?? "";
 	const userSigned =
 		userRole == "Client Viewer"
@@ -47,6 +52,7 @@ export default function ContractPage() {
 	useEffect(() => {
 		if (!contract || !projectId) return;
 		get_signatories();
+		console.log(signatories);
 	}, [
 		contract?.contract_id,
 		contract?.client_signed_at,
@@ -107,6 +113,7 @@ export default function ContractPage() {
 	const get_signatories = async () => {
 		try {
 			const temp: Signatory[] = [];
+			let localCanSign = false;
 
 			// --- CLIENT SIGNATORY ---
 			if (contract?.client_id) {
@@ -114,6 +121,7 @@ export default function ContractPage() {
 
 				if (clientAssignment?.Users) {
 					const clientSigned = !!contract.client_signed_at;
+					localCanSign = user?.profile_id == clientAssignment.Users.profile_id;
 					temp.push({
 						id: "1",
 						name: `${clientAssignment.Users.first_name} ${clientAssignment.Users.last_name}`,
@@ -130,6 +138,10 @@ export default function ContractPage() {
 			if (ownerAssignment?.Users) {
 				const ownerProfile = ownerAssignment.Users;
 				const ownerSigned = !!contract?.project_owner_signed_at;
+
+				if (!localCanSign) {
+					localCanSign = user?.profile_id == ownerProfile.profile_id;
+				}
 				temp.push({
 					id: "2",
 					name: `${ownerProfile.first_name} ${ownerProfile.last_name}`,
@@ -140,11 +152,12 @@ export default function ContractPage() {
 			}
 
 			setSignatories(temp);
+
+			setCanSign(localCanSign);
 			//check if all signatories have signed
 			const check =
 				temp.length > 0 &&
 				temp.every((s) => s.status.trim() == "signed".trim());
-			console.log(`have I signed: ${userSigned}`);
 			setAllSigned(check);
 		} catch (err) {
 			console.error("Failed to load signatories:", err);
@@ -168,7 +181,9 @@ export default function ContractPage() {
 			<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
 				<div className="mx-auto max-w-6xl">
 					<div className="flex items-center justify-center py-20">
-						<p className="text-destructive">Failed to load contract. Please try again.</p>
+						<p className="text-destructive">
+							Failed to load contract. Please try again.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -176,50 +191,51 @@ export default function ContractPage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
+		<>
 			<div className="mx-auto max-w-6xl">
 				{allSigned && (
-						<ExecutedBanner
-							executedAt={executedDate || undefined}
-							className="mb-6"
-						/>
-					)}
+					<ExecutedBanner
+						executedAt={executedDate || undefined}
+						className="mb-6"
+					/>
+				)}
 
-					<header className="mb-6">
-						<h1 className="text-xl font-semibold text-[#181724]">
-							{contract?.contract_name ?? "Untitled contract"}{" "}
-							{/* INPUT contract_name HERE */}
-						</h1>
-						<p className="text-sm text-[#6E6B82]">
-							Review the document and complete signing below.
-						</p>
-					</header>
+				<header className="mb-6">
+					<h1 className="text-xl font-semibold text-[#181724]">
+						{contract?.contract_name ?? "Untitled contract"}{" "}
+						{/* INPUT contract_name HERE */}
+					</h1>
+					<p className="text-sm text-[#6E6B82]">
+						Review the document and complete signing below.
+					</p>
+				</header>
 
-					<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
-						<ContractViewer
-							className="h-[80vh] min-h-[600px]"
-							clientId={clientId}
-							projectId={projectId}
-							profileId={user?.profile_id ?? null}
-							initialFilePath={contract?.file_path ?? null}
-						/>
+				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+					<ContractViewer
+						className="h-[80vh] min-h-[600px]"
+						clientId={clientId}
+						projectId={projectId}
+						profileId={user?.profile_id ?? null}
+						initialFilePath={contract?.file_path ?? null}
+						initialContractName={contract?.contract_name ?? null}
+					/>
 
-						<div className="flex flex-col gap-6">
-							<SignatoriesCard signatories={signatories} />
-							{!userSigned && contract && (
-								<>
-									<ExecuteAgreementCard
-										maskedEmail={
-											user ? get_masked_email(user.email) : "a******@gmail.com"
-										}
-										projectId={projectId}
-										role={userRole ?? "Client Viewer"}
-									/>
-								</>
-							)}
-						</div>
+					<div className="flex flex-col gap-6">
+						<SignatoriesCard signatories={signatories} />
+						{!userSigned && contract && canSign && (
+							<>
+								<ExecuteAgreementCard
+									maskedEmail={
+										user ? get_masked_email(user.email) : "a******@gmail.com"
+									}
+									projectId={projectId}
+									role={userRole ?? "Client Viewer"}
+								/>
+							</>
+						)}
 					</div>
 				</div>
 			</div>
+		</>
 	);
 }
