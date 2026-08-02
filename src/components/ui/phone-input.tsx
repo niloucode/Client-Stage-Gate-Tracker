@@ -10,7 +10,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
-import { parsePhoneNumber, isValidPhoneNumber, getCountries, getCountryCallingCode } from "libphonenumber-js"
+import { parsePhoneNumberWithError, isValidPhoneNumber, getCountries, getCountryCallingCode } from "libphonenumber-js"
 import type { CountryCode } from "libphonenumber-js"
 
 const COUNTRIES = getCountries().map((code) => ({
@@ -38,7 +38,7 @@ export function PhoneInput({
 	const validation = useMemo(() => {
 		if (!value) return null
 		try {
-			const phoneNumber = parsePhoneNumber(value, country)
+			const phoneNumber = parsePhoneNumberWithError(value, country)
 			if (phoneNumber && isValidPhoneNumber(value, country)) {
 				return { valid: true, formatted: phoneNumber.formatInternational() }
 			}
