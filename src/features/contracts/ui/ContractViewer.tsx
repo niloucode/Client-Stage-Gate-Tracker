@@ -238,12 +238,12 @@ export function ContractViewer({
 	return (
 		<>
 			<Card className={`flex flex-col overflow-hidden ${className}`}>
-				<CardContent className="flex flex-col overflow-hidden p-0">
+				<CardContent className="flex flex-1 flex-col overflow-hidden p-0">
 					{/* Toolbar */}
 					<div className="flex items-center justify-between gap-3 border-b border-[#E6E4F0] px-4 py-3">
 						<div className="flex min-w-0 items-center gap-2">
-							<FileText className="h-5 w-5 shrink-0 text-[#4338CA]" />
-							{contractName.trim() != "" && (
+							<FileText className="h-5.5 w-5.5 shrink-0 text-[#500086]" />
+							{/* {contractName.trim() != "" && (
 								<input
 									type="text"
 									className="block leading-none py-0 truncate text-sm font-medium text-[#181724] border border-transparent hover:border-foreground"
@@ -262,7 +262,7 @@ export function ContractViewer({
 										});
 									}}
 								/>
-							)}
+							)} */}
 						</div>
 
 						<div className="flex shrink-0 items-center gap-1">
@@ -293,22 +293,7 @@ export function ContractViewer({
 										<ZoomIn className="h-4 w-4" />
 									</Button>
 									<span className="mx-1 h-4 w-px bg-[#E6E4F0]" />
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={handleDownload}
-										aria-label="Download"
-									>
-										<Download className="h-4 w-4" />
-									</Button>
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={handlePrint}
-										aria-label="Print"
-									>
-										<Printer className="h-4 w-4" />
-									</Button>
+
 									<Button
 										variant="ghost"
 										size="icon"
@@ -324,9 +309,10 @@ export function ContractViewer({
 									variant="default"
 									size="sm"
 									onClick={() => inputRef.current?.click()}
+									className={"px-4 py-5 bg-[#500086]"}
 								>
 									<Upload size={14} />
-									Upload
+									Upload Contract
 								</Button>
 							)}
 						</div>
@@ -353,7 +339,7 @@ export function ContractViewer({
 								<embed
 									src={`${fileUrl}#toolbar=0`}
 									type="application/pdf"
-									className="aspect-[8.5/11] w-full rounded-lg border border-[#E6E4F0] bg-neutral-surface shadow-sm"
+									className="aspect-[8.5/11] w-full rounded-lg border border-[#E6E4F0] bg-[#D2D9F4] shadow-sm"
 								/>
 							</div>
 						</div>
@@ -366,19 +352,22 @@ export function ContractViewer({
 							onDragLeave={() => setIsDragging(false)}
 							onDrop={handleDrop}
 							onClick={() => inputRef.current?.click()}
-							className={`flex flex-1 min-h-full cursor-pointer flex-col items-center justify-center gap-3 px-6 py-20 text-center transition-colors ${
-								isDragging ? "bg-[#EEF0FF]" : "bg-[#FAFAFD]"
+							className={`flex flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
+								isDragging ? "bg-[#EEF0FF]" : "bg-[#FFFFFF]"
 							}`}
 						>
-							<div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EEF0FF]">
-								<Upload className="h-5 w-5 text-[#4338CA]" />
+							<div
+								className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${isDragging ? "bg-[#E0B9FF]" : "bg-[#F1DAFF]"}`}
+							>
+								<Upload className="h-5 w-5 text-[#500086]" />
 							</div>
 							<div>
-								<p className="text-sm font-medium text-[#181724]">
+								<p className="text-sm font-medium text-[#181724] w-[250px]">
 									Click to upload or drag and drop a PDF
 								</p>
-								<p className="mt-1 text-xs text-[#6E6B82]">
-									Select a document from your computer to preview it here
+								<p className="mt-1 text-xs text-[#6E6B82] w-[250px]">
+									Select a document from your computer to preview and prepare
+									for signing here.
 								</p>
 								{fileError && (
 									<p className="mt-2 text-xs font-medium text-[#DC2626]">
@@ -403,7 +392,7 @@ export function ContractViewer({
 							</h3>
 							<p className="mt-1.5 text-sm leading-relaxed text-[#6E6B82]">
 								<span className="font-medium text-[#181724]">
-									{pendingFile.name}
+									{contractName}
 								</span>{" "}
 								will become the active contract between you and the client. The
 								client will be able to see this document right away.

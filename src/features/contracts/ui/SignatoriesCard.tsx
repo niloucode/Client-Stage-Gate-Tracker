@@ -77,8 +77,6 @@ export function SignatoriesCard({
 									{isSigned && person.timestamp && (
 										<p className="mt-0.5 text-[11px] text-[#9C9AB0]">
 											Signed {person.timestamp} <br />
-											{person.device} <br />
-											{person.location}
 										</p>
 									)}
 								</div>

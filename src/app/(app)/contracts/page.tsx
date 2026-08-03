@@ -212,7 +212,7 @@ export default function ContractPage() {
 
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
 					<ContractViewer
-						className="h-[80vh] min-h-[600px]"
+						className="h-[80vh] min-h-[600px] py-0 bg-[#F9F9F7]"
 						clientId={clientId}
 						projectId={projectId}
 						profileId={user?.profile_id ?? null}
@@ -221,7 +221,10 @@ export default function ContractPage() {
 					/>
 
 					<div className="flex flex-col gap-6">
-						<SignatoriesCard signatories={signatories} />
+						<SignatoriesCard
+							className={"px-5 py-10 gap-10"}
+							signatories={signatories}
+						/>
 						{!userSigned && contract && canSign && (
 							<>
 								<ExecuteAgreementCard
