@@ -4,7 +4,6 @@ import {
 	createContext,
 	useContext,
 	useEffect,
-	useRef,
 	type ReactNode,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,11 +18,12 @@ import { useRouter, usePathname } from "next/navigation";
 const DEPARTMENT_IDS = {
 	PROJECT_TEAM: "22e9bc4d-394d-4ed5-abff-9e3a06a385aa",
 	PROJECT_OWNER: "527ac29d-a48c-4b03-a3b9-71f7a66d425f",
-	FINANCE: "f8611c71-e593-415f-ba03-96387841a2f7",
 } as const;
 
-const DEFAULT_PROJECT_REDIRECT =
-	"/projects/";
+// TEMPORARY redirect target: project owners/team land on the existing
+// ProjectDashboard feature (/projects) until the Landing Dashboard
+// (/dashboard) is built — then flip this to "/dashboard".
+const DEFAULT_PROJECT_REDIRECT = "/projects";
 
 const AUTH_PAGES = ["/login", "/signup/staff", "/signup/client", "/"] as const;
 
@@ -52,14 +52,6 @@ export function AuthProvider({ children }: prop) {
 	const router = useRouter();
 	const pathname = usePathname();
 
-	// Keep latest values in refs so the auth listener (subscribed once) always
-	// reads current user / pathname without re-subscribing.
-	const userRef = useRef(user);
-	userRef.current = user;
-
-	const pathnameRef = useRef(pathname);
-	pathnameRef.current = pathname;
-
 	const logout = async () => {
         try {
             // 1. Sign out from Supabase (clears local auth tokens)
@@ -76,39 +68,49 @@ export function AuthProvider({ children }: prop) {
         }
     };
 
+	// Keep the subscription for cache invalidation only. The actual
+	// post-login redirect is a state-driven effect below, so the profile is
+	// always loaded before the role decision — the old listener-based
+	// redirect read a stale ref and usually never fired.
 	useEffect(() => {
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((_event, session) => {
-			queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
-
-			if (!session?.user?.id) return;
-			if (_event !== "SIGNED_IN") return;
-
-			const currentPathname = pathnameRef.current;
-			if (!(AUTH_PAGES as readonly string[]).includes(currentPathname)) return;
-
-			const currentUser = userRef.current;
-
-			if (currentUser?.client_id) {
-				router.push("/client/" + currentUser.client_id);
-				return;
-			}
-
-			const deptId = currentUser?.department_id;
-			if (
-				deptId === DEPARTMENT_IDS.PROJECT_TEAM ||
-				deptId === DEPARTMENT_IDS.PROJECT_OWNER
-			) {
-				router.push(DEFAULT_PROJECT_REDIRECT);
-			} else if (deptId === DEPARTMENT_IDS.FINANCE) {
-				router.push("/insert-finance-page-here/");
+			if (session?.user?.id) {
+				queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
 			}
 		});
 
 		return () => subscription.unsubscribe();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	// Redirect signed-in users off auth pages, by role. Runs whenever the
+	// resolved profile changes, so there is no race with the profile query.
+	useEffect(() => {
+		if (isLoading || !user) return;
+		if (!(AUTH_PAGES as readonly string[]).includes(pathname)) return;
+
+		if (user.client_id) {
+			// TEMPORARY: clients land on /contracts until the Client Portal
+			// (/client) is built.
+			router.replace("/contracts");
+			return;
+		}
+
+		const deptId = user.department_id;
+		if (
+			deptId === DEPARTMENT_IDS.PROJECT_TEAM ||
+			deptId === DEPARTMENT_IDS.PROJECT_OWNER
+		) {
+			router.replace(DEFAULT_PROJECT_REDIRECT);
+			return;
+		}
+
+		// Fallback for signed-in profiles with no recognized role: never leave
+		// a logged-in user stranded on an auth page.
+		router.replace(DEFAULT_PROJECT_REDIRECT);
+	}, [user, pathname, isLoading, router]);
 
 	return (
 		<auth_context.Provider value={{ user: user ?? null, isLoading, logout }}>

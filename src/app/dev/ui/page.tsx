@@ -41,6 +41,9 @@ export default function UIPage() {
           <p className="text-sm text-gray-400 mt-1">
             All reusable UI primitives — <code className="bg-gray-100 px-1 rounded">src/components/ui/</code>
           </p>
+          <p className="mt-2 text-sm text-indigo-600">
+            <a href="/dev/views" className="hover:underline">→ Planned views hub</a>
+          </p>
         </div>
 
         {/* ── Button ── */}

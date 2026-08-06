@@ -1,4 +1,4 @@
-export type Role = "PRODUCT_OWNER" | "PRODUCT_TEAM" | "FINANCE" | "CLIENT";
+export type Role = "PRODUCT_OWNER" | "PRODUCT_TEAM" | "CLIENT";
 
 export type TicketStatus = "PENDING" | "IN_PROGRESS" | "FINISHED";
 

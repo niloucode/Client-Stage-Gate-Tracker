@@ -153,14 +153,13 @@ export function EditProjectModal({
     onSubmit(formData)
   }
 
-  // Format options for the client select dropdown
-  const clientOptions: SelectOption[] = [
-    { label: "Select client...", value: null },
-    ...clients.map((c) => ({
-      label: c.client_name,
-      value: c.client_id,
-    })),
-  ]
+  // Format options for the client select dropdown. The empty state is
+  // handled by the SelectValue placeholder below — never add a null-valued
+  // option here (it would crash the SelectItem render loop).
+  const clientOptions: SelectOption[] = clients.map((c) => ({
+    label: c.client_name,
+    value: c.client_id,
+  }))
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
@@ -219,14 +218,16 @@ export function EditProjectModal({
                     <SelectValue placeholder="Select client..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {clientOptions.map((opt) => (
-                      <SelectItem
-                        key={opt.value!.toString()}
-                        value={opt.value!.toString()}
-                      >
-                        {opt.label}
-                      </SelectItem>
-                    ))}
+                    {clientOptions.map((opt) => {
+                      // Defensive: never render an option without a usable value
+                      if (opt.value === null) return null
+                      const val = String(opt.value)
+                      return (
+                        <SelectItem key={val} value={val}>
+                          {opt.label}
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
               </div>
