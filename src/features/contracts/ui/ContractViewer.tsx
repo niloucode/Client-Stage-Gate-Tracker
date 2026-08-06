@@ -240,13 +240,13 @@ export function ContractViewer({
 			<Card className={`flex flex-col overflow-hidden ${className}`}>
 				<CardContent className="flex flex-1 flex-col overflow-hidden p-0">
 					{/* Toolbar */}
-					<div className="flex items-center justify-between gap-3 border-b border-[#E6E4F0] px-4 py-3">
+					<div className="flex items-center justify-between gap-3 border-b border-lavender-100 px-4 py-3">
 						<div className="flex min-w-0 items-center gap-2">
 							<FileText className="h-5.5 w-5.5 shrink-0 text-[#500086]" />
 							{/* {contractName.trim() != "" && (
 								<input
 									type="text"
-									className="block leading-none py-0 truncate text-sm font-medium text-[#181724] border border-transparent hover:border-foreground"
+									className="block leading-none py-0 truncate text-sm font-medium text-ink border border-transparent hover:border-foreground"
 									value={changeName}
 									onChange={(e) => setChangeName(e.target.value)}
 									//trigger saving when I click enter
@@ -292,14 +292,14 @@ export function ContractViewer({
 									>
 										<ZoomIn className="h-4 w-4" />
 									</Button>
-									<span className="mx-1 h-4 w-px bg-[#E6E4F0]" />
+									<span className="mx-1 h-4 w-px bg-lavender-100" />
 
 									<Button
 										variant="ghost"
 										size="icon"
 										onClick={requestRemove}
 										aria-label="Remove document"
-										className="hover:bg-[#FEF2F2] hover:text-[#DC2626]"
+										className="hover:bg-[#FEF2F2] hover:text-red-600"
 									>
 										<X className="h-4 w-4" />
 									</Button>
@@ -339,7 +339,7 @@ export function ContractViewer({
 								<embed
 									src={`${fileUrl}#toolbar=0`}
 									type="application/pdf"
-									className="aspect-[8.5/11] w-full rounded-lg border border-[#E6E4F0] bg-[#D2D9F4] shadow-sm"
+									className="aspect-[8.5/11] w-full rounded-lg border border-lavender-100 bg-[#D2D9F4] shadow-sm"
 								/>
 							</div>
 						</div>
@@ -353,7 +353,7 @@ export function ContractViewer({
 							onDrop={handleDrop}
 							onClick={() => inputRef.current?.click()}
 							className={`flex flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
-								isDragging ? "bg-[#EEF0FF]" : "bg-[#FFFFFF]"
+								isDragging ? "bg-lavender-50" : "bg-[#FFFFFF]"
 							}`}
 						>
 							<div
@@ -362,15 +362,15 @@ export function ContractViewer({
 								<Upload className="h-5 w-5 text-[#500086]" />
 							</div>
 							<div>
-								<p className="text-sm font-medium text-[#181724] w-[250px]">
+								<p className="text-sm font-medium text-ink w-[250px]">
 									Click to upload or drag and drop a PDF
 								</p>
-								<p className="mt-1 text-xs text-[#6E6B82] w-[250px]">
+								<p className="mt-1 text-xs text-plum-400 w-[250px]">
 									Select a document from your computer to preview and prepare
 									for signing here.
 								</p>
 								{fileError && (
-									<p className="mt-2 text-xs font-medium text-[#DC2626]">
+									<p className="mt-2 text-xs font-medium text-red-600">
 										{fileError}
 									</p>
 								)}
@@ -387,17 +387,17 @@ export function ContractViewer({
 							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFFBEB]">
 								<AlertTriangle className="h-5 w-5 text-[#B45309]" />
 							</div>
-							<h3 className="mt-4 text-sm font-semibold text-[#181724]">
+							<h3 className="mt-4 text-sm font-semibold text-ink">
 								Upload this as the contract?
 							</h3>
-							<p className="mt-1.5 text-sm leading-relaxed text-[#6E6B82]">
-								<span className="font-medium text-[#181724]">
+							<p className="mt-1.5 text-sm leading-relaxed text-plum-400">
+								<span className="font-medium text-ink">
 									{contractName}
 								</span>{" "}
 								will become the active contract between you and the client. The
 								client will be able to see this document right away.
 							</p>
-							<label className="mt-4 block text-xs font-medium text-[#6E6B82]">
+							<label className="mt-4 block text-xs font-medium text-plum-400">
 								{" "}
 								{/* ALSO ADDED THIS */}
 								Contract name
@@ -437,14 +437,14 @@ export function ContractViewer({
 					<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/70 backdrop-blur-sm px-4">
 						<div className="w-full max-w-sm rounded-2xl bg-neutral-surface p-6 shadow-xl">
 							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FEF2F2]">
-								<AlertTriangle className="h-5 w-5 text-[#DC2626]" />
+								<AlertTriangle className="h-5 w-5 text-red-600" />
 							</div>
-							<h3 className="mt-4 text-sm font-semibold text-[#181724]">
+							<h3 className="mt-4 text-sm font-semibold text-ink">
 								Remove this contract?
 							</h3>
-							<p className="mt-1.5 text-sm leading-relaxed text-[#6E6B82]">
+							<p className="mt-1.5 text-sm leading-relaxed text-plum-400">
 								This removes{" "}
-								<span className="font-medium text-[#181724]">
+								<span className="font-medium text-ink">
 									{contractName}
 								</span>{" "}
 								from view. To confirm, type the file name below.
@@ -455,7 +455,7 @@ export function ContractViewer({
 								onChange={(e) => setRemoveConfirmText(e.target.value)}
 								placeholder={contractName}
 								autoFocus
-								className="mt-4 focus-visible:border-[#DC2626]"
+								className="mt-4 focus-visible:border-red-600"
 							/>
 
 							<div className="mt-5 flex gap-2">

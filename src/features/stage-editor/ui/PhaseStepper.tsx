@@ -8,7 +8,7 @@ import {
     useEffect,
 } from "react";
 import type { Phase } from "../types";
-import { DeletePhase } from "@/features/stage-editor/ui/modals/DeletePhase";
+import { ConfirmDeleteModal } from "@/shared/ui";
 import { AddPhase } from "@/features/stage-editor/ui/modals/AddPhase";
 import {
     useCreatePhase,
@@ -190,13 +190,13 @@ export const PhaseStepper = forwardRef<
 
     return (
         <>
-            <div className="relative bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm mb-8">
+            <div className="relative bg-neutral-surface border border-slate-200 rounded-xl shadow-sm mb-8">
                 <div className="px-8 py-8 relative">
                     {/* Empty State */}
                     {phases.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 text-center">
                             <p className="text-sm text-neutral-subtle">No phases yet</p>
-                            <p className="text-xs text-[#94A3B8] mt-1">
+                            <p className="text-xs text-slate-400 mt-1">
                                 Click Add Phase to create your first phase
                             </p>
                         </div>
@@ -206,7 +206,7 @@ export const PhaseStepper = forwardRef<
                             {showLeftArrow && (
                                 <button
                                     onClick={() => scroll("left")}
-                                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-brand-500 transition-all flex items-center justify-center"
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-slate-200 rounded-full shadow-md hover:bg-slate-50 hover:border-brand-500 transition-all flex items-center justify-center"
                                 >
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                         <path
@@ -224,7 +224,7 @@ export const PhaseStepper = forwardRef<
                             {showRightArrow && (
                                 <button
                                     onClick={() => scroll("right")}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-[#E2E8F0] rounded-full shadow-md hover:bg-[#F8FAFC] hover:border-brand-500 transition-all flex items-center justify-center"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-slate-200 rounded-full shadow-md hover:bg-slate-50 hover:border-brand-500 transition-all flex items-center justify-center"
                                 >
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                         <path
@@ -351,11 +351,11 @@ export const PhaseStepper = forwardRef<
 
                 {/* Phase Details Section */}
                 {currentPhase && (
-                    <div className="p-6 pl-8 border-t border-[#E2E8F0] bg-neutral-surface rounded-b-xl">
+                    <div className="p-6 pl-8 border-t border-slate-200 bg-neutral-surface rounded-b-xl">
                         <div className="grid grid-cols-1 gap-6">
                             <div className="mb-2">
                                 <label className="block text-sm font-medium text-neutral-800">Description</label>
-                                <div className="mt-2 text-sm text-neutral-600 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-3 min-h-[80px]">
+                                <div className="mt-2 text-sm text-neutral-600 bg-slate-50 border border-slate-200 rounded-lg p-3 min-h-[80px]">
                                     {currentPhase.description || "No description provided."}
                                 </div>
                             </div>
@@ -368,7 +368,7 @@ export const PhaseStepper = forwardRef<
                                     type="text"
                                     value={currentPhase.start_date ? new Date(currentPhase.start_date).toLocaleDateString() : ""}
                                     disabled
-                                    className="mt-1 w-full px-3 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-neutral-500 cursor-not-allowed"
+                                    className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             </div>
@@ -379,7 +379,7 @@ export const PhaseStepper = forwardRef<
                                     type="text"
                                     value={currentPhase.deadline_date ? new Date(currentPhase.deadline_date).toLocaleDateString() : ""}
                                     disabled
-                                    className="mt-1 w-full px-3 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-neutral-500 cursor-not-allowed"
+                                    className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             </div>
@@ -390,7 +390,7 @@ export const PhaseStepper = forwardRef<
                                     type="text"
                                     value={currentPhase.finish_date ? new Date(currentPhase.finish_date).toLocaleDateString() : ""}
                                     disabled
-                                    className="mt-1 w-full px-3 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-neutral-500 cursor-not-allowed"
+                                    className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             </div>
@@ -407,10 +407,11 @@ export const PhaseStepper = forwardRef<
             />
 
             {/* Delete Confirmation Modal */}
-            <DeletePhase
+            <ConfirmDeleteModal
                 isOpen={isDeleteConfirmOpen}
-                phaseLabel={
-                    phaseToDelete !== null ? `Phase ${phaseToDelete}` : undefined
+                noun="Phase"
+                title={
+                    phaseToDelete !== null ? `Delete Phase ${phaseToDelete}` : undefined
                 }
                 onConfirm={handleDeletePhase}
                 onCancel={closeDeleteModal}

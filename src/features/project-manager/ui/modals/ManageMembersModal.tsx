@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useDebouncedCallback } from "use-debounce"
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
 import { useProjectMembers, useAddProjectMember, useRemoveProjectMember } from "@/entities/project"
 import { searchProfilesForProject } from "@/entities/project/projectActions"
 import { LucideSearch } from "lucide-react"
@@ -36,7 +38,6 @@ export function ManageMembersModal({
 		Awaited<ReturnType<typeof searchProfilesForProject>>
 	>([])
 	const [isSearching, setIsSearching] = useState(false)
-	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const mountedRef = useRef(true)
 	const latestQueryRef = useRef("")
 
@@ -46,15 +47,14 @@ export function ManageMembersModal({
 	const removeMemberMutation = useRemoveProjectMember()
 
 	// Reset search when modal closes
-	useEffect(() => {
-		if (!isOpen) {
-			const id = setTimeout(() => {
-				setSearchQuery("")
-				setSearchResults([])
-			}, 0)
-			return () => clearTimeout(id)
-		}
-	}, [isOpen])
+	useResetOnOpen(
+		isOpen,
+		() => {
+			setSearchQuery("")
+			setSearchResults([])
+		},
+		false, // reset on close (dialog already unmounted inputs)
+	)
 
 	// Track mount state for async safety
 	useEffect(() => {
@@ -64,44 +64,30 @@ export function ManageMembersModal({
 		}
 	}, [])
 
-	// Debounced search — tracks latest query to discard stale responses
-	useEffect(() => {
-		if (!searchQuery || searchQuery.trim().length < 1) {
-			const id = setTimeout(() => {
-				if (mountedRef.current) setSearchResults([])
-			}, 0)
-			return () => clearTimeout(id)
+// Debounced search — use-debounce handles the timing; the latest-query ref
+// discards stale responses.
+const debouncedSearch = useDebouncedCallback(async (query: string) => {
+	const trimmed = query.trim()
+	if (trimmed.length < 1) {
+		if (mountedRef.current) setSearchResults([])
+		return
+	}
+	if (mountedRef.current) setIsSearching(true)
+	latestQueryRef.current = trimmed
+	try {
+		const results = await searchProfilesForProject(trimmed)
+		// Filter out client profiles (clients are managed separately)
+		const filtered = results.filter((p) => !p.client_id)
+		// Only apply results if the query hasn't changed and component is still mounted
+		if (mountedRef.current && latestQueryRef.current === trimmed) {
+			setSearchResults(filtered)
 		}
-
-		const searchId = setTimeout(() => {
-			if (mountedRef.current) setIsSearching(true)
-		}, 0)
-		latestQueryRef.current = searchQuery.trim()
-
-		if (debounceRef.current) clearTimeout(debounceRef.current)
-
-		debounceRef.current = setTimeout(async () => {
-			clearTimeout(searchId)
-			try {
-				const results = await searchProfilesForProject(searchQuery.trim())
-				// Filter out client profiles (clients are managed separately)
-				const filtered = results.filter((p) => !p.client_id)
-				// Only apply results if the query hasn't changed and component is still mounted
-				if (mountedRef.current && latestQueryRef.current === searchQuery.trim()) {
-					setSearchResults(filtered)
-				}
-			} catch {
-				if (mountedRef.current) setSearchResults([])
-			} finally {
-				if (mountedRef.current) setIsSearching(false)
-			}
-		}, 300)
-
-		return () => {
-			clearTimeout(searchId)
-			if (debounceRef.current) clearTimeout(debounceRef.current)
-		}
-	}, [searchQuery])
+	} catch {
+		if (mountedRef.current) setSearchResults([])
+	} finally {
+		if (mountedRef.current) setIsSearching(false)
+	}
+}, 300)
 
 	const handleAddMember = async (profileId : string, firstName : string, roleName: string = "Project Team Member") => {
 		const result = await addMemberMutation.mutateAsync({ projectId, profileId, roleName })
@@ -146,13 +132,20 @@ export function ManageMembersModal({
 
 				<div className="relative flex items-center w-full mt-1.5">
 					{/* Search Icon */}
-					<LucideSearch className="absolute left-3 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+					<LucideSearch className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
 
 					{/* Input Field */}
+					<label htmlFor="member-search" className="sr-only">
+						Search for people to add
+					</label>
 					<input
+						id="member-search"
 						type="text"
 						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
+						onChange={(e) => {
+							setSearchQuery(e.target.value)
+							debouncedSearch(e.target.value)
+						}}
 						placeholder="Search for people to add"
 						className="w-full pl-9 pr-3 py-2 bg-neutral-surface border border-brand-100 rounded text-sm text-foreground placeholder:text-brand-100 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 					/>
@@ -244,10 +237,10 @@ export function ManageMembersModal({
 														{member.Users.first_name[0]}{member.Users.last_name[0]}
 													</div>
 												<div>
-													<p className="text-sm font-medium text-[#0F172A]">
+													<p className="text-sm font-medium text-slate-900">
 														{member.Users.first_name} {member.Users.last_name}
 													</p>
-													<p className="text-xs text-[#94A3B8]">
+													<p className="text-xs text-slate-400">
 														{member.Users.email}
 													</p>
 												</div>
@@ -268,7 +261,7 @@ export function ManageMembersModal({
 												className={`p-1.5 rounded-lg transition-colors ${
 													cannotRemove
 													? "text-brand-100 cursor-not-allowed"
-													: "text-[#94A3B8] hover:text-[#EF4444] hover:bg-[#FEE2E2]"
+													: "text-slate-400 hover:text-red-500 hover:bg-[#FEE2E2]"
 												}`}
 												>
 												<svg width="16" height="16" viewBox="0 0 16 16" fill="none">

@@ -52,7 +52,6 @@ export default function ContractPage() {
 	useEffect(() => {
 		if (!contract || !projectId) return;
 		get_signatories();
-		console.log(signatories);
 	}, [
 		contract?.contract_id,
 		contract?.client_signed_at,
@@ -201,11 +200,11 @@ export default function ContractPage() {
 				)}
 
 				<header className="mb-6">
-					<h1 className="text-xl font-semibold text-[#181724]">
+					<h1 className="text-xl font-semibold text-ink">
 						{contract?.contract_name ?? "Untitled contract"}{" "}
 						{/* INPUT contract_name HERE */}
 					</h1>
-					<p className="text-sm text-[#6E6B82]">
+					<p className="text-sm text-plum-400">
 						Review the document and complete signing below.
 					</p>
 				</header>
@@ -228,9 +227,7 @@ export default function ContractPage() {
 						{!userSigned && contract && canSign && (
 							<>
 								<ExecuteAgreementCard
-									maskedEmail={
-										user ? get_masked_email(user.email) : "a******@gmail.com"
-									}
+									maskedEmail={user ? get_masked_email(user.email) : undefined}
 									projectId={projectId}
 									role={userRole ?? "Client Viewer"}
 								/>

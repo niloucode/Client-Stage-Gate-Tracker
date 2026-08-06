@@ -1,9 +1,9 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
-import { cascadeSoftDeletePhase } from "../phase/phaseActions";
-
-export type EntityFilterStatus = "active" | "deleted" | "all";
+import { assertProjectMember, resolveStageProject } from "@/lib/auth/projectAccess";
+import { generateKeyBetween } from "fractional-indexing";
+import type { EntityFilterStatus } from "@/entities/types";
 
 /**
  * Creates a new stage and automatically assigns it a scoped sequential number
@@ -23,19 +23,25 @@ export async function createStage(
 	startDate?: Date | null,
 	endDate?: Date | null,
 ) {
+	// Authorization: caller must be a member of the project
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
-		const maxNumber = await prisma.stages.aggregate({
+		// Fractional sort key: append after the last sibling — a single-key
+		// insert that never requires renumbering existing rows.
+		const lastStage = await prisma.stages.findFirst({
 			where: { project_id: projectId, is_deleted: false },
-			_max: { number: true },
+			orderBy: { sort_key: { sort: "desc", nulls: "last" } },
+			select: { sort_key: true },
 		});
-		const nextStageNumber = (maxNumber._max.number ?? 0) + 1;
+		const nextKey = generateKeyBetween(lastStage?.sort_key ?? null, null);
 
 		const newStage = await prisma.stages.create({
 			data: {
 				name: stageName,
-				number: nextStageNumber,
-				start_date: startDate,
-				finish_date: endDate,
+				sort_key: nextKey,
+				plan_start_at: startDate ?? new Date(),
+				plan_end_at: endDate ?? new Date(),
 				project_id: projectId,
 			},
 		});
@@ -120,7 +126,7 @@ export async function getPhasesByStageId(
 				is_deleted: isDeletedFilter,
 			},
 			orderBy: {
-				number: "asc",
+				sort_key: { sort: "asc", nulls: "last" },
 			},
 		});
 
@@ -149,6 +155,11 @@ export async function updateStage(
 	startDate?: Date | null,
 	endDate?: Date | null,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveStageProject(stageId);
+	if (!projectId) return { success: false, error: "Stage not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const updatedStage = await prisma.stages.update({
 			where: {
@@ -156,8 +167,8 @@ export async function updateStage(
 			},
 			data: {
 				name: stageName,
-				start_date: startDate,
-				finish_date: endDate,
+				plan_start_at: startDate ?? undefined,
+				plan_end_at: endDate ?? undefined,
 			},
 		});
 		return { success: true, data: updatedStage };
@@ -178,6 +189,11 @@ export async function updateStage(
  * Returns `success: false` and an error message if the stage contains phases or the query fails.
  */
 export async function softDeleteStage(stageId: string) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveStageProject(stageId);
+	if (!projectId) return { success: false, error: "Stage not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const attachedPhasesCount = await prisma.phases.count({
 			where: {
@@ -198,7 +214,7 @@ export async function softDeleteStage(stageId: string) {
 				is_deleted: true,
 				deleted_at: new Date(),
 				number: null,
-			} as any,
+			},
 		});
 		return { success: true };
 	} catch (error) {
@@ -227,19 +243,69 @@ export async function cascadeSoftDeleteStage(
 	stageId: string,
 	txClient?: Prisma.TransactionClient,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveStageProject(stageId);
+	if (!projectId) return { success: false, error: "Stage not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
 		await tx.stages.update({
 			where: { stage_id: stageId },
-			data: { is_deleted: true, deleted_at: new Date(), number: null } as any,
+			data: { is_deleted: true, deleted_at: new Date(), number: null },
 		});
 
+		// Batch the whole subtree: one updateMany per level instead of
+		// per-child cascade calls.
 		const childPhases = await tx.phases.findMany({
 			where: { stage_id: stageId, is_deleted: false },
 			select: { phase_id: true },
 		});
+		const phaseIds = childPhases.map((p) => p.phase_id);
 
-		for (const phase of childPhases) {
-			await cascadeSoftDeletePhase(phase.phase_id, tx);
+		if (phaseIds.length > 0) {
+			await tx.phases.updateMany({
+				where: { phase_id: { in: phaseIds } },
+				data: { is_deleted: true, deleted_at: new Date() },
+			});
+
+			const childModules = await tx.modules.findMany({
+				where: { phase_id: { in: phaseIds }, is_deleted: false },
+				select: { module_id: true },
+			});
+			const moduleIds = childModules.map((m) => m.module_id);
+
+			if (moduleIds.length > 0) {
+				await tx.modules.updateMany({
+					where: { module_id: { in: moduleIds } },
+					data: { is_deleted: true, deleted_at: new Date() },
+				});
+
+				const childWorkflows = await tx.workflows.findMany({
+					where: { module_id: { in: moduleIds }, is_deleted: false },
+					select: { workflow_id: true },
+				});
+				const workflowIds = childWorkflows.map((w) => w.workflow_id);
+
+				if (workflowIds.length > 0) {
+					await tx.workflows.updateMany({
+						where: { workflow_id: { in: workflowIds } },
+						data: { is_deleted: true, deleted_at: new Date() },
+					});
+
+					const childTickets = await tx.tickets.findMany({
+						where: { workflow_id: { in: workflowIds }, is_deleted: false },
+						select: { ticket_id: true },
+					});
+					const ticketIds = childTickets.map((t) => t.ticket_id);
+
+					if (ticketIds.length > 0) {
+						await tx.tickets.updateMany({
+							where: { ticket_id: { in: ticketIds } },
+							data: { is_deleted: true, deleted_at: new Date() },
+						});
+					}
+				}
+			}
 		}
 	};
 
@@ -271,6 +337,18 @@ export async function cascadeSoftDeleteStage(
  * Returns `success: false` and an error message if the stages cannot be found or the database update fails.
  */
 export async function swapStageOrder(stageId1: string, stageId2: string) {
+	// Authorization: caller must be a member of both stages' project
+	const projectId1 = await resolveStageProject(stageId1);
+	const projectId2 = await resolveStageProject(stageId2);
+	if (!projectId1 || !projectId2)
+		return { success: false, error: "Stage not found." };
+	if (projectId1 !== projectId2)
+		return {
+			success: false,
+			error: "Stages must belong to the same project.",
+		};
+	const auth = await assertProjectMember(projectId1);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			const stage1 = await tx.stages.findUnique({
@@ -284,14 +362,15 @@ export async function swapStageOrder(stageId1: string, stageId2: string) {
 				throw new Error("One or both stages could not be found.");
 			}
 
+			// Fractional-indexing swap: exchange sort keys (O(1), no renumbering)
 			await tx.stages.update({
 				where: { stage_id: stageId1 },
-				data: { number: stage2.number },
+				data: { sort_key: stage2.sort_key },
 			});
 
 			await tx.stages.update({
 				where: { stage_id: stageId2 },
-				data: { number: stage1.number },
+				data: { sort_key: stage1.sort_key },
 			});
 		});
 
@@ -319,42 +398,38 @@ export async function getStageTree(stageId: string) {
 
 		const phases = await prisma.phases.findMany({
 			where: { stage_id: stageId, is_deleted: false },
-			orderBy: { number: "asc" },
+			orderBy: { sort_key: { sort: "asc", nulls: "last" } },
 		});
 
 		const phaseIds = phases.map((p) => p.phase_id);
 		const modules = await prisma.modules.findMany({
 			where: { phase_id: { in: phaseIds }, is_deleted: false },
-			orderBy: { start_date: "asc" },
+			orderBy: { plan_start_at: "asc" },
 		});
 
-		const moduleIds = modules.map(
-			(m: Record<string, unknown>) => m.module_id as string,
-		);
+		const moduleIds = modules.map((m) => m.module_id);
 		const workflows = await prisma.workflows.findMany({
 			where: { module_id: { in: moduleIds }, is_deleted: false },
 			orderBy: [
-				{ number: { sort: "asc", nulls: "last" } },
-				{ start_date: "asc" },
+				{ sort_key: { sort: "asc", nulls: "last" } },
+				{ plan_start_at: "asc" },
 			],
 		});
 
-		const workflowIds = workflows.map(
-			(w: Record<string, unknown>) => w.workflow_id as string,
-		);
+		const workflowIds = workflows.map((w) => w.workflow_id);
 
 		// ── Fetch all tickets for these workflows ────────────────────────
 		let tickets: {
-			workflow_id: string;
+			workflow_id: string | null;
 			status: string;
-			finish_date: Date | null;
+			actual_end_at: Date | null;
 		}[] = [];
 		if (workflowIds.length > 0) {
 			try {
-				tickets = (await prisma.tickets.findMany({
+				tickets = await prisma.tickets.findMany({
 					where: { workflow_id: { in: workflowIds }, is_deleted: false },
-					select: { workflow_id: true, status: true, finish_date: true },
-				})) as any[];
+					select: { workflow_id: true, status: true, actual_end_at: true },
+				});
 			} catch (err) {
 				console.error("Failed to fetch tickets for stage tree:", err);
 				// Continue with empty tickets — progress bars will show "- %"
@@ -364,12 +439,12 @@ export async function getStageTree(stageId: string) {
 		// Group tickets by workflow
 		const ticketsByWorkflow = new Map<
 			string,
-			{ status: string; finish_date: Date | null }[]
+			{ status: string; actual_end_at: Date | null }[]
 		>();
 		for (const t of tickets) {
-			const wfId = (t as Record<string, unknown>).workflow_id as string;
+			const wfId = t.workflow_id ?? "";
 			const list = ticketsByWorkflow.get(wfId) ?? [];
-			list.push({ status: t.status, finish_date: t.finish_date });
+			list.push({ status: t.status, actual_end_at: t.actual_end_at });
 			ticketsByWorkflow.set(wfId, list);
 		}
 
@@ -379,22 +454,22 @@ export async function getStageTree(stageId: string) {
 			{ ticketCount: number; progress: number; computedFinishDate: Date | null }
 		>();
 		for (const wf of workflows) {
-			const wfId = (wf as Record<string, unknown>).workflow_id as string;
+			const wfId = wf.workflow_id;
 			const wfTickets = ticketsByWorkflow.get(wfId) ?? [];
 			const total = wfTickets.length;
 			const finished = wfTickets.filter((t) => t.status === "FINISHED").length;
 			const progress = total > 0 ? Math.round((finished / total) * 100) : 0;
 
-			// Finish date = max finish_date of finished tickets, but only when ALL are finished
+			// Finish date = max actual_end_at of finished tickets, but only when ALL are finished
 			const allFinished = total > 0 && finished === total;
 			let computedFinishDate: Date | null = null;
 			if (allFinished) {
 				for (const t of wfTickets) {
 					if (
-						t.finish_date &&
-						(!computedFinishDate || t.finish_date > computedFinishDate)
+						t.actual_end_at &&
+						(!computedFinishDate || t.actual_end_at > computedFinishDate)
 					) {
-						computedFinishDate = t.finish_date;
+						computedFinishDate = t.actual_end_at;
 					}
 				}
 			}
@@ -409,8 +484,8 @@ export async function getStageTree(stageId: string) {
 		// ── Build nested tree ────────────────────────────────────────────
 		const workflowsByModule = new Map<string, object[]>();
 		for (const wf of workflows) {
-			const wfModId = (wf as Record<string, unknown>).module_id as string;
-			const wfId = (wf as Record<string, unknown>).workflow_id as string;
+			const wfModId = wf.module_id;
+			const wfId = wf.workflow_id;
 			const stats = workflowStats.get(wfId) ?? {
 				ticketCount: 0,
 				progress: 0,
@@ -419,24 +494,28 @@ export async function getStageTree(stageId: string) {
 			const list = workflowsByModule.get(wfModId) ?? [];
 			list.push({
 				...wf,
+				number: list.length + 1, // display number derived from sort order (WorkflowsList reorder uses it)
 				ticketCount: stats.ticketCount,
 				progress: stats.progress,
-				finish_date: stats.computedFinishDate, // override DB finish_date with computed value
+				start_date: wf.plan_start_at,
+				deadline_date: wf.plan_end_at,
+				actual_start_date: wf.actual_start_at,
+				finish_date: stats.computedFinishDate, // computed: date last ticket finished
 			});
 			workflowsByModule.set(wfModId, list);
 		}
 
 		const modulesByPhase = new Map<string, object[]>();
 		for (const mod of modules) {
-			const modPhaseId = (mod as Record<string, unknown>).phase_id as string;
-			const modId = (mod as Record<string, unknown>).module_id as string;
+			const modPhaseId = mod.phase_id;
+			const modId = mod.module_id;
 			const modWorkflows = workflowsByModule.get(modId) ?? [];
 
 			// Module finish_date = max of workflow finish_dates, but only if ALL are finished
 			let modFinishDate: Date | null = null;
 			let allWfsFinished = modWorkflows.length > 0;
 			for (const w of modWorkflows) {
-				const ce = (w as Record<string, unknown>).finish_date as Date | null;
+				const ce = (w as { finish_date: Date | null }).finish_date;
 				if (!ce) {
 					allWfsFinished = false;
 					break;
@@ -446,19 +525,26 @@ export async function getStageTree(stageId: string) {
 			if (!allWfsFinished) modFinishDate = null;
 
 			const list = modulesByPhase.get(modPhaseId) ?? [];
-			list.push({ ...mod, workflows: modWorkflows, finish_date: modFinishDate });
+			list.push({
+				...mod,
+				workflows: modWorkflows,
+				start_date: mod.plan_start_at,
+				deadline_date: mod.plan_end_at,
+				actual_start_date: mod.actual_start_at,
+				finish_date: modFinishDate,
+			});
 			modulesByPhase.set(modPhaseId, list);
 		}
 
-		const phasesWithModules = phases.map((p) => {
-			const phId = (p as Record<string, unknown>).phase_id as string;
+		const phasesWithModules = phases.map((p, index) => {
+			const phId = p.phase_id;
 			const phModules = modulesByPhase.get(phId) ?? [];
 
 			// Phase finish_date = max of module finish_dates, but only if ALL are finished
 			let phFinishDate: Date | null = null;
 			let allModsFinished = phModules.length > 0;
 			for (const m of phModules) {
-				const ce = (m as Record<string, unknown>).finish_date as Date | null;
+				const ce = (m as { finish_date: Date | null }).finish_date;
 				if (!ce) {
 					allModsFinished = false;
 					break;
@@ -467,7 +553,15 @@ export async function getStageTree(stageId: string) {
 			}
 			if (!allModsFinished) phFinishDate = null;
 
-			return { ...p, modules: phModules, finish_date: phFinishDate };
+			return {
+				...p,
+				number: index + 1, // display number derived from sort order
+				modules: phModules,
+				start_date: p.plan_start_at,
+				deadline_date: p.plan_end_at,
+				actual_start_date: p.actual_start_at,
+				finish_date: phFinishDate,
+			};
 		});
 
 		return { ...stage, phases: phasesWithModules };

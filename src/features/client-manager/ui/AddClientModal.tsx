@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { clientCreate } from "@/entities/client"
+import { getFieldErrors } from "@/shared/lib/zod"
 import { clientSchema } from "@/shared/schemas"
 
 const CLIENT_NAME_MAX = 40
@@ -39,11 +40,7 @@ export default function AddClientModal({
 			is_deleted: false,
 		})
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors
-			const mapped: Record<string, string> = {}
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key] = msgs[0]
-			}
+			const mapped = getFieldErrors(result)
 			setFieldErrors(mapped)
 			return
 		}

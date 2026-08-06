@@ -20,7 +20,7 @@ async function fetchTicketHistory(
 		ticketHistoryEntrySchema.parse({
 			history_event_id: row.history_event_id,
 			action: row.action,
-			date_performed: row.date_performed,
+			date_performed: row.performed_at,
 			ticket_id: row.ticket_id,
 			target_profile_id: row.target_profile_id,
 			performed_by: row.performed_by,

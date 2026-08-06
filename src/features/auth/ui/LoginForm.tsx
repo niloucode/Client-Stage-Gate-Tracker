@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
+import { getFieldErrors } from "@/shared/lib/zod";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/features/auth";
 import { loginSchema } from "@/shared/schemas";
@@ -43,11 +44,7 @@ export function LoginForm() {
 
 		const result = loginSchema.safeParse({ email, password });
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: Record<string, string> = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
 			return;
 		}

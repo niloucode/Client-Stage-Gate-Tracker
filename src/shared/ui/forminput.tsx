@@ -33,14 +33,6 @@ type FormInputProps = BaseFormFieldProps & (
       placeholder?: string;
       onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     }
-  | {
-      variant: "select";
-      options: SelectOption[];
-      isOpen: boolean;
-      onToggleOpen: () => void;
-      onSelect: (value: any) => void;
-      placeholder?: string;
-    }
 );
 
 export const FormInput: React.FC<FormInputProps> = (props) => {
@@ -98,61 +90,7 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
         />
       )}
 
-      {/* Variant 2: Custom Dropdown */}
-      {props.variant === "select" && (
-        <>
-          <button
-            type="button"
-            onClick={props.onToggleOpen}
-            className={`cursor-pointer w-full flex items-center justify-between px-3.5 py-2.5 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:border-transparent transition-all mt-1 ${
-              hasError
-                ? "border-red-400 focus:ring-red-400"
-                : "border-gray-300 focus:ring-brand-500"
-            }`}
-          >
-            <span className={value ? "" : "text-[#94A3B8]"}>
-              {value
-                ? props.options.find((opt) => opt.value === value)?.label ?? (props.placeholder ?? "Select...")
-                : (props.placeholder ?? "Select...")}
-            </span>
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              className={`transform transition-transform ${props.isOpen ? "rotate-180" : ""}`}
-            >
-              <path d="M3 4.5L6 7.5L9 4.5" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          {props.isOpen && (
-            <div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-              {props.options.map((opt, idx) => (
-                <div
-                  key={opt.value?.toString() ?? idx}
-                  onClick={() => {
-                    props.onSelect(opt.value);
-                    if (hasError && onClearError) onClearError();
-                    props.onToggleOpen();
-                  }}
-                  className={`px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 ${
-                    opt.value === null ? "text-[#94A3B8]" : ""
-                  } ${
-                    value === opt.value
-                      ? "bg-indigo-50 text-indigo-700 font-medium"
-                      : "text-[#0F172A]"
-                  }`}
-                >
-                  {opt.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Variant 3: Base Input / Datepicker (Default) */}
+      {/* Variant 2: Base Input / Datepicker (Default) */}
       {(!props.variant || props.variant === "input" || props.variant === "datetime-local") && (
         <Input
           type={props.type ?? "text"}

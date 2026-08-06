@@ -5,12 +5,53 @@ export const TAG_COLORS = [
     "#DC2626", "#EA580C", "#CA8A04", "#16A34A", "#0D9488", "#0284C7", "#4338CA", "#DB2777", "#7C3AED",
 ];
 
+/** Human-readable names for TAG_COLORS — used for accessible labels. */
+export const TAG_COLOR_NAMES: Record<string, string> = {
+    "#EF4444": "Red",
+    "#F97316": "Orange",
+    "#EAB308": "Yellow",
+    "#84CC16": "Lime",
+    "#22C55E": "Green",
+    "#06B6D4": "Cyan",
+    "#6366F1": "Indigo",
+    "#EC4899": "Pink",
+    "#8B5CF6": "Violet",
+    "#DC2626": "Dark Red",
+    "#EA580C": "Burnt Orange",
+    "#CA8A04": "Olive",
+    "#16A34A": "Forest Green",
+    "#0D9488": "Teal",
+    "#0284C7": "Sky Blue",
+    "#4338CA": "Deep Indigo",
+    "#DB2777": "Magenta",
+    "#7C3AED": "Purple",
+};
+
+/** Normalizes a hex color string: strips a leading `#`, expands 3-digit
+ * shorthand (`abc` → `aabbcc`), uppercases. Returns `null` for anything
+ * that is not a valid hex color.
+ */
+function normalizeHex(input: string): string | null {
+	const stripped = input.trim().replace(/^#/, "");
+	const expanded =
+		stripped.length === 3
+			? stripped
+					.split("")
+					.map((c) => c + c)
+					.join("")
+			: stripped;
+	if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return null;
+	return expanded.toUpperCase();
+}
+
 export function getPastelStyle(hex: string): { bg: string; text: string; border: string } {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    const bg = `rgba(${r}, ${g}, ${b}, 0.12)`;
-    const text = hex;
-    const border = `rgba(${r}, ${g}, ${b}, 0.25)`;
-    return { bg, text, border };
+	// normalizeHex strips the `#`, so the fallback is stored hash-less
+	const normalized = normalizeHex(hex) ?? "94A3B8";
+	const r = parseInt(normalized.slice(0, 2), 16);
+	const g = parseInt(normalized.slice(2, 4), 16);
+	const b = parseInt(normalized.slice(4, 6), 16);
+	const bg = `rgba(${r}, ${g}, ${b}, 0.12)`;
+	const text = `#${normalized}`;
+	const border = `rgba(${r}, ${g}, ${b}, 0.25)`;
+	return { bg, text, border };
 }

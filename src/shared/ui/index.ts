@@ -1,3 +1,5 @@
 export { FormInput } from "./forminput"
 export type { SelectOption } from "./forminput"
 export { TagBadge } from "./tagbadge"
+export { ConfirmDeleteModal } from "./ConfirmDeleteModal"
+export { CloseButton, ColorPicker, Backdrop } from "./tagPrimitives"

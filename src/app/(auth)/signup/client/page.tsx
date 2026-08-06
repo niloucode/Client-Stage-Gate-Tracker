@@ -61,7 +61,7 @@ export default function ClientSignupPage() {
 
 			{/* ── Right Panel — sticky ── */}
 			<div className="hidden lg:block flex-1 relative">
-				<div className="sticky top-0 h-screen flex flex-col items-center justify-center overflow-hidden bg-[#060D1C]">
+				<div className="sticky top-0 h-screen flex flex-col items-center justify-center overflow-hidden bg-navy-900">
 					<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#0f2044_0%,_#060D1C_70%)]" />
 					<div className="relative z-10 flex flex-col items-center">
 						<Image

@@ -1,7 +1,7 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { ProfileType } from "@/shared/types";
-import { EntityFilterStatus } from "../ticket/ticketActions";
+import type { EntityFilterStatus } from "@/entities/types";
 
 /**
  * Retrieves all profile records from the database.

@@ -68,10 +68,10 @@ export function SignatoriesCard({
 								</Avatar>
 
 								<div className="min-w-0 flex-1">
-									<p className="truncate text-sm font-medium text-[#181724]">
+									<p className="truncate text-sm font-medium text-ink">
 										{person.name}
 									</p>
-									<p className="truncate text-xs text-[#6E6B82]">
+									<p className="truncate text-xs text-plum-400">
 										{person.role}
 									</p>
 									{isSigned && person.timestamp && (
@@ -84,7 +84,7 @@ export function SignatoriesCard({
 								<span
 									className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium ${
 										isSigned
-											? "bg-[#ECFDF3] text-[#15803D]"
+											? "bg-[#ECFDF3] text-green-700"
 											: "bg-[#FFFBEB] text-[#B45309]"
 									}`}
 								>

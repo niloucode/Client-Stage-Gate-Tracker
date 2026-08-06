@@ -8,7 +8,7 @@ interface TeamMember {
 	firstName: string
 	lastName: string
 	email: string
-	phone: string
+	phone: string | null
 	avatarUrl?: string
 }
 

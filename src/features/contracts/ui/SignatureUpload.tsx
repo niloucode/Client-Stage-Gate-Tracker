@@ -124,7 +124,7 @@ export function SignatureUpload({
 					aria-label="Remove signature"
 					className="absolute right-2 top-2 rounded-full bg-neutral-surface p-1 shadow-sm hover:bg-red-50"
 				>
-					<X className="h-3.5 w-3.5 text-[#6E6B82]" />
+					<X className="h-3.5 w-3.5 text-plum-400" />
 				</button>
 				<img
 					src={preview}
@@ -162,18 +162,18 @@ export function SignatureUpload({
 					isError
 						? "border-red-300 bg-red-50"
 						: isDragging
-							? "border-[#4338CA] bg-[#EEF0FF]"
-							: "border-[#C4BFE6] bg-[#F8F7FF] hover:border-[#4338CA] hover:bg-[#EEF0FF]"
+							? "border-indigo-700 bg-lavender-50"
+							: "border-[#C4BFE6] bg-[#F8F7FF] hover:border-indigo-700 hover:bg-lavender-50"
 				}`}
 			>
 				{isError ? (
 					<UploadCloud className="h-6 w-6 text-red-400" />
 				) : (
-					<PenLine className="h-6 w-6 text-[#6E6B82]" />
+					<PenLine className="h-6 w-6 text-plum-400" />
 				)}
 
 				<p
-					className={`text-sm font-medium ${isError ? "text-red-600" : "text-[#181724]"}`}
+					className={`text-sm font-medium ${isError ? "text-red-600" : "text-ink"}`}
 				>
 					{isError ? "Upload failed" : "Click to Add Signature"}
 				</p>

@@ -125,10 +125,10 @@ export function ProjectDashboard() {
 		return (
 			<div className="p-8 max-w-[1550px] mx-auto">
 				<div className="animate-pulse space-y-6">
-					<div className="h-8 bg-[#F1F5F9] rounded w-48" />
-					<div className="h-4 bg-[#F1F5F9] rounded w-72" />
+					<div className="h-8 bg-slate-100 rounded w-48" />
+					<div className="h-4 bg-slate-100 rounded w-72" />
 					{[1, 2, 3].map((i) => (
-						<div key={i} className="h-24 bg-[#F1F5F9] rounded-xl" />
+						<div key={i} className="h-24 bg-slate-100 rounded-xl" />
 					))}
 				</div>
 			</div>

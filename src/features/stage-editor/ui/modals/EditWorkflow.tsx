@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { Workflow } from "../../types";
 import { Label } from "@/components/ui/label";
 import { workflowCreateSchema } from "@/shared/schemas";
+import { getFieldErrors } from "@/shared/lib/zod";
 
 interface EditWorkflowFormData {
 	name: string;
@@ -49,11 +50,7 @@ export function EditWorkflow({
 	const handleSave = () => {
 		const result = workflowCreateSchema.safeParse(formData);
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: FieldErrors = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key as keyof FieldErrors] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
 			return;
 		}
@@ -68,7 +65,7 @@ export function EditWorkflow({
 			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-md p-6 relative">
 				<button
 					onClick={onClose}
-					className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#475569] transition-colors"
+					className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
 				>
 					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
 						<path
@@ -80,7 +77,7 @@ export function EditWorkflow({
 					</svg>
 				</button>
 
-				<h2 className="text-xl font-bold text-[#0F172A] mb-2">Edit Workflow</h2>
+				<h2 className="text-xl font-bold text-slate-900 mb-2">Edit Workflow</h2>
 				<p className="text-sm text-neutral-subtle mb-6">
 					Update the workflow details below.
 				</p>
@@ -104,7 +101,7 @@ export function EditWorkflow({
 								setFieldErrors({});
 							}}
 							placeholder="e.g., User Login Flow"
-							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
+							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
 						/>
 						<div className="flex justify-between mt-1">
 							{fieldErrors.name ? (
@@ -137,15 +134,15 @@ export function EditWorkflow({
 										: null,
 								})
 							}
-							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center mt-6 pt-4 border-t border-[#F1F5F9]">
+				<div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
 					<button
 						onClick={onDelete}
-						className="px-4 py-2 text-sm font-semibold text-[#EF4444] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center gap-2"
+						className="px-4 py-2 text-sm font-semibold text-red-500 hover:text-red-600 hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center gap-2"
 					>
 						<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 							<path
@@ -161,13 +158,13 @@ export function EditWorkflow({
 					<div className="flex gap-3 ml-auto">
 						<button
 							onClick={onClose}
-							className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
+							className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-slate-900 transition-colors"
 						>
 							Cancel
 						</button>
 						<button
 							onClick={handleSave}
-							className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+							className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-sm"
 						>
 							Save Changes
 						</button>

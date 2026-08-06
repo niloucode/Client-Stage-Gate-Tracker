@@ -37,6 +37,17 @@
 	--color-neutral-muted: #343434;
 	--color-neutral-main: #1A1C1B;
 
+	/* Custom app palette tokens (replaces literal hex classes in features) */
+	--color-ink: #181724;
+	--color-charcoal: #1A1A1A;
+	--color-plum-400: #6E6B82;
+	--color-plum-700: #4C4352;
+	--color-navy-900: #060D1C;
+	--color-lavender-50: #EEF0FF;
+	--color-lavender-100: #E6E4F0;
+	--color-lavender-200: #E5E3F1;
+	--color-warm-gray-200: #E5E3E0;
+
 	--font-sans: var(--font-hanken), "Hanken Grotesk", system-ui, -apple-system, sans-serif;
 	--font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 	--font-display: "Plus Jakarta Sans", sans-serif;

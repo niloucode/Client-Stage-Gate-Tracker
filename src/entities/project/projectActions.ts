@@ -9,37 +9,11 @@ import {
 	type ProjectUpdateInput,
 } from "@/shared/schemas";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-async function requireProjectMember(projectId: string, userId: string): Promise<boolean> {
-	const assignment = await prisma.roleAssignments.findFirst({
-		where: { project_id: projectId, user_id: userId },
-	});
-	return !!assignment;
-}
-
-async function requireProjectOwner(projectId: string, userId: string): Promise<boolean> {
-	const ownerRole = await prisma.roles.findUnique({
-		where: { name: "Project Owner" },
-		select: { role_id: true },
-	});
-	if (!ownerRole) return false;
-	const assignment = await prisma.roleAssignments.findFirst({
-		where: { project_id: projectId, user_id: userId, role_id: ownerRole.role_id },
-	});
-	return !!assignment;
-}
-
-async function getCurrentUserId(): Promise<string | null> {
-	try {
-		const supabase = await createClient();
-		const { data: { user } } = await supabase.auth.getUser();
-		if (!user) return null;
-		return user.id;
-	} catch {
-		return null;
-	}
-}
+import {
+	getCurrentUserId,
+	requireProjectMember,
+	requireProjectOwner,
+} from "@/lib/auth/projectAccess";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,6 +45,7 @@ export async function selectProjects() {
 		return await prisma.projects.findMany({
 			where: { is_deleted: false },
 			orderBy: { name: "asc" },
+			take: 200, // bound the list; paginate when callers need more
 		});
 	} catch (error) {
 		console.error("Failed to fetch projects:", error);
@@ -120,6 +95,7 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 		// Fetch all owned projects (includes existing status column)
 		const projects = await prisma.projects.findMany({
 			where: { project_id: { in: projectIds }, is_deleted: false },
+			take: 200, // bound the list; paginate when callers need more
 		});
 
 		// Fetch contracts for these projects
@@ -138,17 +114,29 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 		const stageCounts = await prisma.stages.groupBy({
 			by: ["project_id"],
 			where: { project_id: { in: projectIds }, is_deleted: false },
-			_count: { finish_date: true, stage_id: true },
+			_count: { _all: true },
+		});
+		const finishedStageCounts = await prisma.stages.groupBy({
+			by: ["project_id"],
+			where: {
+				project_id: { in: projectIds },
+				is_deleted: false,
+				actual_end_at: { not: null },
+			},
+			_count: { _all: true },
 		});
 
 		const stageStats = new Map<
 			string,
 			{ finished: number; total: number }
 		>();
+		const finishedMap = new Map(
+			finishedStageCounts.map((s) => [s.project_id, s._count?._all ?? 0]),
+		);
 		for (const s of stageCounts) {
 			stageStats.set(s.project_id, {
-				finished: s._count.finish_date,
-				total: s._count.stage_id,
+				finished: finishedMap.get(s.project_id) ?? 0,
+				total: s._count?._all ?? 0,
 			});
 		}
 
@@ -193,9 +181,9 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 				project_id: p.project_id,
 				name: p.name,
 				description: p.description,
-				start_date: p.start_date,
-				finish_date: p.finish_date,
-				deadline_date: p.deadline_date,
+				start_date: p.plan_start_at,
+				finish_date: p.actual_end_at,
+				deadline_date: p.plan_end_at,
 				is_deleted: p.is_deleted,
 				deleted_at: p.deleted_at,
 				status: computedStatus,
@@ -234,9 +222,9 @@ export async function getProjectById(projectId: string) {
  * The user ID is obtained from the server-side Supabase session.
  */
 export async function createProject(data: ProjectCreateInput) {
-	projectCreateSchema.parse(data);
-
 	try {
+		projectCreateSchema.parse(data);
+
 		// Get the current user from the server session
 		const supabase = await createClient();
 		const {
@@ -274,8 +262,8 @@ export async function createProject(data: ProjectCreateInput) {
 				data: {
 					name: data.name,
 					description: data.description ?? null,
-					start_date: data.start_date ?? null,
-					deadline_date: data.deadline_date ?? null,
+					plan_start_at: data.start_date ?? new Date(),
+					plan_end_at: data.deadline_date ?? new Date(),
 				},
 			});
 
@@ -303,20 +291,16 @@ export async function createProject(data: ProjectCreateInput) {
 					select: { profile_id: true },
 				});
 
-				// Assign each client profile the "Client Viewer" role
-				for (const cp of clientProfiles) {
-					await tx.roleAssignments.create({
-						data: {
+				// Assign each client profile the "Client Viewer" role — one
+				// batched insert, duplicates silently skipped.
+				if (clientProfiles.length > 0) {
+					await tx.roleAssignments.createMany({
+						data: clientProfiles.map((cp) => ({
 							role_id: clientViewerRole.role_id,
 							user_id: cp.profile_id,
 							project_id: project.project_id,
-						},
-					}).catch((err) => {
-						// Ignore unique constraint violations (duplicate assignments); log others
-						if ((err as { code?: string })?.code !== "P2002") {
-							console.warn("Failed to assign client profile to project:", err);
-						}
-						// Ignore unique constraint errors (duplicate assignments)
+						})),
+						skipDuplicates: true,
 					});
 				}
 			}
@@ -348,8 +332,8 @@ export async function updateProject(data: ProjectUpdateInput) {
 		const updateData: Record<string, unknown> = {};
 		if (data.name !== undefined) updateData.name = data.name;
 		if (data.description !== undefined) updateData.description = data.description;
-		if (data.start_date !== undefined) updateData.start_date = data.start_date;
-		if (data.deadline_date !== undefined) updateData.deadline_date = data.deadline_date;
+		if (data.start_date !== undefined) updateData.plan_start_at = data.start_date;
+		if (data.deadline_date !== undefined) updateData.plan_end_at = data.deadline_date;
 
 		const updated = await prisma.projects.update({
 			where: { project_id: data.project_id },

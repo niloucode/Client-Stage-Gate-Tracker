@@ -1,11 +1,28 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
 import { projectCreateSchema } from "@/shared/schemas"
+import { getFieldErrors } from "@/shared/lib/zod"
 import { clientSelectAll } from "@/entities/client/clientActions"
 import { FormInput, SelectOption } from "@/shared/ui/"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+	DialogFooter,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
 
 interface EditProjectFormData {
   name: string
@@ -69,7 +86,6 @@ export function EditProjectModal({
   const [formData, setFormData] = useState<EditProjectFormData>(getInitialFormData)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [clients, setClients] = useState<Awaited<ReturnType<typeof clientSelectAll>>>([])
-  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -106,15 +122,10 @@ export function EditProjectModal({
   }, [isOpen, project])
 
   // Reset form state on Add mode open
-  useEffect(() => {
-    if (isOpen && !project) {
-      const id = setTimeout(() => {
-        setFormData(emptyFormData)
-        setFieldErrors({})
-      }, 0)
-      return () => clearTimeout(id)
-    }
-  }, [isOpen, project])
+  useResetOnOpen(isOpen && !project, () => {
+    setFormData(emptyFormData)
+    setFieldErrors({})
+  })
 
   const formKey = isEditMode ? project.project_id : "new"
 
@@ -133,12 +144,7 @@ export function EditProjectModal({
   const handleSubmit = () => {
     const result = projectCreateSchema.safeParse(formData)
     if (!result.success) {
-      const flattened = result.error.flatten().fieldErrors
-      const mapped: FieldErrors = {}
-      for (const [key, msgs] of Object.entries(flattened)) {
-        if (msgs && msgs.length > 0)
-          mapped[key as keyof EditProjectFormData] = msgs[0]
-      }
+      const mapped = getFieldErrors(result)
       setFieldErrors(mapped)
       return
     }
@@ -193,19 +199,37 @@ export function EditProjectModal({
 
             {/* Client Selection (Create Mode Only) */}
             {!isEditMode && (
-              <FormInput
-                variant="select"
-                label="Client"
-                required
-                placeholder="Select client..."
-                options={clientOptions}
-                value={formData.client_id}
-                isOpen={clientDropdownOpen}
-                onToggleOpen={() => setClientDropdownOpen(!clientDropdownOpen)}
-                onSelect={(val) => setFormData({ ...formData, client_id: val })}
-                error={fieldErrors.client_id}
-                onClearError={() => clearFieldError("client_id")}
-              />
+              <div>
+                <div className="flex">
+                  <Label required>Client</Label>
+                  {typeof fieldErrors.client_id === "string" && (
+                    <div className="ml-auto text-xs text-destructive">
+                      {fieldErrors.client_id}
+                    </div>
+                  )}
+                </div>
+                <Select
+                  value={formData.client_id ?? undefined}
+                  onValueChange={(val) => {
+                    setFormData({ ...formData, client_id: val })
+                    clearFieldError("client_id")
+                  }}
+                >
+                  <SelectTrigger className="mt-1 w-full" aria-label="Client">
+                    <SelectValue placeholder="Select client..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientOptions.map((opt) => (
+                      <SelectItem
+                        key={opt.value!.toString()}
+                        value={opt.value!.toString()}
+                      >
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             {/* Dates Section */}

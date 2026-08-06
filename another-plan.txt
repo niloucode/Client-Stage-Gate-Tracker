@@ -1,0 +1,80 @@
+Here is a more descriptive version of your roadmap, adding clear context and the "why" behind each technical task to help align the team on the objectives.
+
+### Phase 1: Component Refactoring & Cleanup
+
+*Focus: Improving code reusability, standardizing the UI architecture, and stabilizing the codebase before adding new features.*
+
+* **Relocate `FormInput` to `components/ui/**`
+* *Context:* Move this component to the global UI directory to establish it as a shared, foundational element. This promotes reusability and keeps our folder structure clean.
+
+
+* **Refactor `ActivePhaseDetails` & `Login` pages to use `<FormInput/>**`
+* *Context:* Replace one-off input fields on these pages with the standardized `<FormInput/>` component. This reduces code duplication and ensures form styling behaves consistently across the app.
+
+
+* **Strip hardcoded widths on `DialogContent**`
+* *Context:* Remove rigid, fixed widths from modal containers. This allows modals to scale dynamically based on their content and ensures they remain fully responsive on smaller screens.
+
+
+* **Merge & harmonize codebase contributions (JM's changes)**
+* *Context:* Integrate JM's recent commits into the main branch. This involves resolving any merge conflicts, ensuring styling matches the current design system, and stabilizing the build before Phase 2.
+
+
+
+---
+
+### Phase 2: Data Model & Date Standardization
+
+*Focus: Upgrading the database schema to better track project timelines and ensuring data integrity through UI validation.*
+
+* **Update Projects, Phases, Modules, & Workflows schemas/types**
+* *Context:* Expand the data models to support baseline vs. actual tracking. We are introducing four distinct date fields:
+* `plan_start`: When the work was scheduled to begin.
+* `plan_end`: The original deadline.
+* `actl_start`: When the work actually began.
+* `actl_end`: When the work was actually completed.
+
+
+
+
+* **Add `plan_start` form fields across creation/edit modals**
+* *Context:* Update all relevant UI forms so users can input and edit the new planned start date, ensuring the database fields are fully accessible from the frontend.
+
+
+* **Implement strict chronological validation (Start Date ≤ End Date)**
+* *Context:* Add form validation rules across the app to prevent users from accidentally setting an end date that occurs *before* a start date, protecting database integrity.
+
+
+
+---
+
+### Phase 3: Feature & UI Enhancements
+
+*Focus: Polishing the user experience, standardizing visual language, and refining data fetching logic.*
+
+* **Phase Stepper: Render all four dates on dividers**
+* *Context:* Update the visual stepper component to display both the planned timeline and the actual execution timeline. This gives project managers immediate visual feedback on whether a phase is running ahead or behind schedule.
+
+
+* **Phase Edit Flow: Add hover pencil icon -> trigger pre-populated modal**
+* *Context:* Improve UX by adding a quick-edit action. Hovering over a phase will reveal a pencil icon; clicking it will open a modal already populated with that phase's current data for fast, frictionless editing.
+
+
+* **Module UI: Align deadline visual style with Workflow format**
+* *Context:* Standardize the UI so that deadlines on "Modules" look identical to deadlines on "Workflows." This consistency reduces cognitive load for users navigating different hierarchy levels.
+
+
+* **Workflow Status: Dynamic state colors (global.css) + hide Edit on 'Completed'**
+* *Context:* Map workflow statuses (e.g., Pending, In Progress, Completed) to distinct, globally defined CSS colors. Additionally, remove the edit functionality for completed workflows to prevent accidental changes to historical data.
+
+
+* **Client List: Remove placeholder data, only display fetched data on page load**
+* *Context:* Transition the Client List from a staging/mockup state to production. Strip out hardcoded dummy data and ensure the page relies entirely on real data fetched from the database on initial render.
+
+
+* **Client List: Dynamic local state update/refetch on edit**
+* *Context:* Ensure that when a user edits a client, the UI updates instantly. This requires implementing optimistic UI updates or triggering a targeted background refetch, so users don't have to manually refresh the page to see their changes.
+
+
+* **Supabase Integration: Update 'Department' -> 'UserCategory' & role mapping**
+* *Context:* Refactor the authentication/user logic to reflect the new business rules. We are deprecating "Department" in favor of "UserCategory," and mapping these categories explicitly to "Admin" or "Employee" roles for better access control.

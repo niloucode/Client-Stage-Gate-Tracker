@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
 	ColorPicker,
-} from "@/features/tag-manager/ui/TagModals";
+} from "@/shared/ui";
 
 export default function TagFormModal({
 	mode,

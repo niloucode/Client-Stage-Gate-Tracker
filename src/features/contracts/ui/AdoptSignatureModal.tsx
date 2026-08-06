@@ -63,15 +63,15 @@ export function AdoptSignatureModal({
 			<link rel="stylesheet" href={GOOGLE_FONTS_HREF} />
 			<div className="w-full max-w-xl overflow-hidden rounded-xl bg-neutral-surface shadow-2xl">
 				{/* Header */}
-				<div className="flex items-center justify-between border-b border-[#E5E3F1] px-6 py-4">
-					<h2 className="text-lg font-semibold text-[#181724]">
+				<div className="flex items-center justify-between border-b border-lavender-200 px-6 py-4">
+					<h2 className="text-lg font-semibold text-ink">
 						Adopt Your Signature
 					</h2>
 					<button
 						type="button"
 						onClick={onCancel}
 						aria-label="Close"
-						className="rounded p-1 text-[#6E6B82] hover:bg-[#F2F1FA]"
+						className="rounded p-1 text-plum-400 hover:bg-[#F2F1FA]"
 					>
 						<X className="h-5 w-5" />
 					</button>
@@ -86,59 +86,59 @@ export function AdoptSignatureModal({
 					{/* Name / Initials inputs */}
 					<div className="mb-5 grid grid-cols-[1fr_auto] gap-4">
 						<div>
-							<label className="mb-1.5 block text-xs font-semibold text-[#181724]">
+							<label className="mb-1.5 block text-xs font-semibold text-ink">
 								Full Name <span className="text-red-500">*</span>
 							</label>
 							<input
 								type="text"
 								value={fullName}
 								onChange={(e) => setFullName(e.target.value)}
-								className="w-full rounded-md border border-[#D6D3E8] px-3 py-2 text-sm text-[#181724] outline-none focus:border-[#4338CA] focus:ring-1 focus:ring-[#4338CA]"
+								className="w-full rounded-md border border-[#D6D3E8] px-3 py-2 text-sm text-ink outline-none focus:border-indigo-700 focus:ring-1 focus:ring-indigo-700"
 								placeholder="Your Name"
 							/>
 						</div>
 						<div className="w-28">
-							<label className="mb-1.5 block text-xs font-semibold text-[#181724]">
+							<label className="mb-1.5 block text-xs font-semibold text-ink">
 								Initials <span className="text-red-500">*</span>
 							</label>
 							<input
 								type="text"
 								value={initials}
 								onChange={(e) => setInitials(e.target.value.slice(0, 4))}
-								className="w-full rounded-md border border-[#D6D3E8] px-3 py-2 text-center text-sm text-[#181724] outline-none focus:border-[#4338CA] focus:ring-1 focus:ring-[#4338CA]"
+								className="w-full rounded-md border border-[#D6D3E8] px-3 py-2 text-center text-sm text-ink outline-none focus:border-indigo-700 focus:ring-1 focus:ring-indigo-700"
 								placeholder="YN"
 							/>
 						</div>
 					</div>
 
 					{/* Tab */}
-					<div className="mb-4 border-b border-[#E5E3F1]">
-						<div className="inline-block border-b-2 border-[#4338CA] pb-2 text-xs font-semibold tracking-wide text-[#4338CA]">
+					<div className="mb-4 border-b border-lavender-200">
+						<div className="inline-block border-b-2 border-indigo-700 pb-2 text-xs font-semibold tracking-wide text-indigo-700">
 							SELECT STYLE
 						</div>
 					</div>
 
 					<div className="mb-1 flex items-center justify-between">
-						<span className="text-xs font-semibold tracking-wide text-[#6E6B82]">
+						<span className="text-xs font-semibold tracking-wide text-plum-400">
 							PREVIEW
 						</span>
 						{/* 
             <button
               type="button"
               onClick={cycleStyle}
-              className="text-xs font-medium text-[#4338CA] hover:underline"
+              className="text-xs font-medium text-indigo-700 hover:underline"
             >
               Change Style
             </button>*/}
 					</div>
 
-					<div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-lg border border-[#E5E3F1] bg-neutral-surface px-6 py-8">
+					<div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-lg border border-lavender-200 bg-neutral-surface px-6 py-8">
 						<div className="min-w-0 overflow-hidden">
-							<div className="mb-1 text-[10px] font-semibold tracking-wide text-[#4338CA]">
+							<div className="mb-1 text-[10px] font-semibold tracking-wide text-indigo-700">
 								SIGNED BY:
 							</div>
 							<div
-								className="overflow-visible neutral-surfacespace-nowrap text-[#181724]"
+								className="overflow-visible neutral-surfacespace-nowrap text-ink"
 								style={{
 									fontFamily: currentStyle.font,
 									fontSize: "clamp(18px, 5vw, 30px)",
@@ -149,14 +149,14 @@ export function AdoptSignatureModal({
 							</div>
 						</div>
 
-						<div className="h-16 w-px bg-[#E5E3F1]" />
+						<div className="h-16 w-px bg-lavender-200" />
 
 						<div className="min-w-0">
-							<div className="mb-1 text-[10px] font-semibold tracking-wide text-[#4338CA]">
+							<div className="mb-1 text-[10px] font-semibold tracking-wide text-indigo-700">
 								DS:
 							</div>
 							<div
-								className="neutral-surfacespace-nowrap text-[#181724]"
+								className="neutral-surfacespace-nowrap text-ink"
 								style={{
 									fontFamily: currentStyle.font,
 									fontSize: "30px",
@@ -168,9 +168,9 @@ export function AdoptSignatureModal({
 						</div>
 					</div>
 
-					<p className="mt-5 text-xs leading-relaxed text-[#6E6B82]">
+					<p className="mt-5 text-xs leading-relaxed text-plum-400">
 						By selecting{" "}
-						<span className="font-medium text-[#181724]">Adopt and Sign</span>,
+						<span className="font-medium text-ink">Adopt and Sign</span>,
 						I agree that the signature and initials will be the electronic
 						representation of my signature and initials for all purposes when I
 						(or my agent) use them on documents, including legally binding
@@ -184,7 +184,7 @@ export function AdoptSignatureModal({
 						type="button"
 						onClick={handleAdopt}
 						disabled={!canAdopt}
-						className="rounded-md bg-[#4338CA] px-5 py-2.5 text-sm font-semibold text-neutral-surface transition-colors hover:bg-[#372FB0] disabled:cursor-not-allowed disabled:opacity-40"
+						className="rounded-md bg-indigo-700 px-5 py-2.5 text-sm font-semibold text-neutral-surface transition-colors hover:bg-[#372FB0] disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						Adopt and Sign
 					</button>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Workflow } from "../types";
 import { AddWorkflow } from "@/features/stage-editor/ui/modals/AddWorkflow";
 import { EditWorkflow } from "@/features/stage-editor/ui/modals/EditWorkflow";
-import { DeleteWorkflow } from "@/features/stage-editor/ui/modals/DeleteWorkflow";
+import { ConfirmDeleteModal } from "@/shared/ui";
 import {
 	useCreateWorkflow,
 	useUpdateWorkflow,
@@ -313,7 +313,7 @@ export function WorkflowsList({
 					return (
 						<div
 							key={workflow.workflow_id}
-							className="flex items-center justify-between px-4 py-3 border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors group cursor-grab active:cursor-grabbing"
+							className="flex items-center justify-between px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors group cursor-grab active:cursor-grabbing"
 							draggable={true}
 							onDragStart={(e) => handleDragStart(e, index)}
 							onDragEnd={handleDragEnd}
@@ -328,7 +328,7 @@ export function WorkflowsList({
 									height="12"
 									viewBox="0 0 8 12"
 									fill="none"
-									className="text-[#94A3B8] opacity-40 group-hover:opacity-100 transition-opacity"
+									className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity"
 								>
 									<circle cx="1" cy="1" r="1" fill="currentColor" />
 									<circle cx="1" cy="6" r="1" fill="currentColor" />
@@ -340,7 +340,7 @@ export function WorkflowsList({
 								<div>
 									<Link
 										href={`/projects/${projectId}/workflows/${workflow.workflow_id}`}
-										className="font-normal text-sm text-[#0F172A] hover:text-brand-600 transition-colors"
+										className="font-normal text-sm text-slate-900 hover:text-brand-600 transition-colors"
 									>
 										{workflow.name}
 									</Link>
@@ -357,7 +357,7 @@ export function WorkflowsList({
 							<div className="flex items-center gap-4">
 								{/* Deadline column: always bound to planned_end (deadline_date), never swapped */}
 								<div className="flex flex-col items-end gap-0.5">
-									<span className="text-[10px] uppercase tracking-wide text-[#94A3B8]">
+									<span className="text-[10px] uppercase tracking-wide text-slate-400">
 										Deadline
 									</span>
 									<span
@@ -380,20 +380,20 @@ export function WorkflowsList({
 								<div className="flex items-center gap-2 min-w-[100px]">
 									{workflow.ticketCount === 0 ? (
 										<>
-											<div className="w-20 h-1.5 bg-[#F1F5F9] rounded-full" />
-											<span className="text-[11px] font-semibold text-[#94A3B8]">
+											<div className="w-20 h-1.5 bg-slate-100 rounded-full" />
+											<span className="text-[11px] font-semibold text-slate-400">
 												- %
 											</span>
 										</>
 									) : (
 										<>
-											<div className="w-20 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
+											<div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">
 												<div
 													className="h-full bg-brand-500 rounded-full transition-all"
 													style={{ width: `${workflow.progress}%` }}
 												/>
 											</div>
-											<span className="text-[11px] font-semibold text-[#475569]">
+											<span className="text-[11px] font-semibold text-slate-600">
 												{workflow.progress}%
 											</span>
 										</>
@@ -423,7 +423,7 @@ export function WorkflowsList({
 				{/* Add Workflow Button */}
 				<button
 					onClick={openCreateWorkflowModal}
-					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-[#F8FAFC] hover:border-brand-500 transition-all"
+					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
 					style={{ width: "calc(100% - 24px)" }}
 				>
 					<Plus size={16} className={"text-brand-200"} />
@@ -450,9 +450,12 @@ export function WorkflowsList({
 			/>
 
 			{/* Delete Confirmation Modal */}
-			<DeleteWorkflow
+			<ConfirmDeleteModal
 				isOpen={isDeleteConfirmOpen}
-				workflowLabel={workflowToDelete?.name}
+				noun="Workflow"
+				title={
+					workflowToDelete ? `Delete ${workflowToDelete.name}` : undefined
+				}
 				onConfirm={handleDeleteWorkflow}
 				onCancel={() => {
 					setIsDeleteConfirmOpen(false);

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { moduleCreateSchema } from "@/shared/schemas"
+import { getFieldErrors } from "@/shared/lib/zod"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -87,12 +88,7 @@ export function AddModule({
 	const handleSubmit = () => {
 		const result = moduleCreateSchema.safeParse(formData)
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors
-			const mapped: FieldErrors = {}
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0)
-					mapped[key as keyof AddModuleFormData] = msgs[0]
-			}
+			const mapped = getFieldErrors(result)
 			setFieldErrors(mapped)
 			return
 		}
@@ -124,7 +120,7 @@ export function AddModule({
 								setFormData({ ...formData, name: e.target.value })
 							}
 							placeholder="e.g., Authentication & Identity"
-							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
+							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
 						/>
 						<div className="flex justify-between mt-1">
 							{fieldErrors.name ? (
@@ -136,7 +132,7 @@ export function AddModule({
 					</div>
 
 					<div>
-						<label className="block text-xs font-semibold text-[#475569] mb-1.5">
+						<label className="block text-xs font-semibold text-slate-600 mb-1.5">
 							Deadline Date
 						</label>
 						<input
@@ -159,7 +155,7 @@ export function AddModule({
 										: null,
 								})
 							}
-							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 				</div>

@@ -46,7 +46,7 @@ export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
 			}`}
 		>
 			<p className="font-sans text-sm font-semibold text-gray-900 leading-tight">
-				Asceoft
+				Acesoft
 			</p>
 			<p className="font-mono text-[10px] text-gray-400 tracking-widest uppercase">
 				Studio Portal

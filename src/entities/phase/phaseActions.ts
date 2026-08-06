@@ -1,9 +1,13 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
-import { cascadeSoftDeleteModule } from "../module/moduleActions";
-
-export type EntityFilterStatus = "active" | "deleted" | "all";
+import {
+	assertProjectMember,
+	resolvePhaseProject,
+	resolveStageProject,
+} from "@/lib/auth/projectAccess";
+import { generateKeyBetween } from "fractional-indexing";
+import type { EntityFilterStatus } from "@/entities/types";
 
 /**
  * Creates a new phase and automatically assigns it a scoped sequential number
@@ -25,21 +29,29 @@ export async function createPhase(
 	deadlineDate?: Date | null,
 	description?: string | null,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveStageProject(stageId);
+	if (!projectId) return { success: false, error: "Stage not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
-		const maxNumber = await prisma.phases.aggregate({
+		// Fractional sort key: append after the last sibling — a single-key
+		// insert that never requires renumbering existing rows.
+		const lastPhase = await prisma.phases.findFirst({
 			where: { stage_id: stageId, is_deleted: false },
-			_max: { number: true },
+			orderBy: { sort_key: { sort: "desc", nulls: "last" } },
+			select: { sort_key: true },
 		});
-		const nextPhaseNumber = (maxNumber._max.number ?? 0) + 1;
+		const nextKey = generateKeyBetween(lastPhase?.sort_key ?? null, null);
 
 		const newPhase = await prisma.phases.create({
 			data: {
 				name: phaseName,
 				description: description,
-				number: nextPhaseNumber,
-				start_date: startDate,
-				finish_date: endDate,
-				deadline_date: deadlineDate,
+				sort_key: nextKey,
+				plan_start_at: startDate ?? new Date(),
+				actual_end_at: endDate,
+				plan_end_at: deadlineDate ?? new Date(),
 				stage_id: stageId,
 			},
 		});
@@ -120,7 +132,7 @@ export async function getModulesByPhaseId(
 				is_deleted: isDeletedFilter,
 			},
 			orderBy: {
-				start_date: "asc",
+				plan_start_at: "asc",
 			},
 		});
 
@@ -152,6 +164,11 @@ export async function updatePhase(
 	endDate?: Date | null,
 	deadlineDate?: Date | null,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolvePhaseProject(phaseId);
+	if (!projectId) return { success: false, error: "Phase not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const updatedPhase = await prisma.phases.update({
 			where: {
@@ -160,9 +177,9 @@ export async function updatePhase(
 			data: {
 				name: phaseName,
 				description: description,
-				start_date: startDate,
-				finish_date: endDate,
-				deadline_date: deadlineDate,
+				plan_start_at: startDate ?? undefined,
+				actual_end_at: endDate,
+				plan_end_at: deadlineDate ?? undefined,
 			},
 		});
 		return { success: true, data: updatedPhase };
@@ -183,6 +200,11 @@ export async function updatePhase(
  * Returns `success: false` and an error message if the phase contains modules or the query fails.
  */
 export async function softDeletePhase(phaseId: string) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolvePhaseProject(phaseId);
+	if (!projectId) return { success: false, error: "Phase not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const attachedModulesCount = await prisma.modules.count({
 			where: {
@@ -197,53 +219,13 @@ export async function softDeletePhase(phaseId: string) {
 			};
 		}
 
-		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			// Read the phase's number before nulling it
-			const phase = await tx.phases.findUnique({
-				where: { phase_id: phaseId },
-				select: { stage_id: true, number: true },
-			});
-
-			// Mark the phase as deleted and release its number slot
-			await tx.phases.update({
-				where: { phase_id: phaseId },
-				data: {
-					is_deleted: true,
-					deleted_at: new Date(),
-					number: null,
-				} as any,
-			});
-
-			// Renumber remaining phases to close the gap
-			if (phase?.number != null) {
-				const higherPhases = await tx.phases.findMany({
-					where: {
-						stage_id: phase.stage_id,
-						number: { gt: phase.number },
-						is_deleted: false,
-					},
-					select: { phase_id: true, number: true },
-					orderBy: { number: "asc" },
-				});
-
-				if (higherPhases.length > 0) {
-					// Null all affected phases (safe — multiple NULLs allowed)
-					await tx.phases.updateMany({
-						where: {
-							phase_id: { in: higherPhases.map((p) => p.phase_id) },
-						},
-						data: { number: null },
-					});
-
-					// Reassign each to its new number
-					for (const p of higherPhases) {
-						await tx.phases.update({
-							where: { phase_id: p.phase_id },
-							data: { number: p.number! - 1 },
-						});
-					}
-				}
-			}
+		await prisma.phases.update({
+			where: { phase_id: phaseId },
+			data: {
+				is_deleted: true,
+				deleted_at: new Date(),
+				number: null,
+			},
 		});
 
 		return { success: true };
@@ -273,51 +255,53 @@ export async function cascadeSoftDeletePhase(
 	phaseId: string,
 	txClient?: Prisma.TransactionClient,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolvePhaseProject(phaseId);
+	if (!projectId) return { success: false, error: "Phase not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
-		// Read the phase's number before nulling it
-		const phase = await tx.phases.findUnique({
-			where: { phase_id: phaseId },
-			select: { stage_id: true, number: true },
-		});
-
 		await tx.phases.update({
 			where: { phase_id: phaseId },
-			data: { is_deleted: true, deleted_at: new Date(), number: null } as any,
+			data: { is_deleted: true, deleted_at: new Date(), number: null },
 		});
 
+		// Batch the whole subtree: one updateMany per level instead of
+		// per-child cascade calls.
 		const childModules = await tx.modules.findMany({
 			where: { phase_id: phaseId, is_deleted: false },
 			select: { module_id: true },
 		});
+		const moduleIds = childModules.map((m) => m.module_id);
 
-		for (const childModule of childModules) {
-			await cascadeSoftDeleteModule(childModule.module_id, tx);
-		}
-
-		// Renumber remaining phases to close the gap
-		if (phase?.number != null) {
-			const higherPhases = await tx.phases.findMany({
-				where: {
-					stage_id: phase.stage_id,
-					number: { gt: phase.number },
-					is_deleted: false,
-				},
-				select: { phase_id: true, number: true },
-				orderBy: { number: "asc" },
+		if (moduleIds.length > 0) {
+			await tx.modules.updateMany({
+				where: { module_id: { in: moduleIds } },
+				data: { is_deleted: true, deleted_at: new Date() },
 			});
 
-			if (higherPhases.length > 0) {
-				await tx.phases.updateMany({
-					where: {
-						phase_id: { in: higherPhases.map((p) => p.phase_id) },
-					},
-					data: { number: null },
+			const childWorkflows = await tx.workflows.findMany({
+				where: { module_id: { in: moduleIds }, is_deleted: false },
+				select: { workflow_id: true },
+			});
+			const workflowIds = childWorkflows.map((w) => w.workflow_id);
+
+			if (workflowIds.length > 0) {
+				await tx.workflows.updateMany({
+					where: { workflow_id: { in: workflowIds } },
+					data: { is_deleted: true, deleted_at: new Date() },
 				});
 
-				for (const p of higherPhases) {
-					await tx.phases.update({
-						where: { phase_id: p.phase_id },
-						data: { number: p.number! - 1 },
+				const childTickets = await tx.tickets.findMany({
+					where: { workflow_id: { in: workflowIds }, is_deleted: false },
+					select: { ticket_id: true },
+				});
+				const ticketIds = childTickets.map((t) => t.ticket_id);
+
+				if (ticketIds.length > 0) {
+					await tx.tickets.updateMany({
+						where: { ticket_id: { in: ticketIds } },
+						data: { is_deleted: true, deleted_at: new Date() },
 					});
 				}
 			}
@@ -357,80 +341,55 @@ export async function reorderPhase(
 	phaseId: string,
 	targetNumber: number,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolvePhaseProject(phaseId);
+	if (!projectId) return { success: false, error: "Phase not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			const phase = await tx.phases.findUnique({
 				where: { phase_id: phaseId },
+				select: { stage_id: true },
 			});
 
 			if (!phase) {
 				throw new Error(`Phase ${phaseId} not found.`);
 			}
-			if (phase.number === null) {
+
+			// Fractional-indexing move: compute the key between the neighbors
+			// at the target position and update a single row. No renumbering.
+			const siblings = await tx.phases.findMany({
+				where: { stage_id: phase.stage_id, is_deleted: false, sort_key: { not: null } },
+				select: { phase_id: true, sort_key: true },
+				orderBy: { sort_key: { sort: "asc", nulls: "last" } },
+			});
+
+			const currentIndex = siblings.findIndex(
+				(s) => s.phase_id === phaseId,
+			);
+			if (currentIndex === -1) {
+				throw new Error(`Phase ${phaseId} not found.`);
+			}
+			if (targetNumber < 1 || targetNumber > siblings.length) {
 				throw new Error(
-					`Phase ${phaseId} has no sequence number (number is null).`,
+					`Target number ${targetNumber} is out of bounds (1–${siblings.length}).`,
 				);
 			}
+			const targetIndex = targetNumber - 1;
+			if (targetIndex === currentIndex) return;
 
-			const stageId = phase.stage_id;
-			const oldNumber = phase.number;
+			const rest = siblings.filter((s) => s.phase_id !== phaseId);
+			const before =
+				targetIndex > 0 ? rest[targetIndex - 1].sort_key : null;
+			const after =
+				targetIndex < rest.length ? rest[targetIndex].sort_key : null;
+			const newKey = generateKeyBetween(before, after);
 
-			// No-op if already at the target position
-			if (oldNumber === targetNumber) return;
-
-			// Validate target range
-			const activeCount = await tx.phases.count({
-				where: { stage_id: stageId, is_deleted: false },
+			await tx.phases.update({
+				where: { phase_id: phaseId },
+				data: { sort_key: newKey },
 			});
-			if (targetNumber < 1 || targetNumber > activeCount) {
-				throw new Error(
-					`Target number ${targetNumber} is out of bounds (1–${activeCount}).`,
-				);
-			}
-
-			// Step 1: Fetch every phase in the affected range (dragged + shifted)
-			const rangeStart = Math.min(oldNumber, targetNumber);
-			const rangeEnd = Math.max(oldNumber, targetNumber);
-			const affected = await tx.phases.findMany({
-				where: {
-					stage_id: stageId,
-					number: { gte: rangeStart, lte: rangeEnd },
-					is_deleted: false,
-				},
-				select: { phase_id: true, number: true },
-			});
-
-			// Step 2: Null ALL affected phases at once —
-			//         multiple NULLs don't violate the unique constraint
-			await tx.phases.updateMany({
-				where: {
-					phase_id: { in: affected.map((p) => p.phase_id) },
-				},
-				data: { number: null },
-			});
-
-			// Step 3: Reassign each phase one at a time (safe — all numbers are null)
-			for (const p of affected) {
-				if (p.phase_id === phaseId) {
-					// The dragged phase lands at the target
-					await tx.phases.update({
-						where: { phase_id: p.phase_id },
-						data: { number: targetNumber },
-					});
-				} else if (oldNumber < targetNumber) {
-					// Moving right: items shift down by 1
-					await tx.phases.update({
-						where: { phase_id: p.phase_id },
-						data: { number: p.number! - 1 },
-					});
-				} else {
-					// Moving left: items shift up by 1
-					await tx.phases.update({
-						where: { phase_id: p.phase_id },
-						data: { number: p.number! + 1 },
-					});
-				}
-			}
 		});
 
 		return { success: true };

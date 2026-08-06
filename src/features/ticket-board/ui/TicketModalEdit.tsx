@@ -62,7 +62,7 @@ export default function TicketModalEdit({
 	const [titleDraft, setTitleDraft] = useState("");
 	const [descDraft, setDescDraft] = useState("");
 	const [deadlineDraft, setDeadlineDraft] = useState("");
-	const titleRef = useRef<HTMLInputElement>(null);
+	const titleRef = useRef<HTMLTextAreaElement>(null);
 	const descRef = useRef<HTMLTextAreaElement>(null);
 
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -161,8 +161,8 @@ export default function TicketModalEdit({
 		if (field === "description") setDescDraft(ticket!.description ?? "");
 		if (field === "deadline")
 			setDeadlineDraft(
-				ticket!.deadline_date
-					? new Date(ticket!.deadline_date).toISOString().slice(0, 16)
+				ticket!.plan_end_at
+					? new Date(ticket!.plan_end_at).toISOString().slice(0, 16)
 					: "",
 			);
 	}
@@ -183,7 +183,7 @@ export default function TicketModalEdit({
 			t
 				? {
 						...t,
-						deadline_date: deadlineDraft ? new Date(deadlineDraft) : t.deadline_date,
+						deadline_date: deadlineDraft ? new Date(deadlineDraft) : t.plan_end_at,
 					}
 				: t,
 		);
@@ -212,7 +212,7 @@ export default function TicketModalEdit({
 			ticket_id: ticket.ticket_id,
 			workflow_id: ticket.workflow_id,
 			name: ticket.name,
-			deadline_date: ticket.deadline_date ?? undefined,
+			deadline_date: ticket.plan_end_at ?? undefined,
 			status: ticket.status,
 			watcher_id: ticket.watcher_id,
 			TicketAssigned: ticket.TicketAssigned.map(
@@ -220,20 +220,20 @@ export default function TicketModalEdit({
 			),
 			tagIds: selectedTags,
 			description: ticket.description,
-			finish_date: ticket.finish_date,
+			finish_date: ticket.actual_end_at,
 			api_route: apiRoute || null,
 			api_method: apiMethod || null,
 			performed_by: user?.profile_id,
 		});
-		onUpdate(updated as unknown as Ticket);
+		onUpdate(updated);
 		onClose();
 	}
 
 	const watcher = profiles.find((u) => u.profile_id === ticket.watcher_id);
 	const isOverdue =
-		ticket.deadline_date && new Date(ticket.deadline_date) < new Date();
-	const deadlineDisplay = ticket.deadline_date
-		? new Date(ticket.deadline_date).toLocaleDateString()
+		ticket.plan_end_at && new Date(ticket.plan_end_at) < new Date();
+	const deadlineDisplay = ticket.plan_end_at
+		? new Date(ticket.plan_end_at).toLocaleDateString()
 		: null;
 
 	const isApiTagSelected = selectedTags.some(
@@ -379,7 +379,7 @@ export default function TicketModalEdit({
 						<div className="flex-1 min-w-0 flex items-center gap-2">
 							<div className="relative flex-1 min-w-0">
 								<Textarea
-									ref={titleRef as any}
+									ref={titleRef}
 									value={titleDraft}
 									maxLength={50}
 									rows={2}
@@ -645,8 +645,8 @@ export default function TicketModalEdit({
 							autoFocus
 							value={
 								deadlineDraft ||
-								(ticket.deadline_date
-								? new Date(ticket.deadline_date).toISOString().slice(0, 16)
+								(ticket.plan_end_at
+								? new Date(ticket.plan_end_at).toISOString().slice(0, 16)
 								: "")
 							}
 							onChange={(e) => setDeadlineDraft(e.target.value)}
@@ -669,8 +669,8 @@ export default function TicketModalEdit({
 							className="h-[2rem] text-xs gap-2 py-1 mb-1.5 border border-transparent hover:border-gray-200 rounded-md cursor-pointer hover:bg-gray-50 transition-all flex items-center"
 							>
 							<Calendar size={12}/>
-							{ticket.deadline_date ? (
-								new Date(ticket.deadline_date).toLocaleDateString("en-US", {
+							{ticket.plan_end_at ? (
+								new Date(ticket.plan_end_at).toLocaleDateString("en-US", {
 								month: "long",
 								day: "numeric",
 								year: "numeric",
@@ -750,8 +750,8 @@ export default function TicketModalEdit({
 					<div>
 						<Label className="text-xs text-neutral-border font-bold">START DATE</Label>
 						<p className="text-sm text-gray-700">
-							{ticket.start_date
-								? new Date(ticket.start_date).toLocaleString()
+							{ticket.plan_start_at
+								? new Date(ticket.plan_start_at).toLocaleString()
 								: "—"}
 						</p>
 					</div>
@@ -760,8 +760,8 @@ export default function TicketModalEdit({
 					<div>
 						<Label className="text-xs text-neutral-border font-bold">FINISH DATE</Label>
 						<p className="text-sm text-gray-700">
-							{ticket.finish_date
-								? new Date(ticket.finish_date).toLocaleString()
+							{ticket.actual_end_at
+								? new Date(ticket.actual_end_at).toLocaleString()
 								: "—"}
 						</p>
 					</div>
