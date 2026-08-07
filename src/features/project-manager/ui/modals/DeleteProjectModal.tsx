@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface DeleteProjectModalProps {
 	isOpen: boolean;
@@ -43,14 +49,21 @@ export function DeleteProjectModal({
 	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+		<Dialog
+			open={isOpen}
+			onOpenChange={(open) => {
+				if (!open) onClose();
+			}}
+		>
 			<DialogContent>
-				<DialogHeader><DialogTitle>Delete Project</DialogTitle></DialogHeader>
+				<DialogHeader>
+					<DialogTitle>Delete Project</DialogTitle>
+				</DialogHeader>
 				<div className="px-6 space-y-4">
 					<p className="text-sm text-neutral-border">
 						This action cannot be undone. Please type{" "}
 						<span className="font-bold text-foreground">{projectName}</span>
-						 to confirm.
+						to confirm.
 					</p>
 					<div>
 						<input
@@ -74,15 +87,15 @@ export function DeleteProjectModal({
 						)}
 					</div>
 				</div>
-		<DialogFooter>
-				<Button
-					onClick={handleConfirm}
-					disabled={!namesMatch}
-					variant="destructive"
-					icon="delete">
+				<DialogFooter>
+					<Button
+						onClick={handleConfirm}
+						disabled={!namesMatch}
+						variant="destructive"
+					>
 						Delete Project
 					</Button>
-			</DialogFooter>
+				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);

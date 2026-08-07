@@ -282,20 +282,16 @@ export default function ContractPage() {
 								get_clients();
 							}}
 						/>
-						{!userSigned &&
-							contract &&
-							canSign === true && (
-									<>
-										<ExecuteAgreementCard
-											maskedEmail={
-												user ? get_masked_email(user.email) : undefined
-											}
-											projectId={projectId}
-											role={userRole ?? "Client Viewer"}
-											className="px-5 py-10 gap-10"
-										/>
-									</>,
-								)}
+						{!userSigned && contract && canSign === true && (
+							<>
+								<ExecuteAgreementCard
+									maskedEmail={user ? get_masked_email(user.email) : undefined}
+									projectId={projectId}
+									role={userRole ?? "Client Viewer"}
+									className="px-5 py-10 gap-10"
+								/>
+							</>
+						)}
 					</div>
 				</div>
 			</div>

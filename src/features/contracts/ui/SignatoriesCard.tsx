@@ -262,7 +262,7 @@ export function SignatoriesCard({
 					{showClientDropdown && <Separator />}
 					{/* no_client / with_client: dropdown + confirm button */}
 					{showClientDropdown && (
-						<div className="flex flex-col gap-3">
+						<div className="w-full flex flex-col gap-6">
 							<ClientsDropdown
 								clients={availableClients}
 								selected={selectedClient}

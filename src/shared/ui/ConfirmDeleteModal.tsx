@@ -58,7 +58,7 @@ export function ConfirmDeleteModal({
 					<AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
 					<AlertDialogAction
 						onClick={onConfirm}
-						icon="delete"
+
 						className="bg-destructive hover:bg-destructive/90"
 					>
 						{confirmLabel ?? `Delete ${noun}`}

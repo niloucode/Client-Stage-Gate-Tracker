@@ -54,7 +54,7 @@ export function ClientsDropdown({
 				<div
 					role="combobox"
 					aria-expanded={open}
-					className="relative flex w-full items-center rounded-lg px-4 py-3 text-left transition-colors hover:brightness-95"
+					className="relative flex w-full items-center rounded-lg px-4 py-0 text-left transition-colors hover:brightness-95"
 					style={{
 						backgroundColor: "#faf8ff",
 						border: "1px solid #c7c4d8",
@@ -102,28 +102,22 @@ export function ClientsDropdown({
 				</div>
 			</PopoverTrigger>
 
-			<PopoverContent
-				className="w-[--radix-popover-trigger-width] p-0"
-				align="start"
-			>
-				<Command>
+			<PopoverContent className="w-full p-0" align="start">
+				<Command className="w-full">
 					<CommandList>
 						<CommandEmpty>No clients found.</CommandEmpty>
 						<CommandGroup>
 							{clients.map((client) => (
 								<CommandItem
-									key={clients.indexOf(client)}
+									key={client.id}
 									value={client.name}
-
-									className="px-4 py-3"
+									onSelect={() => {
+										onSelect(client);
+										setOpen(false);
+									}}
+									className="px-4 py-3 w-full bg-transparent! hover:bg-[#F3F0FF]! focus:bg-[#FFFFFF] data-[selected]:bg-[#FFFFFF]"
 								>
-									<div
-										className="flex items-center gap-3"
-										onClick={() => {
-											onSelect(client);
-											setOpen(false);
-										}}
-									>
+									<div className="flex items-center gap-3">
 										<Avatar className="h-9 w-9">
 											<AvatarFallback
 												className="text-sm font-semibold"
