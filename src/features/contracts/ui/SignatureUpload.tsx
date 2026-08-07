@@ -158,7 +158,7 @@ export function SignatureUpload({
 				onDrop={handleDrop}
 				onDragOver={handleDragOver}
 				onDragLeave={handleDragLeave}
-				className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed px-6 py-7 text-center transition-colors ${
+				className={`flex cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed px-6 py-7 text-center transition-colors ${
 					isError
 						? "border-red-300 bg-red-50"
 						: isDragging

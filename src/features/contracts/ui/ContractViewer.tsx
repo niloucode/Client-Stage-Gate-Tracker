@@ -21,14 +21,17 @@ import {
 	useDeleteContract,
 	useChangeContractName,
 } from "@/entities/contract";
+import { ConfirmTextModal, ContractDetails } from "./ConfirmTextModal";
 
 interface PDFViewerProps {
 	className?: string;
 	projectId: string;
 	clientId: string;
 	profileId?: string | null;
+	contractDetails: ContractDetails;
 	initialFilePath?: string | null; //null if contract DOESN'T exist yet
 	initialContractName?: string | null;
+	onSuccess: () => void;
 }
 
 export function ContractViewer({
@@ -37,11 +40,12 @@ export function ContractViewer({
 	clientId,
 	initialFilePath,
 	initialContractName,
+	contractDetails,
+	onSuccess,
 }: PDFViewerProps) {
 	const [file, setFile] = useState<File | null>(null);
 	const [fileUrl, setFileUrl] = useState<string | null>(null);
 	const [pendingFile, setPendingFile] = useState<File | null>(null);
-	const [removeRequested, setRemoveRequested] = useState(false);
 	const [removeConfirmText, setRemoveConfirmText] = useState("");
 	const [fileError, setFileError] = useState<string | null>(null);
 	const [zoom, setZoom] = useState(100);
@@ -51,19 +55,21 @@ export function ContractViewer({
 	const [contractName, setContractName] = useState(
 		file && fileUrl ? file.name : "",
 	); //ADDED THISSS
-	const [changeName, setChangeName] = useState(
-		file && fileUrl ? file.name : "",
-	);
+	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
 	const uploadMutation = useUploadContract();
 	const deleteMutation = useDeleteContract();
 	const changeNameMutation = useChangeContractName();
 
+	const delete_client_phrase = "Yes, I'm Sure";
+	const delete_client_text = `You're about to permanently delete ${contractName} 
+	from [PROJECT NAME]. This action will also remove all associated signatures from 
+	the contract. To proceed, type "${delete_client_phrase}" below.`;
+
 	// Revoke the object URL whenever it changes or the component unmounts
 	useEffect(() => {
 		if (file && fileUrl) {
 			setContractName((prev) => prev || initialContractName || file.name);
-			setChangeName((prev) => prev || initialContractName || file.name);
 		}
 	}, [file, fileUrl]);
 
@@ -167,26 +173,26 @@ export function ContractViewer({
 		selectFile(e.dataTransfer.files?.[0]);
 	};
 
-	const handleDownload = async () => {
-		if (!fileUrl) return;
-		const response = await fetch(fileUrl);
-		const blob = await response.blob();
-		const blobUrl = URL.createObjectURL(blob);
-		const a = document.createElement("a");
-		a.href = blobUrl;
-		a.download = changeName || file?.name || "document.pdf";
-		if (!a.download.endsWith(".pdf")) a.download += ".pdf";
-		a.click();
-		URL.revokeObjectURL(blobUrl);
-	};
+	// const handleDownload = async () => {
+	// 	if (!fileUrl) return;
+	// 	const response = await fetch(fileUrl);
+	// 	const blob = await response.blob();
+	// 	const blobUrl = URL.createObjectURL(blob);
+	// 	const a = document.createElement("a");
+	// 	a.href = blobUrl;
+	// 	a.download = changeName || file?.name || "document.pdf";
+	// 	if (!a.download.endsWith(".pdf")) a.download += ".pdf";
+	// 	a.click();
+	// 	URL.revokeObjectURL(blobUrl);
+	// };
 
 	const requestRemove = () => {
 		setRemoveConfirmText("");
-		setRemoveRequested(true);
+		setDeleteModalOpen(true);
 	};
 
 	const cancelRemove = () => {
-		setRemoveRequested(false);
+		setDeleteModalOpen(false);
 		setContractName("");
 		setRemoveConfirmText("");
 	};
@@ -218,19 +224,19 @@ export function ContractViewer({
 			if (fileUrl) URL.revokeObjectURL(fileUrl);
 			setFile(null);
 			setFileUrl(null);
-			setRemoveRequested(false);
+			setDeleteModalOpen(false);
 			setRemoveConfirmText("");
 		} catch (err) {
 			setFileError("Deletion failed. Please try again.");
 		}
 	};
 
-	const handlePrint = () => {
-		if (!fileUrl) return;
-		const win = window.open(fileUrl, "_blank");
-		if (!win) return;
-		win.addEventListener("load", () => win.print());
-	};
+	// const handlePrint = () => {
+	// 	if (!fileUrl) return;
+	// 	const win = window.open(fileUrl, "_blank");
+	// 	if (!win) return;
+	// 	win.addEventListener("load", () => win.print());
+	// };
 
 	const zoomIn = () => setZoom((z) => Math.min(z + 10, 200));
 	const zoomOut = () => setZoom((z) => Math.max(z - 10, 50));
@@ -248,7 +254,7 @@ export function ContractViewer({
 									type="text"
 									className="block leading-none py-0 truncate text-sm font-medium text-ink border border-transparent hover:border-foreground"
 									value={changeName}
-									onChange={(e) => setChangeName(e.target.value)}
+									onChange={(e) => setContractName(e.target.value)}
 									//trigger saving when I click enter
 									onKeyDown={(e) => {
 										if (e.key === "Enter") e.currentTarget.blur();
@@ -391,9 +397,7 @@ export function ContractViewer({
 								Upload this as the contract?
 							</h3>
 							<p className="mt-1.5 text-sm leading-relaxed text-plum-400">
-								<span className="font-medium text-ink">
-									{contractName}
-								</span>{" "}
+								<span className="font-medium text-ink">{contractName}</span>{" "}
 								will become the active contract between you and the client. The
 								client will be able to see this document right away.
 							</p>
@@ -431,7 +435,7 @@ export function ContractViewer({
 					document.body,
 				)}
 
-			{removeRequested &&
+			{/* {removeRequested &&
 				file &&
 				createPortal(
 					<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/70 backdrop-blur-sm px-4">
@@ -444,9 +448,7 @@ export function ContractViewer({
 							</h3>
 							<p className="mt-1.5 text-sm leading-relaxed text-plum-400">
 								This removes{" "}
-								<span className="font-medium text-ink">
-									{contractName}
-								</span>{" "}
+								<span className="font-medium text-ink">{contractName}</span>{" "}
 								from view. To confirm, type the file name below.
 							</p>
 
@@ -478,7 +480,20 @@ export function ContractViewer({
 						</div>
 					</div>,
 					document.body,
-				)}
+				)} */}
+			{deleteModalOpen && file && (
+				<ConfirmTextModal
+					open={deleteModalOpen}
+					onClose={() => setDeleteModalOpen(false)}
+					noParamFunc={confirmRemove}
+					contractDetails={contractDetails}
+					confirmPhrase={delete_client_phrase}
+					displayText={delete_client_text}
+					displayTitle="Confirm Contract Deletion"
+					buttonText="Delete Contract"
+					onSuccess={onSuccess}
+				/>
+			)}
 		</>
 	);
 }

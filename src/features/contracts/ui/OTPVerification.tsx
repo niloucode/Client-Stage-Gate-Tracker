@@ -12,7 +12,7 @@ const RESEND_COOLDOWN_SEC = 30;
 // Supabase Auth email OTP codes are 6 digits by default (the `{{ .Token }}`
 // placeholder in the email template). Keep in sync with the Supabase
 // project's OTP length setting.
-const CODE_LENGTH = 6;
+const CODE_LENGTH = 8;
 
 interface OTPVerificationProps {
 	/** Masked email of the signer, shown for confirmation. Derived from the
@@ -40,13 +40,27 @@ export function OTPVerification({
 	const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const supabase = createClient();
+	const verificationTriggered = useRef(false);
 	const { user } = useAuth();
+	const allFilled = digits.every((d) => d !== "");
 
 	useEffect(() => {
 		return () => {
 			if (timerRef.current) clearInterval(timerRef.current);
 		};
 	}, []);
+
+	// autoverify when all digits are filled
+	useEffect(() => {
+		if (!allFilled) {
+			verificationTriggered.current = false;
+			return;
+		}
+		if (!isVerifying && !verificationTriggered.current) {
+			verificationTriggered.current = true;
+			handleVerify();
+		}
+	}, [allFilled, isVerifying]);
 
 	const startCountdown = () => {
 		setCountdown(RESEND_COOLDOWN_SEC);
@@ -109,8 +123,6 @@ export function OTPVerification({
 		inputRefs.current[Math.min(pasted.length, CODE_LENGTH - 1)]?.focus();
 	};
 
-	const allFilled = digits.every((d) => d !== "");
-
 	const handleVerify = async () => {
 		if (!user) return;
 		if (!allFilled || isVerifying) return;
@@ -159,7 +171,7 @@ export function OTPVerification({
 				<button
 					type="button"
 					onClick={triggerOTP}
-					className="w-full rounded-lg bg-indigo-700 py-2.5 text-sm font-semibold text-neutral-surface transition-colors hover:bg-[#3730A3]"
+					className="w-full rounded-lg py-2.5 text-sm font-semibold text-neutral-surface transition-colors bg-[#510186] hover:bg-[#6f00b9]"
 				>
 					Request OTP
 				</button>
@@ -171,15 +183,13 @@ export function OTPVerification({
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex items-center justify-between">
-				<p className="text-xs font-medium text-ink">
-					Security Verification
-				</p>
+				<p className="text-xs font-medium text-ink">Security Verification</p>
 				<Button
 					type="button"
 					onClick={triggerOTP}
 					disabled={countdown > 0}
 					variant="default"
-					className="w-full"
+					className="w-fit bg-white hover:bg-white transition-colors text-[#510186] hover:text-[#6f00b9]"
 				>
 					{countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
 				</Button>
@@ -221,21 +231,8 @@ export function OTPVerification({
 				</div>
 			)}
 
-			<button
-				type="button"
-				onClick={handleVerify}
-				disabled={!allFilled || isVerifying}
-				className={`w-full rounded-lg py-2.5 text-sm font-semibold text-neutral-surface transition-colors ${
-					allFilled && !isVerifying
-						? "bg-indigo-700 hover:bg-[#3730A3]"
-						: "cursor-not-allowed bg-[#A8A3D0]"
-				}`}
-			>
-				{isVerifying ? "Verifying…" : "Sign Document"}
-			</button>
-
 			<p className="text-center text-[10px] leading-relaxed text-[#9C9AB0]">
-				By clicking &ldquo;Sign Document&rdquo;, you agree to the{" "}
+				By entering the code, you agree to the{" "}
 				<span className="cursor-pointer text-indigo-700 hover:underline">
 					Terms of Service
 				</span>{" "}

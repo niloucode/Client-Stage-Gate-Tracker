@@ -67,11 +67,10 @@ export function ExecuteAgreementCard({
 
 	return (
 		<Card className={className}>
-			<CardHeader>
+			<CardHeader className="gap-5">
 				<CardTitle>Execute Agreement</CardTitle>
-				<CardDescription>
-					Review the document and provide your signature to execute this
-					agreement.
+				<CardDescription className="text-[#464555]">
+					By signing this contract, you acknowledge that your electronic signature will be applied to the document and that you agree to its terms.
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
