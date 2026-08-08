@@ -2,7 +2,7 @@
 
 import React from "react";
 import {
-  CheckSquare,
+  Check,
   Workflow,
   Plus,
 } from "lucide-react";
@@ -93,14 +93,14 @@ function StageStep({
           selected
             ? "border-brand-600 bg-brand-600 text-white ring-4 ring-brand-100"
             : isApproved
-            ? "border-green-600 bg-green-600 text-white"
+            ? "border-brand-500 bg-brand-500 text-white"
             : isCurrent
             ? "border-brand-600 bg-brand-50 text-brand-600"
             : "border-warm-gray-200 bg-neutral-subtle text-neutral-border"
         }`}
       >
         {isApproved ? (
-          <CheckSquare className="h-5 w-5" />
+          <Check className="h-5 w-5" />
         ) : (
           <span>{stageNumber}</span>
         )}
@@ -151,7 +151,7 @@ export function StageSequence({
   return (
     <div className="w-full">
       {/* Header with Section Label and Add Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
         <SectionLabel icon={Workflow} label="Stage Sequence" />
         {showAddButton && (
           <button

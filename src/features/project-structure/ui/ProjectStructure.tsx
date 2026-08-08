@@ -8,7 +8,7 @@ import {
   BarChart2,
   LayoutDashboard,
   Calendar,
-  CheckSquare,
+  Check,
   ArrowRight,
   LayoutGrid,
   Eye,
@@ -29,18 +29,35 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  AvatarGroup,
+} from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 import { StageSequence, Stage } from "./StageSequence";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  initials?: string;
+  avatar?: string;
+}
+
 export interface TicketItem {
   id: string;
   code: string;
   title: string;
+  workflowName: string;
   daysLeft: number;
+  isExpiring?: boolean;
   isUrgent?: boolean;
+  assignees?: UserProfile[];
+  watcher?: UserProfile;
 }
 
 export interface StatItem {
@@ -50,9 +67,29 @@ export interface StatItem {
   icon: LucideIcon;
 }
 
+export interface StageDetailsInfo {
+  number: number;
+  name: string;
+  approved?: boolean;
+  description: string;
+  dateRange: string;
+}
+
+export interface PhaseInfo {
+  name: string;
+  description: string;
+  progress: number;
+}
+
 export interface ProjectStructureProps {
   projectId?: string;
   projectName?: string;
+  overallProgress?: number;
+  currentStage?: StageDetailsInfo;
+  currentPhase?: PhaseInfo;
+  stages?: Stage[];
+  stats?: StatItem[];
+  tickets?: TicketItem[];
   showAddStageButton?: boolean;
   onAddStage?: () => void;
   onViewContract?: () => void;
@@ -62,14 +99,55 @@ export interface ProjectStructureProps {
   onViewEntireStage?: () => void;
 }
 
-// ─── Encapsulated Mock Data ──────────────────────────────────────────────────
+// ─── Default Mock Data ───────────────────────────────────────────────────────
 
-const MOCK_DATA = {
+const DEFAULT_TICKETS: TicketItem[] = [
+  {
+    id: "1",
+    code: "DEV-102",
+    title: "Setup OAuth Middleware",
+    workflowName: "Auth Workflow",
+    daysLeft: 2,
+    isExpiring: true,
+    assignees: [
+      { id: "u1", name: "Alex Chen", initials: "AC" },
+      { id: "u2", name: "Sarah Jenkins", initials: "SJ" },
+      { id: "u3", name: "Michael Todd", initials: "MT" },
+    ],
+    watcher: { id: "u4", name: "David Kim", initials: "DK" },
+  },
+  {
+    id: "2",
+    code: "DEV-105",
+    title: "User Profile API Hooks",
+    workflowName: "API Module",
+    daysLeft: 4,
+    isExpiring: false,
+    assignees: [
+      { id: "u1", name: "Alex Chen", initials: "AC" },
+      { id: "u5", name: "Emma Watson", initials: "EW" },
+    ],
+    watcher: { id: "u2", name: "Sarah Jenkins", initials: "SJ" },
+  },
+  {
+    id: "3",
+    code: "DEV-108",
+    title: "Database Migration Plan",
+    workflowName: "Core Database",
+    daysLeft: 2,
+    isExpiring: true,
+    assignees: [{ id: "u3", name: "Michael Todd", initials: "MT" }],
+    watcher: { id: "u1", name: "Alex Chen", initials: "AC" },
+  },
+];
+
+const DEFAULT_MOCK_DATA = {
   projectName: "BRAND REDESIGN & WEBSITE",
   overallProgress: 85,
   currentStage: {
     number: 2,
     name: "Development & Architecture",
+    approved: true,
     description:
       "Transitioning from strategy to execution. This stage focuses on technical implementation of the brand redesign and CMS integration.",
     dateRange: "OCT 12, 2023 — NOV 30, 2023",
@@ -86,24 +164,18 @@ const MOCK_DATA = {
     { id: "4", stageNumber: 4, stageName: "Development", approved: false },
   ] as Stage[],
   stats: [
-    { label: "Phases Done", done: 2, total: 4, icon: CheckSquare },
+    { label: "Phases Done", done: 2, total: 4, icon: Check },
     { label: "Modules Done", done: 12, total: 15, icon: LayoutDashboard },
     { label: "Workflows Done", done: 8, total: 10, icon: Workflow },
     { label: "Tickets Done", done: 12, total: 15, icon: Ticket },
   ] as StatItem[],
-  tickets: [
-    { id: "1", code: "DEV-102", title: "Setup OAuth Middleware", daysLeft: 2, isUrgent: true },
-    { id: "2", code: "DEV-105", title: "User Profile API Hooks", daysLeft: 4, isUrgent: false },
-    { id: "3", code: "DEV-108", title: "Database Migration Plan", daysLeft: 2, isUrgent: true },
-    { id: "4", code: "DEV-112", title: "Sanity CMS Schema Setup", daysLeft: 5, isUrgent: false },
-  ] as TicketItem[],
 };
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
 function SectionLabel({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+    <div className="flex items-center gap-1.5 text-2xs font-semibold tracking-wider text-muted-foreground uppercase">
       <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <span>{label}</span>
     </div>
@@ -115,15 +187,15 @@ function ProjectOverviewCard({ projectName, progress }: { projectName: string; p
     <Card className="h-full border border-warm-gray-200 bg-neutral-surface shadow-xs">
       <CardHeader>
         <SectionLabel icon={LayoutDashboard} label="Project Overview" />
-        <CardTitle className="mt-1 text-2xl font-bold leading-tight text-charcoal sm:text-3xl">
+        <CardTitle className="mt-1 text-2xl font-bold tracking-tight text-charcoal sm:text-3xl">
           {projectName}
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-1 space-y-2">
         <SectionLabel icon={BarChart2} label="Overall Progress" />
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold leading-none text-foreground sm:text-4xl">{progress}</span>
-          <span className="text-xl font-semibold text-plum-700 sm:text-2xl">%</span>
+          <span className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{progress}</span>
+          <span className="text-xl font-semibold text-muted-foreground sm:text-2xl">%</span>
         </div>
         <div className="h-2.5 w-full overflow-hidden rounded-full border border-neutral-border/10 bg-neutral-subtle">
           <div
@@ -146,41 +218,38 @@ function ProjectAccessCard({
   onIssueReport?: () => void;
 }) {
   return (
-    <Card className="h-full border border-warm-gray-200 bg-neutral-surface shadow-xs">
-      <CardHeader>
-        <SectionLabel icon={Lock} label="Project Access" />
-      </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-2.5 p-5 pt-1 sm:grid-cols-3 lg:grid-cols-1">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onViewContract}
-          className="w-full justify-start gap-2 border-brand-600 text-brand-600 hover:bg-brand-50"
-        >
-          <Eye className="h-3.5 w-3.5 shrink-0" />
-          <span>View Contract</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onCredentialsRepo}
-          className="w-full justify-start gap-2 border-brand-500 bg-brand-500/10 text-brand-500 hover:bg-brand-500/20"
-        >
-          <Key className="h-3.5 w-3.5 shrink-0" />
-          <span>Credentials Repository</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onIssueReport}
-          className="w-full justify-start gap-2 border-red-500/30 bg-red-100 text-red-600 hover:bg-red-500/20"
-        >
-          <Bug className="h-3.5 w-3.5 shrink-0" />
-          <span>Issue Reporting</span>
-        </Button>
-      </CardContent>
-    </Card>
-  );
+  <Card className="h-full border border-warm-gray-200 bg-neutral-surface shadow-xs">
+    <CardHeader>
+      <SectionLabel icon={Lock} label="Project Access" />
+    </CardHeader>
+    <CardContent className="h-full grid grid-cols-1 gap-2.5 px-4 pt-1 sm:grid-cols-3 lg:grid-cols-1">
+      <Button
+        size="sm"
+        onClick={onViewContract}
+        className="w-full justify-start gap-2 border border-brand-500/30 bg-brand-100/70 text-xs font-semibold text-brand-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-brand-100 active:bg-brand-100 active:shadow-inner active:translate-y-px"
+      >
+        <Eye className="h-3.5 w-3.5 shrink-0" />
+        <span>View Contract</span>
+      </Button>
+      <Button
+        size="sm"
+        onClick={onCredentialsRepo}
+        className="w-full justify-start gap-2 border border-green-500/30 bg-green-100/70 text-xs font-semibold text-green-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-green-100 active:bg-green-100 active:shadow-inner active:translate-y-px"
+      >
+        <Key className="h-3.5 w-3.5 shrink-0" />
+        <span>Credentials Repository</span>
+      </Button>
+      <Button
+        size="sm"
+        onClick={onIssueReport}
+        className="w-full justify-start gap-2 border border-red-500/30 bg-red-100/70 text-xs font-semibold text-red-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-red-100 active:bg-red-100 active:shadow-inner active:translate-y-px"
+      >
+        <Bug className="h-3.5 w-3.5 shrink-0" />
+        <span>Issue Reporting</span>
+      </Button>
+    </CardContent>
+  </Card>
+);
 }
 
 function StatCard({ label, done, total, icon: Icon }: StatItem) {
@@ -191,9 +260,9 @@ function StatCard({ label, done, total, icon: Icon }: StatItem) {
           <Icon className="h-3.5 w-3.5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold text-neutral-border">{label}</p>
-          <p className="text-lg font-semibold leading-tight text-brand-600 sm:text-xl">
-            {done} <span className="text-xs font-normal text-neutral-border">/ {total}</span>
+          <p className="truncate text-2xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
+          <p className="text-xl font-bold leading-tight text-brand-600 sm:text-2xl">
+            {done} <span className="text-xs font-normal text-muted-foreground">/ {total}</span>
           </p>
         </div>
       </CardContent>
@@ -201,31 +270,65 @@ function StatCard({ label, done, total, icon: Icon }: StatItem) {
   );
 }
 
-function TicketCard({ code, title, daysLeft, isUrgent }: TicketItem) {
-  const urgent = isUrgent || daysLeft <= 2;
+function TicketCard({ title, workflowName, daysLeft, isExpiring, isUrgent, assignees = [], watcher }: TicketItem) {
+  const expiring = isExpiring ?? isUrgent ?? daysLeft <= 2;
 
   return (
     <Card size="sm" className="border border-warm-gray-200 bg-neutral-surface">
-      <CardContent className="flex flex-col justify-between gap-2 p-3 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <CardContent className="flex flex-col justify-between gap-3 p-3 lg:flex-row lg:items-center">
+        {/* Left: Workflow Badge & Ticket Title */}
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <Badge
             variant="outline"
-            className="shrink-0 rounded border-brand-600 bg-brand-600/5 px-2 py-0.5 text-xs font-bold text-brand-600"
+            className="shrink-0 gap-1 rounded border-neutral-border/60 bg-neutral-subtle/50 px-2 py-0.5 text-2xs font-semibold text-muted-foreground"
           >
-            REPLACE THIS TEXT WITH PARENT WORKFLOW
+            <Workflow className="h-3 w-3 shrink-0" />
+            <span>{workflowName}</span>
           </Badge>
-          <span className="truncate text-xs font-medium text-charcoal">{title}</span>
+          <span className="truncate text-xs font-medium text-charcoal sm:text-sm">{title}</span>
         </div>
+
+        {/* Center: Assignees & Watcher Profile */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Assignees Group */}
+          {assignees.length > 0 && (
+            <AvatarGroup>
+              {assignees.map((user) => (
+                <Avatar key={user.id} size="sm" title={user.name}>
+                  {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+                  <AvatarFallback className="bg-brand-600 text-neutral-surface font-semibold text-2xs">
+                    {user.initials}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+            </AvatarGroup>
+          )}
+
+          {/* Watcher with Eye Icon */}
+          {watcher && (
+            <div className="flex items-center gap-1.5 border-l border-warm-gray-200 pl-3">
+              <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Avatar size="sm" title={watcher.name}>
+                {watcher.avatar && <AvatarImage src={watcher.avatar} alt={watcher.name} />}
+                <AvatarFallback className="bg-brand-600 text-neutral-surface font-semibold text-2xs">
+                  {watcher.initials}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Expiring Tag */}
         <Badge
           variant="secondary"
           className={cn(
-            "self-start text-[11px] font-semibold sm:self-auto",
-            urgent
+            "self-start text-2xs font-semibold lg:self-auto",
+            expiring
               ? "border-red-500/30 bg-red-100 text-red-600 hover:bg-red-100"
-              : "border-neutral-border/20 bg-neutral-subtle text-neutral-border"
+              : "border-neutral-border/20 bg-neutral-subtle text-muted-foreground"
           )}
         >
-          {daysLeft} {daysLeft === 1 ? "DAY LEFT" : "DAYS LEFT"}
+          {daysLeft}d left
         </Badge>
       </CardContent>
     </Card>
@@ -259,13 +362,13 @@ function StageActionButton({
           <Icon className="h-4 w-4" />
         </div>
         <div>
-          <h4 className="text-xs font-bold">{title}</h4>
-          <p className={`text-[11px] ${isPrimary ? "text-plum-700" : "text-neutral-border"}`}>
+          <h4 className="text-xs font-bold sm:text-sm">{title}</h4>
+          <p className={`text-2xs ${isPrimary ? "text-plum-700" : "text-muted-foreground"}`}>
             {description}
           </p>
         </div>
       </div>
-      <ArrowRight className={`h-4 w-4 ${isPrimary ? "" : "text-neutral-border"}`} />
+      <ArrowRight className={`h-4 w-4 shrink-0 ${isPrimary ? "" : "text-muted-foreground"}`} />
     </Button>
   );
 }
@@ -274,7 +377,13 @@ function StageActionButton({
 
 export function ProjectStructure({
   projectId,
-  projectName = MOCK_DATA.projectName,
+  projectName = DEFAULT_MOCK_DATA.projectName,
+  overallProgress = DEFAULT_MOCK_DATA.overallProgress,
+  currentStage = DEFAULT_MOCK_DATA.currentStage,
+  currentPhase = DEFAULT_MOCK_DATA.currentPhase,
+  stages = DEFAULT_MOCK_DATA.stages,
+  stats = DEFAULT_MOCK_DATA.stats,
+  tickets = DEFAULT_TICKETS,
   showAddStageButton = true,
   onAddStage,
   onViewContract,
@@ -284,17 +393,15 @@ export function ProjectStructure({
   onViewEntireStage,
 }: ProjectStructureProps) {
   const [selectedStageId, setSelectedStageId] = useState<string | null>(
-    MOCK_DATA.stages.find((s) => s.current)?.id ?? null
+    stages.find((s) => s.current)?.id ?? null
   );
-
-  const { currentStage, currentPhase } = MOCK_DATA;
 
   return (
     <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
       {/* Navigation Link */}
       <Link
         href={projectId ? `/projects/${projectId}` : "/projects"}
-        className="group mt-1 flex items-center gap-2 text-xl font-bold leading-none text-gray-900 transition-colors hover:text-brand-600"
+        className="group mt-1 flex items-center gap-2 text-lg font-bold leading-none text-charcoal transition-colors hover:text-brand-600 sm:text-xl"
       >
         <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
         <span>Back to Projects</span>
@@ -303,12 +410,12 @@ export function ProjectStructure({
       {/* Grid Layout */}
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* Project Overview Card */}
-        <div className="lg:col-span-8">
-          <ProjectOverviewCard projectName={projectName} progress={MOCK_DATA.overallProgress} />
+        <div className="lg:col-span-10">
+          <ProjectOverviewCard projectName={projectName} progress={overallProgress} />
         </div>
 
         {/* Project Access Card */}
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-2">
           <ProjectAccessCard
             onViewContract={onViewContract}
             onCredentialsRepo={onCredentialsRepo}
@@ -317,10 +424,11 @@ export function ProjectStructure({
         </div>
 
         {/* Stage Sequence & Detailed Content */}
-        <Card className="overflow-hidden rounded-2xl border border-warm-gray-200 bg-neutral-surface shadow-xs lg:col-span-12">
-          <div className="border-b border-warm-gray-200 px-4 pb-3">
+        <Card className="overflow-hidden rounded-2xl border border-warm-gray-200 bg-neutral-surface shadow-xs lg:col-span-10">
+          {/* Stage Sequence Header */}
+          <div className="border-b border-warm-gray-200 px-4 pb-7">
             <StageSequence
-              stages={MOCK_DATA.stages}
+              stages={stages}
               selectedId={selectedStageId}
               onSelectStage={setSelectedStageId}
               onAddStage={onAddStage}
@@ -328,7 +436,8 @@ export function ProjectStructure({
             />
           </div>
 
-          <CardContent className="pt-2 px-5 pb-5 space-y-5">
+          {/* Stage Details & Stage Actions Section (Full Bleed Border-B) */}
+          <div className="border-b border-warm-gray-200 p-5 pb-9 space-y-5">
             <SectionLabel icon={Calendar} label="Stage Details" />
 
             {/* Stage Header Details */}
@@ -338,10 +447,17 @@ export function ProjectStructure({
                   {currentStage.number}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-xl font-semibold leading-tight text-charcoal sm:text-2xl">
-                    {currentStage.name}
-                  </h2>
-                  <p className="mt-1 text-xs leading-relaxed text-plum-700 sm:text-sm">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
+                      {currentStage.name}
+                    </h2>
+                    {currentStage.approved && (
+                      <Badge className="border border-green-600/30 bg-green-100 text-green-700 font-bold uppercase text-2xs px-2 py-0.5 rounded-md hover:bg-green-100">
+                        APPROVED
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
                     {currentStage.description}
                   </p>
                 </div>
@@ -357,56 +473,66 @@ export function ProjectStructure({
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {MOCK_DATA.stats.map((stat) => (
+              {stats.map((stat) => (
                 <StatCard key={stat.label} {...stat} />
               ))}
             </div>
 
-            {/* Current Phase & Tickets */}
+            {/* Stage Actions */}
+            <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-2">
+              <StageActionButton
+                title="Preview Stage"
+                description="Explore full stage modules & workflow hierarchy"
+                icon={Workflow}
+                onClick={onViewEntireStage}
+                isPrimary
+              />
+              <StageActionButton
+                title="Preview Gate"
+                description="Review mandatory compliance milestones"
+                icon={LayoutGrid}
+                onClick={onViewGateOverview}
+              />
+            </div>
+          </div>
+
+          {/* Current Phase & Expiring Tickets Section */}
+          <CardContent className="p-5 space-y-5">
             <Card className="border border-warm-gray-200 bg-neutral-subtle/50">
-              <CardHeader className="p-4 pb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <CardTitle className="text-base font-semibold text-charcoal sm:text-lg">
+                  <CardTitle className="text-base font-bold text-charcoal sm:text-lg">
                     {currentPhase.name}
                   </CardTitle>
-                  <CardDescription className="mt-0.5 text-xs text-plum-700">
+                  <CardDescription className="mt-0.5 text-xs text-muted-foreground">
                     {currentPhase.description}
                   </CardDescription>
                 </div>
-                <CardAction className="self-start sm:self-auto sm:text-right">
-                  <p className="text-[10px] font-semibold text-brand-600 uppercase">Progress</p>
-                  <p className="text-lg font-semibold text-brand-600 sm:text-xl">{currentPhase.progress}%</p>
+
+                {/* Phase Progress Bar & % */}
+                <CardAction className="self-start sm:self-auto sm:text-right min-w-[120px]">
+                  <p className="text-2xs font-semibold tracking-wider text-muted-foreground uppercase">Progress</p>
+                  <p className="text-xl font-bold text-brand-600 sm:text-2xl">{currentPhase.progress}%</p>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-neutral-subtle">
+                    <div
+                      className="h-full rounded-full bg-brand-600 transition-all duration-500"
+                      style={{ width: `${currentPhase.progress}%` }}
+                    />
+                  </div>
                 </CardAction>
               </CardHeader>
 
               <CardContent className="p-4 pt-1 space-y-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-charcoal">
-                  URGENT TICKETS
+                <p className="text-2xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  EXPIRING TICKETS
                 </p>
                 <div className="grid grid-cols-1 gap-2.5">
-                  {MOCK_DATA.tickets.map((ticket) => (
+                  {tickets.map((ticket) => (
                     <TicketCard key={ticket.id} {...ticket} />
                   ))}
                 </div>
               </CardContent>
             </Card>
-
-            {/* Stage Actions */}
-            <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-2">
-				<StageActionButton
-					title="Preview Stage"
-					description="Explore full stage modules & workflow hierarchy"
-					icon={Workflow}
-					onClick={onViewEntireStage}
-					isPrimary
-				/>
-				<StageActionButton
-					title="Preview Gate"
-					description="Review mandatory compliance milestones"
-					icon={LayoutGrid}
-					onClick={onViewGateOverview}
-				/>
-			</div>
           </CardContent>
         </Card>
       </div>

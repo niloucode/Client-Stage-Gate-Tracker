@@ -33,24 +33,24 @@ export const navItems = [
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
-	<div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
-		<div className="w-8 h-8 flex-shrink-0 bg-gray-900 rounded-lg flex items-center justify-center text-neutral-surface">
-			<Boxes className="w-5 h-5" />
-		</div>
+	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-[65px]">
+		<div className="flex items-center gap-3 min-w-0">
+			<div className="w-8 h-8 flex-shrink-0 bg-gray-900 rounded-lg flex items-center justify-center text-neutral-surface">
+				<Boxes className="w-5 h-5" />
+			</div>
 
-		<div
-			className={`overflow-hidden transition-opacity duration-150 whitespace-nowrap ${
-				collapsed
-					? "opacity-0 delay-0" // disappears immediately on collapse
-					: "opacity-100 delay-150" // fades in only after 150ms on expand
-			}`}
-		>
-			<p className="font-sans text-sm font-semibold text-gray-900 leading-tight">
-				Acesoft
-			</p>
-			<p className="font-mono text-[10px] text-gray-400 tracking-widest uppercase">
-				Studio Portal
-			</p>
+			<div
+				className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${
+					collapsed ? "max-w-0 opacity-0" : "max-w-[160px] opacity-100"
+				}`}
+			>
+				<p className="font-sans text-sm font-semibold text-gray-900 leading-tight">
+					Acesoft
+				</p>
+				<p className="font-mono text-[10px] text-gray-400 tracking-widest uppercase">
+					Studio Portal
+				</p>
+			</div>
 		</div>
 	</div>
 );
@@ -72,6 +72,7 @@ export const SidebarNavItem = ({
 	return (
 		<button
 			onClick={() => onClick(item.label)}
+			title={collapsed ? item.label : undefined}
 			className={`
         w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
         transition-colors duration-150 group font-sans
@@ -82,45 +83,68 @@ export const SidebarNavItem = ({
 				}
       `}
 		>
-			<Icon
-				className={`w-4 h-4 flex-shrink-0 transition-colors ${
-					isActive ? "text-gray-900" : "text-gray-400 group-hover:text-gray-600"
+			<span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+				<Icon
+					className={`w-4 h-4 transition-colors ${
+						isActive ? "text-gray-900" : "text-gray-400 group-hover:text-gray-600"
+					}`}
+				/>
+			</span>
+			<span
+				className={`text-sm font-medium truncate leading-4 overflow-hidden transition-all duration-300 ease-in-out ${
+					collapsed ? "max-w-0 opacity-0" : "max-w-[140px] opacity-100"
 				}`}
-			/>
-			{!collapsed && (
-				<span className="text-sm font-medium truncate leading-4">
-					{item.label}
-				</span>
-			)}
+			>
+				{item.label}
+			</span>
 		</button>
 	);
 };
 
 export const SidebarFooter = ({
 	collapsed,
-	onCollapse,
+	onToggle,
 }: {
 	collapsed?: boolean;
-	onCollapse: () => void;
+	onToggle: () => void;
 }) => (
-	<div className="px-2 py-4 border-t border-gray-100 flex items-center justify-between">
+	<div className="px-2 py-3 border-t border-gray-100 space-y-0.5 flex-shrink-0">
 		<button
-			className={`flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150 font-sans ${
-				collapsed ? "w-full justify-center" : ""
-			}`}
+			title={collapsed ? "Settings" : undefined}
+			className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150 font-sans"
 		>
-			<Settings className="w-4 h-4 flex-shrink-0" />
-			{!collapsed && <span className="text-sm font-medium">Settings</span>}
-		</button>
-		{!collapsed && (
-			<button
-				onClick={onCollapse}
-				className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-				aria-label="Collapse sidebar"
+			<span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+				<Settings className="w-4 h-4" />
+			</span>
+			<span
+				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
+					collapsed ? "max-w-0 opacity-0" : "max-w-[140px] opacity-100"
+				}`}
 			>
-				<ChevronLeft className="w-4 h-4" />
-			</button>
-		)}
+				Settings
+			</span>
+		</button>
+
+		<button
+			onClick={onToggle}
+			title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+			className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150 font-sans"
+		>
+			<span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+				{collapsed ? (
+					<ChevronRight className="w-4 h-4" />
+				) : (
+					<ChevronLeft className="w-4 h-4" />
+				)}
+			</span>
+			<span
+				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
+					collapsed ? "max-w-0 opacity-0" : "max-w-[140px] opacity-100"
+				}`}
+			>
+				Collapse
+			</span>
+		</button>
 	</div>
 );
 
@@ -134,19 +158,19 @@ export default function SidebarLayout({
 
 	return (
 		<div
-			className={`${hanken.variable} ${jetbrains.variable} flex min-h-screen w-full`}
+			className={`${hanken.variable} ${jetbrains.variable} flex h-screen w-full overflow-hidden`}
 		>
 			{/* Sidebar */}
 			<div
 				className={`
-          relative flex flex-col bg-neutral-surface border-r border-gray-200
-          transition-all duration-300 ease-in-out
+          flex flex-col h-full bg-neutral-surface border-r border-gray-200
+          transition-all duration-300 ease-in-out overflow-hidden
           ${collapsed ? "w-16" : "w-52"}
         `}
 			>
 				<SidebarLogo collapsed={collapsed} />
 
-				<nav className="flex-1 px-2 py-4 space-y-0.5">
+				<nav className="flex-1 px-2 py-4 space-y-0.5 overflow-hidden">
 					{navItems.map((item) => (
 						<SidebarNavItem
 							key={item.label}
@@ -160,36 +184,14 @@ export default function SidebarLayout({
 
 				<SidebarFooter
 					collapsed={collapsed}
-					onCollapse={() => setCollapsed(true)}
+					onToggle={() => setCollapsed(!collapsed)}
 				/>
-
-				{/* Expand toggle when collapsed */}
-				{collapsed && (
-					<button
-						onClick={() => setCollapsed(false)}
-						className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-neutral-surface border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 shadow-sm"
-						aria-label="Expand sidebar"
-					>
-						<ChevronRight className="w-3.5 h-3.5" />
-					</button>
-				)}
-
-				{/* Collapse toggle when expanded */}
-				{!collapsed && (
-					<button
-						onClick={() => setCollapsed(true)}
-						className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 shadow-sm"
-						aria-label="Collapse sidebar"
-					>
-						<ChevronLeft className="w-3.5 h-3.5" />
-					</button>
-				)}
 			</div>
 
 			{/* Main Page content */}
-			<div className="flex-1 overflow-hidden">
+			<div className="flex-1 h-full overflow-y-auto">
 				{children ?? (
-					<div>
+					<div className="p-6">
 						<h1 className="text-xl font-semibold text-gray-800">{active}</h1>
 						<p className="text-sm text-gray-400 mt-1">
 							Page content goes here.
