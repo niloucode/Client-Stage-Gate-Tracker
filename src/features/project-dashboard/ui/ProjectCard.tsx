@@ -55,7 +55,7 @@ export function ProjectCard({
 		<div className="bg-neutral-surface cursor-pointer rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none">
 			{/* Project Head: Name left, Status badge top-right */}
 			<div className="flex items-start justify-between gap-2 mb-3">
-				<h3 className="text-m font-semibold text-[#0F172A] max-w-[80%] break-all line-clamp-2">
+				<h3 className="text-m font-semibold text-slate-900 max-w-[80%] break-all line-clamp-2">
 					{project.name}
 				</h3>
 				<span
@@ -69,7 +69,7 @@ export function ProjectCard({
 			{/* Description — always shown, clamped to 2 lines */}
 			<div className="mb-3 h-[2.8rem]">
 				<p
-					className={`text-xs break-words ${project.description ? "text-[#475569]" : "text-[#94A3B8]"}`}
+					className={`text-xs break-words ${project.description ? "text-slate-600" : "text-slate-400"}`}
 					style={{
 						display: "-webkit-box",
 						WebkitLineClamp: 3,
@@ -99,7 +99,7 @@ export function ProjectCard({
 								{ project.start_date ? formatDateTime(project.start_date) :'N/A' }
 							</span>
 							
-							<span className="font-weight-100 text-[#94A3B8] flex-shrink-0">—</span>
+							<span className="font-weight-100 text-slate-400 flex-shrink-0">—</span>
 							
 							<Calendar size={12}/>
 							
@@ -116,7 +116,7 @@ export function ProjectCard({
 				{/* Menu Ellipsis — bottom right */}
 				<div className="flex-shrink-0 ml-2">
 					<DropdownMenu>
-						<DropdownMenuTrigger className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#475569] hover:bg-[#F1F5F9] transition-colors data-[popup-open]:bg-[#F1F5F9]">
+						<DropdownMenuTrigger className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-[popup-open]:bg-slate-100">
 							<EllipsisVertical size={16}/>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-56">

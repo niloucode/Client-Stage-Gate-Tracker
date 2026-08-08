@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
 	DndContext,
@@ -54,6 +54,9 @@ import { useAuth } from "@/features/auth";
  *
  * @param {Object} props
  * @param {string} props.workflow_id - Unique container scope identifying the target board sprint layout.
+ * @param {string} [props.workflowName] - Display name for the board header (defaults to "Current Sprint").
+ * @param {string} [props.projectId] - Parent project id, used for auth and project-scoped lookups.
+ * @param {string} [props.stageId] - Parent stage id, used for tag scope resolution.
  * @returns {JSX.Element} The fully rendered sprint board panel or a loading skeleton.
  */
 export default function TicketBoard({
@@ -88,6 +91,18 @@ export default function TicketBoard({
 
 	const { data: tickets = [], isLoading } = useTicketsByWorkflow(workflow_id);
 
+	// Group once per tickets change — three .filter() passes over the full
+	// list on every render become one pass.
+	const ticketsByStatus = useMemo(() => {
+		const map = new Map<Ticket["status"], Ticket[]>()
+		for (const t of tickets) {
+			const list = map.get(t.status) ?? []
+			list.push(t)
+			map.set(t.status, list)
+		}
+		return map
+	}, [tickets])
+
 	const { data: tags = [] } = useTags();
 
 	const createTicketMutation = useCreateTicket();
@@ -105,7 +120,7 @@ export default function TicketBoard({
 	 * Intercepts selection events on individual ticket layout targets to open the view/edit drawer.
 	 * Includes a guard condition checking the mutable dragging reference to avoid firing
 	 * accidental element selections at the immediate termination of item canvas shifts.
-	 * * @param {Ticket} ticket - The specific ticket entity being targeted for inspection.
+	 * @param {Ticket} ticket - The specific ticket entity being targeted for inspection.
 	 * @returns {void}
 	 */
 	function handleSelectTicket(ticket: Ticket) {
@@ -207,7 +222,7 @@ export default function TicketBoard({
 	 * Captures active pointer initialization signals emitted from active dnd-kit draggable component bounds.
 	 * Sets the layout state values with the current target card string and flags tracking parameters
 	 * to ensure background selections remain blocked during the motion phase.
-	 * * @param {DragStartEvent} event - Native dnd-kit synthetic payload context tracking mouse/touch triggers.
+	 * @param {DragStartEvent} event - Native dnd-kit synthetic payload context tracking mouse/touch triggers.
 	 * @returns {void}
 	 */
 	function handleDragStart(event: DragStartEvent) {
@@ -254,7 +269,7 @@ export default function TicketBoard({
 
 	return (
 		<>
-			<div className="flex items-center justify-between mb-5 shrink-0">
+			<div className="flex items-center justify-between shrink-0">
 				<div className="flex items-center gap-2">
 					{stageId && projectId ? (
 						<Link
@@ -294,13 +309,13 @@ export default function TicketBoard({
 				onDragStart={handleDragStart}
 				onDragEnd={handleDragEnd}
 			>
-				<div className="w-full flex-1 overflow-x-auto pb-6">
+				<div className="mt-15 w-full flex-1 overflow-x-auto pb-6">
 					<div className="grid grid-cols-3 gap-10 flex-1 w-full min-h-0 max-h-[80vh] min-w-[30vw]">
 						{COLUMNS.map((column) => (
 							<TicketColumn
 								key={column.id}
 								column={column}
-								tickets={tickets.filter((t) => t.status === column.id)}
+								tickets={ticketsByStatus.get(column.id) ?? []}
 								onSelectTicket={handleSelectTicket}
 								onDeleteTicket={handleDeleteTicket}
 							/>

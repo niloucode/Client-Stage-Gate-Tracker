@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { Module } from "../../types";
 import { Label } from "@/components/ui/label";
 import { moduleCreateSchema } from "@/shared/schemas";
+import { getFieldErrors } from "@/shared/lib/zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Trash2, Plus } from "lucide-react"
@@ -53,11 +54,7 @@ export function EditModule({
 	const handleSubmit = () => {
 		const result = moduleCreateSchema.safeParse(formData);
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: FieldErrors = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key as keyof FieldErrors] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
 			return;
 		}

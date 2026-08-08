@@ -23,7 +23,7 @@ interface Client {
 	billingAddress: string;
 	companyCode: string;
 	tin: string;
-	profiles?: { profile_id: string; first_name: string; last_name: string; email: string; phone: string }[];
+	profiles?: { profile_id: string; first_name: string; last_name: string; email: string; phone: string | null }[];
 }
 
 const PLACEHOLDER_CLIENTS: Client[] = Array.from({ length: 10 }, (_, i) => ({

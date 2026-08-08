@@ -5,16 +5,19 @@ import SignatoriesCard, {
 	type Signatory,
 } from "@/features/contracts/ui/SignatoriesCard";
 import ExecuteAgreementCard from "@/features/contracts/ui/ExecuteAgreementCard";
-import { ExecutedBanner } from "@/features/contracts/ui/ExecutedBanner";
+// import { ExecutedBanner } from "@/features/contracts/ui/ExecutedBanner";
 import { useContract } from "@/entities/contract";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/features/auth";
+import { getProfilesByClientId } from "@/entities/profile";
 import {
 	getClientByProjectId,
 	getProjectOwnerByProjectId,
 	getRoleAssignmentByProfileProjectId,
 } from "@/entities/roleAssignment";
+import { getProjectById } from "@/entities/project";
+import { ClientOption } from "@/features/contracts/ui/ClientsDropdown";
 
 //UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 // export default function ContractPage({
@@ -26,13 +29,18 @@ import {
 export default function ContractPage() {
 	const [signatories, setSignatories] = useState<Signatory[]>([]);
 	const [allSigned, setAllSigned] = useState(false);
-	const [canSign, setCanSign] = useState(false);
+	const [canSign, setCanSign] = useState<boolean | null>(null);
+	const [hasClient, setHasClient] = useState(false);
+	const [clients, setClients] = useState<ClientOption[] | undefined>(undefined);
+	const [clientSigned, setClientSigned] = useState(false);
 	const [userRole, setUserRole] = useState<"Client Viewer" | "Project Owner">(
 		"Client Viewer",
 	);
 	const searchParams = useSearchParams();
 	const { user } = useAuth();
-	const [executedDate, setExecutedDate] = useState<Date | null>(null);
+	// const [executedDate, setExecutedDate] = useState<Date | null>(null);
+	const GOOGLE_FONTS_HREF =
+		"https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap";
 
 	//UNCOMMENT THIS WHEN GOING BACK TO REGULAR
 	//const {projectId} = params
@@ -52,26 +60,27 @@ export default function ContractPage() {
 	useEffect(() => {
 		if (!contract || !projectId) return;
 		get_signatories();
-		console.log(signatories);
+		get_clients();
 	}, [
+		user?.profile_id,
 		contract?.contract_id,
 		contract?.client_signed_at,
 		contract?.project_owner_signed_at,
 	]); // runs when contract first loads or when new signing happens
 
-	useEffect(() => {
-		if (allSigned && contract) {
-			const client_date =
-				contract.client_signed_at || new Date(-8640000000000000);
-			const project_owner_date =
-				contract.project_owner_signed_at || new Date(-8640000000000000);
+	// useEffect(() => {
+	// 	if (allSigned && contract) {
+	// 		const client_date =
+	// 			contract.client_signed_at || new Date(-8640000000000000);
+	// 		const project_owner_date =
+	// 			contract.project_owner_signed_at || new Date(-8640000000000000);
 
-			const latest = new Date(
-				Math.max(client_date.getTime(), project_owner_date.getTime()),
-			);
-			setExecutedDate(latest);
-		}
-	}, [allSigned]);
+	// 		const latest = new Date(
+	// 			Math.max(client_date.getTime(), project_owner_date.getTime()),
+	// 		);
+	// 		setExecutedDate(latest);
+	// 	}
+	// }, [allSigned]);
 
 	useEffect(() => {
 		if (!user) return;
@@ -115,23 +124,6 @@ export default function ContractPage() {
 			const temp: Signatory[] = [];
 			let localCanSign = false;
 
-			// --- CLIENT SIGNATORY ---
-			if (contract?.client_id) {
-				const clientAssignment = await getClientByProjectId(projectId);
-
-				if (clientAssignment?.Users) {
-					const clientSigned = !!contract.client_signed_at;
-					localCanSign = user?.profile_id == clientAssignment.Users.profile_id;
-					temp.push({
-						id: "1",
-						name: `${clientAssignment.Users.first_name} ${clientAssignment.Users.last_name}`,
-						role: "Client Representative",
-						status: clientSigned ? "signed" : "pending",
-						timestamp: contract.client_signed_at?.toDateString(),
-					});
-				}
-			}
-
 			// --- PROJECT OWNER SIGNATORY ---
 			const ownerAssignment = await getProjectOwnerByProjectId(projectId);
 
@@ -139,29 +131,78 @@ export default function ContractPage() {
 				const ownerProfile = ownerAssignment.Users;
 				const ownerSigned = !!contract?.project_owner_signed_at;
 
-				if (!localCanSign) {
-					localCanSign = user?.profile_id == ownerProfile.profile_id;
-				}
+				localCanSign = user?.profile_id == ownerProfile.profile_id;
 				temp.push({
-					id: "2",
+					id: ownerProfile.profile_id,
+					email: ownerProfile.email,
 					name: `${ownerProfile.first_name} ${ownerProfile.last_name}`,
+					signed_name: contract?.project_owner_signature ?? null,
 					role: "Project Owner",
 					status: ownerSigned ? "signed" : "pending",
 					timestamp: contract?.project_owner_signed_at?.toDateString(),
 				});
 			}
 
+			// --- CLIENT SIGNATORY ---
+			if (contract?.client_id) {
+				const clientAssignment = await getClientByProjectId(projectId);
+
+				if (clientAssignment?.Users) {
+					const clientSigned = !!contract.client_signed_at;
+					setHasClient(true);
+					setClientSigned(clientSigned);
+					if (!localCanSign) {
+						localCanSign =
+							user?.profile_id == clientAssignment.Users.profile_id;
+					}
+
+					temp.push({
+						id: clientAssignment.Users.profile_id,
+						email: clientAssignment.Users.email,
+						name: `${clientAssignment.Users.first_name} ${clientAssignment.Users.last_name}`,
+						signed_name: contract?.client_signature ?? null,
+						role: "Client",
+						status: clientSigned ? "signed" : "pending",
+						timestamp: contract.client_signed_at?.toDateString(),
+					});
+				} else setHasClient(false);
+			} else setHasClient(false);
+
 			setSignatories(temp);
 
-			setCanSign(localCanSign);
 			//check if all signatories have signed
 			const check =
 				temp.length > 0 &&
 				temp.every((s) => s.status.trim() == "signed".trim());
 			setAllSigned(check);
+			setCanSign(localCanSign);
 		} catch (err) {
 			console.error("Failed to load signatories:", err);
+			setCanSign(false);
 		}
+	};
+
+	const get_client_state = () => {
+		if (!hasClient) return "no_client";
+		else if (hasClient && !clientSigned) return "client_decided";
+		else return "client_signed";
+	};
+
+	const get_clients = async () => {
+		if (!clientId) return;
+
+		const result = await getProfilesByClientId(clientId);
+		if (result.data) {
+			const temp = [];
+			for (let i = 0; i < result.data?.length; i++) {
+				temp.push({
+					id: result.data[i].profile_id,
+					name: result.data[i].first_name + " " + result.data[i].last_name,
+					email: result.data[i].email,
+				});
+			}
+			setClients(temp);
+		} else setClients(undefined);
 	};
 
 	if (isLoading) {
@@ -192,47 +233,62 @@ export default function ContractPage() {
 
 	return (
 		<>
+			<link rel="stylesheet" href={GOOGLE_FONTS_HREF} />
 			<div className="mx-auto max-w-6xl">
-				{allSigned && (
+				{/* {allSigned && (
 					<ExecutedBanner
 						executedAt={executedDate || undefined}
 						className="mb-6"
 					/>
-				)}
+				)} */}
 
 				<header className="mb-6">
-					<h1 className="text-xl font-semibold text-[#181724]">
+					<h1 className="text-xl font-semibold text-ink">
 						{contract?.contract_name ?? "Untitled contract"}{" "}
 						{/* INPUT contract_name HERE */}
 					</h1>
-					<p className="text-sm text-[#6E6B82]">
+					<p className="text-sm text-plum-400">
 						Review the document and complete signing below.
 					</p>
 				</header>
 
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
 					<ContractViewer
+						contractDetails={{
+							id: projectId,
+							name: contract?.contract_name ?? "Untitled contract",
+						}}
 						className="h-[80vh] min-h-[600px] py-0 bg-[#F9F9F7]"
 						clientId={clientId}
 						projectId={projectId}
 						profileId={user?.profile_id ?? null}
 						initialFilePath={contract?.file_path ?? null}
 						initialContractName={contract?.contract_name ?? null}
+						onSuccess={() => {}}
 					/>
 
 					<div className="flex flex-col gap-6">
 						<SignatoriesCard
-							className={"px-5 py-10 gap-10"}
+							className={"px-5 py-10 gap-7"}
 							signatories={signatories}
+							clientState={get_client_state()}
+							availableClients={clients}
+							contractDetails={{
+								id: projectId,
+								name: contract?.contract_name ?? "Untitled contract",
+							}}
+							onSuccess={() => {
+								get_signatories();
+								get_clients();
+							}}
 						/>
-						{!userSigned && contract && canSign && (
+						{!userSigned && contract && canSign === true && (
 							<>
 								<ExecuteAgreementCard
-									maskedEmail={
-										user ? get_masked_email(user.email) : "a******@gmail.com"
-									}
+									maskedEmail={user ? get_masked_email(user.email) : undefined}
 									projectId={projectId}
 									role={userRole ?? "Client Viewer"}
+									className="px-5 py-10 gap-10"
 								/>
 							</>
 						)}

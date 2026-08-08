@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { notFound } from 'next/navigation'
 import { Hanken_Grotesk } from 'next/font/google'
 //import TicketsShowcase from './TicketsShowcase'
 
@@ -27,6 +28,9 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 export default function UIPage() {
+  // Dev-only component showcase — never served in production.
+  if (process.env.NODE_ENV === "production") notFound();
+
   return (
     <div className={`${hanken.className} min-h-screen bg-gray-50 px-12 py-14`}>
       <div className="max-w-3xl mx-auto">
@@ -36,6 +40,9 @@ export default function UIPage() {
           <h1 className="text-2xl font-semibold text-gray-900">Component Library</h1>
           <p className="text-sm text-gray-400 mt-1">
             All reusable UI primitives — <code className="bg-gray-100 px-1 rounded">src/components/ui/</code>
+          </p>
+          <p className="mt-2 text-sm text-indigo-600">
+            <a href="/dev/views" className="hover:underline">→ Planned views hub</a>
           </p>
         </div>
 

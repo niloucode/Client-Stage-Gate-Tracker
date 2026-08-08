@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
+import { getFieldErrors } from "@/shared/lib/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProfileType } from "@/shared/types";
 import { createClient } from "@/lib/supabase/client";
@@ -82,11 +83,7 @@ export function StaffSignupForm() {
 		});
 
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: Record<string, string> = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
 			return;
 		}
@@ -132,7 +129,6 @@ export function StaffSignupForm() {
 			setError(
 				"Account created! Check your email to confirm your account before logging in.",
 			);
-			console.log(data);
 			setLoading(false);
 		}
 	};

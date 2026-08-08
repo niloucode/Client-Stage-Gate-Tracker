@@ -1,21 +1,17 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
-import { cascadeSoftDeleteWorkflow } from "../workflow/workflowActions";
-
-export type EntityFilterStatus = "active" | "deleted" | "all";
+import {
+	assertProjectMember,
+	resolveModuleProject,
+	resolvePhaseProject,
+} from "@/lib/auth/projectAccess";
+import type { EntityFilterStatus } from "@/entities/types";
 
 /**
  * Creates a new module and maps it to its parent phase.
  *
  * @param {string} phaseId - The UUID of the parent phase this module belongs to.
- * @param {string} moduleName - The display name of the module (e.g., "Module 1", "Authentication").
- * @param {string | null} [description] - (Optional) A brief description of the module's purpose.
- * @param {Date | null} [startDate] - (Optional) The scheduled start date of the module.
- * @param {Date | null} [endDate] - (Optional) The scheduled end date of the module.
- * @returns {Promise<{success: boolean, data?: any, error?: string}>}
- * Returns `success: true` and the newly created module object if successful.
- * Returns `success: false` and an error message if the creation fails.
  */
 export async function createModule(
 	phaseId: string,
@@ -24,13 +20,18 @@ export async function createModule(
 	endDate?: Date | null,
 	deadlineDate?: Date | null,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolvePhaseProject(phaseId);
+	if (!projectId) return { success: false, error: "Phase not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const newModule = await prisma.modules.create({
 			data: {
 				name: moduleName,
-				start_date: startDate,
-				finish_date: endDate,
-				deadline_date: deadlineDate,
+				plan_start_at: startDate ?? new Date(),
+				actual_end_at: endDate,
+				plan_end_at: deadlineDate ?? new Date(),
 				phase_id: phaseId,
 			},
 		});
@@ -114,7 +115,7 @@ export async function getWorkflowsByModuleId(
 				is_deleted: isDeletedFilter,
 			},
 			orderBy: {
-				start_date: "asc",
+				plan_start_at: "asc",
 			},
 		});
 
@@ -144,6 +145,11 @@ export async function updateModule(
 	endDate?: Date | null,
 	deadlineDate?: Date | null,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveModuleProject(moduleId);
+	if (!projectId) return { success: false, error: "Module not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const updatedModule = await prisma.modules.update({
 			where: {
@@ -151,9 +157,9 @@ export async function updateModule(
 			},
 			data: {
 				name: moduleName,
-				start_date: startDate,
-				finish_date: endDate,
-				deadline_date: deadlineDate,
+				plan_start_at: startDate ?? undefined,
+				actual_end_at: endDate,
+				plan_end_at: deadlineDate ?? undefined,
 			},
 		});
 		return { success: true, data: updatedModule };
@@ -174,6 +180,11 @@ export async function updateModule(
  * Returns `success: false` and an error message if the module contains workflows or the query fails.
  */
 export async function softDeleteModule(moduleId: string) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveModuleProject(moduleId);
+	if (!projectId) return { success: false, error: "Module not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const attachedWorkflowsCount = await prisma.workflows.count({
 			where: {
@@ -222,19 +233,43 @@ export async function cascadeSoftDeleteModule(
 	moduleId: string,
 	txClient?: Prisma.TransactionClient,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveModuleProject(moduleId);
+	if (!projectId) return { success: false, error: "Module not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
 		await tx.modules.update({
 			where: { module_id: moduleId },
 			data: { is_deleted: true, deleted_at: new Date() },
 		});
 
+		// Batch the whole subtree: one updateMany per level instead of
+		// per-child cascade calls.
 		const childWorkflows = await tx.workflows.findMany({
 			where: { module_id: moduleId, is_deleted: false },
 			select: { workflow_id: true },
 		});
+		const workflowIds = childWorkflows.map((w) => w.workflow_id);
 
-		for (const workflow of childWorkflows) {
-			await cascadeSoftDeleteWorkflow(workflow.workflow_id, tx);
+		if (workflowIds.length > 0) {
+			await tx.workflows.updateMany({
+				where: { workflow_id: { in: workflowIds } },
+				data: { is_deleted: true, deleted_at: new Date() },
+			});
+
+			const childTickets = await tx.tickets.findMany({
+				where: { workflow_id: { in: workflowIds }, is_deleted: false },
+				select: { ticket_id: true },
+			});
+			const ticketIds = childTickets.map((t) => t.ticket_id);
+
+			if (ticketIds.length > 0) {
+				await tx.tickets.updateMany({
+					where: { ticket_id: { in: ticketIds } },
+					data: { is_deleted: true, deleted_at: new Date() },
+				});
+			}
 		}
 	};
 

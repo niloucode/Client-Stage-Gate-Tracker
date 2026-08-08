@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
 import { clientSignupSchema, type ClientSignupInput } from "@/shared/schemas";
+import { getFieldErrors } from "@/shared/lib/zod";
 import { createClient } from "@/lib/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { profileKeys } from "@/shared/query/keys";
@@ -90,11 +91,7 @@ export function ClientSignupForm() {
 
 		const result = clientSignupSchema.safeParse(fields);
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: Errors = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key as FieldKey] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setErrors(mapped);
 			return;
 		}
@@ -140,12 +137,13 @@ export function ClientSignupForm() {
 				deleted_at: null,
 			};
 
-			client = await clientCreate(newClient);
-			if (!client) {
-				setApiError("Unable to save company data.");
+			const created = await clientCreate(newClient);
+			if (!created.success) {
+				setApiError(created.error ?? "Unable to save company data.");
 				setLoading(false);
 				return;
 			}
+			client = created.data;
 		}
 
 		// Create profile and sign up

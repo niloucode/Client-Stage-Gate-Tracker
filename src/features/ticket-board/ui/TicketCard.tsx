@@ -40,7 +40,7 @@ export function TicketCardContent({
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 	const today = new Date()
 	today.setHours(0, 0, 0, 0)
-	const isOverdue = ticket.deadline_date ? ticket.deadline_date < today : false
+	const isOverdue = ticket.plan_end_at ? ticket.plan_end_at < today : false
 
 	return (
 		<>
@@ -104,13 +104,13 @@ export function TicketCardContent({
 								<AvatarFallback className="bg-transparent" />
 							</Avatar>
 						)}
-						{ticket.deadline_date ? (
+						{ticket.plan_end_at ? (
 							<div
 								className={`ml-3 flex items-center text-xs font-medium ${
 									isOverdue ? "text-red-500" : "text-gray-400"
 								}`}
 							>
-								{ticket.deadline_date.toLocaleDateString("en-US", {
+								{ticket.plan_end_at.toLocaleDateString("en-US", {
 									month: "short",
 									day: "2-digit",
 									year: "numeric",

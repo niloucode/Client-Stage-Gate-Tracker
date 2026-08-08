@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
 	return (
 		<Sidebar>
-			<TopNav breadcrumbs={["Acesoft", "Project Alpha", "Project Structure"]} />
+			<TopNav />
 			<div className="min-h-[80vh] max-w-[90vw] mx-auto p-8">
 				<>{children}</>
 			</div>

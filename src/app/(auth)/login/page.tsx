@@ -58,7 +58,7 @@ export default function LoginPage() {
 			</div>
 
 			{/* ── Right Panel ── */}
-			<div className="hidden lg:flex flex-col items-center justify-center flex-1 relative overflow-hidden bg-[#060D1C]">
+			<div className="hidden lg:flex flex-col items-center justify-center flex-1 relative overflow-hidden bg-navy-900">
 				<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#0f2044_0%,_#060D1C_70%)]" />
 				<div className="relative z-10 flex flex-col items-center">
 					<Image

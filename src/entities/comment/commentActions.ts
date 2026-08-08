@@ -3,6 +3,12 @@
 import { prisma } from "@/lib/prisma";
 import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 import { commentCreateSchema, type CommentCreateInput } from "@/shared/schemas";
+import {
+	assertProjectMember,
+	resolveGateProject,
+	resolveTicketProject,
+} from "@/lib/auth/projectAccess";
+import type { EntityFilterStatus } from "@/entities/types";
 
 export async function selectImagesByParent(parentType: ImageParentType, parentId: string) {
 	return prisma.images.findMany({
@@ -10,60 +16,58 @@ export async function selectImagesByParent(parentType: ImageParentType, parentId
 	});
 }
 
-export type EntityFilterStatus = 'active' | 'deleted' | 'all';
-
-export async function selectComment() {
+export async function selectComment(parentId: string) {
     try {
-        // Fetch all comments first
+        // Scoped to one parent (ticket/gate) — never the whole table
         const comments = await prisma.comments.findMany({
-            where: { is_deleted: false },
+            where: { parent_id: parentId, is_deleted: false },
             include: {
-                Profiles: true // or the actual relation name in your schema
-            }
+                Profiles: true,
+            },
         });
 
-        // If no comments, then just return nothing
         if (comments.length === 0) return [];
 
-        // If there are comments, make a String array of comment ids
-        const commentIds = comments.map(c => c.comment_id);
+        const commentIds = comments.map((c) => c.comment_id);
 
-        // Afterward, let's find for images, ONLY that are linked to these comments
-        // Essentially, ur left with [img1] [img2] both of whos parent ids are ones that arent delted
+        // Images are polymorphically linked (app-level integrity), so fetch
+        // them in one scoped query and join with a Map.
         const images = await prisma.images.findMany({
             where: {
                 parent_id: { in: commentIds },
-                parent_type: ImageParentType.TICKET_COMMENT
-            }
+                parent_type: ImageParentType.TICKET_COMMENT,
+            },
         });
 
-        // Lastly, let's link list of comments to the images related to them.
-        // Essentially -> comment1: [img1, img2]
-        // Can I get my chagee now?
-        return comments.map(comment => ({
-            ...comment,
-            images: images.filter(img => img.parent_id === comment.comment_id)
-        }));
+        const imagesByComment = new Map<string, (typeof images)[number][]>();
+        for (const img of images) {
+            const list = imagesByComment.get(img.parent_id) ?? [];
+            list.push(img);
+            imagesByComment.set(img.parent_id, list);
+        }
 
+        return comments.map((comment) => ({
+            ...comment,
+            images: imagesByComment.get(comment.comment_id) ?? [],
+        }));
     } catch (error) {
         console.error("Error fetching comments with images:", error);
         return [];
     }
 }
 
-export async function selectTicketComment() {
-    try {
-        return await prisma.comments.findMany({
-            where: { is_deleted: false },
-        });
-    } catch (error) {
-        console.error("Error fetching comments:", error);
-        return [];
-    }
-}
-
 export async function createCommentWithImages(data: CommentCreateInput) {
     commentCreateSchema.parse(data);
+
+    // Authorization: caller must be a member of the parent project
+    const projectId =
+        data.parent_type === "TICKET_COMMENT"
+            ? await resolveTicketProject(data.parent_id)
+            : await resolveGateProject(data.parent_id);
+    if (!projectId)
+        return { success: false, error: "Comment target not found." };
+    const auth = await assertProjectMember(projectId);
+    if (!auth.ok) return { success: false, error: auth.error };
 
     return await prisma.$transaction(async (tx) => {
         const comment = await tx.comments.create({

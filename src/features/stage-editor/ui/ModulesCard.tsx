@@ -193,7 +193,7 @@ export function ModulesCard({
 		<div className="mx-auto mb-8">
 			{/* Header with Add Module button */}
 			<div className="flex justify-between items-center mb-4">
-				<h3 className="text-2xl font-semibold text-[#0F172A]">
+				<h3 className="text-2xl font-semibold text-slate-900">
 					Modules
 				</h3>
 				<Button onClick={openCreateModuleModal}>
@@ -204,18 +204,18 @@ export function ModulesCard({
 			{/* Module Cards */}
 			<div className="space-y-4">
 				{activePhase === null ? (
-					<div className="bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm p-8 text-center">
+					<div className="bg-neutral-surface border border-slate-200 rounded-xl shadow-sm p-8 text-center">
 						<p className="text-sm text-neutral-subtle">No phase selected</p>
-						<p className="text-xs text-[#94A3B8] mt-1">
+						<p className="text-xs text-slate-400 mt-1">
 							Select a phase from the stepper above to manage its modules
 						</p>
 					</div>
 				) : modules.length === 0 ? (
-					<div className="bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm p-8 text-center">
+					<div className="bg-neutral-surface border border-slate-200 rounded-xl shadow-sm p-8 text-center">
 						<p className="text-sm text-neutral-subtle">
 							No modules yet for this phase.
 						</p>
-						<p className="text-xs text-[#94A3B8] mt-1">
+						<p className="text-xs text-slate-400 mt-1">
 							Click Add Module to create one.
 						</p>
 					</div>
@@ -233,10 +233,10 @@ export function ModulesCard({
 						return (
 							<div
 								key={module.module_id}
-								className="bg-neutral-surface border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden"
+								className="bg-neutral-surface border border-slate-200 rounded-xl shadow-sm overflow-hidden"
 							>
 								{/* Module Header */}
-								<div className="flex justify-between items-center px-5 py-4 bg-[#F8FAFC] border-b border-[#E2E8F0]">
+								<div className="flex justify-between items-center px-5 py-4 bg-slate-50 border-b border-slate-200">
 									{/* Left Side Block */}
 									<div
 										className="flex-1 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
@@ -257,7 +257,7 @@ export function ModulesCard({
 											/>
 										</svg>
 										<div>
-											<h4 className="font-semibold text-sm text-[#0F172A]">
+											<h4 className="font-semibold text-sm text-slate-900">
 												{module.name}
 											</h4>
 											<div className="flex items-center gap-1 mt-0.5">
@@ -303,12 +303,12 @@ export function ModulesCard({
 										</div>
 
 										{/* Vertical Divider */}
-										<div className="w-px h-5 bg-[#E2E8F0] mx-1"></div>
+										<div className="w-px h-5 bg-slate-200 mx-1"></div>
 
 										{/* Edit button */}
 										<button
 											onClick={() => openEditModuleModal(module)}
-											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-[#E2E8F0] rounded"
+											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
 										>
 											<svg
 												width="14"
@@ -360,7 +360,7 @@ export function ModulesCard({
 			{isDeleteConfirmOpen && (
 				<div className="fixed inset-0 bg-foregroundal-main/50 flex items-center justify-center z-50">
 					<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-sm p-6 relative">
-						<h2 className="text-xl font-bold text-[#0F172A] mb-2">
+						<h2 className="text-xl font-bold text-slate-900 mb-2">
 							Delete Module
 						</h2>
 						<p className="text-sm text-neutral-subtle mb-6">
@@ -374,13 +374,13 @@ export function ModulesCard({
 									setIsDeleteConfirmOpen(false);
 									setModuleToDelete(null);
 								}}
-								className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
+								className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-slate-900 transition-colors"
 							>
 								Cancel
 							</button>
 							<button
 								onClick={handleDeleteModule}
-								className="px-4 py-2 bg-[#EF4444] text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#DC2626] transition-all shadow-sm"
+								className="px-4 py-2 bg-red-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-red-600 transition-all shadow-sm"
 							>
 								Delete Module
 							</button>
