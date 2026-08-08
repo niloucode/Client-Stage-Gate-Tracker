@@ -1,554 +1,417 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import Link from "next/link";
 import {
-	ChevronRight,
-	FileText,
-	Key,
-	Bug,
-	BarChart2,
-	LayoutDashboard,
-	Calendar,
-	CheckSquare,
-	Package,
-	GitMerge,
-	Tag,
-	ArrowRight,
-	Bell,
-	Settings,
-	LayoutGrid,
-	FolderKanban,
-	Users,
-	LogOut,
-	EyeIcon,
-	Lock,
-	Workflow,
-	Ticket,
+  Key,
+  Bug,
+  BarChart2,
+  LayoutDashboard,
+  Calendar,
+  CheckSquare,
+  ArrowRight,
+  LayoutGrid,
+  Eye,
+  Lock,
+  Workflow,
+  Ticket,
+  ChevronLeft,
+  LucideIcon,
 } from "lucide-react";
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardAction,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
 import { StageSequence, Stage } from "./StageSequence";
 
-// ─── Brand colours ────────────────────────────────────────────────────────────
-const BRAND = "#6b1fa8";
-const BRAND_DARK = "#500086";
-const BRAND_LIGHT = "#f1daff";
-const BRAND_XLIGHT = "#faf8fd";
+// ─── Types ───────────────────────────────────────────────────────────────────
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Ticket {
-	code: string;
-	title: string;
-	dateRange: string;
+export interface TicketItem {
+  id: string;
+  code: string;
+  title: string;
+  daysLeft: number;
+  isUrgent?: boolean;
 }
 
-interface StatItem {
-	label: string;
-	done: number;
-	total: number;
-	icon: React.ReactNode;
+export interface StatItem {
+  label: string;
+  done: number;
+  total: number;
+  icon: LucideIcon;
 }
 
-interface ProjectStructureProps {
-	projectName?: string;
-	overallProgress?: number;
-	stages?: Stage[];
-	currentStageName?: string;
-	currentStageNumber?: number;
-	currentStageDescription?: string;
-	currentStageDateRange?: string;
-	stats?: StatItem[];
-	currentPhaseName?: string;
-	currentPhaseDescription?: string;
-	currentPhaseProgress?: number;
-	urgentTickets?: Ticket[];
-	onAddStage?: () => void;
-	onViewContract?: () => void;
-	onCredentialsRepo?: () => void;
-	onIssueReport?: () => void;
-	onProjectDashboard?: () => void;
-	onViewGateOverview?: () => void;
-	onViewEntireStage?: () => void;
-	showAddStageButton?: boolean;
-	userInitials?: string;
+export interface ProjectStructureProps {
+  projectId?: string;
+  projectName?: string;
+  showAddStageButton?: boolean;
+  onAddStage?: () => void;
+  onViewContract?: () => void;
+  onCredentialsRepo?: () => void;
+  onIssueReport?: () => void;
+  onViewGateOverview?: () => void;
+  onViewEntireStage?: () => void;
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+// ─── Encapsulated Mock Data ──────────────────────────────────────────────────
 
-function StatCard({ label, done, total, icon }: StatItem) {
-	return (
-		<div
-			className="flex items-center gap-4 rounded-xl bg-white p-4"
-			style={{ border: "1px solid #e5e3e0" }}
-		>
-			<div
-				className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-				style={{ backgroundColor: `${BRAND}1A` }}
-			>
-				{icon}
-			</div>
-			<div className="min-w-0 flex-1">
-				<p className="text-[12px] font-semibold truncate" style={{ color: "#6b6b6b" }}>
-					{label}
-				</p>
-				<p
-					className="text-[20px] sm:text-[24px] font-semibold leading-tight"
-					style={{ color: BRAND_DARK }}
-				>
-					{done}{" "}
-					<span
-						className="text-[13px] sm:text-[14px] font-normal"
-						style={{ color: "#6b6b6b" }}
-					>
-						/ {total}
-					</span>
-				</p>
-			</div>
-		</div>
-	);
+const MOCK_DATA = {
+  projectName: "BRAND REDESIGN & WEBSITE",
+  overallProgress: 85,
+  currentStage: {
+    number: 2,
+    name: "Development & Architecture",
+    description:
+      "Transitioning from strategy to execution. This stage focuses on technical implementation of the brand redesign and CMS integration.",
+    dateRange: "OCT 12, 2023 — NOV 30, 2023",
+  },
+  currentPhase: {
+    name: "Phase 3: Backend Integration",
+    description: "Executing API hooks and core CMS functionalities for the landing experience.",
+    progress: 60,
+  },
+  stages: [
+    { id: "1", stageNumber: 1, stageName: "Discovery & UX", approved: true },
+    { id: "2", stageNumber: 2, stageName: "Visual Identity", approved: true, current: true },
+    { id: "3", stageNumber: 3, stageName: "Core Page Design", approved: false },
+    { id: "4", stageNumber: 4, stageName: "Development", approved: false },
+  ] as Stage[],
+  stats: [
+    { label: "Phases Done", done: 2, total: 4, icon: CheckSquare },
+    { label: "Modules Done", done: 12, total: 15, icon: LayoutDashboard },
+    { label: "Workflows Done", done: 8, total: 10, icon: Workflow },
+    { label: "Tickets Done", done: 12, total: 15, icon: Ticket },
+  ] as StatItem[],
+  tickets: [
+    { id: "1", code: "DEV-102", title: "Setup OAuth Middleware", daysLeft: 2, isUrgent: true },
+    { id: "2", code: "DEV-105", title: "User Profile API Hooks", daysLeft: 4, isUrgent: false },
+    { id: "3", code: "DEV-108", title: "Database Migration Plan", daysLeft: 2, isUrgent: true },
+    { id: "4", code: "DEV-112", title: "Sanity CMS Schema Setup", daysLeft: 5, isUrgent: false },
+  ] as TicketItem[],
+};
+
+// ─── Sub-Components ──────────────────────────────────────────────────────────
+
+function SectionLabel({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <span>{label}</span>
+    </div>
+  );
 }
 
-// ─── Ticket Row ───────────────────────────────────────────────────────────────
-
-function TicketRow({ code, title, dateRange }: Ticket) {
-	return (
-		<div
-			className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded bg-white px-4 py-3"
-			style={{ border: "1px solid #e5e3e0" }}
-		>
-			<div className="flex items-center gap-3 min-w-0">
-				<span
-					className="shrink-0 rounded px-2 py-1 text-[12px] font-bold"
-					style={{
-						backgroundColor: "rgba(80, 0, 134, 0.05)",
-						border: `1px solid ${BRAND_DARK}`,
-						color: BRAND_DARK,
-					}}
-				>
-					{code}
-				</span>
-				<span className="text-[14px] font-medium truncate" style={{ color: "#1a1a1a" }}>
-					{title}
-				</span>
-			</div>
-			<span
-				className="self-start sm:self-auto shrink-0 rounded-full px-3 py-1 text-[11px] sm:text-[12px] font-semibold"
-				style={{ backgroundColor: "#efedf1", color: "#7e7384" }}
-			>
-				{dateRange}
-			</span>
-		</div>
-	);
+function ProjectOverviewCard({ projectName, progress }: { projectName: string; progress: number }) {
+  return (
+    <Card className="h-full border border-warm-gray-200 bg-neutral-surface shadow-xs">
+      <CardHeader>
+        <SectionLabel icon={LayoutDashboard} label="Project Overview" />
+        <CardTitle className="mt-1 text-2xl font-bold leading-tight text-charcoal sm:text-3xl">
+          {projectName}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-1 space-y-2">
+        <SectionLabel icon={BarChart2} label="Overall Progress" />
+        <div className="flex items-baseline gap-1">
+          <span className="text-3xl font-bold leading-none text-foreground sm:text-4xl">{progress}</span>
+          <span className="text-xl font-semibold text-plum-700 sm:text-2xl">%</span>
+        </div>
+        <div className="h-2.5 w-full overflow-hidden rounded-full border border-neutral-border/10 bg-neutral-subtle">
+          <div
+            className="h-full rounded-full bg-green-600 transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
-// ─── Default data ─────────────────────────────────────────────────────────────
+function ProjectAccessCard({
+  onViewContract,
+  onCredentialsRepo,
+  onIssueReport,
+}: {
+  onViewContract?: () => void;
+  onCredentialsRepo?: () => void;
+  onIssueReport?: () => void;
+}) {
+  return (
+    <Card className="h-full border border-warm-gray-200 bg-neutral-surface shadow-xs">
+      <CardHeader>
+        <SectionLabel icon={Lock} label="Project Access" />
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 gap-2.5 p-5 pt-1 sm:grid-cols-3 lg:grid-cols-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onViewContract}
+          className="w-full justify-start gap-2 border-brand-600 text-brand-600 hover:bg-brand-50"
+        >
+          <Eye className="h-3.5 w-3.5 shrink-0" />
+          <span>View Contract</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onCredentialsRepo}
+          className="w-full justify-start gap-2 border-brand-500 bg-brand-500/10 text-brand-500 hover:bg-brand-500/20"
+        >
+          <Key className="h-3.5 w-3.5 shrink-0" />
+          <span>Credentials Repository</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onIssueReport}
+          className="w-full justify-start gap-2 border-red-500/30 bg-red-100 text-red-600 hover:bg-red-500/20"
+        >
+          <Bug className="h-3.5 w-3.5 shrink-0" />
+          <span>Issue Reporting</span>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
 
-const DEFAULT_STAGES: Stage[] = [
-	{ id: "1", stageNumber: 1, stageName: "Discovery & UX", approved: true },
-	{
-		id: "2",
-		stageNumber: 2,
-		stageName: "Visual Identity",
-		approved: true,
-		current: true,
-	},
-	{ id: "3", stageNumber: 3, stageName: "Core Page Design", approved: false },
-	{ id: "4", stageNumber: 4, stageName: "Development", approved: false },
-];
+function StatCard({ label, done, total, icon: Icon }: StatItem) {
+  return (
+    <Card size="sm" className="border border-warm-gray-200 bg-neutral-surface shadow-xs">
+      <CardContent className="flex items-center gap-3.5 p-3.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-brand-500/20 bg-brand-500/10 text-brand-600">
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-neutral-border">{label}</p>
+          <p className="text-lg font-semibold leading-tight text-brand-600 sm:text-xl">
+            {done} <span className="text-xs font-normal text-neutral-border">/ {total}</span>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-const DEFAULT_STATS: StatItem[] = [
-	{
-		label: "Phases Done",
-		done: 2,
-		total: 4,
-		icon: (
-			<CheckSquare
-				className="h-[13px] w-[15px]"
-				style={{ color: BRAND_DARK }}
-			/>
-		),
-	},
-	{
-		label: "Modules Done",
-		done: 12,
-		total: 15,
-		icon: (
-			<LayoutDashboard className="h-[13px] w-[13px]" style={{ color: BRAND_DARK }} />
-		),
-	},
-	{
-		label: "Workflows Done",
-		done: 8,
-		total: 10,
-		icon: (
-			<Workflow className="h-[15px] w-[13px]" style={{ color: BRAND_DARK }} />
-		),
-	},
-	{
-		label: "Tickets Done",
-		done: 12,
-		total: 15,
-		icon: <Ticket className="h-[12px] w-[15px]" style={{ color: BRAND_DARK }} />,
-	},
-];
+function TicketCard({ code, title, daysLeft, isUrgent }: TicketItem) {
+  const urgent = isUrgent || daysLeft <= 2;
 
-const DEFAULT_TICKETS: Ticket[] = [
-	{
-		code: "DEV-102",
-		title: "Setup OAuth Middleware",
-		dateRange: "OCT 14 - OCT 18",
-	},
-	{
-		code: "DEV-105",
-		title: "User Profile API Hooks",
-		dateRange: "OCT 15 - OCT 20",
-	},
-	{
-		code: "DEV-108",
-		title: "Database Migration Plan",
-		dateRange: "OCT 18 - OCT 22",
-	},
-	{
-		code: "DEV-112",
-		title: "Sanity CMS Schema Setup",
-		dateRange: "OCT 20 - OCT 25",
-	},
-	{
-		code: "DEV-115",
-		title: "Asset Optimization Flow",
-		dateRange: "OCT 22 - OCT 28",
-	},
-	{
-		code: "DEV-119",
-		title: "Unit Testing CI Setup",
-		dateRange: "OCT 25 - NOV 02",
-	},
-];
+  return (
+    <Card size="sm" className="border border-warm-gray-200 bg-neutral-surface">
+      <CardContent className="flex flex-col justify-between gap-2 p-3 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Badge
+            variant="outline"
+            className="shrink-0 rounded border-brand-600 bg-brand-600/5 px-2 py-0.5 text-xs font-bold text-brand-600"
+          >
+            REPLACE THIS TEXT WITH PARENT WORKFLOW
+          </Badge>
+          <span className="truncate text-xs font-medium text-charcoal">{title}</span>
+        </div>
+        <Badge
+          variant="secondary"
+          className={cn(
+            "self-start text-[11px] font-semibold sm:self-auto",
+            urgent
+              ? "border-red-500/30 bg-red-100 text-red-600 hover:bg-red-100"
+              : "border-neutral-border/20 bg-neutral-subtle text-neutral-border"
+          )}
+        >
+          {daysLeft} {daysLeft === 1 ? "DAY LEFT" : "DAYS LEFT"}
+        </Badge>
+      </CardContent>
+    </Card>
+  );
+}
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+function StageActionButton({
+  title,
+  description,
+  icon: Icon,
+  isPrimary,
+  ...props
+}: {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  isPrimary?: boolean;
+} & React.ComponentProps<typeof Button>) {
+  return (
+    <Button
+      variant="outline"
+      className={`h-auto w-full justify-between rounded-xl p-3.5 text-left font-normal ${
+        isPrimary
+          ? "border-brand-500/30 bg-brand-50/50 text-brand-600 hover:bg-brand-50"
+          : "border-warm-gray-200 bg-neutral-surface text-charcoal hover:bg-neutral-subtle/50"
+      }`}
+      {...props}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <h4 className="text-xs font-bold">{title}</h4>
+          <p className={`text-[11px] ${isPrimary ? "text-plum-700" : "text-neutral-border"}`}>
+            {description}
+          </p>
+        </div>
+      </div>
+      <ArrowRight className={`h-4 w-4 ${isPrimary ? "" : "text-neutral-border"}`} />
+    </Button>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ProjectStructure({
-	projectName = "BRAND REDESIGN & WEBSITE",
-	overallProgress = 85,
-	stages = DEFAULT_STAGES,
-	currentStageName = "Development & Architecture",
-	currentStageNumber = 2,
-	currentStageDescription = "Transitioning from strategy to execution. This stage focuses on the core technical implementation of the brand redesign and CMS integration.",
-	currentStageDateRange = "OCT 12, 2023 — NOV 30, 2023",
-	stats = DEFAULT_STATS,
-	currentPhaseName = "Phase 3: Backend Integration",
-	currentPhaseDescription = "Executing the API hooks and core CMS functionalities for the primary landing experience.",
-	currentPhaseProgress = 60,
-	urgentTickets = DEFAULT_TICKETS,
-	onAddStage,
-	onViewContract,
-	onCredentialsRepo,
-	onIssueReport,
-	onProjectDashboard,
-	onViewGateOverview,
-	onViewEntireStage,
-	showAddStageButton = true,
-	userInitials = "AM",
+  projectId,
+  projectName = MOCK_DATA.projectName,
+  showAddStageButton = true,
+  onAddStage,
+  onViewContract,
+  onCredentialsRepo,
+  onIssueReport,
+  onViewGateOverview,
+  onViewEntireStage,
 }: ProjectStructureProps) {
-	const [selectedStageId, setSelectedStageId] = useState<string | null>(
-		stages.find((s) => s.current)?.id ?? null,
-	);
+  const [selectedStageId, setSelectedStageId] = useState<string | null>(
+    MOCK_DATA.stages.find((s) => s.current)?.id ?? null
+  );
 
-	return (
-		<div className="flex flex-1 flex-col overflow-x-hidden min-w-0">
-			{/* Responsive scrollable main content wrapper */}
-			<main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
-				{/* Responsive Page title */}
-				<h1
-					className="mb-6 text-[28px] sm:text-[36px] lg:text-[40px] font-bold leading-tight break-words"
-					style={{ color: "#1a1a1a" }}
-				>
-					{projectName}
-				</h1>
+  const { currentStage, currentPhase } = MOCK_DATA;
 
-				{/* ── Section 1: Overall Progress & Access ── */}
-				<div className="mb-6 flex flex-col xl:flex-row gap-6">
-					{/* Overall progress card */}
-					<div
-						className="flex flex-1 flex-col justify-between rounded-lg bg-white p-5 sm:p-6"
-						style={{ border: "1px solid #e5e3e0" }}
-					>
-						<div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-							<div>
-								<div className="flex items-center gap-2 mb-2">
-									<BarChart2
-										className="h-3 w-3"
-										style={{ color: "#4c4352" }}
-									/>
-									<span
-										className="text-[12px] font-semibold"
-										style={{ color: "#4c4352" }}
-									>
-										OVERALL PROGRESS
-									</span>
-								</div>
-								<div className="flex items-baseline gap-1">
-									<span
-										className="text-[32px] sm:text-[40px] font-bold leading-none"
-										style={{ color: "#1b1b1f" }}
-									>
-										{overallProgress}
-									</span>
-									<span
-										className="text-[20px] sm:text-[24px] font-semibold"
-										style={{ color: "#4c4352" }}
-									>
-										%
-									</span>
-								</div>
-							</div>
-							<button
-								onClick={onProjectDashboard}
-								className="flex items-center justify-center gap-2 rounded px-3 py-2 text-[12px] font-semibold transition-colors hover:bg-gray-50 self-start sm:self-auto"
-								style={{
-									border: `1px solid ${BRAND_DARK}`,
-									color: BRAND_DARK,
-								}}
-							>
-								<LayoutDashboard className="h-3 w-3" />
-								Project Dashboard
-							</button>
-						</div>
+  return (
+    <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
+      {/* Navigation Link */}
+      <Link
+        href={projectId ? `/projects/${projectId}` : "/projects"}
+        className="group mt-1 flex items-center gap-2 text-xl font-bold leading-none text-gray-900 transition-colors hover:text-brand-600"
+      >
+        <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+        <span>Back to Projects</span>
+      </Link>
 
-						{/* Progress bar */}
-						<div
-							className="mt-6 h-3 w-full overflow-hidden rounded-full"
-							style={{ backgroundColor: "#efedf1" }}
-						>
-							<div
-								className="h-full rounded-full transition-all duration-500"
-								style={{
-									width: `${overallProgress}%`,
-									backgroundColor: "#2d6c00",
-								}}
-							/>
-						</div>
-					</div>
+      {/* Grid Layout */}
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
+        {/* Project Overview Card */}
+        <div className="lg:col-span-8">
+          <ProjectOverviewCard projectName={projectName} progress={MOCK_DATA.overallProgress} />
+        </div>
 
-					{/* Project access card */}
-					<div
-						className="flex w-full xl:w-[340px] shrink-0 flex-col gap-3 rounded-lg bg-white p-5 sm:p-6"
-						style={{ border: "1px solid #e5e3e0" }}
-					>
-						<div className="flex items-center gap-2">
-							<Lock
-								className="h-3 w-3 opacity-70"
-								style={{ color: "#1a1a1a" }}
-							/>
-							<span
-								className="text-[12px] font-semibold opacity-70"
-								style={{ color: "#1a1a1a" }}
-							>
-								PROJECT ACCESS
-							</span>
-						</div>
-						<div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-3">
-							<button
-								onClick={onViewContract}
-								className="flex items-center justify-center gap-2 rounded px-3 py-2.5 text-[12px] font-semibold transition-colors hover:bg-gray-50"
-								style={{ border: `1px solid ${BRAND_DARK}`, color: BRAND_DARK }}
-							>
-								<EyeIcon className="h-3 w-3" />
-								View Contract
-							</button>
-							<button
-								onClick={onCredentialsRepo}
-								className="flex items-center justify-center gap-2 rounded px-3 py-2.5 text-[12px] font-semibold transition-opacity hover:opacity-80"
-								style={{
-									backgroundColor: `${BRAND}0D`,
-									border: `1px solid ${BRAND}`,
-									color: BRAND,
-								}}
-							>
-								<Key className="h-3 w-3" />
-								Credentials Repository
-							</button>
-							<button
-								onClick={onIssueReport}
-								className="flex items-center justify-center gap-2 rounded px-3 py-2.5 text-[12px] font-semibold transition-opacity hover:opacity-80"
-								style={{
-									backgroundColor: "#ffdad6",
-									border: "1px solid #f1b3b0",
-									color: "#93000a",
-								}}
-							>
-								<Bug className="h-3 w-3" />
-								Issue Reporting
-							</button>
-						</div>
-					</div>
-				</div>
+        {/* Project Access Card */}
+        <div className="lg:col-span-4">
+          <ProjectAccessCard
+            onViewContract={onViewContract}
+            onCredentialsRepo={onCredentialsRepo}
+            onIssueReport={onIssueReport}
+          />
+        </div>
 
-				{/* ── Section 2: Stage Sequence ── */}
-				<div className="mb-6 w-full overflow-hidden">
-					<StageSequence
-						stages={stages}
-						selectedId={selectedStageId}
-						onSelectStage={setSelectedStageId}
-						onAddStage={onAddStage}
-						showAddButton={showAddStageButton}
-					/>
-				</div>
+        {/* Stage Sequence & Detailed Content */}
+        <Card className="overflow-hidden rounded-2xl border border-warm-gray-200 bg-neutral-surface shadow-xs lg:col-span-12">
+          <div className="border-b border-warm-gray-200 px-4 pb-3">
+            <StageSequence
+              stages={MOCK_DATA.stages}
+              selectedId={selectedStageId}
+              onSelectStage={setSelectedStageId}
+              onAddStage={onAddStage}
+              showAddButton={showAddStageButton}
+            />
+          </div>
 
-				{/* ── Section 3: Current Stage Detail ── */}
-				<div
-					className="mb-6 rounded-[20px] sm:rounded-[28px] bg-white p-5 sm:p-8"
-					style={{ border: "1px solid #e5e3e0" }}
-				>
-					{/* Fully Responsive Stage Header */}
-					<div className="mb-6 flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-						<div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5 min-w-0 flex-1">
-							{/* Stage Number Circle */}
-							<div
-								className="flex h-14 w-14 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-full text-[24px] sm:text-[40px] font-bold"
-								style={{
-									border: `5px solid ${BRAND_LIGHT}`,
-									color: BRAND_DARK,
-								}}
-							>
-								{currentStageNumber}
-							</div>
-							
-							{/* Responsive Stage Title & Description */}
-							<div className="min-w-0 flex-1">
-								<h2
-									className="text-[20px] sm:text-[28px] lg:text-[32px] font-semibold leading-tight break-words"
-									style={{ color: "#1a1a1a" }}
-								>
-									{currentStageName}
-								</h2>
-								<p className="mt-1 text-xs sm:text-sm lg:text-base leading-relaxed break-words" style={{ color: "#4c4352" }}>
-									{currentStageDescription}
-								</p>
-							</div>
-						</div>
+          <CardContent className="pt-2 px-5 pb-5 space-y-5">
+            <SectionLabel icon={Calendar} label="Stage Details" />
 
-						{/* Responsive Date Tag */}
-						<div
-							className="flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 sm:py-3 self-start lg:self-auto max-w-full"
-							style={{ backgroundColor: BRAND_LIGHT }}
-						>
-							<Calendar
-								className="h-3.5 w-3.5 shrink-0"
-								style={{ color: "#2d004f" }}
-							/>
-							<span
-								className="text-[11px] sm:text-[12px] font-semibold break-words sm:whitespace-nowrap"
-								style={{ color: "#2d004f" }}
-							>
-								{currentStageDateRange}
-							</span>
-						</div>
-					</div>
+            {/* Stage Header Details */}
+            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-4 min-w-0 flex-1">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-[4px] border-brand-100 text-2xl font-bold text-brand-600 sm:h-16 sm:w-16 sm:text-3xl">
+                  {currentStage.number}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-semibold leading-tight text-charcoal sm:text-2xl">
+                    {currentStage.name}
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-plum-700 sm:text-sm">
+                    {currentStage.description}
+                  </p>
+                </div>
+              </div>
 
-					{/* Stats Row Responsive Grid */}
-					<div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-						{stats.map((stat) => (
-							<StatCard key={stat.label} {...stat} />
-						))}
-					</div>
+              <div className="flex shrink-0 items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2 text-brand-600 self-start sm:px-4 sm:py-2.5 lg:self-auto">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span className="text-xs font-semibold sm:whitespace-nowrap">
+                  {currentStage.dateRange}
+                </span>
+              </div>
+            </div>
 
-					{/* Current Phase Preview */}
-					<div
-						className="rounded-lg p-4 sm:p-6"
-						style={{
-							backgroundColor: "#f7f5f2",
-							border: "1px solid #e5e3e0",
-						}}
-					>
-						<div className="mb-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-							<div>
-								<h3
-									className="text-[20px] sm:text-[24px] font-semibold"
-									style={{ color: "#1a1a1a" }}
-								>
-									{currentPhaseName}
-								</h3>
-								<p className="mt-1 text-[13px] sm:text-[14px]" style={{ color: "#4c4352" }}>
-									{currentPhaseDescription}
-								</p>
-							</div>
-							<div className="sm:text-right self-start sm:self-auto">
-								<p
-									className="text-[11px] sm:text-[12px] font-semibold"
-									style={{ color: BRAND_DARK }}
-								>
-									PROGRESS
-								</p>
-								<p
-									className="text-[20px] sm:text-[24px] font-semibold"
-									style={{ color: BRAND_DARK }}
-								>
-									{currentPhaseProgress}%
-								</p>
-							</div>
-						</div>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {MOCK_DATA.stats.map((stat) => (
+                <StatCard key={stat.label} {...stat} />
+              ))}
+            </div>
 
-						<p
-							className="mb-3 text-[12px] font-semibold"
-							style={{ color: "#1a1a1a" }}
-						>
-							URGENT TICKETS
-						</p>
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-							{urgentTickets.map((ticket) => (
-								<TicketRow key={ticket.code} {...ticket} />
-							))}
-						</div>
-					</div>
+            {/* Current Phase & Tickets */}
+            <Card className="border border-warm-gray-200 bg-neutral-subtle/50">
+              <CardHeader className="p-4 pb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <CardTitle className="text-base font-semibold text-charcoal sm:text-lg">
+                    {currentPhase.name}
+                  </CardTitle>
+                  <CardDescription className="mt-0.5 text-xs text-plum-700">
+                    {currentPhase.description}
+                  </CardDescription>
+                </div>
+                <CardAction className="self-start sm:self-auto sm:text-right">
+                  <p className="text-[10px] font-semibold text-brand-600 uppercase">Progress</p>
+                  <p className="text-lg font-semibold text-brand-600 sm:text-xl">{currentPhase.progress}%</p>
+                </CardAction>
+              </CardHeader>
 
-					{/* View Entire Stage Button */}
-					<button
-						onClick={onViewEntireStage}
-						className="mt-5 flex w-full items-center justify-center gap-2 rounded px-4 py-3 text-[12px] font-semibold transition-colors hover:bg-gray-50"
-						style={{ border: `2px dotted ${BRAND}`, color: BRAND_DARK }}
-					>
-						<ArrowRight className="h-3 w-3" />
-						View Entire Stage Structure
-					</button>
-				</div>
+              <CardContent className="p-4 pt-1 space-y-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-charcoal">
+                  URGENT TICKETS
+                </p>
+                <div className="grid grid-cols-1 gap-2.5">
+                  {MOCK_DATA.tickets.map((ticket) => (
+                    <TicketCard key={ticket.id} {...ticket} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-				{/* ── Section 4: Gate Overview ── */}
-				<div
-					className="relative overflow-hidden rounded-lg bg-white p-6 sm:p-8"
-					style={{ border: "1px solid #e5e3e0" }}
-				>
-					{/* Rhombus colored #6B1FA8 at 5% opacity */}
-					<div
-						className="absolute -bottom-10 -right-35 h-200 w-36 sm:h-200 sm:w-44 rotate-15 pointer-events-none"
-						style={{ backgroundColor: "#6B1FA8", opacity: 0.05 }}
-					/>
-
-					{/* Centered Layout */}
-					<div className="relative flex flex-col items-center justify-center text-center gap-3">
-						<div
-							className="flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl"
-							style={{ backgroundColor: BRAND_DARK }}
-						>
-							<LayoutGrid className="h-5 w-5 sm:h-[25px] sm:w-[17px] text-white" />
-						</div>
-						<div>
-							<h3
-								className="text-[20px] sm:text-[24px] font-semibold cursor-pointer hover:underline"
-								style={{ color: BRAND_DARK }}
-								onClick={onViewGateOverview}
-							>
-								View Gate Overview
-							</h3>
-							<p className="mt-1 text-[13px] sm:text-[14px] max-w-md mx-auto" style={{ color: "#6b6b6b" }}>
-								Review mandatory requirements and compliance milestones for
-								current stage completion.
-							</p>
-						</div>
-					</div>
-				</div>
-			</main>
-		</div>
-	);
+            {/* Stage Actions */}
+            <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-2">
+				<StageActionButton
+					title="Preview Stage"
+					description="Explore full stage modules & workflow hierarchy"
+					icon={Workflow}
+					onClick={onViewEntireStage}
+					isPrimary
+				/>
+				<StageActionButton
+					title="Preview Gate"
+					description="Review mandatory compliance milestones"
+					icon={LayoutGrid}
+					onClick={onViewGateOverview}
+				/>
+			</div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 export default ProjectStructure;

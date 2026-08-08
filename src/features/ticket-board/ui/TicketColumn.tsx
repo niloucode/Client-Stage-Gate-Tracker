@@ -27,7 +27,7 @@ export default function TicketColumn({
 	return (
 		<div className="flex flex-col h-full w-full select-none rounded-xl min-h-0">
     {/* Column header - shrink-0 keeps header fixed size */}
-			<div className="flex h-16 shrink-0 items-center gap-2">
+			<div className="flex mb-2 shrink-0 items-center gap-2">
 				<span className="text-2xl font-semibold text-brand-900">{column.title}</span>
 				<span className={`text-xs ${column.dotColor} ${column.textColor} font-semibold w-5 h-5 flex items-center justify-center rounded-full`}>
 					{tickets.length}

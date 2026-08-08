@@ -202,6 +202,9 @@ export const PhaseStepper = forwardRef<
                         </div>
                     ) : (
                         <>
+						
+                            {/* Connecting Line */}
+                            <div className="z-0 absolute w-full top-1/2 h-0.5 bg-brand-100 -translate-y-1/2 pointer-events-none" />
                             {/* Left Scroll Arrow */}
                             {showLeftArrow && (
                                 <button
@@ -343,8 +346,6 @@ export const PhaseStepper = forwardRef<
                                 </div>
                             </div>
 
-                            {/* Connecting Line */}
-                            <div className="z-0 absolute min-w-[80vw] top-1/2 h-0.5 bg-brand-100 -translate-y-1/2 pointer-events-none" />
                         </>
                     )}
                 </div>
