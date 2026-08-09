@@ -26,20 +26,11 @@ interface Client {
 	profiles?: { profile_id: string; first_name: string; last_name: string; email: string; phone: string | null }[];
 }
 
-const PLACEHOLDER_CLIENTS: Client[] = Array.from({ length: 10 }, (_, i) => ({
-	id: String(i + 1),
-	name: "Client Name\nInput Over Flow",
-	email: "Email input. Will not overflow",
-	contactNumber: "Contact Number Here",
-	billingAddress: "Billing Address Input\nWill Overflow like this",
-	companyCode: "6DIGIT",
-	tin: "TIN INPUT",
-}));
-
 export default function ClientPage() {
-	const { data: clientsData } = useClients()
-		const clients: Client[] = clientsData && clientsData.length > 0
-		? clientsData.map((c) => ({
+	const { data: clientsData, refetch } = useClients()
+		// Live data only (Task 5.8) — no hardcoded placeholder rows; show an
+		// empty state until the query returns real clients.
+		const clients: Client[] = (clientsData ?? []).map((c) => ({
 			id: c.client_id,
 			name: c.client_name,
 			email: c.email ?? "",
@@ -48,8 +39,7 @@ export default function ClientPage() {
 			companyCode: "",
 			tin: c.tin,
 			profiles: c.Profiles,
-		}))
-		: PLACEHOLDER_CLIENTS;
+		}));
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [viewMembersClient, setViewMembersClient] = useState<Client | null>(null);
 	const [editClient, setEditClient] = useState<Client | null>(null);
@@ -199,7 +189,10 @@ export default function ClientPage() {
 			</main>
 			<ClientFormModal
 				isOpen={showAddModal}
-				onClose={() => setShowAddModal(false)}
+				onClose={() => {
+					setShowAddModal(false);
+					void refetch();
+				}}
 			/>
 			<ViewTeamMembersModal
 				isOpen={viewMembersClient !== null}
@@ -222,7 +215,10 @@ export default function ClientPage() {
 					contactNumber: editClient?.contactNumber,
 					billingAddress: editClient?.billingAddress,
 				}}
-				onClose={() => setEditClient(null)}
+				onClose={() => {
+					setEditClient(null);
+					void refetch();
+				}}
 			/>
 		</>
 	);

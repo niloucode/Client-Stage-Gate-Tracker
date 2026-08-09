@@ -20,7 +20,7 @@ import { getInitials } from "@/shared/lib/strings";
 import ImageLightbox from "@/shared/ui/ImageLightbox";
 import TicketHistoryLog from "./TicketHistoryLog";
 import { TagBadge } from "@/entities/tag/ui/TagBadge"
-import { Calendar, X} from "lucide-react"
+import { Calendar, X, Paperclip } from "lucide-react"
 
 
 function statusLabel(status: status) {
@@ -977,18 +977,7 @@ export default function TicketModalEdit({
 					className="cursor-pointer text-gray-400 hover:text-brand-500 transition-colors"
 					title="Attach images (jpg, png · Max 5MB)"
 				>
-					<svg
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth={2}
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-					</svg>
+					<Paperclip size={16} />
 
 					{/* 2. THE MULTIPLE ATTRIBUTE GOES HERE */}
 					<input

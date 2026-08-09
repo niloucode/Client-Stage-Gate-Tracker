@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Key,
   Bug,
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDeleteModal } from "@/shared/ui";
 import {
   Avatar,
   AvatarImage,
@@ -36,8 +38,10 @@ import {
   AvatarGroup,
 } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { cascadeSoftDeleteStage } from "@/entities/stage/stageActions";
 
 import { StageSequence, Stage } from "./StageSequence";
+import { StageModal } from "./StageModal";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -91,12 +95,9 @@ export interface ProjectStructureProps {
   stats?: StatItem[];
   tickets?: TicketItem[];
   showAddStageButton?: boolean;
-  onAddStage?: () => void;
   onViewContract?: () => void;
   onCredentialsRepo?: () => void;
   onIssueReport?: () => void;
-  onViewGateOverview?: () => void;
-  onViewEntireStage?: () => void;
 }
 
 // ─── Default Mock Data ───────────────────────────────────────────────────────
@@ -385,15 +386,47 @@ export function ProjectStructure({
   stats = DEFAULT_MOCK_DATA.stats,
   tickets = DEFAULT_TICKETS,
   showAddStageButton = true,
-  onAddStage,
   onViewContract,
   onCredentialsRepo,
   onIssueReport,
-  onViewGateOverview,
-  onViewEntireStage,
 }: ProjectStructureProps) {
   const [selectedStageId, setSelectedStageId] = useState<string | null>(
     stages.find((s) => s.current)?.id ?? null
+  );
+  const router = useRouter();
+  // Local copy so stage deletion can be reflected in the mock list.
+  const [visibleStages, setVisibleStages] = useState(stages);
+
+  // Progress formula (Task 5.6): Total Stages Done / Total Stages.
+  // Falls back to the explicit prop when no stages are supplied.
+  const computedProgress =
+    visibleStages.length > 0
+      ? Math.round(
+          (visibleStages.filter((s) => s.approved).length /
+            visibleStages.length) *
+            100,
+        )
+      : overallProgress;
+
+  // Add/Edit Stage modal state (Task 5.7)
+  const [stageModalOpen, setStageModalOpen] = useState(false);
+  const [stageToEdit, setStageToEdit] = useState<{
+    stage_id: string;
+    name: string;
+    description?: string | null;
+    planStart?: Date | null;
+    planEnd?: Date | null;
+    actualStart?: Date | null;
+    actualEnd?: Date | null;
+  } | null>(null);
+
+  // Delete confirmation state (review fix: subtree delete needs a confirm)
+  const [stageToDelete, setStageToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [stageDeleteError, setStageDeleteError] = useState<string | null>(
+    null,
   );
 
   return (
@@ -411,7 +444,7 @@ export function ProjectStructure({
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* Project Overview Card */}
         <div className="lg:col-span-10">
-          <ProjectOverviewCard projectName={projectName} progress={overallProgress} />
+          <ProjectOverviewCard projectName={projectName} progress={computedProgress} />
         </div>
 
         {/* Project Access Card */}
@@ -428,10 +461,33 @@ export function ProjectStructure({
           {/* Stage Sequence Header */}
           <div className="border-b border-warm-gray-200 px-4 pb-7">
             <StageSequence
-              stages={stages}
+              stages={visibleStages}
               selectedId={selectedStageId}
               onSelectStage={setSelectedStageId}
-              onAddStage={onAddStage}
+              onAddStage={() => {
+                setStageToEdit(null);
+                setStageModalOpen(true);
+              }}
+              onEditStage={(id) => {
+                const s = visibleStages.find((x) => x.id === id);
+                if (s) {
+                  setStageToEdit({
+                    stage_id: id,
+                    name: s.stageName,
+                    description: s.description,
+                    planStart: s.planStart,
+                    planEnd: s.planEnd,
+                    actualStart: s.actualStart,
+                    actualEnd: s.actualEnd,
+                  });
+                  setStageModalOpen(true);
+                }
+              }}
+              onDeleteStage={(id) => {
+                const s = visibleStages.find((x) => x.id === id);
+                setStageDeleteError(null);
+                setStageToDelete(s ? { id, name: s.stageName } : { id, name: "" });
+              }}
               showAddButton={showAddStageButton}
             />
           </div>
@@ -484,14 +540,20 @@ export function ProjectStructure({
                 title="Preview Stage"
                 description="Explore full stage modules & workflow hierarchy"
                 icon={Workflow}
-                onClick={onViewEntireStage}
+                onClick={() =>
+                  projectId &&
+                  selectedStageId &&
+                  router.push(`/projects/${projectId}/stages/${selectedStageId}`)
+                }
                 isPrimary
               />
               <StageActionButton
                 title="Preview Gate"
                 description="Review mandatory compliance milestones"
                 icon={LayoutGrid}
-                onClick={onViewGateOverview}
+                onClick={() =>
+                  projectId && router.push(`/projects/${projectId}`)
+                }
               />
             </div>
           </div>
@@ -536,6 +598,80 @@ export function ProjectStructure({
           </CardContent>
         </Card>
       </div>
+
+      {/* Add/Edit Stage modal (Task 5.7) */}
+      <StageModal
+        isOpen={stageModalOpen}
+        stage={stageToEdit}
+        projectId={projectId ?? ""}
+        onClose={() => setStageModalOpen(false)}
+        onSaved={(saved) => {
+          // Reflect create/edit in the local view until real stage data
+          // integration lands (review fix).
+          if (!stageToEdit) {
+            // Create mode: append the newly created stage.
+            setVisibleStages((prev) => [
+              ...prev,
+              {
+                id: saved.stage_id,
+                stageNumber: prev.length + 1,
+                stageName: saved.name,
+                approved: false,
+              },
+            ]);
+            return;
+          }
+          setVisibleStages((prev) =>
+            prev.map((s) =>
+              s.id === stageToEdit.stage_id
+                ? { ...s, stageName: stageToEdit.name }
+                : s,
+            ),
+          );
+        }}
+      />
+
+      {/* Stage delete confirmation (subtree soft-delete) */}
+      <ConfirmDeleteModal
+        isOpen={stageToDelete !== null}
+        noun="Stage"
+        title={
+          stageToDelete ? `Delete Stage "${stageToDelete.name}"?` : undefined
+        }
+        description={
+          stageDeleteError ??
+          "This soft-deletes the stage and its entire subtree (phases, modules, workflows, tickets). This action cannot be undone."
+        }
+        onConfirm={() => {
+          if (!stageToDelete) return;
+          void cascadeSoftDeleteStage(stageToDelete.id).then((result) => {
+            if (result.success) {
+              // Remove from the local view; real stage data integration
+              // replaces the mock list.
+              setVisibleStages((prev) =>
+                prev.filter((s) => s.id !== stageToDelete.id),
+              );
+              // Clear the selection if the deleted stage was selected so
+              // "Preview Stage" can't navigate to a deleted stage.
+              setSelectedStageId((prev) =>
+                prev === stageToDelete.id ? null : prev,
+              );
+              setStageDeleteError(null);
+              setStageToDelete(null);
+            } else {
+              setStageDeleteError(
+                typeof result.error === "string"
+                  ? result.error
+                  : "Failed to delete the stage.",
+              );
+            }
+          });
+        }}
+        onCancel={() => {
+          setStageDeleteError(null);
+          setStageToDelete(null);
+        }}
+      />
     </div>
   );
 }

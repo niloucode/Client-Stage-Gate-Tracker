@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X, Plus } from "lucide-react";
 import { workflowCreateSchema } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
 import {
@@ -100,14 +101,7 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 					onClick={handleClose}
 					className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
 				>
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<path
-							d="M15 5L5 15M5 5L15 15"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-						/>
-					</svg>
+					<X size={20} />
 				</button>
 
 				<h2 className="text-xl font-bold text-slate-900 mb-2">

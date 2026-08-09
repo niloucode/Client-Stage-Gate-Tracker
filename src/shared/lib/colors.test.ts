@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPastelStyle, TAG_COLORS } from "./colors";
+import { getPastelStyle, TAG_COLORS, departmentBadgeStyle } from "./colors";
 
 describe("getPastelStyle", () => {
 	it("produces rgba backgrounds for valid 6-digit hexes", () => {
@@ -33,5 +33,18 @@ describe("getPastelStyle", () => {
 			const style = getPastelStyle(color);
 			expect(style.bg).not.toContain("NaN");
 		}
+	});
+});
+
+describe("departmentBadgeStyle (Task 5.8 #22)", () => {
+	it("returns the mapped classes for known departments", () => {
+		expect(departmentBadgeStyle("Project Owner")).toContain("bg-[#FFDAD7]");
+		expect(departmentBadgeStyle("Finance Team")).toContain("bg-[#BAE9D4]");
+	});
+
+	it("falls back to a neutral badge for unknown departments", () => {
+		expect(departmentBadgeStyle("Engineering")).toBe(
+			"bg-slate-100 text-slate-600",
+		);
 	});
 });

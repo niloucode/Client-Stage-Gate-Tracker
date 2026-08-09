@@ -11,7 +11,8 @@ import {
 	useDeleteModule,
 } from "@/entities/module/mutations";
 import { Button } from "@/components/ui/button";
-import { Plus, Clock } from "lucide-react";
+import { ConfirmDeleteModal } from "@/shared/ui";
+import { Plus, Clock, ChevronDown, EllipsisVertical } from "lucide-react";
 
 // --- INLINE DATE LOGIC & HELPERS ---
 type WorkflowStatus = "not_started" | "started" | "ended";
@@ -242,20 +243,10 @@ export function ModulesCard({
 										className="flex-1 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
 										onClick={() => toggleModule(module.module_id)}
 									>
-										<svg
-											width="12"
-											height="8"
-											viewBox="0 0 12 8"
-											fill="none"
-											className={`flex-shrink-0 transform transition-transform ${isExpanded ? "" : "-rotate-90"}`}
-										>
-											<path
-												d="M1 1L6 6L11 1"
-												stroke="#64748B"
-												strokeWidth="1.5"
-												strokeLinecap="round"
-											/>
-										</svg>
+										<ChevronDown
+											size={12}
+											className={`flex-shrink-0 transform transition-transform text-slate-500 ${isExpanded ? "" : "-rotate-90"}`}
+										/>
 										<div>
 											<h4 className="font-semibold text-sm text-slate-900">
 												{module.name}
@@ -310,16 +301,10 @@ export function ModulesCard({
 											onClick={() => openEditModuleModal(module)}
 											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
 										>
-											<svg
-												width="14"
-												height="14"
-												viewBox="0 0 14 14"
-												fill="none"
-											>
-												<circle cx="7" cy="7" r="1.75" fill="#64748B" />
-												<circle cx="7" cy="2.4" r="1.75" fill="#64748B" />
-												<circle cx="7" cy="11.6" r="1.75" fill="#64748B" />
-											</svg>
+											<EllipsisVertical
+												size={14}
+												className="text-slate-500"
+											/>
 										</button>
 									</div>
 								</div>
@@ -356,38 +341,16 @@ export function ModulesCard({
 				onDelete={handleEditDeleteClick}
 			/>
 
-			{/* Delete Confirmation Modal */}
-			{isDeleteConfirmOpen && (
-				<div className="fixed inset-0 bg-foregroundal-main/50 flex items-center justify-center z-50">
-					<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-sm p-6 relative">
-						<h2 className="text-xl font-bold text-slate-900 mb-2">
-							Delete Module
-						</h2>
-						<p className="text-sm text-neutral-subtle mb-6">
-							Are you sure you want to delete this module? This action cannot be
-							undone.
-						</p>
-
-						<div className="flex justify-end gap-3">
-							<button
-								onClick={() => {
-									setIsDeleteConfirmOpen(false);
-									setModuleToDelete(null);
-								}}
-								className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-slate-900 transition-colors"
-							>
-								Cancel
-							</button>
-							<button
-								onClick={handleDeleteModule}
-								className="px-4 py-2 bg-red-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-red-600 transition-all shadow-sm"
-							>
-								Delete Module
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
+			{/* Delete Confirmation Modal — shared primitive (Task 5.2) */}
+			<ConfirmDeleteModal
+				isOpen={isDeleteConfirmOpen}
+				noun="Module"
+				onConfirm={handleDeleteModule}
+				onCancel={() => {
+					setIsDeleteConfirmOpen(false);
+					setModuleToDelete(null);
+				}}
+			/>
 		</div>
 	);
 }

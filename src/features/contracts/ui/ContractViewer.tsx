@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import {
 	FileText,
 	Upload,
@@ -46,7 +53,6 @@ export function ContractViewer({
 	const [file, setFile] = useState<File | null>(null);
 	const [fileUrl, setFileUrl] = useState<string | null>(null);
 	const [pendingFile, setPendingFile] = useState<File | null>(null);
-	const [removeConfirmText, setRemoveConfirmText] = useState("");
 	const [fileError, setFileError] = useState<string | null>(null);
 	const [zoom, setZoom] = useState(100);
 	const [isDragging, setIsDragging] = useState(false);
@@ -187,24 +193,11 @@ export function ContractViewer({
 	// };
 
 	const requestRemove = () => {
-		setRemoveConfirmText("");
 		setDeleteModalOpen(true);
 	};
 
-	const cancelRemove = () => {
-		setDeleteModalOpen(false);
-		setContractName("");
-		setRemoveConfirmText("");
-	};
-
 	const confirmRemove = async () => {
-		if (
-			!file ||
-			removeConfirmText !== contractName ||
-			!initialFilePath ||
-			!projectId
-		)
-			return;
+		if (!file || !initialFilePath || !projectId) return;
 		try {
 			const result = await deleteMutation.mutateAsync({
 				projectId,
@@ -225,7 +218,6 @@ export function ContractViewer({
 			setFile(null);
 			setFileUrl(null);
 			setDeleteModalOpen(false);
-			setRemoveConfirmText("");
 		} catch (err) {
 			setFileError("Deletion failed. Please try again.");
 		}
@@ -386,101 +378,50 @@ export function ContractViewer({
 				</CardContent>
 			</Card>
 
-			{pendingFile &&
-				createPortal(
-					<div className="fixed inset-0 z-50 flex items-center justify-center bg-foregroundal-main/40 px-4">
-						<div className="w-full max-w-sm rounded-2xl bg-neutral-surface p-6 shadow-xl">
-							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFFBEB]">
+			<Dialog
+				open={!!pendingFile}
+				onOpenChange={(open) => !open && cancelUpload()}
+			>
+				<DialogContent className="max-w-sm">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-3">
+							<span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFFBEB]">
 								<AlertTriangle className="h-5 w-5 text-[#B45309]" />
-							</div>
-							<h3 className="mt-4 text-sm font-semibold text-ink">
-								Upload this as the contract?
-							</h3>
-							<p className="mt-1.5 text-sm leading-relaxed text-plum-400">
-								<span className="font-medium text-ink">{contractName}</span>{" "}
-								will become the active contract between you and the client. The
-								client will be able to see this document right away.
-							</p>
-							<label className="mt-4 block text-xs font-medium text-plum-400">
-								{" "}
-								{/* ALSO ADDED THIS */}
-								Contract name
-							</label>
-							<Input
-								value={contractName}
-								onChange={(e) => setContractName(e.target.value)}
-								placeholder="e.g. Input Contract Name here"
-								autoFocus
-								className="mt-1.5"
-							/>
-							<div className="mt-5 flex gap-2">
-								<Button
-									variant="ghost"
-									onClick={cancelUpload}
-									className="flex-1"
-								>
-									Cancel
-								</Button>
-								<Button
-									variant="default"
-									onClick={confirmUpload}
-									disabled={!contractName.trim()}
-									className="flex-1"
-								>
-									Yes, upload
-								</Button>
-							</div>
-						</div>
-					</div>,
-					document.body,
-				)}
+							</span>
+							Upload this as the contract?
+						</DialogTitle>
+						<DialogDescription className="pt-2">
+							<span className="font-medium text-ink">{contractName}</span>{" "}
+							will become the active contract between you and the client. The
+							client will be able to see this document right away.
+						</DialogDescription>
+					</DialogHeader>
+					<label className="block text-xs font-medium text-plum-400">
+						Contract name
+					</label>
+					<Input
+						value={contractName}
+						onChange={(e) => setContractName(e.target.value)}
+						placeholder="e.g. Input Contract Name here"
+						autoFocus
+						className="mt-1.5"
+					/>
+					<DialogFooter showCloseButton={false}>
+						<Button variant="ghost" onClick={cancelUpload} className="flex-1">
+							Cancel
+						</Button>
+						<Button
+							variant="default"
+							onClick={confirmUpload}
+							disabled={!contractName.trim()}
+							className="flex-1"
+						>
+							Yes, upload
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
-			{/* {removeRequested &&
-				file &&
-				createPortal(
-					<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/70 backdrop-blur-sm px-4">
-						<div className="w-full max-w-sm rounded-2xl bg-neutral-surface p-6 shadow-xl">
-							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FEF2F2]">
-								<AlertTriangle className="h-5 w-5 text-red-600" />
-							</div>
-							<h3 className="mt-4 text-sm font-semibold text-ink">
-								Remove this contract?
-							</h3>
-							<p className="mt-1.5 text-sm leading-relaxed text-plum-400">
-								This removes{" "}
-								<span className="font-medium text-ink">{contractName}</span>{" "}
-								from view. To confirm, type the file name below.
-							</p>
-
-							<Input
-								value={removeConfirmText}
-								onChange={(e) => setRemoveConfirmText(e.target.value)}
-								placeholder={contractName}
-								autoFocus
-								className="mt-4 focus-visible:border-red-600"
-							/>
-
-							<div className="mt-5 flex gap-2">
-								<Button
-									variant="ghost"
-									onClick={cancelRemove}
-									className="flex-1"
-								>
-									Cancel
-								</Button>
-								<Button
-									variant="default"
-									onClick={confirmRemove}
-									disabled={removeConfirmText !== contractName}
-									className="flex-1"
-								>
-									Remove
-								</Button>
-							</div>
-						</div>
-					</div>,
-					document.body,
-				)} */}
 			{deleteModalOpen && file && (
 				<ConfirmTextModal
 					open={deleteModalOpen}

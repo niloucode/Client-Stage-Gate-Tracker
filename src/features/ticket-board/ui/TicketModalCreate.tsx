@@ -8,7 +8,7 @@ import { Tag } from "@/entities/types"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Check, Paperclip } from "lucide-react"
 import { useProfiles } from "@/entities/profile/queries"
 import { createClient } from "@/lib/supabase/client"
 import type { CreateTicketParams } from "@/shared/schemas"
@@ -282,9 +282,7 @@ export default function TicketModalCreate({
 													}`}
 												>
 													{assignedIds.includes(profile.profile_id) && (
-														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline points="2 6 5 9 10 3" stroke="neutral-surface" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-														</svg>
+														<Check size={10} strokeWidth={2} className="text-neutral-surface" />
 													)}
 												</div>
 												<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
@@ -402,9 +400,7 @@ export default function TicketModalCreate({
 													}`}
 												>
 													{selectedTags.includes(tag.tag_id) && (
-														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline points="2 6 5 9 10 3" stroke="neutral-surface" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-														</svg>
+														<Check size={10} strokeWidth={2} className="text-neutral-surface" />
 													)}
 												</div>
 												{tag.name}
@@ -437,18 +433,7 @@ export default function TicketModalCreate({
 							</span>
 						</Label>
 						<label className="flex items-center gap-2.5 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
-							<svg
-								width="15"
-								height="15"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth={2}
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-							</svg>
+							<Paperclip size={15} />
 							<span>{imageFiles.length > 0 ? `${imageFiles.length} file(s) selected` : "Click to attach images..."}</span>
 							<input
 								type="file"

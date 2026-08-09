@@ -5,7 +5,17 @@ import {
   Check,
   Workflow,
   Plus,
+  EllipsisVertical,
+  Pencil,
+  Trash2,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -15,6 +25,11 @@ export interface Stage {
   stageName: string;
   approved: boolean;
   current?: boolean;
+  description?: string;
+  planStart?: Date | null;
+  planEnd?: Date | null;
+  actualStart?: Date | null;
+  actualEnd?: Date | null;
 }
 
 interface TicketItem {
@@ -35,6 +50,8 @@ interface StageSequenceProps {
   selectedId?: string | null;
   onSelectStage?: (id: string) => void;
   onAddStage?: () => void;
+  onEditStage?: (id: string) => void;
+  onDeleteStage?: (id: string) => void;
   showAddButton?: boolean;
 }
 
@@ -136,6 +153,8 @@ export function StageSequence({
   selectedId,
   onSelectStage,
   onAddStage,
+  onEditStage,
+  onDeleteStage,
   showAddButton = true,
 }: StageSequenceProps) {
   const lastApprovedIdx = stages.reduce(
@@ -201,7 +220,7 @@ export function StageSequence({
             return (
               <div
                 key={stage.id}
-                className="relative z-10 flex justify-center"
+                className="relative z-10 flex flex-col items-center"
                 style={{ width: NODE_SLOT }}
               >
                 <StageStep
@@ -212,6 +231,37 @@ export function StageSequence({
                   badge={badge}
                   onClick={() => onSelectStage?.(stage.id)}
                 />
+                {/* Per-stage actions menu (Task 5.7) */}
+                {(onEditStage || onDeleteStage) && (
+                  <div className="mt-1 h-6">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        aria-label={`Actions for ${stage.stageName}`}
+                        className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                      >
+                        <EllipsisVertical size={14} />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center" className="w-44">
+                        {onEditStage && (
+                          <DropdownMenuItem onClick={() => onEditStage(stage.id)}>
+                            <Pencil size={14} />
+                            Edit
+                          </DropdownMenuItem>
+                        )}
+                        {onEditStage && onDeleteStage && <DropdownMenuSeparator />}
+                        {onDeleteStage && (
+                          <DropdownMenuItem
+                            onClick={() => onDeleteStage(stage.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 size={14} />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
               </div>
             );
           })}

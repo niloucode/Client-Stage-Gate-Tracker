@@ -13,6 +13,10 @@
 	--color-red-500: #EF4444;
 	--color-red-600: #BA1A1A;
 
+	/* Danger (destructive actions) — Task 5.8 #25 */
+	--color-danger: #DC2626;
+	--color-danger-foreground: #ffffff;
+
 	/* Green / Success */
 	--color-green-100: #BAE9D4;
 	--color-green-500: #22C55E;

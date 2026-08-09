@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { X, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Workflow } from "../../types";
 import { Label } from "@/components/ui/label";
 import { workflowCreateSchema } from "@/shared/schemas";
@@ -71,14 +73,7 @@ export function EditWorkflow({
 					onClick={onClose}
 					className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
 				>
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<path
-							d="M15 5L5 15M5 5L15 15"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-						/>
-					</svg>
+					<X size={20} />
 				</button>
 
 				<h2 className="text-xl font-bold text-slate-900 mb-2">Edit Workflow</h2>
@@ -133,20 +128,15 @@ export function EditWorkflow({
 				</div>
 
 				<div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
-					<button
+					<Button
+						type="button"
+						variant="danger"
 						onClick={onDelete}
-						className="px-4 py-2 text-sm font-semibold text-red-500 hover:text-red-600 hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center gap-2"
+						className="flex items-center gap-2"
 					>
-						<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-							<path
-								d="M12 4L4 12M4 4L12 12"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-							/>
-						</svg>
+						<Trash2 size={16} />
 						Delete Workflow
-					</button>
+					</Button>
 
 					<div className="flex gap-3 ml-auto">
 						<button

@@ -117,7 +117,7 @@ export function ProjectDashboard() {
 		})
 		if (result.success) {
 			setDeleteProject(null)
-			toast.add({ title: "Project Deleted", description: "Project successfully deleted" })
+			toast.add({ title: "Project Deleted", description: "Project successfully deleted", type: "delete" })
 		}
 	}
 

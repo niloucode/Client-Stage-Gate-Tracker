@@ -137,7 +137,9 @@ function ToastIcon({ type }: { type: string | undefined }) {
 
   if (type === "success") {
     icon = (
-      <CircleCheckIcon aria-hidden="true" />
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+        <CircleCheckIcon className="text-emerald-600" aria-hidden="true" />
+      </span>
     )
   }
 
@@ -149,13 +151,25 @@ function ToastIcon({ type }: { type: string | undefined }) {
 
   if (type === "warning") {
     icon = (
-      <TriangleAlertIcon aria-hidden="true" />
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100">
+        <TriangleAlertIcon className="text-amber-600" aria-hidden="true" />
+      </span>
     )
   }
 
   if (type === "error") {
     icon = (
       <OctagonXIcon className="text-destructive" aria-hidden="true" />
+    )
+  }
+
+  // Distinct red/orange treatment for destructive delete confirmations
+  // (Task 5.3 #40) — not the generic error icon.
+  if (type === "delete") {
+    icon = (
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100">
+        <OctagonXIcon className="text-red-600" aria-hidden="true" />
+      </span>
     )
   }
 

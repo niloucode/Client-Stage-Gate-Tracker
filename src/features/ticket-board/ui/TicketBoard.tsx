@@ -162,11 +162,10 @@ export default function TicketBoard({
 	}
 
 	/**
-	 * Triggers a cascaded soft-deletion database script while immediately dropping
-	 * the target element from the visible client board arrays to optimize user latency perception.
-	 * * @async
-	 * @param {string} ticketId - The explicit UUID string mapping to the target document reference.
-	 * @returns {Promise<void>} Resolves when state mutation pipelines finish reconciling.
+	 * Soft-deletes a ticket via the delete mutation. The ticket disappears
+	 * from the board when the server mutation succeeds (query invalidation
+	 * refetches the list) — there is no client-side optimistic removal.
+	 * @param {string} ticketId - The UUID of the ticket to delete.
 	 */
 	function handleDeleteTicket(ticketId: string) {
 		deleteTicketMutation.mutate({ ticketId, performed_by: user?.profile_id });

@@ -55,3 +55,18 @@ export function getPastelStyle(hex: string): { bg: string; text: string; border:
 	const border = `rgba(${r}, ${g}, ${b}, 0.25)`;
 	return { bg, text, border };
 }
+
+/**
+ * Tailwind classes for department/role badges (Task 5.8 #22).
+ * Single source of truth — previously duplicated inline in
+ * `ManageMembersModal`. Unknown departments fall back to a neutral slate.
+ */
+export const DEPARTMENT_BADGE_STYLES: Record<string, string> = {
+	"Project Owner": "bg-[#FFDAD7] text-[#410004]",
+	"Project Team": "bg-brand-500 text-[#DAD7FF]",
+	"Finance Team": "bg-[#BAE9D4] text-[#00714D]",
+};
+
+export function departmentBadgeStyle(name: string): string {
+	return DEPARTMENT_BADGE_STYLES[name] ?? "bg-slate-100 text-slate-600";
+}

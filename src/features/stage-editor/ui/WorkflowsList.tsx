@@ -13,7 +13,7 @@ import {
 	useReorderWorkflow,
 } from "@/entities/workflow/mutations";
 
-import { Pencil, X, Plus, Clock } from "lucide-react";
+import { Pencil, X, Plus, Clock, GripVertical } from "lucide-react";
 
 interface WorkflowsListProps {
 	workflows: Workflow[];
@@ -318,20 +318,10 @@ export function WorkflowsList({
 						>
 							<div className="flex items-center gap-3 flex-1">
 								{/* Drag handle */}
-								<svg
-									width="8"
-									height="12"
-									viewBox="0 0 8 12"
-									fill="none"
+								<GripVertical
+									size={14}
 									className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity"
-								>
-									<circle cx="1" cy="1" r="1" fill="currentColor" />
-									<circle cx="1" cy="6" r="1" fill="currentColor" />
-									<circle cx="1" cy="11" r="1" fill="currentColor" />
-									<circle cx="5" cy="1" r="1" fill="currentColor" />
-									<circle cx="5" cy="6" r="1" fill="currentColor" />
-									<circle cx="5" cy="11" r="1" fill="currentColor" />
-								</svg>
+								/>
 								<div>
 									<Link
 										href={`/projects/${projectId}/workflows/${workflow.workflow_id}`}
@@ -395,14 +385,16 @@ export function WorkflowsList({
 									)}
 								</div>
 
-								{/* Workflow Actions */}
+								{/* Workflow Actions — edit hidden when completed (Task 5.7) */}
 								<div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-									<button
-										onClick={() => openEditWorkflowModal(workflow)}
-										title="Edit workflow"
-									>
-										<Pencil size={12} className={"text-neutral-border"} />
-									</button>
+									{getWorkflowStatus(workflow as WorkflowWithActuals) !== "ended" && (
+										<button
+											onClick={() => openEditWorkflowModal(workflow)}
+											title="Edit workflow"
+										>
+											<Pencil size={12} className={"text-neutral-border"} />
+										</button>
+									)}
 									<button
 										onClick={() => confirmDelete(workflow)}
 										title="Delete workflow"

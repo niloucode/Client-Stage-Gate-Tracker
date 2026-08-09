@@ -15,7 +15,7 @@ import {
     useDeletePhase,
     useReorderPhase,
 } from "@/entities/phase/mutations";
-import { Pencil, X } from "lucide-react";
+import { Pencil, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PhaseStepperProps {
     phases: Phase[];
@@ -193,15 +193,7 @@ export const PhaseStepper = forwardRef<
                                     onClick={() => scroll("left")}
                                     className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-slate-200 rounded-full shadow-md hover:bg-slate-50 hover:border-brand-500 transition-all flex items-center justify-center"
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                        <path
-                                            d="M10 12L6 8L10 4"
-                                            stroke="#64748B"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
+                                    <ChevronLeft size={16} strokeWidth={2} className="text-slate-500" />
                                 </button>
                             )}
 
@@ -211,15 +203,7 @@ export const PhaseStepper = forwardRef<
                                     onClick={() => scroll("right")}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-slate-200 rounded-full shadow-md hover:bg-slate-50 hover:border-brand-500 transition-all flex items-center justify-center"
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                        <path
-                                            d="M6 12L10 8L6 4"
-                                            stroke="#64748B"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
+                                    <ChevronRight size={16} strokeWidth={2} className="text-slate-500" />
                                 </button>
                             )}
 
@@ -322,17 +306,32 @@ export const PhaseStepper = forwardRef<
                                                     >
                                                         {phase.name}
                                                     </div>
-                                                    {phase.planStart && phase.actualEnd && (
+                                                    {/* 4-date display (Task 5.7): planStart–planEnd, then actualStart–actualEnd when execution dates exist; fall back to plan dates when actuals are missing */}
+                                                    {phase.planStart && phase.planEnd && (
                                                         <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
                                                             {new Date(phase.planStart).toLocaleDateString("en-US", {
                                                                 month: "short",
                                                                 day: "numeric",
                                                             })}{" "}
                                                             –{" "}
-                                                            {new Date(phase.actualEnd).toLocaleDateString("en-US", {
+                                                            {new Date(phase.planEnd).toLocaleDateString("en-US", {
                                                                 month: "short",
                                                                 day: "numeric",
                                                             })}
+                                                            {(phase.actualStart || phase.actualEnd) && (
+                                                                <>
+                                                                    {" · "}
+                                                                    {new Date(phase.actualStart ?? phase.planStart).toLocaleDateString("en-US", {
+                                                                        month: "short",
+                                                                        day: "numeric",
+                                                                    })}
+                                                                    {"–"}
+                                                                    {new Date(phase.actualEnd ?? phase.planEnd).toLocaleDateString("en-US", {
+                                                                        month: "short",
+                                                                        day: "numeric",
+                                                                    })}
+                                                                </>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>

@@ -5,7 +5,8 @@ import { useDebouncedCallback } from "use-debounce"
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
 import { useProjectMembers, useAddProjectMember, useRemoveProjectMember } from "@/entities/project"
 import { searchProfilesForProject } from "@/entities/project/projectActions"
-import { LucideSearch } from "lucide-react"
+import { departmentBadgeStyle } from "@/shared/lib/colors"
+import { LucideSearch, X } from "lucide-react"
 import { toast } from "@/components/ui/toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Searching, Lacking } from "@/shared/ui/search-status"
@@ -16,16 +17,10 @@ interface ManageMembersModalProps {
 	onClose: () => void
 }
 
-const DEPARTMENT_STYLES: Record<string,string> = {
-	"Project Owner":"bg-[#FFDAD7] text-[#410004]",
-	"Project Team":"bg-brand-500 text-[#DAD7FF]",
-	"Finance Team":"bg-[#BAE9D4] text-[#00714D]",
-}
-
 export function DepartmentDisplay({departmentName}:{departmentName:string})
 {
 	return <div className={`px-2 w-25 text-center py-0.5 rounded-xl text-xs 
-		${DEPARTMENT_STYLES[departmentName]}`}>{departmentName}</div>
+		${departmentBadgeStyle(departmentName)}`}>{departmentName}</div>
 }
 
 export function ManageMembersModal({
@@ -264,9 +259,7 @@ const debouncedSearch = useDebouncedCallback(async (query: string) => {
 													: "text-slate-400 hover:text-red-500 hover:bg-[#FEE2E2]"
 												}`}
 												>
-												<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-													<path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-												</svg>
+												<X size={16} />
 												</button>
 											</td>
 										</tr>
