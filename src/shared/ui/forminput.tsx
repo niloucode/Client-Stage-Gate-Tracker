@@ -98,7 +98,7 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
           maxLength={maxLength}
           placeholder={props.placeholder}
           onChange={(e) => handleValueChange(e, props.onChange)}
-          className={`mt-1 ${hasError
+          className={`mt-1 bg-neutral-surface ${hasError
               ? "border-red-400 focus:ring-red-400"
               : "border-gray-300 focus:ring-brand-500"}`}
         />
