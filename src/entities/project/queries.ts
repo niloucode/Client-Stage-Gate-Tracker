@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { projectKeys } from "@/shared/query/keys";
 import {
 	selectProjects,
@@ -10,56 +10,59 @@ import {
 	selectProjectsByOwner,
 } from "./projectActions";
 
-/**
- * Hook to fetch all non-deleted projects.
- */
+export const projectQueryOptions = {
+	list: () =>
+		queryOptions({
+			queryKey: projectKeys.lists(),
+			queryFn: selectProjects,
+		}),
+	owned: () =>
+		queryOptions({
+			queryKey: [...projectKeys.lists(), "owned"],
+			queryFn: selectProjectsByOwner,
+		}),
+	detail: (projectId: string | null) =>
+		queryOptions({
+			queryKey: projectKeys.detail(projectId ?? ""),
+			queryFn: () => getProjectById(projectId!),
+			enabled: !!projectId,
+		}),
+	members: (projectId: string | null) =>
+		queryOptions({
+			queryKey: projectKeys.members(projectId ?? ""),
+			queryFn: () => getProjectMembers(projectId!),
+			enabled: !!projectId,
+		}),
+	/**
+	 * Disabled-by-default profile search (callers enable via `refetch`).
+	 */
+	profileSearch: () =>
+		queryOptions({
+			queryKey: ["profiles", "search", ""],
+			queryFn: () =>
+				Promise.resolve(
+					[] as Awaited<ReturnType<typeof searchProfilesForProject>>,
+				),
+			enabled: false,
+		}),
+};
+
 export function useProjects() {
-	return useQuery({
-		queryKey: projectKeys.lists(),
-		queryFn: selectProjects,
-	});
+	return useQuery(projectQueryOptions.list());
 }
 
-/**
- * Hook to fetch a single project by its ID.
- */
 export function useProject(projectId: string | null) {
-	return useQuery({
-		queryKey: projectKeys.detail(projectId ?? ""),
-		queryFn: () => getProjectById(projectId!),
-		enabled: !!projectId,
-	});
+	return useQuery(projectQueryOptions.detail(projectId));
 }
 
-/**
- * Hook to fetch all members of a project.
- */
 export function useProjectMembers(projectId: string | null) {
-	return useQuery({
-		queryKey: projectKeys.members(projectId ?? ""),
-		queryFn: () => getProjectMembers(projectId!),
-		enabled: !!projectId,
-	});
+	return useQuery(projectQueryOptions.members(projectId));
 }
 
-/**
- * Hook to search profiles for adding to a project.
- * Returns a function that can be called with a search query.
- */
 export function useProfileSearch() {
-	return useQuery({
-		queryKey: ["profiles", "search", ""],
-		queryFn: () => Promise.resolve([] as Awaited<ReturnType<typeof searchProfilesForProject>>),
-		enabled: false, // Manual trigger only
-	});
+	return useQuery(projectQueryOptions.profileSearch());
 }
 
-/**
- * Hook to fetch projects owned by the current user with computed status.
- */
 export function useOwnedProjects() {
-	return useQuery({
-		queryKey: [...projectKeys.lists(), "owned"],
-		queryFn: selectProjectsByOwner,
-	});
+	return useQuery(projectQueryOptions.owned());
 }

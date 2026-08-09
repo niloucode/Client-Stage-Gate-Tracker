@@ -10,12 +10,12 @@ import {
 import type { Phase } from "../types";
 import { ConfirmDeleteModal } from "@/shared/ui";
 import { AddPhase } from "@/features/stage-editor/ui/modals/AddPhase";
+import { EditPhase } from "@/features/stage-editor/ui/modals/EditPhase";
 import {
-    useCreatePhase,
     useDeletePhase,
     useReorderPhase,
 } from "@/entities/phase/mutations";
-import { X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 
 interface PhaseStepperProps {
     phases: Phase[];
@@ -29,6 +29,8 @@ export const PhaseStepper = forwardRef<
     PhaseStepperProps
 >(({ phases, stageId, activePhase, setActivePhase }, ref) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [phaseToEdit, setPhaseToEdit] = useState<Phase | null>(null);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [phaseToDelete, setPhaseToDelete] = useState<number | null>(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -36,7 +38,6 @@ export const PhaseStepper = forwardRef<
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const createPhaseMutation = useCreatePhase();
     const deletePhaseMutation = useDeletePhase();
     const reorderPhaseMutation = useReorderPhase();
 
@@ -70,22 +71,9 @@ export const PhaseStepper = forwardRef<
         });
     };
 
-    const handleAddPhase = async (data: {
-        name: string;
-        description: string;
-        start_date: Date | null;
-        deadline_date: Date | null;
-        finish_date: Date | null;
-    }) => {
-        await createPhaseMutation.mutateAsync({
-            stageId,
-            name: data.name,
-            description: data.description,
-            start_date: data.start_date ?? undefined,
-            deadline_date: data.deadline_date ?? undefined,
-            finish_date: data.finish_date ?? undefined,
-        });
-        setIsModalOpen(false);
+    const openEditModal = (phase: Phase) => {
+        setPhaseToEdit(phase);
+        setIsEditModalOpen(true);
     };
 
     const confirmDelete = (phaseNumber: number) => {
@@ -295,6 +283,16 @@ export const PhaseStepper = forwardRef<
                                                         </div>
                                                     </button>
 
+                                                    {/* Edit Button on Group Hover (Task 1.4 pilot) */}
+                                                    <button
+                                                        onClick={() => openEditModal(phase)}
+                                                        className="flex items-center justify-center h-4 w-4 absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
+                                                        title="Edit phase"
+                                                        aria-label={`Edit phase ${phase.number ?? ""}`}
+                                                    >
+                                                        <Pencil size={12} strokeWidth={3} />
+                                                    </button>
+
                                                     {/* Delete Button on Group Hover */}
                                                     <button
                                                         onClick={() =>
@@ -324,14 +322,14 @@ export const PhaseStepper = forwardRef<
                                                     >
                                                         {phase.name}
                                                     </div>
-                                                    {phase.start_date && phase.finish_date && (
+                                                    {phase.planStart && phase.actualEnd && (
                                                         <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
-                                                            {new Date(phase.start_date).toLocaleDateString("en-US", {
+                                                            {new Date(phase.planStart).toLocaleDateString("en-US", {
                                                                 month: "short",
                                                                 day: "numeric",
                                                             })}{" "}
                                                             –{" "}
-                                                            {new Date(phase.finish_date).toLocaleDateString("en-US", {
+                                                            {new Date(phase.actualEnd).toLocaleDateString("en-US", {
                                                                 month: "short",
                                                                 day: "numeric",
                                                             })}
@@ -361,10 +359,10 @@ export const PhaseStepper = forwardRef<
 
                         <div className="grid grid-cols-3 gap-6 mt-4">
                             <div>
-                                <label className="block text-sm font-medium text-neutral-800">Start Date</label>
+                                <label className="block text-sm font-medium text-neutral-800">Plan Start</label>
                                 <input
                                     type="text"
-                                    value={currentPhase.start_date ? new Date(currentPhase.start_date).toLocaleDateString() : ""}
+                                    value={currentPhase.planStart ? new Date(currentPhase.planStart).toLocaleDateString() : ""}
                                     disabled
                                     className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
                                     onClick={(e) => e.stopPropagation()}
@@ -372,10 +370,10 @@ export const PhaseStepper = forwardRef<
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-neutral-800">Deadline Date</label>
+                                <label className="block text-sm font-medium text-neutral-800">Plan End</label>
                                 <input
                                     type="text"
-                                    value={currentPhase.deadline_date ? new Date(currentPhase.deadline_date).toLocaleDateString() : ""}
+                                    value={currentPhase.planEnd ? new Date(currentPhase.planEnd).toLocaleDateString() : ""}
                                     disabled
                                     className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
                                     onClick={(e) => e.stopPropagation()}
@@ -383,10 +381,10 @@ export const PhaseStepper = forwardRef<
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-neutral-800">Finish Date</label>
+                                <label className="block text-sm font-medium text-neutral-800">Actual End</label>
                                 <input
                                     type="text"
-                                    value={currentPhase.finish_date ? new Date(currentPhase.finish_date).toLocaleDateString() : ""}
+                                    value={currentPhase.actualEnd ? new Date(currentPhase.actualEnd).toLocaleDateString() : ""}
                                     disabled
                                     className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
                                     onClick={(e) => e.stopPropagation()}
@@ -401,7 +399,15 @@ export const PhaseStepper = forwardRef<
             <AddPhase
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSubmit={handleAddPhase}
+                stageId={stageId}
+            />
+
+            {/* Edit Phase Modal (Task 1.4 pilot) */}
+            <EditPhase
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                stageId={stageId}
+                phase={phaseToEdit}
             />
 
             {/* Delete Confirmation Modal */}

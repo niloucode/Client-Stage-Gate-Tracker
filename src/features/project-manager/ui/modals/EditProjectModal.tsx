@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
 import { projectCreateSchema } from "@/shared/schemas"
 import { getFieldErrors } from "@/shared/lib/zod"
+import { toDateTimeLocalInput } from "@/shared/lib/scheduling"
 import { clientSelectAll } from "@/entities/client/clientActions"
 import { FormInput, SelectOption } from "@/shared/ui/"
 import {
@@ -57,9 +58,7 @@ const emptyFormData: EditProjectFormData = {
 type FieldErrors = Partial<Record<keyof EditProjectFormData, string>>
 
 function toDateInput(date: Date | null): string {
-	if (!date) return ""
-	const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-	return d.toISOString().slice(0, 16)
+	return toDateTimeLocalInput(date)
 }
 
 export function EditProjectModal({

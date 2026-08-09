@@ -1,5 +1,5 @@
 import type { Tag } from "@/entities/types"
-import { TagBadge } from "@/shared/ui/tagbadge"
+import { TagBadge } from "@/entities/tag/ui/TagBadge"
 
 export default function TagListModal({
 	tags,

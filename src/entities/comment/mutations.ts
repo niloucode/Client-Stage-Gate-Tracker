@@ -2,8 +2,10 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { commentKeys, historyKeys } from "@/shared/query/keys";
-import { createCommentWithImages } from "./commentActions";
-import type { CommentParentType } from "@/lib/generated/prisma";
+import { createCommentWithImages, selectComment } from "./commentActions";
+
+/** Cache shape for a comment list — typed, never `any` (Task 4.3 #63). */
+type CommentListData = Awaited<ReturnType<typeof selectComment>>;
 
 export function useCreateComment() {
 	const queryClient = useQueryClient();
@@ -16,7 +18,6 @@ export function useCreateComment() {
 			});
 			queryClient.invalidateQueries({ queryKey: commentKeys.lists() });
 
-			// Also refresh ticket history when commenting on a ticket
 			if (vars.parent_type === "TICKET_COMMENT") {
 				queryClient.invalidateQueries({
 					queryKey: historyKeys.list(vars.parent_id),
@@ -25,7 +26,7 @@ export function useCreateComment() {
 
 			queryClient.setQueryData(
 				commentKeys.list(vars.parent_type, vars.parent_id),
-				(oldData: any) => {
+				(oldData: CommentListData | undefined) => {
 					if (!oldData) return [_data];
 					return [_data, ...oldData];
 				},

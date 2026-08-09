@@ -2,7 +2,8 @@
 
 import type { Tag } from "@/entities/types"
 import { useState } from "react"
-import { ConfirmDeleteModal, TagBadge } from "@/shared/ui"
+import { ConfirmDeleteModal } from "@/shared/ui"
+import { TagBadge } from "@/entities/tag/ui"
 import TagListModal from "@/features/tag-manager/ui/TagListModal"
 import TagFormModal from "@/features/tag-manager/ui/TagFormModal"
 import{ Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"

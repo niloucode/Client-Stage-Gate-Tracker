@@ -13,20 +13,17 @@ import type {
 	WorkflowUpdateInput,
 } from "@/shared/schemas";
 
+/**
+ * Workflow mutations use the canonical scheduling vocabulary
+ * (planStart/planEnd/actualStart/actualEnd) — see Task 3.1.
+ */
 export function useCreateWorkflow() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: (
 			params: { moduleId: string; stageId: string } & WorkflowCreateInput,
-		) =>
-			createWorkflow(
-				params.moduleId,
-				params.name,
-				params.start_date,
-				params.finish_date,
-				params.deadline_date,
-			),
+		) => createWorkflow(params.moduleId, params),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
@@ -41,15 +38,7 @@ export function useUpdateWorkflow() {
 	return useMutation({
 		mutationFn: (
 			params: { workflowId: string; stageId: string } & WorkflowUpdateInput,
-		) =>
-			updateWorkflow(
-				params.workflowId,
-				params.name,
-				params.start_date,
-				params.finish_date,
-				undefined,
-				params.deadline_date,
-			),
+		) => updateWorkflow(params.workflowId, params),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),

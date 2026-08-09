@@ -24,6 +24,8 @@ export const commentKeys = {
 	lists: () => [...commentKeys.all, "list"] as const,
 	list: (parentType: string, parentId: string) =>
 		[...commentKeys.lists(), parentType, parentId] as const,
+	images: (parentType: string, parentId: string) =>
+		[...commentKeys.all, "images", parentType, parentId] as const,
 };
 
 export const clientKeys = {

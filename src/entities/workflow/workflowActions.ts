@@ -7,6 +7,13 @@ import {
 	resolveWorkflowProject,
 } from "@/lib/auth/projectAccess";
 import { generateKeyBetween } from "fractional-indexing";
+import { reorderBySortKey } from "@/shared/lib/fractionalSort";
+import {
+	workflowCreateSchema,
+	workflowUpdateSchema,
+	type WorkflowCreateInput,
+	type WorkflowUpdateInput,
+} from "@/shared/schemas";
 import type { EntityFilterStatus } from "@/entities/types";
 
 /**
@@ -23,12 +30,15 @@ import type { EntityFilterStatus } from "@/entities/types";
  */
 export async function createWorkflow(
 	moduleId: string,
-	workflowName: string,
-	startDate?: Date | null,
-	endDate?: Date | null,
-	deadlineDate?: Date | null,
-	isApproved: boolean = false,
+	input: WorkflowCreateInput,
 ) {
+	const parsed = workflowCreateSchema.safeParse(input);
+	if (!parsed.success) {
+		return { success: false, error: "Invalid workflow data." };
+	}
+	const { name, planStart, planEnd, actualStart, actualEnd, isApproved } =
+		parsed.data;
+
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveModuleProject(moduleId);
 	if (!projectId) return { success: false, error: "Module not found." };
@@ -46,13 +56,14 @@ export async function createWorkflow(
 
 		const newWorkflow = await prisma.workflows.create({
 			data: {
-				name: workflowName,
+				name,
 				sort_key: nextKey,
-				plan_start_at: startDate ?? new Date(),
-				actual_end_at: endDate,
-				is_approved: isApproved,
+				plan_start_at: planStart ?? new Date(),
+				actual_end_at: actualEnd ?? null,
+				actual_start_at: actualStart ?? null,
+				is_approved: isApproved ?? false,
 				module_id: moduleId,
-				plan_end_at: deadlineDate ?? new Date(),
+				plan_end_at: planEnd ?? new Date(),
 			},
 		});
 		return { success: true, data: newWorkflow };
@@ -165,12 +176,15 @@ export async function getTicketsByWorkflowId(
  */
 export async function updateWorkflow(
 	workflowId: string,
-	workflowName?: string,
-	startDate?: Date | null,
-	endDate?: Date | null,
-	isApproved?: boolean,
-	deadlineDate?: Date | null,
+	input: WorkflowUpdateInput,
 ) {
+	const parsed = workflowUpdateSchema.safeParse(input);
+	if (!parsed.success) {
+		return { success: false, error: "Invalid workflow data." };
+	}
+	const { name, planStart, planEnd, actualStart, actualEnd, isApproved } =
+		parsed.data;
+
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveWorkflowProject(workflowId);
 	if (!projectId) return { success: false, error: "Workflow not found." };
@@ -182,10 +196,11 @@ export async function updateWorkflow(
 				workflow_id: workflowId,
 			},
 			data: {
-				name: workflowName,
-				plan_start_at: startDate ?? undefined,
-				actual_end_at: endDate,
-				plan_end_at: deadlineDate ?? undefined,
+				name: name ?? undefined,
+				plan_start_at: planStart ?? undefined,
+				actual_end_at: actualEnd ?? undefined,
+				actual_start_at: actualStart ?? undefined,
+				plan_end_at: planEnd ?? undefined,
 				is_approved: isApproved,
 			},
 		});
@@ -337,38 +352,28 @@ export async function reorderWorkflow(
 				throw new Error(`Workflow ${workflowId} not found.`);
 			}
 
-			// Fractional-indexing move: compute the key between the neighbors
-			// at the target position and update a single row. No renumbering.
+			// Fractional-indexing move via the shared core (Task 3.4):
+			// compute the key between the neighbors at the target position
+			// and update a single row. No renumbering.
 			const siblings = await tx.workflows.findMany({
 				where: { module_id: wf.module_id, is_deleted: false, sort_key: { not: null } },
 				select: { workflow_id: true, sort_key: true },
 				orderBy: { sort_key: { sort: "asc", nulls: "last" } },
 			});
 
-			const currentIndex = siblings.findIndex(
-				(s) => s.workflow_id === workflowId,
+			const result = reorderBySortKey(
+				siblings.map((s) => ({ id: s.workflow_id, sort_key: s.sort_key })),
+				workflowId,
+				targetNumber,
 			);
-			if (currentIndex === -1) {
-				throw new Error(`Workflow ${workflowId} not found.`);
+			if (!result.success) {
+				throw new Error(result.error);
 			}
-			if (targetNumber < 1 || targetNumber > siblings.length) {
-				throw new Error(
-					`Target number ${targetNumber} is out of bounds (1–${siblings.length}).`,
-				);
-			}
-			const targetIndex = targetNumber - 1;
-			if (targetIndex === currentIndex) return;
-
-			const rest = siblings.filter((s) => s.workflow_id !== workflowId);
-			const before =
-				targetIndex > 0 ? rest[targetIndex - 1].sort_key : null;
-			const after =
-				targetIndex < rest.length ? rest[targetIndex].sort_key : null;
-			const newKey = generateKeyBetween(before, after);
+			if (result.newKey === undefined) return;
 
 			await tx.workflows.update({
 				where: { workflow_id: workflowId },
-				data: { sort_key: newKey },
+				data: { sort_key: result.newKey },
 			});
 		});
 

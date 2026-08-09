@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
 import { clientSignupSchema, type ClientSignupInput } from "@/shared/schemas";
+import { env } from "@/env";
 import { getFieldErrors } from "@/shared/lib/zod";
 import { createClient } from "@/lib/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -80,7 +81,7 @@ export function ClientSignupForm() {
 					is_deleted: user.is_deleted,
 					deleted_at: user.deleted_at,
 				},
-				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
+				emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
 			},
 		});
 	}

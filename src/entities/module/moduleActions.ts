@@ -6,6 +6,12 @@ import {
 	resolveModuleProject,
 	resolvePhaseProject,
 } from "@/lib/auth/projectAccess";
+import {
+	moduleCreateSchema,
+	moduleUpdateSchema,
+	type ModuleCreateInput,
+	type ModuleUpdateInput,
+} from "@/shared/schemas";
 import type { EntityFilterStatus } from "@/entities/types";
 
 /**
@@ -13,13 +19,13 @@ import type { EntityFilterStatus } from "@/entities/types";
  *
  * @param {string} phaseId - The UUID of the parent phase this module belongs to.
  */
-export async function createModule(
-	phaseId: string,
-	moduleName: string,
-	startDate?: Date | null,
-	endDate?: Date | null,
-	deadlineDate?: Date | null,
-) {
+export async function createModule(phaseId: string, input: ModuleCreateInput) {
+	const parsed = moduleCreateSchema.safeParse(input);
+	if (!parsed.success) {
+		return { success: false, error: "Invalid module data." };
+	}
+	const { name, planStart, planEnd, actualStart, actualEnd } = parsed.data;
+
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolvePhaseProject(phaseId);
 	if (!projectId) return { success: false, error: "Phase not found." };
@@ -28,10 +34,11 @@ export async function createModule(
 	try {
 		const newModule = await prisma.modules.create({
 			data: {
-				name: moduleName,
-				plan_start_at: startDate ?? new Date(),
-				actual_end_at: endDate,
-				plan_end_at: deadlineDate ?? new Date(),
+				name,
+				plan_start_at: planStart ?? new Date(),
+				actual_end_at: actualEnd ?? null,
+				actual_start_at: actualStart ?? null,
+				plan_end_at: planEnd ?? new Date(),
 				phase_id: phaseId,
 			},
 		});
@@ -138,13 +145,13 @@ export async function getWorkflowsByModuleId(
  * Returns `success: true` and the updated module object if successful.
  * Returns `success: false` and an error message if the update fails.
  */
-export async function updateModule(
-	moduleId: string,
-	moduleName?: string,
-	startDate?: Date | null,
-	endDate?: Date | null,
-	deadlineDate?: Date | null,
-) {
+export async function updateModule(moduleId: string, input: ModuleUpdateInput) {
+	const parsed = moduleUpdateSchema.safeParse(input);
+	if (!parsed.success) {
+		return { success: false, error: "Invalid module data." };
+	}
+	const { name, planStart, planEnd, actualStart, actualEnd } = parsed.data;
+
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveModuleProject(moduleId);
 	if (!projectId) return { success: false, error: "Module not found." };
@@ -156,10 +163,11 @@ export async function updateModule(
 				module_id: moduleId,
 			},
 			data: {
-				name: moduleName,
-				plan_start_at: startDate ?? undefined,
-				actual_end_at: endDate,
-				plan_end_at: deadlineDate ?? undefined,
+				name: name ?? undefined,
+				plan_start_at: planStart ?? undefined,
+				actual_end_at: actualEnd ?? undefined,
+				actual_start_at: actualStart ?? undefined,
+				plan_end_at: planEnd ?? undefined,
 			},
 		});
 		return { success: true, data: updatedModule };

@@ -28,8 +28,15 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          # t3-env validates server vars at import time (Task 1.8), so the
+          # build needs the full set — NEXT_PUBLIC_* are inlined into the
+          # client bundle, DATABASE_URL/SUPABASE_SERVICE_ROLE_KEY are
+          # validated server-side.
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SKIP_ENV_VALIDATION: ${{ secrets.SKIP_ENV_VALIDATION }}
 
       # Lint is not a hard gate yet: the repo carries ~800 pre-existing
       # legacy-code lint errors. Run it visibly so the count stays on the

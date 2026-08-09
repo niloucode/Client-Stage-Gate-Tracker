@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/app/**/*.{ts,tsx}",
+    "scripts/*.mjs",
+    "src/lib/safe-action.ts"
+  ],
+  "ignore": [
+    // Ambient module augmentation consumed by TypeScript, not imports.
+    "src/shared/query/register.ts"
+  ],
+  "ignoreDependencies": [
+    // Runtime Prisma comes from src/lib/generated (prisma generate output).
+    "@prisma/client",
+    // Planned email notifications; not yet wired to code.
+    "nodemailer",
+    "@types/nodemailer"
+  ]
+}

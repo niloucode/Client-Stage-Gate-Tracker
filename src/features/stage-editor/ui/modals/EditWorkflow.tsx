@@ -5,12 +5,16 @@ import type { Workflow } from "../../types";
 import { Label } from "@/components/ui/label";
 import { workflowCreateSchema } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
+import {
+	fromDateTimeLocalInput,
+	toDateTimeLocalInput,
+} from "@/shared/lib/scheduling";
 
 interface EditWorkflowFormData {
 	name: string;
-	start_date: Date | null;
-	deadline_date: Date | null;
-	finish_date: Date | null;
+	planStart: Date | null;
+	planEnd: Date | null;
+	actualEnd: Date | null;
 }
 
 interface EditWorkflowProps {
@@ -23,9 +27,9 @@ interface EditWorkflowProps {
 
 const toFormData = (workflow: Workflow | null): EditWorkflowFormData => ({
 	name: workflow?.name ?? "",
-	start_date: workflow?.start_date ?? null,
-	deadline_date: workflow?.deadline_date ?? null,
-	finish_date: workflow?.finish_date ?? null,
+	planStart: workflow?.planStart ?? null,
+	planEnd: workflow?.planEnd ?? null,
+	actualEnd: workflow?.actualEnd ?? null,
 });
 
 type FieldErrors = Partial<Record<"name", string>>;
@@ -116,22 +120,11 @@ export function EditWorkflow({
 						<Label>Deadline Date</Label>
 						<input
 							type="datetime-local"
-							value={
-								formData.deadline_date
-									? new Date(
-											formData.deadline_date.getTime() -
-												formData.deadline_date.getTimezoneOffset() * 60000,
-										)
-											.toISOString()
-											.slice(0, 16)
-									: ""
-							}
+							value={toDateTimeLocalInput(formData.planEnd)}
 							onChange={(e) =>
 								setFormData({
 									...formData,
-									deadline_date: e.target.value
-										? new Date(e.target.value)
-										: null,
+									planEnd: fromDateTimeLocalInput(e.target.value),
 								})
 							}
 							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"

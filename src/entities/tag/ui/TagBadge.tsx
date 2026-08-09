@@ -1,5 +1,5 @@
 import { getPastelStyle } from "@/shared/lib/colors";
-import { Tag } from "@/entities/types";
+import type { Tag } from "@/entities/types";
 
 export function TagBadge({
   tag,

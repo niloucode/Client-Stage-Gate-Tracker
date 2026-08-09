@@ -22,6 +22,8 @@ export async function createStage(
 	stageName: string,
 	startDate?: Date | null,
 	endDate?: Date | null,
+	actualStart?: Date | null,
+	actualEnd?: Date | null,
 ) {
 	// Authorization: caller must be a member of the project
 	const auth = await assertProjectMember(projectId);
@@ -42,6 +44,8 @@ export async function createStage(
 				sort_key: nextKey,
 				plan_start_at: startDate ?? new Date(),
 				plan_end_at: endDate ?? new Date(),
+				actual_start_at: actualStart ?? null,
+				actual_end_at: actualEnd ?? null,
 				project_id: projectId,
 			},
 		});
@@ -154,6 +158,8 @@ export async function updateStage(
 	stageName?: string,
 	startDate?: Date | null,
 	endDate?: Date | null,
+	actualStart?: Date | null,
+	actualEnd?: Date | null,
 ) {
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveStageProject(stageId);
@@ -169,6 +175,8 @@ export async function updateStage(
 				name: stageName,
 				plan_start_at: startDate ?? undefined,
 				plan_end_at: endDate ?? undefined,
+				actual_start_at: actualStart ?? undefined,
+				actual_end_at: actualEnd ?? undefined,
 			},
 		});
 		return { success: true, data: updatedStage };
@@ -497,10 +505,10 @@ export async function getStageTree(stageId: string) {
 				number: list.length + 1, // display number derived from sort order (WorkflowsList reorder uses it)
 				ticketCount: stats.ticketCount,
 				progress: stats.progress,
-				start_date: wf.plan_start_at,
-				deadline_date: wf.plan_end_at,
-				actual_start_date: wf.actual_start_at,
-				finish_date: stats.computedFinishDate, // computed: date last ticket finished
+				planStart: wf.plan_start_at,
+				planEnd: wf.plan_end_at,
+				actualStart: wf.actual_start_at,
+				actualEnd: stats.computedFinishDate, // computed: date last ticket finished
 			});
 			workflowsByModule.set(wfModId, list);
 		}
@@ -511,27 +519,27 @@ export async function getStageTree(stageId: string) {
 			const modId = mod.module_id;
 			const modWorkflows = workflowsByModule.get(modId) ?? [];
 
-			// Module finish_date = max of workflow finish_dates, but only if ALL are finished
-			let modFinishDate: Date | null = null;
+			// Module actualEnd = max of workflow actualEnd, but only if ALL are finished
+			let modActualEnd: Date | null = null;
 			let allWfsFinished = modWorkflows.length > 0;
 			for (const w of modWorkflows) {
-				const ce = (w as { finish_date: Date | null }).finish_date;
+				const ce = (w as { actualEnd: Date | null }).actualEnd;
 				if (!ce) {
 					allWfsFinished = false;
 					break;
 				}
-				if (!modFinishDate || ce > modFinishDate) modFinishDate = ce;
+				if (!modActualEnd || ce > modActualEnd) modActualEnd = ce;
 			}
-			if (!allWfsFinished) modFinishDate = null;
+			if (!allWfsFinished) modActualEnd = null;
 
 			const list = modulesByPhase.get(modPhaseId) ?? [];
 			list.push({
 				...mod,
 				workflows: modWorkflows,
-				start_date: mod.plan_start_at,
-				deadline_date: mod.plan_end_at,
-				actual_start_date: mod.actual_start_at,
-				finish_date: modFinishDate,
+				planStart: mod.plan_start_at,
+				planEnd: mod.plan_end_at,
+				actualStart: mod.actual_start_at,
+				actualEnd: modActualEnd,
 			});
 			modulesByPhase.set(modPhaseId, list);
 		}
@@ -540,27 +548,27 @@ export async function getStageTree(stageId: string) {
 			const phId = p.phase_id;
 			const phModules = modulesByPhase.get(phId) ?? [];
 
-			// Phase finish_date = max of module finish_dates, but only if ALL are finished
-			let phFinishDate: Date | null = null;
+			// Phase actualEnd = max of module actualEnd, but only if ALL are finished
+			let phActualEnd: Date | null = null;
 			let allModsFinished = phModules.length > 0;
 			for (const m of phModules) {
-				const ce = (m as { finish_date: Date | null }).finish_date;
+				const ce = (m as { actualEnd: Date | null }).actualEnd;
 				if (!ce) {
 					allModsFinished = false;
 					break;
 				}
-				if (!phFinishDate || ce > phFinishDate) phFinishDate = ce;
+				if (!phActualEnd || ce > phActualEnd) phActualEnd = ce;
 			}
-			if (!allModsFinished) phFinishDate = null;
+			if (!allModsFinished) phActualEnd = null;
 
 			return {
 				...p,
 				number: index + 1, // display number derived from sort order
 				modules: phModules,
-				start_date: p.plan_start_at,
-				deadline_date: p.plan_end_at,
-				actual_start_date: p.actual_start_at,
-				finish_date: phFinishDate,
+				planStart: p.plan_start_at,
+				planEnd: p.plan_end_at,
+				actualStart: p.actual_start_at,
+				actualEnd: phActualEnd,
 			};
 		});
 

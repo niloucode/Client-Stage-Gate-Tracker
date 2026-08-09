@@ -16,11 +16,15 @@ export async function selectImagesByParent(parentType: ImageParentType, parentId
 	});
 }
 
-export async function selectComment(parentId: string) {
+export async function selectComment(
+	parentType: CommentParentType,
+	parentId: string,
+) {
     try {
-        // Scoped to one parent (ticket/gate) — never the whole table
+        // Scoped to one parent (ticket/gate) — never the whole table.
+        // Polymorphic parent_type + parent_id (LOL #43/#44).
         const comments = await prisma.comments.findMany({
-            where: { parent_id: parentId, is_deleted: false },
+            where: { parent_type: parentType, parent_id: parentId, is_deleted: false },
             include: {
                 Profiles: true,
             },
@@ -31,11 +35,13 @@ export async function selectComment(parentId: string) {
         const commentIds = comments.map((c) => c.comment_id);
 
         // Images are polymorphically linked (app-level integrity), so fetch
-        // them in one scoped query and join with a Map.
+        // them in one scoped query (bounded by commentIds — never the whole
+        // table) and join with a Map.
         const images = await prisma.images.findMany({
             where: {
                 parent_id: { in: commentIds },
                 parent_type: ImageParentType.TICKET_COMMENT,
+                is_deleted: false,
             },
         });
 

@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ProfileType } from "@/shared/types";
 import { createClient } from "@/lib/supabase/client";
 import { signupSchema } from "@/shared/schemas";
+import { env } from "@/env";
 import { profileKeys } from "@/shared/query/keys";
 import { getProfileByEmail } from "@/entities/profile/profileActions";
 
@@ -60,7 +61,7 @@ export function StaffSignupForm() {
 					is_deleted: user.is_deleted,
 					deleted_at: user.deleted_at,
 				},
-				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
+				emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
 			},
 		});
 	}

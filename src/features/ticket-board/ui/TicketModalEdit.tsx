@@ -19,7 +19,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getInitials } from "@/shared/lib/strings";
 import ImageLightbox from "@/shared/ui/ImageLightbox";
 import TicketHistoryLog from "./TicketHistoryLog";
-import { TagBadge } from "@/shared/ui"
+import { TagBadge } from "@/entities/tag/ui/TagBadge"
 import { Calendar, X} from "lucide-react"
 
 

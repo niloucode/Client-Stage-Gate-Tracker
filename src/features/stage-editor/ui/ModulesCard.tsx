@@ -29,11 +29,11 @@ const formatDateTime = (date: Date | null | undefined) => {
 };
 
 function getActualStart(module: any): Date | null {
-	return module.actual_start_date || module.start_date || null;
+	return module.actualStart || module.planStart || null;
 }
 
 function getWorkflowStatus(module: any): WorkflowStatus {
-	if (module.finish_date) return "ended";
+	if (module.actualEnd) return "ended";
 	const actualStart = getActualStart(module);
 	const now = new Date();
 	if (actualStart && new Date(actualStart) <= now) return "started";
@@ -51,13 +51,13 @@ function getDeadlineState(
 	module: any,
 	status: WorkflowStatus
 ): "upcoming" | "approaching" | "overdue" | "on-time" | "late" {
-	if (!module.deadline_date) return "upcoming";
+	if (!module.planEnd) return "upcoming";
 	
-	const dl = new Date(module.deadline_date);
+	const dl = new Date(module.planEnd);
 	
 	if (status === "ended") {
-		if (!module.finish_date) return "on-time";
-		return new Date(module.finish_date) > dl ? "late" : "on-time";
+		if (!module.actualEnd) return "on-time";
+		return new Date(module.actualEnd) > dl ? "late" : "on-time";
 	}
 	
 	const now = new Date();
@@ -112,36 +112,36 @@ export function ModulesCard({
 
 	const handleAddModule = async (data: {
 		name: string;
-		start_date: Date | null;
-		deadline_date: Date | null;
-		finish_date: Date | null;
+		planStart: Date | null;
+		planEnd: Date | null;
+		actualEnd: Date | null;
 	}) => {
 		if (activePhase === null || !currentPhase) return;
 		await createModuleMutation.mutateAsync({
 			phaseId: currentPhase.phase_id,
 			stageId,
 			name: data.name,
-			start_date: data.start_date ?? undefined,
-			deadline_date: data.deadline_date ?? undefined,
-			finish_date: data.finish_date ?? undefined,
+			planStart: data.planStart ?? undefined,
+			planEnd: data.planEnd ?? undefined,
+			actualEnd: data.actualEnd ?? undefined,
 		});
 		setIsAddOpen(false);
 	};
 
 	const handleSaveModule = async (data: {
 		name: string;
-		start_date: Date | null;
-		deadline_date: Date | null;
-		finish_date: Date | null;
+		planStart: Date | null;
+		planEnd: Date | null;
+		actualEnd: Date | null;
 	}) => {
 		if (!editingModule) return;
 		await updateModuleMutation.mutateAsync({
 			moduleId: editingModule.module_id,
 			stageId,
 			name: data.name,
-			start_date: data.start_date ?? undefined,
-			deadline_date: data.deadline_date ?? undefined,
-			finish_date: data.finish_date ?? undefined,
+			planStart: data.planStart ?? undefined,
+			planEnd: data.planEnd ?? undefined,
+			actualEnd: data.actualEnd ?? undefined,
 		});
 		setEditingModule(null);
 	};
@@ -226,7 +226,7 @@ export function ModulesCard({
 						// Contextual logic driven by inline helpers
 						const status = getWorkflowStatus(module); 
 						const actualStart = getActualStart(module);
-						const delayDays = getStartDelayDays(module.start_date, actualStart);
+						const delayDays = getStartDelayDays(module.planStart, actualStart);
 						const deadlineState = getDeadlineState(module, status);
 						const deadlineColorClass = getDeadlineColorClass(deadlineState);
 
@@ -264,7 +264,7 @@ export function ModulesCard({
 												{deadlineState === 'approaching' && <Clock className="w-3 h-3 text-amber-500" />}
 												<p className={`text-xs ${deadlineColorClass}`}>
 												{status === 'not_started' && (
-													<>Starting: {formatDateTime(module.start_date)}</>
+													<>Starting: {formatDateTime(module.planStart)}</>
 												)}
 												
 												{status === 'started' && (
@@ -276,7 +276,7 @@ export function ModulesCard({
 
 												{status === 'ended' && (
 													<>
-														Started: {formatDateTime(actualStart)} – Ended: {formatDateTime(module.finish_date)}
+														Started: {formatDateTime(actualStart)} – Ended: {formatDateTime(module.actualEnd)}
 													</>
 												)}
 													
@@ -289,11 +289,11 @@ export function ModulesCard({
 										{/* Contextual Date Badge */}
 										<div 
 											className="px-3 py-1.5 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md"
-											title={status !== 'not_started' && module.start_date ? `Planned Start: ${formatDateTime(module.start_date)}` : undefined}
+											title={status !== 'not_started' && module.planStart ? `Planned Start: ${formatDateTime(module.planStart)}` : undefined}
 										>
 											<span className="font-medium text-xs text-slate-600 flex items-center gap-1">
 												{deadlineState === 'overdue' ? 'Overdue: ' : 'Deadline: '} 
-													{formatDateTime(module.deadline_date)}
+													{formatDateTime(module.planEnd)}
 													{status === 'ended' && (
 														<span className="ml-1 opacity-80">
 															({deadlineState === 'late' ? 'Late' : 'On-time'})

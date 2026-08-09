@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { workflowCreateSchema } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
+import {
+	fromDateTimeLocalInput,
+	toDateTimeLocalInput,
+} from "@/shared/lib/scheduling";
 import { Label } from "@/components/ui/label";
 
 interface AddWorkflowFormData {
 	name: string;
-	start_date: Date | null;
-	deadline_date: Date | null;
-	finish_date: Date | null;
+	planStart: Date | null;
+	planEnd: Date | null;
+	actualEnd: Date | null;
 }
 
 interface AddWorkflowProps {
@@ -20,9 +24,9 @@ interface AddWorkflowProps {
 
 const emptyFormData: AddWorkflowFormData = {
 	name: "",
-	start_date: null,
-	deadline_date: null,
-	finish_date: null,
+	planStart: null,
+	planEnd: null,
+	actualEnd: null,
 };
 
 type FieldErrors = Partial<Record<keyof AddWorkflowFormData, string>>;
@@ -38,16 +42,16 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 		setFormData((prev) => {
 			if (
 				next &&
-				prev.finish_date &&
-				next.getTime() + MIN_GAP_MS > prev.finish_date.getTime()
+				prev.actualEnd &&
+				next.getTime() + MIN_GAP_MS > prev.actualEnd.getTime()
 			) {
 				return {
 					...prev,
-					start_date: next,
-					finish_date: new Date(next.getTime() + MIN_GAP_MS),
+					planStart: next,
+					actualEnd: new Date(next.getTime() + MIN_GAP_MS),
 				};
 			}
-			return { ...prev, start_date: next };
+			return { ...prev, planStart: next };
 		});
 	};
 
@@ -56,16 +60,16 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 		setFormData((prev) => {
 			if (
 				next &&
-				prev.start_date &&
-				prev.start_date.getTime() + MIN_GAP_MS > next.getTime()
+				prev.planStart &&
+				prev.planStart.getTime() + MIN_GAP_MS > next.getTime()
 			) {
 				return {
 					...prev,
-					finish_date: next,
-					start_date: new Date(next.getTime() - MIN_GAP_MS),
+					actualEnd: next,
+					planStart: new Date(next.getTime() - MIN_GAP_MS),
 				};
 			}
-			return { ...prev, finish_date: next };
+			return { ...prev, actualEnd: next };
 		});
 	};
 
@@ -148,22 +152,11 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 						</label>
 						<input
 							type="datetime-local"
-							value={
-								formData.deadline_date
-									? new Date(
-											formData.deadline_date.getTime() -
-												formData.deadline_date.getTimezoneOffset() * 60000,
-										)
-											.toISOString()
-											.slice(0, 16)
-									: ""
-							}
+							value={toDateTimeLocalInput(formData.planEnd)}
 							onChange={(e) =>
 								setFormData({
 									...formData,
-									deadline_date: e.target.value
-										? new Date(e.target.value)
-										: null,
+									planEnd: fromDateTimeLocalInput(e.target.value),
 								})
 							}
 							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"

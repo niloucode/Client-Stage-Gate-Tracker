@@ -1,5 +1,4 @@
 export { FormInput } from "./forminput"
 export type { SelectOption } from "./forminput"
-export { TagBadge } from "./tagbadge"
 export { ConfirmDeleteModal } from "./ConfirmDeleteModal"
 export { ColorPicker, Backdrop } from "./tagPrimitives"

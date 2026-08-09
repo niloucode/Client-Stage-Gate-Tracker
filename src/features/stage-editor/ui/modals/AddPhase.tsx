@@ -1,148 +1,139 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { phaseCreateSchema } from "@/shared/schemas"
-import { getFieldErrors } from "@/shared/lib/zod"
-import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
-
-interface AddPhaseFormData {
-	name: string
-	description: string
-	start_date: Date | null
-	deadline_date: Date | null
-	finish_date: Date | null
-}
+import type { z } from "zod";
+import { useAppForm, SchedulingFields } from "@/shared/form";
+import { phaseCreateSchema } from "@/shared/schemas";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useCreatePhase } from "@/entities/phase/mutations";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
+import { formErrorToMessage } from "@/shared/form/errors";
+import { Plus } from "lucide-react";
 
 interface AddPhaseProps {
-	isOpen: boolean
-	onClose: () => void
-	onSubmit: (data: AddPhaseFormData) => void
+	isOpen: boolean;
+	onClose: () => void;
+	stageId: string;
 }
 
-const emptyFormData: AddPhaseFormData = {
-	name: "",
-	description: "",
-	start_date: null,
-	deadline_date: null,
-	finish_date: null,
-}
+/** Form values are the Zod schema's *input* type (Task 1.4 acceptance). */
+type AddPhaseFormValues = z.input<typeof phaseCreateSchema>;
 
-type FieldErrors = Partial<Record<keyof AddPhaseFormData, string>>
+/**
+ * Create Phase modal — pilot for the shared TanStack Form convention
+ * (Task 1.4). Form values inferred from `phaseCreateSchema` (Zod); no
+ * manual field-error mapper, no per-field useState; pending state and
+ * server failure behavior come from the form + mutation.
+ * Uses the canonical scheduling vocabulary (Task 1.5).
+ */
+export function AddPhase({ isOpen, onClose, stageId }: AddPhaseProps) {
+	const createPhaseMutation = useCreatePhase();
 
-export function AddPhase({ isOpen, onClose, onSubmit }: AddPhaseProps) {
-	const [formData, setFormData] = useState<AddPhaseFormData>(emptyFormData)
-	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+	const defaultValues: AddPhaseFormValues = {
+		name: "",
+		description: "",
+		planStart: null,
+		planEnd: null,
+		actualStart: null,
+		actualEnd: null,
+	};
 
+	const form = useAppForm({
+		defaultValues,
+		validators: {
+			onSubmit: phaseCreateSchema,
+		},
+		onSubmit: async ({ value }) => {
+			await createPhaseMutation.mutateAsync({
+				stageId,
+				name: value.name,
+				description: value.description ?? "",
+				planStart: value.planStart ?? undefined,
+				planEnd: value.planEnd ?? undefined,
+				actualStart: value.actualStart ?? undefined,
+				actualEnd: value.actualEnd ?? undefined,
+			});
+		},
+	});
+
+	useResetOnOpen(isOpen, () => form.reset());
 
 	const handleClose = () => {
-		setFormData(emptyFormData)
-		setFieldErrors({})
-		onClose()
-	}
-
-	const handleSubmit = () => {
-		const result = phaseCreateSchema.safeParse(formData)
-		if (!result.success) {
-			const mapped = getFieldErrors(result)
-			setFieldErrors(mapped)
-			return
-		}
-		onSubmit(formData)
-		setFormData(emptyFormData)
-		setFieldErrors({})
-	}
+		form.reset();
+		onClose();
+	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose() }}>
+		<Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{"Create New Phase"}</DialogTitle>
-					<DialogDescription>{"Fill in the details to create a new phase."}</DialogDescription>
+					<DialogTitle>Create New Phase</DialogTitle>
+					<DialogDescription>
+						Fill in the details to create a new phase.
+					</DialogDescription>
 				</DialogHeader>
-				<div className="px-6">
-					<div>
-						<div className="flex justify-between items-center">
-						<Label required error={!!fieldErrors.name}>
-							Phase Name
-						</Label>
-							<span className="text-[10px] text-muted-foreground">
-								{formData.name.length}/20
-							</span>
-						</div>
-						<input
-							type="text"
-							maxLength={20}
-							value={formData.name}
-							onChange={(e) =>
-								setFormData({ ...formData, name: e.target.value })
-							}
-							placeholder="e.g., Discovery"
-							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
-						/>
-						<div className="flex justify-between mt-1">
-							{fieldErrors.name ? (
-								<p className="text-xs text-destructive">{fieldErrors.name}</p>
-							) : (
-								<span />
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						void form.handleSubmit();
+					}}
+					className="px-6"
+				>
+					<div className="flex flex-col gap-4">
+						<form.AppField
+							name="name"
+							children={(field) => (
+								<field.TextField
+									label="Phase Name"
+									required
+									placeholder="e.g., Discovery"
+									maxLength={20}
+								/>
 							)}
-						</div>
-					</div>
-
-					<div>
-						<label className="block text-xs font-semibold text-slate-600 mb-1.5">
-							Description
-						</label>
-						<textarea
-							value={formData.description}
-							onChange={(e) =>
-								setFormData({ ...formData, description: e.target.value })
-							}
-							placeholder="Describe the objectives and scope of this phase..."
-							rows={3}
-							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 resize-none focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+						/>
+						<form.AppField
+							name="description"
+							children={(field) => (
+								<field.TextAreaField
+									label="Description"
+									placeholder="Describe the objectives and scope of this phase..."
+									rows={3}
+								/>
+							)}
+						/>
+						<SchedulingFields form={form} showActuals={false} />
+						<form.Subscribe
+							selector={(state) => state.errorMap.onSubmit}
+							children={(onSubmitError) => {
+								const message = formErrorToMessage(onSubmitError);
+								return message ? (
+									<p className="text-xs text-destructive" role="alert">
+										{message}
+									</p>
+								) : null;
+							}}
 						/>
 					</div>
-
-					<div>
-						<label className="block text-xs font-semibold text-slate-600 mb-1.5">
-							Deadline Date
-						</label>
-						<input
-							type="datetime-local"
-							value={
-								formData.deadline_date
-									? new Date(
-											formData.deadline_date.getTime() -
-												formData.deadline_date.getTimezoneOffset() * 60000,
-										)
-											.toISOString()
-											.slice(0, 16)
-									: ""
-							}
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									deadline_date: e.target.value
-										? new Date(e.target.value)
-										: null,
-								})
-							}
-							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
-						/>
-					</div>
-				</div>
-				<DialogFooter>
-					<Button onClick={handleClose} variant="ghost">
-						Cancel
-					</Button>
-					<Button onClick={handleSubmit}>
-						<Plus />{"Add Phase"}
-					</Button>
-				</DialogFooter>
+					<DialogFooter showCloseButton={false}>
+						<Button type="button" variant="ghost" onClick={handleClose}>
+							Cancel
+						</Button>
+						<form.AppForm>
+							<form.SubmitButton pendingLabel="Adding…">
+								<Plus /> Add Phase
+							</form.SubmitButton>
+						</form.AppForm>
+					</DialogFooter>
+				</form>
 			</DialogContent>
 		</Dialog>
-	)
+	);
 }

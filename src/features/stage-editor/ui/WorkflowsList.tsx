@@ -25,19 +25,16 @@ interface WorkflowsListProps {
 /**
  * NOTE ON DATA MODEL
  * ------------------
- * The `Workflow` type as currently defined only exposes:
- *   - start_date     -> treated here as PLANNED START (PS)
- *   - deadline_date   -> PLANNED END (PE) — this is fixed, never swapped for actual_end
- *   - finish_date     -> ACTUAL END (AE), set once the workflow has ended
- *
- * It does NOT yet expose an ACTUAL START (AS) distinct from the planned one.
- * Until the backend adds `actual_start_date`, we extend the type locally and
- * fall back to dummy/derived data so the UI logic can be reviewed end-to-end.
- * Swap `getActualStart` for a real field read as soon as it exists on the API.
+ * The `Workflow` type exposes the canonical scheduling vocabulary
+ * (Task 1.5 / 3.1):
+ *   - planStart  -> PLANNED START (PS)
+ *   - planEnd    -> PLANNED END (PE) — fixed, never swapped for actualEnd
+ *   - actualEnd  -> ACTUAL END (AE), set once the workflow has ended
+ *   - actualStart -> ACTUAL START (AS), distinct from the planned one
  */
 type WorkflowWithActuals = Workflow & {
-	/** Real actual-start timestamp, once the backend supports it */
-	actual_start_date?: Date | null;
+	/** Actual start is now first-class on Workflow (canonical vocabulary) */
+	actualStart?: Date | null;
 };
 
 type WorkflowStatus = "not_started" | "started" | "ended";
@@ -53,27 +50,25 @@ const DAY_MS = 1000 * 60 * 60 * 24;
 
 /** Not Started / Started Already / Ended, derived from what dates we actually have. */
 function getWorkflowStatus(workflow: WorkflowWithActuals): WorkflowStatus {
-	if (workflow.finish_date) return "ended";
-	if (workflow.actual_start_date) return "started";
-	if (workflow.start_date && workflow.start_date.getTime() <= Date.now()) {
+	if (workflow.actualEnd) return "ended";
+	if (workflow.actualStart) return "started";
+	if (workflow.planStart && workflow.planStart.getTime() <= Date.now()) {
 		return "started";
 	}
 	return "not_started";
 }
 
 /**
- * DUMMY DATA HELPER
- * Returns the actual start date to display. Falls back to `start_date`
+ * Returns the actual start date to display. Falls back to `planStart`
  * (i.e. assumes an on-time start) when the real field isn't populated yet.
- * Replace with a direct field read once `actual_start_date` exists on Workflow.
  */
 function getActualStart(workflow: WorkflowWithActuals): Date | null {
-	return workflow.actual_start_date ?? workflow.start_date ?? null;
+	return workflow.actualStart ?? workflow.planStart ?? null;
 }
 
 /** Days late a workflow started, relative to its planned start. Null if not late / not started. */
 function getStartDelayDays(workflow: WorkflowWithActuals): number | null {
-	const planned = workflow.start_date;
+	const planned = workflow.planStart;
 	const actual = getActualStart(workflow);
 	if (!planned || !actual) return null;
 	const diffDays = Math.round((actual.getTime() - planned.getTime()) / DAY_MS);
@@ -144,35 +139,35 @@ export function WorkflowsList({
 
 	const handleAddWorkflow = async (data: {
 		name: string;
-		start_date: Date | null;
-		deadline_date: Date | null;
-		finish_date: Date | null;
+		planStart: Date | null;
+		planEnd: Date | null;
+		actualEnd: Date | null;
 	}) => {
 		await createWorkflowMutation.mutateAsync({
 			moduleId,
 			stageId,
 			name: data.name,
-			start_date: data.start_date ?? undefined,
-			deadline_date: data.deadline_date ?? undefined,
-			finish_date: data.finish_date ?? undefined,
+			planStart: data.planStart ?? undefined,
+			planEnd: data.planEnd ?? undefined,
+			actualEnd: data.actualEnd ?? undefined,
 		});
 		setIsAddOpen(false);
 	};
 
 	const handleSaveWorkflow = async (data: {
 		name: string;
-		start_date: Date | null;
-		deadline_date: Date | null;
-		finish_date: Date | null;
+		planStart: Date | null;
+		planEnd: Date | null;
+		actualEnd: Date | null;
 	}) => {
 		if (!editingWorkflow) return;
 		await updateWorkflowMutation.mutateAsync({
 			workflowId: editingWorkflow.workflow_id,
 			stageId,
 			name: data.name,
-			start_date: data.start_date ?? undefined,
-			deadline_date: data.deadline_date ?? undefined,
-			finish_date: data.finish_date ?? undefined,
+			planStart: data.planStart ?? undefined,
+			planEnd: data.planEnd ?? undefined,
+			actualEnd: data.actualEnd ?? undefined,
 		});
 		setEditingWorkflow(null);
 	};
@@ -268,8 +263,8 @@ export function WorkflowsList({
 					const startDelayDays = getStartDelayDays(wf);
 					const deadlineState = getDeadlineState(
 						status,
-						wf.deadline_date ?? null,
-						wf.finish_date ?? null,
+						wf.planEnd ?? null,
+						wf.actualEnd ?? null,
 					);
 
 					// --- Start column label + tooltip ---
@@ -277,7 +272,7 @@ export function WorkflowsList({
 					let startTooltip: string | undefined;
 
 					if (status === "not_started") {
-						startLabel = `Starting: ${formatDateTime(wf.start_date)}`;
+						startLabel = `Starting: ${formatDateTime(wf.planStart)}`;
 					} else if (status === "started") {
 						startLabel = (
 							<>
@@ -290,17 +285,17 @@ export function WorkflowsList({
 								)}
 							</>
 						);
-						startTooltip = `Planned start: ${formatDateTime(wf.start_date)}`;
+						startTooltip = `Planned start: ${formatDateTime(wf.planStart)}`;
 					} else {
 						startLabel = (
 							<>
 								Started: {formatDateTime(actualStart)} — Ended:{" "}
-								{formatDateTime(wf.finish_date)}
+								{formatDateTime(wf.actualEnd)}
 							</>
 						);
 						startTooltip = startDelayDays
-							? `Planned start: ${formatDateTime(wf.start_date)} (started ${startDelayDays}d late)`
-							: `Planned start: ${formatDateTime(wf.start_date)}`;
+							? `Planned start: ${formatDateTime(wf.planStart)} (started ${startDelayDays}d late)`
+							: `Planned start: ${formatDateTime(wf.planStart)}`;
 					}
 
 					// --- Deadline column label ---
@@ -355,7 +350,7 @@ export function WorkflowsList({
 							</div>
 
 							<div className="flex items-center gap-4">
-								{/* Deadline column: always bound to planned_end (deadline_date), never swapped */}
+								{/* Deadline column: always bound to planEnd, never swapped */}
 								<div className="flex flex-col items-end gap-0.5">
 									<span className="text-[10px] uppercase tracking-wide text-slate-400">
 										Deadline
@@ -364,7 +359,7 @@ export function WorkflowsList({
 										className={`flex items-center gap-1 text-xs ${DEADLINE_STYLES[deadlineState]}`}
 									>
 										<Clock size={11} />
-										{formatDateTime(wf.deadline_date)}
+										{formatDateTime(wf.planEnd)}
 										{deadlineSuffix}
 									</span>
 								</div>

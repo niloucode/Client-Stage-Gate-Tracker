@@ -11,10 +11,6 @@ import {
 } from "./projectActions";
 import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas";
 
-/**
- * Hook to create a new project.
- * Invalidates the project list on success.
- */
 export function useCreateProject() {
 	const queryClient = useQueryClient();
 
@@ -26,10 +22,6 @@ export function useCreateProject() {
 	});
 }
 
-/**
- * Hook to update an existing project.
- * Invalidates both the list and the specific project detail on success.
- */
 export function useUpdateProject() {
 	const queryClient = useQueryClient();
 
@@ -44,10 +36,6 @@ export function useUpdateProject() {
 	});
 }
 
-/**
- * Hook to soft-delete a project.
- * Invalidates the project list on success.
- */
 export function useDeleteProject() {
 	const queryClient = useQueryClient();
 
@@ -65,10 +53,6 @@ export function useDeleteProject() {
 	});
 }
 
-/**
- * Hook to add a member to a project.
- * Invalidates the project members list on success.
- */
 export function useAddProjectMember() {
 	const queryClient = useQueryClient();
 
@@ -90,11 +74,6 @@ export function useAddProjectMember() {
 	});
 }
 
-/**
- * Hook to remove a member from a project.
- * Uses optimistic update: removes the row from cache immediately,
- * restores on error.
- */
 export function useRemoveProjectMember() {
 	const queryClient = useQueryClient();
 
@@ -107,17 +86,14 @@ export function useRemoveProjectMember() {
 			profileId: string;
 		}) => removeProjectMember(projectId, profileId),
 		onMutate: async ({ projectId, profileId }) => {
-			// Cancel any outgoing refetches
 			await queryClient.cancelQueries({
 				queryKey: projectKeys.members(projectId),
 			});
 
-			// Snapshot the current cache
 			const previousMembers = queryClient.getQueryData(
 				projectKeys.members(projectId),
 			);
 
-			// Optimistically remove the member from cache
 			queryClient.setQueryData(
 				projectKeys.members(projectId),
 				(old: unknown[] | undefined) => {
@@ -132,7 +108,6 @@ export function useRemoveProjectMember() {
 			return { previousMembers, projectId };
 		},
 		onError: (_err, _vars, context) => {
-			// Restore the previous cache state on error
 			if (context?.previousMembers) {
 				queryClient.setQueryData(
 					projectKeys.members(context.projectId),

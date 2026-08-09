@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Prisma, status } from "@/lib/generated/prisma";
 import { ticketCreateSchema, ticketUpdateSchema, type CreateTicketParams, type UpdateTicketParams } from "@/shared/schemas";
 import { ticketInclude } from "./types";
+import { rollupTicketAncestors } from "./lib/dateRollup";
+import { logHistoryEvent } from "./lib/logHistoryEvent";
 import { z } from "zod";
 import {
 	assertProjectMember,
@@ -37,53 +39,61 @@ export async function createTicket(data: CreateTicketParams & { performed_by?: s
     const auth = await assertProjectMember(projectId);
     if (!auth.ok) throw new Error(auth.error);
 
-    const ticket = await prisma.tickets.create({
-        data: {
-            name: data.name,
-            plan_start_at: new Date(),
-            plan_end_at: data.deadline_date,
-            status: data.status,
-            workflow_id: data.workflow_id ?? null,
-            watcher_id: data.watcher_id ?? null,
-            description: data.description ?? null,
-            actual_end_at: data.finish_date ?? null,
-            api_route: data.api_route ?? null,
-            api_method: data.api_method ?? null,
-
-            TicketAssigned: {
-                create: data.TicketAssigned?.map((id: string) => ({
-                    profile_id: id,
-                })),
-            },
-            TicketTags: {
-                create: data.tagIds?.map((id: string): { tag_id: string } => ({
-                    tag_id: id,
-                }))
-            },
-        },
-        include: ticketInclude,
-    });
-
-    if (data.image_urls && data.image_urls.length > 0) {
-        await prisma.images.createMany({
-            data: data.image_urls.map((url) => ({
-                image_src: url,
-                parent_type: "TICKET",
-                parent_id: ticket.ticket_id,
-            })),
-        });
-    }
-
-    if (data.performed_by) {
-        await prisma.historyEvent.create({
+    const ticket = await prisma.$transaction(async (tx) => {
+        const created = await tx.tickets.create({
             data: {
-                action: "CREATED",
-                performed_by: data.performed_by,
-                ticket_id: ticket.ticket_id,
-                details: JSON.stringify({ ticket_name: data.name }),
+                name: data.name,
+                plan_start_at: new Date(),
+                plan_end_at: data.deadline_date,
+                status: data.status,
+                workflow_id: data.workflow_id ?? null,
+                watcher_id: data.watcher_id ?? null,
+                description: data.description ?? null,
+                actual_end_at: data.finish_date ?? null,
+                api_route: data.api_route ?? null,
+                api_method: data.api_method ?? null,
+
+                TicketAssigned: {
+                    create: data.TicketAssigned?.map((id: string) => ({
+                        profile_id: id,
+                    })),
+                },
+                TicketTags: {
+                    create: data.tagIds?.map((id: string): { tag_id: string } => ({
+                        tag_id: id,
+                    }))
+                },
             },
+            include: ticketInclude,
         });
-    }
+
+        if (data.image_urls && data.image_urls.length > 0) {
+            await tx.images.createMany({
+                data: data.image_urls.map((url) => ({
+                    image_src: url,
+                    parent_type: "TICKET",
+                    parent_id: created.ticket_id,
+                })),
+            });
+        }
+
+        if (data.performed_by) {
+            await logHistoryEvent(tx, {
+                ticketId: created.ticket_id,
+                performedBy: data.performed_by,
+                action: "CREATED",
+                details: { ticket_name: data.name },
+            });
+        }
+
+        // Timeline rollup (Task 3.2): a new ticket extends the workflow/module
+        // boundaries.
+        if (created.workflow_id) {
+            await rollupTicketAncestors(tx, created.workflow_id);
+        }
+
+        return created;
+    });
 
     return ticket;
 }
@@ -105,6 +115,7 @@ export async function updateTicket(data: UpdateTicketParams & { performed_by?: s
                 name: true,
                 status: true,
                 watcher_id: true,
+                workflow_id: true,
                 TicketAssigned: { select: { profile_id: true } },
                 TicketTags:      { select: { tag_id: true } },
             },
@@ -231,6 +242,16 @@ export async function updateTicket(data: UpdateTicketParams & { performed_by?: s
             await tx.historyEvent.createMany({ data: historyRows });
         }
 
+        // Timeline rollup: keep the parent Workflow + Module boundaries in
+        // sync with this ticket's dates/status (Task 3.2). Roll both the
+        // old and new workflow when the ticket moved between them.
+        const oldWorkflowId = existing?.workflow_id ?? null;
+        const newWorkflowId = data.workflow_id ?? null;
+        if (oldWorkflowId) await rollupTicketAncestors(tx, oldWorkflowId);
+        if (newWorkflowId && newWorkflowId !== oldWorkflowId) {
+            await rollupTicketAncestors(tx, newWorkflowId);
+        }
+
         return updated;
     });
 }
@@ -249,7 +270,7 @@ export async function updateTicketStatus(ticketId: string, status: status, perfo
         // Fetch old status inside the transaction for consistency
         const existing = await tx.tickets.findUnique({
             where: { ticket_id: ticketId },
-            select: { status: true },
+            select: { status: true, workflow_id: true },
         });
 
         const updated = await tx.tickets.update({
@@ -262,25 +283,21 @@ export async function updateTicketStatus(ticketId: string, status: status, perfo
         });
 
         if (performed_by && existing && existing.status !== status) {
-            if (status === "FINISHED") {
-                await tx.historyEvent.create({
-                    data: {
-                        action: "FINISHED",
-                        performed_by,
-                        ticket_id: ticketId,
-                        details: JSON.stringify({ from: existing.status }),
-                    },
-                });
-            } else {
-                await tx.historyEvent.create({
-                    data: {
-                        action: "UPDATED_STATUS",
-                        performed_by,
-                        ticket_id: ticketId,
-                        details: JSON.stringify({ from: existing.status, to: status }),
-                    },
-                });
-            }
+            await logHistoryEvent(tx, {
+                ticketId,
+                performedBy: performed_by,
+                action: status === "FINISHED" ? "FINISHED" : "UPDATED_STATUS",
+                details:
+                    status === "FINISHED"
+                        ? { from: existing.status }
+                        : { from: existing.status, to: status },
+            });
+        }
+
+        // Timeline rollup: status change moves the workflow/module boundary
+        // (Task 3.2) — e.g. transitioning to FINISHED sets actualEnd.
+        if (existing?.workflow_id) {
+            await rollupTicketAncestors(tx, existing.workflow_id);
         }
 
         return updated;
@@ -306,7 +323,7 @@ export async function cascadeSoftDeleteTicket(ticketId: string, performed_by?: s
 		// Fetch ticket name before soft-deleting so we can record it in history
 		const ticket = await db.tickets.findUnique({
 			where: { ticket_id: ticketId },
-			select: { name: true },
+			select: { name: true, workflow_id: true },
 		});
 
 		await db.tickets.update({
@@ -318,14 +335,18 @@ export async function cascadeSoftDeleteTicket(ticketId: string, performed_by?: s
 		});
 
 		if (performed_by) {
-			await db.historyEvent.create({
-				data: {
-					action: "DELETE",
-					performed_by,
-					ticket_id: ticketId,
-					details: JSON.stringify({ ticket_name: ticket?.name ?? null }),
-				},
+			await logHistoryEvent(db, {
+				ticketId,
+				performedBy: performed_by,
+				action: "DELETE",
+				details: { ticket_name: ticket?.name ?? null },
 			});
+		}
+
+		// Timeline rollup (Task 3.2): removing a ticket narrows the parent
+		// boundaries. Runs on `db` (the caller's transaction when provided).
+		if (ticket?.workflow_id) {
+			await rollupTicketAncestors(db, ticket.workflow_id);
 		}
 
         return { success: true };

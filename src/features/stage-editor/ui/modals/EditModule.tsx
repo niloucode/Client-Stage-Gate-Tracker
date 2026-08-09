@@ -5,6 +5,10 @@ import type { Module } from "../../types";
 import { Label } from "@/components/ui/label";
 import { moduleCreateSchema } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
+import {
+	fromDateTimeLocalInput,
+	toDateTimeLocalInput,
+} from "@/shared/lib/scheduling";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Trash2, Plus } from "lucide-react"
@@ -12,9 +16,9 @@ import { FormInput } from "@/shared/ui/"
 
 interface EditModuleFormData {
 	name: string;
-	start_date: Date | null;
-	deadline_date: Date | null;
-	finish_date: Date | null;
+	planStart: Date | null;
+	planEnd: Date | null;
+	actualEnd: Date | null;
 }
 
 interface EditModuleProps {
@@ -27,9 +31,9 @@ interface EditModuleProps {
 
 const toFormData = (module: Module | null): EditModuleFormData => ({
 	name: module?.name ?? "",
-	start_date: module?.start_date ?? null,
-	deadline_date: module?.deadline_date ?? null,
-	finish_date: module?.finish_date ?? null,
+	planStart: module?.planStart ?? null,
+	planEnd: module?.planEnd ?? null,
+	actualEnd: module?.actualEnd ?? null,
 });
 
 type FieldErrors = Partial<Record<"name", string>>;
@@ -85,23 +89,14 @@ export function EditModule({
 					/>
 					<FormInput
 						variant="datetime-local"
-						label="Start Date"
+						label="Plan End"
 						type="datetime-local"
-						value={formData.deadline_date
-							? new Date(
-									formData.deadline_date.getTime() -
-										formData.deadline_date.getTimezoneOffset() * 60000,
-								)
-									.toISOString()
-									.slice(0, 16)
-							: ""}
+						value={toDateTimeLocalInput(formData.planEnd)}
 						containerClassName="flex-1"
 						onChange={(e) =>
 							setFormData({
 								...formData,
-								deadline_date: e.target.value
-									? new Date(e.target.value)
-									: null,
+								planEnd: fromDateTimeLocalInput(e.target.value),
 							})
 						}
 					/>

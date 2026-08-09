@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { prisma } from "@/lib/prisma";
+import { getProfileById } from "@/entities/profile/profileActions";
 
 // Root route. Anonymous users are already sent to /login by the middleware
 // (proxy.ts). Signed-in users get a role-aware redirect that mirrors the
@@ -12,11 +12,10 @@ export default async function RootPage() {
 	} = await supabase.auth.getUser();
 	if (!user) redirect("/login");
 
-	const profile = await prisma.profiles.findUnique({
-		where: { profile_id: user.id },
-		select: { client_id: true },
-	});
-	if (profile?.client_id) {
+	// Entity action (not inline prisma) — picks up soft-delete filtering
+	// and the {success, data} contract (Task 4.1).
+	const result = await getProfileById(user.id);
+	if (result.success && result.data?.client_id) {
 		// TEMPORARY: clients land on /contracts until the Client Portal
 		// (/client) is built.
 		redirect("/contracts");
