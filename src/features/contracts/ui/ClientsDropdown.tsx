@@ -102,8 +102,8 @@ export function ClientsDropdown({
 				</div>
 			</PopoverTrigger>
 
-			<PopoverContent className="w-full p-0" align="start">
-				<Command className="w-full">
+			<PopoverContent>
+				<Command>
 					<CommandList>
 						<CommandEmpty>No clients found.</CommandEmpty>
 						<CommandGroup>

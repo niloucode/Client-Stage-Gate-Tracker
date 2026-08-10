@@ -33,7 +33,7 @@ import {
 	useDeleteTag,
 } from "@/entities/tag/mutations";
 
-import { LucideChevronLeft } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
 
 // Types
 import { COLUMNS } from "../model/columns";
@@ -268,13 +268,14 @@ export default function TicketBoard({
 
 	return (
 		<>
-			<div className="flex items-center justify-between shrink-0">
+			<div className="flex items-start justify-between shrink-0">
 				<div className="flex items-center gap-2">
 					{stageId && projectId ? (
 						<Link
 							href={`/projects/${projectId}/stages/${stageId}`}
-							className="group flex items-center gap-2 text-xl font-bold text-gray-900 hover:text-brand-600 transition-colors leading-none"						>
-							<LucideChevronLeft/>
+							className="group mt-1 flex items-center gap-2 text-lg font-bold leading-none text-charcoal transition-colors hover:text-brand-600 sm:text-xl"
+						>
+							<ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
 							<span>{workflowName}</span>
 						</Link>
 					) : (

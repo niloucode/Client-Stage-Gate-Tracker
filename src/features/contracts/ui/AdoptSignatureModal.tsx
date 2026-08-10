@@ -113,14 +113,6 @@ export function AdoptSignatureModal({
 						<span className="text-xs font-semibold tracking-wide text-plum-400">
 							PREVIEW
 						</span>
-						{/* 
-            <button
-              type="button"
-              onClick={cycleStyle}
-              className="text-xs font-medium text-indigo-700 hover:underline"
-            >
-              Change Style
-            </button>*/}
 					</div>
 
 					<div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-lg border border-lavender-200 bg-neutral-surface px-6 py-8">

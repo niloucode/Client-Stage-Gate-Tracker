@@ -239,9 +239,9 @@ export function StageSequence({
                         aria-label={`Actions for ${stage.stageName}`}
                         className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                       >
-                        <EllipsisVertical size={14} />
+                        <EllipsisVertical className="border-2 border-brand-100 hover:opacity-100 opacity-0 transition-all duration-300 cursor-pointer absolute top-0 right-6 rounded-xl bg-neutral-surface" size={24} />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="center" className="w-44">
+                      <DropdownMenuContent className="absolute right-0 top-0 w-44">
                         {onEditStage && (
                           <DropdownMenuItem onClick={() => onEditStage(stage.id)}>
                             <Pencil size={14} />

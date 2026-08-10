@@ -15,6 +15,7 @@ import { useClients } from "@/entities/client";
 import ClientFormModal from "@/features/client-manager/ui/ClientFormModal";
 import ViewTeamMembersModal from "@/features/client-manager/ui/ViewTeamMembersModal";
 
+
 interface Client {
 	id: string;
 	name: string;
@@ -86,10 +87,10 @@ export default function ClientPage() {
 						<div className="flex flex-col">
 							{/* Table header (sticky top) */}
 							<div
-								className="sticky top-0 z-10 grid shrink-0 items-center px-6 py-3 text-[11px] font-bold text-muted-foreground border-b border-border"
+								className="sticky top-0 z-10 grid shrink-0 gap-x-3 items-center px-6 py-3 text-[11px] font-bold text-muted-foreground border-b border-border"
 								style={{
 									gridTemplateColumns: "226px 198px 1fr 1fr 1fr 113px 141px",
-									backgroundColor: "#f8f9ff",
+									backgroundColor: "neutral-subtle",
 								}}
 							>
 								<span>CLIENT NAME</span>
@@ -106,7 +107,7 @@ export default function ClientPage() {
 								{filteredClients.map((client, i) => (
 									<div
 										key={client.id}
-										className="grid items-center px-6 py-5 transition-colors hover:bg-muted/50"
+										className="grid items-center gap-3 px-6 py-5 transition-colors hover:bg-muted/50"
 										style={{
 											gridTemplateColumns: "226px 198px 1fr 1fr 1fr 113px 141px",
 											borderBottom: i < clients.length - 1 ? "1px solid hsl(var(--border))" : "none",

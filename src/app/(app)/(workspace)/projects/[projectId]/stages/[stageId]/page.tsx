@@ -8,8 +8,9 @@ import {
 } from "@/features/stage-editor"
 import type { Phase } from "@/features/stage-editor/types"
 import { useStageTree } from "@/entities/stage/queries"
-import { Plus } from "lucide-react"
+import { Plus, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 interface PageParams {
 	projectId: string
@@ -86,10 +87,19 @@ function EditorContent({
 
 	return (
 		<div>
-			<div className="flex justify-between items-end mb-6">
+      {/* Navigation Link */}
+			<Link
+				href={"/projects/"}
+				className="absolute left-60 top-20 group mt-1 flex items-center gap-2 text-lg font-bold leading-none text-neutral-border transition-colors hover:text-brand-600 sm:text-xl"
+			>
+				<ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+				<span>Back</span>
+			</Link>
+
+			<div className="flex justify-between items-end my-4">
 				<div>
 					<h1 className="text-4xl font-bold text-foreground tracking-tight">
-						Structure Editor
+						Stage Name Here
 					</h1>
 					<p className="text-m text-neutral-border mt-1">
 						Define project phases, modules, and workflows.

@@ -240,11 +240,12 @@ export function SignatoriesCard({
 		<>
 			<Card className={className}>
 				<CardHeader className="flex flex-row items-center justify-between">
-					<CardTitle className="text-lg">Signatories</CardTitle>
+					<CardTitle >Signatories</CardTitle>
 					{/* <Badge variant="secondary">
 						{completed} / {signatories.length} completed
 					</Badge> */}
 				</CardHeader>
+				{showClientDropdown && <Separator />}
 
 				<CardContent className="flex flex-col gap-7 items-center">
 					<ul className="flex flex-col gap-4 w-full">
@@ -259,7 +260,6 @@ export function SignatoriesCard({
 						))}
 					</ul>
 
-					{showClientDropdown && <Separator />}
 					{/* no_client / with_client: dropdown + confirm button */}
 					{showClientDropdown && (
 						<div className="w-full flex flex-col gap-6">

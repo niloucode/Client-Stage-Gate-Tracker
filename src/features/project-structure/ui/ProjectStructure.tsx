@@ -432,13 +432,13 @@ export function ProjectStructure({
   return (
     <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
       {/* Navigation Link */}
-      <Link
-        href={projectId ? `/projects/${projectId}` : "/projects"}
-        className="group mt-1 flex items-center gap-2 text-lg font-bold leading-none text-charcoal transition-colors hover:text-brand-600 sm:text-xl"
-      >
-        <ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
-        <span>Back to Projects</span>
-      </Link>
+      	<Link
+			href={projectId ? `/projects/${projectId}` : "/projects"}
+			className="group mt-1 flex items-center gap-2 text-lg font-bold leading-none text-charcoal transition-colors hover:text-brand-600 sm:text-xl"
+		>
+			<ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
+			<span>Back to Projects</span>
+      	</Link>
 
       {/* Grid Layout */}
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
@@ -482,13 +482,13 @@ export function ProjectStructure({
                   });
                   setStageModalOpen(true);
                 }
-              }}
-              onDeleteStage={(id) => {
-                const s = visibleStages.find((x) => x.id === id);
-                setStageDeleteError(null);
-                setStageToDelete(s ? { id, name: s.stageName } : { id, name: "" });
-              }}
-              showAddButton={showAddStageButton}
+				}}
+				onDeleteStage={(id) => {
+					const s = visibleStages.find((x) => x.id === id);
+					setStageDeleteError(null);
+					setStageToDelete(s ? { id, name: s.stageName } : { id, name: "" });
+				}}
+				showAddButton={showAddStageButton}
             />
           </div>
 
@@ -500,17 +500,17 @@ export function ProjectStructure({
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-4 min-w-0 flex-1">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-[4px] border-brand-100 text-2xl font-bold text-brand-600 sm:h-16 sm:w-16 sm:text-3xl">
-                  {currentStage.number}
+                  	{currentStage.number}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
-                      {currentStage.name}
+                      	{currentStage.name}
                     </h2>
                     {currentStage.approved && (
-                      <Badge className="border border-green-600/30 bg-green-100 text-green-700 font-bold uppercase text-2xs px-2 py-0.5 rounded-md hover:bg-green-100">
-                        APPROVED
-                      </Badge>
+						<Badge className="border border-green-600/30 bg-green-100 text-green-700 font-bold uppercase text-2xs px-2 py-0.5 rounded-md hover:bg-green-100">
+							APPROVED
+						</Badge>
                     )}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">

@@ -15,7 +15,7 @@ import {
     useDeletePhase,
     useReorderPhase,
 } from "@/entities/phase/mutations";
-import { Pencil, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, X, ChevronLeft, ChevronRight, Calendar, CheckCircle2 } from "lucide-react";
 
 interface PhaseStepperProps {
     phases: Phase[];
@@ -343,55 +343,65 @@ export const PhaseStepper = forwardRef<
                         </>
                     )}
                 </div>
+				{/* Phase Details Section */}
+				{currentPhase && (
+					<div className="flex items-start justify-between gap-6 p-6 pl-8 border-t border-slate-200 bg-neutral-surface rounded-b-xl">
+						<div className="flex flex-col min-w-[200px]">
+							<h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
+								{currentPhase.name}
+							</h2>
+							<div className="mt-2 text-sm w-3/4 text-foreground min-h-[20px]">
+								wefiuhawifeuheawfuiwhaiawuhfwaieufhwe wieufhweiufhweiufh wieufhweiufhiweuhf weiufhweiufhweiu fhweiufhweiufhweiuf hweiufhweiufhweuifh weifewhuf 
+								{currentPhase.description || "No description provided."}
+							</div>
+						</div>
 
-                {/* Phase Details Section */}
-                {currentPhase && (
-                    <div className="p-6 pl-8 border-t border-slate-200 bg-neutral-surface rounded-b-xl">
-                        <div className="grid grid-cols-1 gap-6">
-                            <div className="mb-2">
-                                <label className="block text-sm font-medium text-neutral-800">Description</label>
-                                <div className="mt-2 text-sm text-neutral-600 bg-slate-50 border border-slate-200 rounded-lg p-3 min-h-[80px]">
-                                    {currentPhase.description || "No description provided."}
-                                </div>
-                            </div>
-                        </div>
+						<div className="flex  gap-3">
+							{/* Planned dates */}
+							<div className="w-65 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+								<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-500 text-white">
+									<Calendar className="h-5 w-5" />
+								</div>
+								<div>
+									<label className="block text-xs font-medium uppercase tracking-wide text-blue-700">
+										Planned Duration
+									</label>
+									<div className="flex items-center gap-1.5">
+										<span className="text-sm font-semibold text-blue-900">
+											{currentPhase.planStart ? new Date(currentPhase.planStart).toLocaleDateString() : "—"}
+										</span>
+										<span className="text-sm font-semibold text-blue-400">—</span>
+										<span className="text-sm font-semibold text-blue-900">
+											{currentPhase.planEnd ? new Date(currentPhase.planEnd).toLocaleDateString() : "—"}
+										</span>
+									</div>
+								</div>
+							</div>
 
-                        <div className="grid grid-cols-3 gap-6 mt-4">
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-800">Plan Start</label>
-                                <input
-                                    type="text"
-                                    value={currentPhase.planStart ? new Date(currentPhase.planStart).toLocaleDateString() : ""}
-                                    disabled
-                                    className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-800">Plan End</label>
-                                <input
-                                    type="text"
-                                    value={currentPhase.planEnd ? new Date(currentPhase.planEnd).toLocaleDateString() : ""}
-                                    disabled
-                                    className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-800">Actual End</label>
-                                <input
-                                    type="text"
-                                    value={currentPhase.actualEnd ? new Date(currentPhase.actualEnd).toLocaleDateString() : ""}
-                                    disabled
-                                    className="mt-1 w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-neutral-500 cursor-not-allowed"
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
+							{/* Actual dates */}
+							<div className="w-65 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+								<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-white">
+									<CheckCircle2 className="h-5 w-5" />
+								</div>
+								<div>
+									<label className="block text-xs font-medium uppercase tracking-wide text-emerald-700">
+										Actual Duration
+									</label>
+									<div className="flex items-center gap-1.5">
+										<span className="text-sm font-semibold text-emerald-900">
+											{currentPhase.actualStart ? new Date(currentPhase.actualStart).toLocaleDateString() : "—"}
+										</span>
+										<span className="text-sm font-semibold text-emerald-400">—</span>
+										<span className="text-sm font-semibold text-emerald-900">
+											{currentPhase.actualEnd ? new Date(currentPhase.actualEnd).toLocaleDateString() : "—"}
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				)}
+                
             </div>
 
             {/* Add Phase Modal */}
