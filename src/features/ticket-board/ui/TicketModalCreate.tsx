@@ -35,6 +35,7 @@ export default function TicketModalCreate({
 }: CreateTicketModalProps) {
 	const [title, setTitle] = useState("")
 	const [description, setDescription] = useState("")
+	const [startDate, setStartDate] = useState("")
 	const [deadline, setDeadline] = useState("")
 	const today = new Date().toISOString().split("T")[0]
 
@@ -120,7 +121,7 @@ export default function TicketModalCreate({
 		setImagePreviews((prev) => prev.filter((_, i) => i !== index))
 	}
 
-		async function handleSubmit(e: React.FormEvent) {
+	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault()
 		if (!title.trim()) return
 
@@ -157,6 +158,7 @@ export default function TicketModalCreate({
 
 		onCreateTicket({
 			name: title.trim(),
+			// start_date: startDate ? new Date(startDate) : null,
 			deadline_date: deadline ? new Date(deadline) : new Date(),
 			watcher_id: watcherId || null,
 			TicketAssigned: assignedIds,
@@ -169,6 +171,7 @@ export default function TicketModalCreate({
 
 		setTitle("")
 		setDescription("")
+		setStartDate("")
 		setDeadline("")
 		setWatcherId("")
 		setSelectedTags([])
@@ -179,7 +182,6 @@ export default function TicketModalCreate({
 		setApiRoute("")
 		onClose()
 	}
-
 
 	const colorClasses = {
 		indigo: "bg-indigo-50 text-indigo-700",
@@ -198,7 +200,7 @@ export default function TicketModalCreate({
 				{/* Modal header */}
 				<DialogHeader>
 					<DialogTitle>New Ticket</DialogTitle>
-					<DialogDescription>Create a new ticket for the board.</DialogDescription>
+					<DialogDescription>Create a new ticket for the board board.</DialogDescription>
 				</DialogHeader>
 
 				<div className="h-px bg-gray-100 shrink-0" />
@@ -210,23 +212,23 @@ export default function TicketModalCreate({
 				>
 					{/* Ticket Name */}
 					<FormInput
-					label="Ticket Name"
-					required
-					placeholder="e.g., Update Landing Page Hero"
-					value={title}
-					onChange={(e) => setTitle(e.target.value)}
-					maxLength={50}
+						label="Ticket Name"
+						required
+						placeholder="e.g., Update Landing Page Hero"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						maxLength={50}
 					/>
 
 					{/* Description */}
 					<FormInput
-					variant="textarea"
-					label="Description"
-					placeholder="Provide detailed information about this ticket..."
-					value={description}
-					onChange={(e) => setDescription(e.target.value)}
-					rows={4}
-					maxLength={160}
+						variant="textarea"
+						label="Description"
+						placeholder="Provide detailed information about this ticket..."
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+						rows={4}
+						maxLength={160}
 					/>
 
 					{/* Assigned to + Watchers row */}
@@ -343,72 +345,85 @@ export default function TicketModalCreate({
 						</div>
 					</div>
 
-					{/* Tags + Deadline row */}
-					<div className="grid grid-cols-2 gap-4">
-						{/* Tags */}
-						<div className="space-y-1.5" ref={tagsRef}>
-							<Label>Tags</Label>
-							<div className="relative">
-								<button
-									type="button"
-									onClick={() => setTagsOpen((o) => !o)}
-									className="w-full flex items-center overflow-x-hidden justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
-								>
-									<div className="flex flex-wrap gap-1 flex-1">
-										{selectedTags.length === 0 ? (
-											<span className="text-gray-400">Select tags...</span>
-										) : (
-											selectedTags.map((tag_id) => {
-												const tag = tags.find((t) => t.tag_id === tag_id)
-												return (
-													<span
-														key={tag_id}
-														className={
-															(colorClasses[tag?.color as keyof typeof colorClasses] ??
-																colorClasses.indigo) +
-															" inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
-														}
-													>
-														{tag?.name}
-														<span
-															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
-															onClick={() => toggleTag(tag_id)}
-														>
-															×
-														</span>
-													</span>
-												)
-											})
-										)}
-									</div>
-									<ChevronDown />
-								</button>
-
-								{tagsOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-										{tags.map((tag) => (
-											<div
-												key={tag.tag_id}
-												onClick={() => toggleTag(tag.tag_id)}
-												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
-											>
-												<div
-													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
-														selectedTags.includes(tag.tag_id)
-															? "bg-brand-600 border-brand-600"
-															: "border-gray-300"
-													}`}
+					{/* Tags */}
+					<div className="space-y-1.5" ref={tagsRef}>
+						<Label>Tags</Label>
+						<div className="relative">
+							<button
+								type="button"
+								onClick={() => setTagsOpen((o) => !o)}
+								className="w-full flex items-center overflow-x-hidden justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
+							>
+								<div className="flex flex-wrap gap-1 flex-1">
+									{selectedTags.length === 0 ? (
+										<span className="text-gray-400">Select tags...</span>
+									) : (
+										selectedTags.map((tag_id) => {
+											const tag = tags.find((t) => t.tag_id === tag_id)
+											return (
+												<span
+													key={tag_id}
+													className={
+														(colorClasses[tag?.color as keyof typeof colorClasses] ??
+															colorClasses.indigo) +
+														" inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
+													}
 												>
-													{selectedTags.includes(tag.tag_id) && (
-														<Check size={10} strokeWidth={2} className="text-neutral-surface" />
-													)}
-												</div>
-												{tag.name}
+													{tag?.name}
+													<span
+														className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
+														onClick={() => toggleTag(tag_id)}
+													>
+														×
+													</span>
+												</span>
+											)
+										})
+									)}
+								</div>
+								<ChevronDown />
+							</button>
+
+							{tagsOpen && (
+								<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+									{tags.map((tag) => (
+										<div
+											key={tag.tag_id}
+											onClick={() => toggleTag(tag.tag_id)}
+											className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+										>
+											<div
+												className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
+													selectedTags.includes(tag.tag_id)
+														? "bg-brand-600 border-brand-600"
+														: "border-gray-300"
+												}`}
+											>
+												{selectedTags.includes(tag.tag_id) && (
+													<Check size={10} strokeWidth={2} className="text-neutral-surface" />
+												)}
 											</div>
-										))}
-									</div>
-								)}
-							</div>
+											{tag.name}
+										</div>
+									))}
+								</div>
+							)}
+						</div>
+					</div>
+
+					{/* Start Date + Deadline row */}
+					<div className="grid grid-cols-2 gap-4">
+						{/* Start Date */}
+						<div className="space-y-1.5">
+							<Label>Start Date</Label>
+							<Input
+								type="datetime-local"
+								value={startDate}
+								onChange={(e) => setStartDate(e.target.value)}
+								min={today}
+								placeholder="Select start date..."
+								className="text-gray-500"
+							/>
 						</div>
 
 						{/* Deadline */}
@@ -418,22 +433,22 @@ export default function TicketModalCreate({
 								type="datetime-local"
 								value={deadline}
 								onChange={(e) => setDeadline(e.target.value)}
-								min={today}
+								min={startDate || today}
 								className="text-gray-500"
 							/>
 						</div>
 					</div>
 
 					{/* Image Attachment */}
-					<div className="space-y-1.5">
-						<Label>
-							Attachment{" "}
+					<div className="space-y-2">
+						<div className="flex items-center justify-between">
+							<Label>Attachment</Label>
 							<span className="text-xs text-gray-400 font-normal">
 								(jpg, png · Max 5MB)
 							</span>
-						</Label>
-						<label className="flex items-center gap-2.5 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
-							<Paperclip size={15} />
+						</div>
+						<label className="flex items-center gap-3 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
+							<Paperclip size={16} className="shrink-0 text-gray-400" />
 							<span>{imageFiles.length > 0 ? `${imageFiles.length} file(s) selected` : "Click to attach images..."}</span>
 							<input
 								type="file"
@@ -443,7 +458,7 @@ export default function TicketModalCreate({
 							/>
 						</label>
 						{imagePreviews.length > 0 && (
-							<div className="flex flex-wrap gap-2 mt-1">
+							<div className="flex flex-wrap gap-3 pt-1">
 								{imagePreviews.map((preview, idx) => (
 									<div key={idx} className="relative inline-block">
 										<img
