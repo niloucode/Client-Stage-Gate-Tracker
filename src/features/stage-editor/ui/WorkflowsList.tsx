@@ -13,7 +13,7 @@ import {
 	useReorderWorkflow,
 } from "@/entities/workflow/mutations";
 
-import { Pencil, X, Plus, Clock, GripVertical } from "lucide-react";
+import { Pencil, X, Plus, Clock, GripVertical,EllipsisVertical } from "lucide-react";
 
 interface WorkflowsListProps {
 	workflows: Workflow[];
@@ -300,10 +300,10 @@ export function WorkflowsList({
 
 					// --- Deadline column label ---
 					let deadlineSuffix = "";
-					if (deadlineState === "approaching") deadlineSuffix = " · due soon";
-					if (deadlineState === "overdue") deadlineSuffix = " · overdue";
-					if (deadlineState === "on_time_done") deadlineSuffix = " · on time";
-					if (deadlineState === "late_done") deadlineSuffix = " · late";
+					if (deadlineState === "approaching") deadlineSuffix = " · DUE SOON";
+					if (deadlineState === "overdue") deadlineSuffix = " · OVERDUE";
+					if (deadlineState === "on_time_done") deadlineSuffix = " · ON TIME";
+					if (deadlineState === "late_done") deadlineSuffix = " · LATE";
 
 					return (
 						<div
@@ -390,17 +390,14 @@ export function WorkflowsList({
 									{getWorkflowStatus(workflow as WorkflowWithActuals) !== "ended" && (
 										<button
 											onClick={() => openEditWorkflowModal(workflow)}
-											title="Edit workflow"
+											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
 										>
-											<Pencil size={12} className={"text-neutral-border"} />
+											<EllipsisVertical
+												size={14}
+												className="text-slate-500"
+											/>
 										</button>
 									)}
-									<button
-										onClick={() => confirmDelete(workflow)}
-										title="Delete workflow"
-									>
-										<X size={12} className={"text-neutral-border"} />
-									</button>
 								</div>
 							</div>
 						</div>

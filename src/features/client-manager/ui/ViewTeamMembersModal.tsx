@@ -10,47 +10,8 @@ export interface TeamMember {
 	firstName: string
 	lastName: string
 	email: string
-	phone: string
+	phone: string | null
 }
-
-// 2. Mock Data
-export const mockTeamMembers: TeamMember[] = [
-	{
-		id: "1",
-		firstName: "Sarah",
-		lastName: "Jenkins",
-		email: "sarah.jenkins@example.com",
-		phone: "+1 (555) 234-5678",
-	},
-	{
-		id: "2",
-		firstName: "Alex",
-		lastName: "Rivera",
-		email: "alex.rivera@example.com",
-		phone: "+1 (555) 876-5432",
-	},
-	{
-		id: "3",
-		firstName: "Michael",
-		lastName: "Chen",
-		email: "michael.chen@example.com",
-		phone: "+1 (555) 345-6789",
-	},
-	{
-		id: "4",
-		firstName: "Emily",
-		lastName: "Watson",
-		email: "emily.watson@example.com",
-		phone: "+1 (555) 987-6543",
-	},
-	{
-		id: "5",
-		firstName: "David",
-		lastName: "Kim",
-		email: "david.kim@example.com",
-		phone: "+1 (555) 456-7890",
-	},
-]
 
 interface ViewTeamMembersModalProps {
 	isOpen: boolean
@@ -60,8 +21,7 @@ interface ViewTeamMembersModalProps {
 
 export default function ViewTeamMembersModal({
 	isOpen,
-	// Defaults to mockTeamMembers if no members prop is passed
-	members = mockTeamMembers,
+	members,
 	onClose,
 }: ViewTeamMembersModalProps) {
 	// Cache members so they remain visible during the exit/closing transition

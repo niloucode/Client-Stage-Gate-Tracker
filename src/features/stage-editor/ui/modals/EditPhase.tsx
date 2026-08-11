@@ -61,10 +61,12 @@ export function EditPhase({ isOpen, onClose, stageId, phase }: EditPhaseProps) {
 				actualStart: value.actualStart ?? undefined,
 				actualEnd: value.actualEnd ?? undefined,
 			});
+			handleClose();
 		},
 	});
 
-	useResetOnOpen(isOpen, () => form.reset());
+	// Reset form with the latest phase data when modal opens
+	useResetOnOpen(isOpen, () => form.reset(defaultValues));
 
 	const handleClose = () => {
 		form.reset();
@@ -78,60 +80,66 @@ export function EditPhase({ isOpen, onClose, stageId, phase }: EditPhaseProps) {
 					<DialogTitle>Edit Phase {phase?.number ?? ""}</DialogTitle>
 					<DialogDescription>Update the phase details.</DialogDescription>
 				</DialogHeader>
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						void form.handleSubmit();
-					}}
-					className="px-6"
-				>
-					<div className="flex flex-col gap-4">
-						<form.AppField
-							name="name"
-							children={(field) => (
-								<field.TextField
-									label="Phase Name"
-									required
-									placeholder="e.g., Discovery"
-									maxLength={20}
-								/>
-							)}
-						/>
-						<form.AppField
-							name="description"
-							children={(field) => (
-								<field.TextAreaField
-									label="Description"
-									placeholder="Describe the objectives and scope of this phase..."
-									rows={3}
-								/>
-							)}
-						/>
-						<SchedulingFields form={form} showActuals={false} />
-						<form.Subscribe
-							selector={(state) => state.errorMap.onSubmit}
-							children={(onSubmitError) => {
-								const message = formErrorToMessage(onSubmitError);
-								return message ? (
-									<p className="text-xs text-destructive" role="alert">
-										{message}
-									</p>
-								) : null;
-							}}
-						/>
-					</div>
-					<DialogFooter showCloseButton={false}>
-						<Button type="button" variant="ghost" onClick={handleClose}>
-							Cancel
-						</Button>
-						<form.AppForm>
+
+				<form.AppForm>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							void form.handleSubmit();
+						}}
+					>
+						<div className="flex flex-col gap-4">
+							<form.AppField name="name">
+								{(field) => (
+									<field.TextField
+										label="Phase Name"
+										required
+										placeholder="e.g., Discovery"
+										maxLength={20}
+									/>
+								)}
+							</form.AppField>
+
+							<form.AppField name="description">
+								{(field) => (
+									<field.TextAreaField
+										label="Description"
+										placeholder="Describe the objectives and scope of this phase..."
+										rows={3}
+									/>
+								)}
+							</form.AppField>
+
+							<SchedulingFields form={form} showActuals={false} />
+
+							<form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+								{(onSubmitError) => {
+									const message = formErrorToMessage(onSubmitError);
+									return message ? (
+										<p className="text-xs text-destructive" role="alert">
+											{message}
+										</p>
+									) : null;
+								}}
+							</form.Subscribe>
+						</div>
+
+						<DialogFooter className="mt-6" showCloseButton={false}>
+							<Button
+								type="button"
+								variant="ghost"
+								onClick={handleClose}
+								disabled={updatePhaseMutation.isPending}
+							>
+								Cancel
+							</Button>
 							<form.SubmitButton pendingLabel="Saving…">
-								<Save /> Save Changes
+								<Save className="mr-2 h-4 w-4" /> Save Changes
 							</form.SubmitButton>
-						</form.AppForm>
-					</DialogFooter>
-				</form>
+						</DialogFooter>
+					</form>
+				</form.AppForm>
 			</DialogContent>
 		</Dialog>
 	);

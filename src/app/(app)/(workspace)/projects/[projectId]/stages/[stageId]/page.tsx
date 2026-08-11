@@ -10,7 +10,7 @@ import type { Phase } from "@/features/stage-editor/types"
 import { useStageTree } from "@/entities/stage/queries"
 import { Plus, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Back } from "@/components/ui/back"
 
 interface PageParams {
 	projectId: string
@@ -88,13 +88,7 @@ function EditorContent({
 	return (
 		<div>
       {/* Navigation Link */}
-			<Link
-				href={"/projects/"}
-				className="absolute left-60 top-20 group mt-1 flex items-center gap-2 text-lg font-bold leading-none text-neutral-border transition-colors hover:text-brand-600 sm:text-xl"
-			>
-				<ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
-				<span>Back</span>
-			</Link>
+			<Back link={"/projects/"} />
 
 			<div className="flex justify-between items-end my-4">
 				<div>

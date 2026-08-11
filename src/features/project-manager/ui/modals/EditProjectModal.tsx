@@ -6,7 +6,8 @@ import { projectCreateSchema } from "@/shared/schemas"
 import { getFieldErrors } from "@/shared/lib/zod"
 import { toDateTimeLocalInput } from "@/shared/lib/scheduling"
 import { clientSelectAll } from "@/entities/client/clientActions"
-import { FormInput, SelectOption } from "@/shared/ui/"
+import { SelectOption } from "@/shared/ui/"
+import { FormInput } from "@/components/ui/forminput"
 import {
 	Dialog,
 	DialogContent,

@@ -26,13 +26,6 @@ interface AddPhaseProps {
 /** Form values are the Zod schema's *input* type (Task 1.4 acceptance). */
 type AddPhaseFormValues = z.input<typeof phaseCreateSchema>;
 
-/**
- * Create Phase modal — pilot for the shared TanStack Form convention
- * (Task 1.4). Form values inferred from `phaseCreateSchema` (Zod); no
- * manual field-error mapper, no per-field useState; pending state and
- * server failure behavior come from the form + mutation.
- * Uses the canonical scheduling vocabulary (Task 1.5).
- */
 export function AddPhase({ isOpen, onClose, stageId }: AddPhaseProps) {
 	const createPhaseMutation = useCreatePhase();
 
@@ -60,6 +53,7 @@ export function AddPhase({ isOpen, onClose, stageId }: AddPhaseProps) {
 				actualStart: value.actualStart ?? undefined,
 				actualEnd: value.actualEnd ?? undefined,
 			});
+			handleClose();
 		},
 	});
 
@@ -79,60 +73,67 @@ export function AddPhase({ isOpen, onClose, stageId }: AddPhaseProps) {
 						Fill in the details to create a new phase.
 					</DialogDescription>
 				</DialogHeader>
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						void form.handleSubmit();
-					}}
-					className="px-6"
-				>
-					<div className="flex flex-col gap-4">
-						<form.AppField
-							name="name"
-							children={(field) => (
-								<field.TextField
-									label="Phase Name"
-									required
-									placeholder="e.g., Discovery"
-									maxLength={20}
-								/>
-							)}
-						/>
-						<form.AppField
-							name="description"
-							children={(field) => (
-								<field.TextAreaField
-									label="Description"
-									placeholder="Describe the objectives and scope of this phase..."
-									rows={3}
-								/>
-							)}
-						/>
-						<SchedulingFields form={form} showActuals={false} />
-						<form.Subscribe
-							selector={(state) => state.errorMap.onSubmit}
-							children={(onSubmitError) => {
-								const message = formErrorToMessage(onSubmitError);
-								return message ? (
-									<p className="text-xs text-destructive" role="alert">
-										{message}
-									</p>
-								) : null;
-							}}
-						/>
-					</div>
-					<DialogFooter showCloseButton={false}>
-						<Button type="button" variant="ghost" onClick={handleClose}>
-							Cancel
-						</Button>
-						<form.AppForm>
+
+				{/* form.AppForm MUST wrap the entire form tree to provide formContext */}
+				<form.AppForm>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							void form.handleSubmit();
+						}}
+					>
+						<div className="flex flex-col gap-4">
+							<form.AppField name="name">
+								{(field) => (
+									<field.TextField
+										label="Phase Name"
+										required
+										placeholder="e.g., Discovery"
+										maxLength={20}
+									/>
+								)}
+							</form.AppField>
+
+							<form.AppField name="description">
+								{(field) => (
+									<field.TextAreaField
+										label="Description"
+										placeholder="Describe the objectives and scope of this phase..."
+										rows={3}
+									/>
+								)}
+							</form.AppField>
+
+							<SchedulingFields form={form} showActuals={false} />
+
+							<form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+								{(onSubmitError) => {
+									const message = formErrorToMessage(onSubmitError);
+									return message ? (
+										<p className="text-xs text-destructive" role="alert">
+											{message}
+										</p>
+									) : null;
+								}}
+							</form.Subscribe>
+						</div>
+
+						<DialogFooter className="mt-6" showCloseButton={false}>
+							<Button
+								type="button"
+								variant="ghost"
+								onClick={handleClose}
+								disabled={createPhaseMutation.isPending}
+							>
+								Cancel
+							</Button>
 							<form.SubmitButton pendingLabel="Adding…">
-								<Plus /> Add Phase
+								<Plus className="mr-2 h-4 w-4" /> Add Phase
 							</form.SubmitButton>
-						</form.AppForm>
-					</DialogFooter>
-				</form>
+						</DialogFooter>
+					</form>
+				</form.AppForm>
 			</DialogContent>
 		</Dialog>
 	);

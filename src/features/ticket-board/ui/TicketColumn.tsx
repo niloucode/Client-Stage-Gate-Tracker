@@ -26,7 +26,7 @@ export default function TicketColumn({
 
 	return (
 		<div className="flex flex-col h-full w-full select-none rounded-xl min-h-0">
-    {/* Column header - shrink-0 keeps header fixed size */}
+    		{/* Column header - shrink-0 keeps header fixed size */}
 			<div className="flex mb-2 shrink-0 items-center gap-2">
 				<span className="text-2xl font-semibold text-brand-900">{column.title}</span>
 				<span className={`text-xs ${column.dotColor} ${column.textColor} font-semibold w-5 h-5 flex items-center justify-center rounded-full`}>
@@ -38,9 +38,10 @@ export default function TicketColumn({
 
 			{/* Container + cards drop zone */}
 			{/* min-h-0 allows overflow-auto to trigger internal scrolling when cards overflow */}
-			<div
+			<div className="flex items-center w-full justify-center flex-1 border border-dashed border-gray-300 rounded-xl bg-neutral-surface/40">
+					<div
 				ref={setNodeRef}
-				className={`flex flex-col items-center gap-2 flex-1 min-h-[70vh] rounded-xl max-h-[70vh] overflow-y-auto transition-colors duration-150 ${
+				className={`flex flex-col items-center gap-2 flex-1 min-h-[69vh] rounded-xl max-h-[69vh] overflow-y-auto transition-colors duration-150 ${
 					isOver ? "border bg-indigo-50 border-indigo-200" :
 					""
 				}`}
@@ -55,13 +56,12 @@ export default function TicketColumn({
 					/>
 				))}
 
-				{tickets.length === 0 && (
-					<div className="flex items-center w-full justify-center flex-1 border border-dashed border-gray-300 rounded-xl bg-neutral-surface/40">
-						<p className="text-xs text-gray-400 font-medium tracking-wide">
-							Drop tickets here
-						</p>
+						{tickets.length === 0 && (
+						<div className="w-full h-full flex-1 flex justify-center items-center text-xs text-gray-400 font-medium tracking-wide">
+									Drop tickets here
+						</div>
+						)}
 					</div>
-				)}
 			</div>
 		</div>
 	);

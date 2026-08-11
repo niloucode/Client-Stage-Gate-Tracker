@@ -6,7 +6,7 @@ export interface Column {
 }
 
 export const COLUMNS: Column[] = [
-	{ id: "PENDING", title: "Pending", dotColor: "bg-neutral-subtle",textColor:"text-neutral-border" },
+	{ id: "PENDING", title: "Pending", dotColor: "bg-yellow-500",textColor:"text-neutral-subtle" },
 	{ id: "IN_PROGRESS", title: "In Progress", dotColor: "bg-brand-600",textColor:"text-neutral-subtle" },
 	{ id: "FINISHED", title: "Finished", dotColor: "bg-green-500",textColor:"text-neutral-subtle" },
 ]

@@ -64,8 +64,8 @@ export default function ClientPage() {
 					</p>
 				</div>
 
-				<div className="mb-5 flex justify-between items-center max-h-10">
-					<div className="flex w-[749px] items-center gap-2 rounded-full border border-border bg-neutral-surface px-4 py-2">
+				<div className="mb-5 flex gap-6 justify-between items-center max-h-10">
+					<div className="flex w-[749px] items-center gap-2 rounded-lg border border-border bg-neutral-surface px-4 py-2">
 						<Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
 						<Input
 							type="text"
@@ -82,108 +82,100 @@ export default function ClientPage() {
 				</div>
 
 				{/* Table */}
-				<div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-neutral-surface">
-					<div className="client-scroll max-h-[calc(60vh)] flex-1 overflow-auto">
-						<div className="flex flex-col">
+				<div className="flex flex-col overflow-hidden rounded-2xl border border-brand-100 bg-neutral-surface overflow-auto">
+					<div className="max-h-[calc(60vh)] overflow-auto">
+						<div className="flex w-full min-w-[960px] flex-col">
 							{/* Table header (sticky top) */}
-							<div
-								className="sticky top-0 z-10 grid shrink-0 gap-x-3 items-center px-6 py-3 text-[11px] font-bold text-muted-foreground border-b border-border"
-								style={{
-									gridTemplateColumns: "226px 198px 1fr 1fr 1fr 113px 141px",
-									backgroundColor: "neutral-subtle",
-								}}
-							>
-								<span>CLIENT NAME</span>
-								<span>TIN</span>
-								<span>EMAIL</span>
-								<span>CONTACT</span>
-								<span>BILLING ADDRESS</span>
-								<span>COMPANY CODE</span>
-								<span>ACTIONS</span>
+							<div className="border-b border-brand-100 sticky top-0 z-10 grid grid-cols-23 items-center gap-6 border-b border-border bg-neutral-subtle px-6 py-3 text-[11px] font-bold text-muted-foreground">
+								<span className="col-span-5">CLIENT NAME</span>
+								<span className="col-span-3">TIN</span>
+								<span className="col-span-4">EMAIL</span>
+								<span className="col-span-3">CONTACT</span>
+								<span className="col-span-3">BILLING ADDRESS</span>
+								<span className="col-span-3">COMPANY CODE</span>
+								<span className="col-span-2">ACTIONS</span>
 							</div>
 
 							{/* Rows */}
-							<div className="flex flex-col">
-								{filteredClients.map((client, i) => (
-									<div
-										key={client.id}
-										className="grid items-center gap-3 px-6 py-5 transition-colors hover:bg-muted/50"
-										style={{
-											gridTemplateColumns: "226px 198px 1fr 1fr 1fr 113px 141px",
-											borderBottom: i < clients.length - 1 ? "1px solid hsl(var(--border))" : "none",
-										}}
-									>
-										{/* Client Name */}
-										<span className="whitespace-pre-line text-base font-bold text-foreground">
-											{client.name}
-										</span>
+{/* Rows */}
+<div className="flex flex-col">
+	{filteredClients.map((client) => {
+		const isCodeVisible = visibleCodes[client.id];
 
-										{/* TIN */}
-										<span className="text-base text-foreground">
-											{client.tin}
-										</span>
+		return (
+			<div
+				key={client.id}
+				className="grid grid-cols-23 items-center gap-6 border-b border-border px-6 py-5 transition-colors hover:bg-muted/50 last:border-b-0"
+			>
+				{/* Client Name (2/12) */}
+				<span className="col-span-5 whitespace-pre-line text-base font-bold text-foreground text-wrap">
+					{client.name}
+				</span>
 
-										{/* Email */}
-										<span className="truncate text-base text-muted-foreground">
-											{client.email}
-										</span>
+				{/* TIN (2/12) */}
+				<span className="col-span-3 text-base text-foreground text-wrap break-all">
+					{client.tin}
+				</span>
 
-										{/* Contact */}
-										<span className="text-base text-muted-foreground">
-											{client.contactNumber}
-										</span>
+				{/* Email (2/12) */}
+				<span className="col-span-4 min-w-0 text-base text-muted-foreground text-wrap break-all">
+					{client.email}
+				</span>
 
-										{/* Billing Address */}
-										<span className="whitespace-pre-line text-base text-muted-foreground">
-											{client.billingAddress}
-										</span>
+				{/* Contact (2/12) */}
+				<span className="col-span-3 text-base text-muted-foreground text-wrap break-all">
+					{client.contactNumber}
+				</span>
 
-										{/* Company Code */}
-										<div className="flex items-center gap-2">
-											<span className="text-base text-muted-foreground">
-												{visibleCodes[client.id]
-													? client.companyCode
-													: "••••••"}
-											</span>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onClick={() => toggleCode(client.id)}
-												aria-label={visibleCodes[client.id] ? "Hide code" : "Show code"}
-												className="ml-auto mr-8"
-											>
-												{visibleCodes[client.id] ? (
-													<Eye className="h-4 w-4" />
-												) : (
-													<EyeOff className="h-4 w-4" />
-												)}
-											</Button>
-										</div>
+				{/* Billing Address (2/12) */}
+				<span className="col-span-3 min-w-0 whitespace-pre-line text-base text-muted-foreground text-wrap">
+					{client.billingAddress}
+				</span>
 
-										{/* Actions */}
-										<div className="flex items-center gap-3">
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onClick={() => setViewMembersClient(client)}
-												aria-label="View team members"
-												className="rounded-full"
-											>
-												<User className="h-4 w-4" />
-											</Button>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onClick={() => setEditClient(client)}
-												aria-label="Edit client"
-												className="rounded-full"
-											>
-												<Pencil className="h-4 w-4" />
-											</Button>
-										</div>
-									</div>
-								))}
-							</div>
+				{/* Company Code (1/12) */}
+				<div className="col-span-3 flex items-center justify-around mr-auto gap-1">
+					<span className="font-mono text-base text-muted-foreground">
+						{isCodeVisible ? client.companyCode : "••••••"}
+					</span>
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						onClick={() => toggleCode(client.id)}
+						aria-label={isCodeVisible ? "Hide code" : "Show code"}
+					>
+						{isCodeVisible ? (
+							<EyeOff className="h-4 w-4" />
+						) : (
+							<Eye className="h-4 w-4" />
+						)}
+					</Button>
+				</div>
+
+				{/* Actions (1/12) */}
+				<div className="col-span-2 flex items-center gap-1">
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						onClick={() => setViewMembersClient(client)}
+						aria-label="View team members"
+						className="rounded-full"
+					>
+						<User className="h-4 w-4" />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						onClick={() => setEditClient(client)}
+						aria-label="Edit client"
+						className="rounded-full"
+					>
+						<Pencil className="h-4 w-4" />
+					</Button>
+				</div>
+			</div>
+		);
+	})}
+</div>
 						</div>
 					</div>
 				</div>

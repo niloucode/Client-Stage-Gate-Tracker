@@ -28,6 +28,7 @@ import {
   CardContent,
   CardAction,
 } from "@/components/ui/card";
+import { Back } from "@/components/ui/back"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteModal } from "@/shared/ui";
@@ -434,13 +435,7 @@ export function ProjectStructure({
   return (
     <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
       {/* Navigation Link */}
-      	<Link
-			href={projectId ? `/projects/${projectId}` : "/projects"}
-			className="group mt-1 flex items-center gap-2 text-lg font-bold leading-none text-charcoal transition-colors hover:text-brand-600 sm:text-xl"
-		>
-			<ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
-			<span>Back to Projects</span>
-      	</Link>
+      	<Back link={`/projects`}/>
 
       {/* Grid Layout */}
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-12">

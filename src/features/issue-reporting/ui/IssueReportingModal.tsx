@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, X, Image as ImageIcon, Trash2 } from "lucide-react";
-import { FormInput } from "@/shared/ui/forminput";
+import { FormInput } from "@/components/ui/forminput";
 
 /* -------------------------------------------------------------------------- */
 /* TYPES & INTERFACES                                                        */
@@ -266,16 +266,16 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
               onChange={handleTextChange("description", 300)}
               rows={4}
             />
-
-            {/* System Environment & Time of Error */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormInput
+            <FormInput
                 label="System Environment"
                 maxLength={60}
                 value={formData.systemEnv}
                 placeholder="Specify the device used in encountering the event"
                 onChange={handleTextChange("systemEnv", 60)}
               />
+            {/* System Environment & Time of Error */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
 
               <FormInput
                 variant="datetime-local"
@@ -353,7 +353,7 @@ const StepRow = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex items-start gap-2">
+    <div className="flex items-start mt-2 gap-2">
       <div className="flex items-center justify-center shrink-0 w-8 h-8 rounded-full bg-secondary text-secondary-foreground text-xs font-semibold mt-1">
         {index + 1}
       </div>

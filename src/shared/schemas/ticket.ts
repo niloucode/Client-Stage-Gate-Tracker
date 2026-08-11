@@ -8,24 +8,14 @@ import { z } from "zod";
 //   actual_end_at    → when the entity finished (previously "end date")
 
 export const ticketCreateSchema = z.object({
-	name: z
-		.string()
-		.trim()
-		.min(1, "Ticket name is required")
-		.max(50, "Ticket name must be 50 characters or less"),
-	description: z
-		.string()
-		.max(160, "Description must be 160 characters or less")
-		.optional()
-		.nullable(),
-	plan_start_at: z.date().optional().nullable(),
-	plan_end_at: z.date({ message: "Deadline is required" }),
-	actual_start_at: z.date().optional().nullable(),
-	actual_end_at: z.date().optional().nullable(),
-	watcher_id: z.uuid().optional().nullable(),
-	tagIds: z.array(z.uuid()).optional().nullable(),
-	api_route: z.string().optional().nullable(),
-	api_method: z.enum(["GET", "POST", "PUT", "DELETE"]).optional().nullable(),
+  name: z.string().trim().min(1, "Ticket name is required").max(50, "Ticket name must be 50 characters or less"),
+  description: z.string().max(360, "Description must be 360 characters or less").optional().nullable(),
+  deadline_date: z.date({ message: "Deadline is required" }),
+  watcher_id: z.string().uuid().optional().nullable(),
+  tagIds: z.array(z.string().uuid()).optional().nullable(),
+  finish_date: z.date().optional().nullable(),
+  api_route: z.string().optional().nullable(),
+  api_method: z.enum(["GET", "POST", "PUT", "DELETE"]).optional().nullable(),
 });
 
 export type TicketCreateInput = z.infer<typeof ticketCreateSchema>;

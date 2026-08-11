@@ -5,7 +5,7 @@ import { z } from "zod"
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
 import { getFieldErrors } from "@/shared/lib/zod"
 import { toDateTimeLocalInput } from "@/shared/lib/scheduling"
-import { FormInput } from "@/shared/ui"
+import { FormInput } from "@/components/ui/forminput"
 import { createStage, updateStage } from "@/entities/stage/stageActions"
 import {
 	Dialog,

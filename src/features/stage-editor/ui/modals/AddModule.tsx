@@ -108,7 +108,7 @@ export function AddModule({
 					<DialogTitle>{"Create New Module"}</DialogTitle>
 					<DialogDescription>{`Fill in the details to create a new module for Phase ${activePhase}.`}</DialogDescription>
 				</DialogHeader>
-				<div className="px-6 space-y-4">
+				<div className="space-y-4">
 					<div>
 						<div className="flex items-center justify-between">
 							<Label required error={!!fieldErrors.name}>

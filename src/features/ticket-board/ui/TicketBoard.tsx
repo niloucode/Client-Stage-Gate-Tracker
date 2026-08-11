@@ -19,6 +19,8 @@ import TicketModalCreate from "./TicketModalCreate";
 import TicketModalEdit from "./TicketModalEdit";
 import { TagManager } from "@/features/tag-manager";
 
+import { Back } from "@/components/ui/back"
+
 // TanStack Query hooks
 import { useTicketsByWorkflow } from "@/entities/ticket/queries";
 import {
@@ -271,13 +273,8 @@ export default function TicketBoard({
 			<div className="flex items-start justify-between shrink-0">
 				<div className="flex items-center gap-2">
 					{stageId && projectId ? (
-						<Link
-							href={`/projects/${projectId}/stages/${stageId}`}
-							className="group mt-1 flex items-center gap-2 text-lg font-bold leading-none text-charcoal transition-colors hover:text-brand-600 sm:text-xl"
-						>
-							<ChevronLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" />
-							<span>{workflowName}</span>
-						</Link>
+						<Back 	link = {`/projects/${projectId}/stages/${stageId}`}
+								/>
 					) : (
 						<h1 className="text-xl font-bold text-gray-900">{workflowName}</h1>
 					)}
@@ -309,7 +306,7 @@ export default function TicketBoard({
 				onDragStart={handleDragStart}
 				onDragEnd={handleDragEnd}
 			>
-				<div className="mt-15 w-full flex-1 overflow-x-auto pb-6">
+				<div className="mt-7 w-full flex-1 overflow-x-auto pb-6">
 					<div className="grid grid-cols-3 gap-10 flex-1 w-full min-h-0 max-h-[80vh] min-w-[30vw]">
 						{COLUMNS.map((column) => (
 							<TicketColumn

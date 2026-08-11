@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { FormInput } from "@/shared/ui";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tag } from "@/entities/types";
+import { useState, useRef, useEffect } from "react"
+import { FormInput } from "@/components/ui/forminput"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tag } from "@/entities/types"
 
 import {
 	Dialog,
@@ -229,7 +229,7 @@ export default function TicketModalCreate({
 				{/* Form */}
 				<form
 					onSubmit={handleSubmit}
-					className="flex-1 overflow-y-auto px-6 py-5 space-y-5"
+					className="flex-1 overflow-y-auto px-1 space-y-5"
 				>
 					{/* Ticket Name */}
 					<FormInput

@@ -2,7 +2,7 @@
 
 import { useFieldContext } from "../contexts";
 import { Label } from "@/components/ui/label";
-import { PhoneInput } from "@/components/ui/phone-input";
+import { PhoneInput } from "@/components/phone-input";
 import { cn } from "@/lib/utils";
 import { firstFieldError } from "./TextField";
 

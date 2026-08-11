@@ -12,7 +12,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Trash2, Plus } from "lucide-react"
-import { FormInput } from "@/shared/ui/"
+import { FormInput } from "@/components/ui/forminput"
 
 interface EditModuleFormData {
 	name: string;
@@ -73,7 +73,7 @@ export function EditModule({
 					<DialogTitle>Edit Module</DialogTitle>
 					<DialogDescription>Update the module details below.</DialogDescription>
 				</DialogHeader>
-				<div className="space-y-4 p-6">
+				<div className="space-y-4">
 					<FormInput
 						variant="input"
 						label="Module Name"
