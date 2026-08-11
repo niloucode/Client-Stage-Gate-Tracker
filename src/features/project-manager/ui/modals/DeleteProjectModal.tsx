@@ -59,11 +59,11 @@ export function DeleteProjectModal({
 				<DialogHeader>
 					<DialogTitle>Delete Project</DialogTitle>
 				</DialogHeader>
-				<div className="px-6 space-y-4">
+				<div className="space-y-4">
 					<p className="text-sm text-neutral-border">
 						This action cannot be undone. Please type{" "}
 						<span className="font-bold text-foreground">{projectName}</span>
-						to confirm.
+						{" "}to confirm.
 					</p>
 					<div>
 						<input

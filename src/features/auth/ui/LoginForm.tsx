@@ -67,7 +67,7 @@ export function LoginForm() {
 	};
 
 	return (
-		<>
+		<div className="bg-neutral-surface rounded-xl p-6">
 			<div className="mb-7">
 				<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
 					Welcome back
@@ -166,6 +166,6 @@ export function LoginForm() {
 					Client
 				</Link>
 			</p>
-		</>
+		</div>
 	);
 }

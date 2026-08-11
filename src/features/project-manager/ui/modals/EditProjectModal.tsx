@@ -176,8 +176,7 @@ export function EditProjectModal({
 			<DialogTitle>{isEditMode ? "Edit Project" : "Create New Project"}</DialogTitle>
 			<DialogDescription>Fill in the details for this project.</DialogDescription>
 			</DialogHeader>
-			<div key={formKey}>
-			<div className="space-y-4 p-6">
+			<div className="space-y-4" key={formKey}>
 				{/* Project Name */}
 				<FormInput
 				variant="input"
@@ -275,7 +274,6 @@ export function EditProjectModal({
 					onClearError={() => clearFieldError("deadline_date")}
 				/>
 				</div>
-			</div>
 			</div>
 			<DialogFooter>
 			<Button onClick={handleClose} variant="ghost">

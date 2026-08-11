@@ -351,25 +351,27 @@ function StageActionButton({
   return (
     <Button
       variant="outline"
-      className={`h-auto w-full justify-between rounded-xl p-3.5 text-left font-normal ${
+      className={`h-auto w-full rounded-xl p-3.5 text-left font-normal ${
         isPrimary
           ? "border-brand-500/30 bg-brand-50/50 text-brand-600 hover:bg-brand-50"
           : "border-warm-gray-200 bg-neutral-surface text-charcoal hover:bg-neutral-subtle/50"
       }`}
       {...props}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white">
-          <Icon className="h-4 w-4" />
+      <div className="flex w-full items-center justify-between gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white">
+            <Icon className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h4 className="text-xs font-bold sm:text-sm truncate">{title}</h4>
+            <p className={`text-[10px] truncate ${isPrimary ? "text-plum-700" : "text-muted-foreground"}`}>
+              {description}
+            </p>
+          </div>
         </div>
-        <div>
-          <h4 className="text-xs font-bold sm:text-sm">{title}</h4>
-          <p className={`text-2xs ${isPrimary ? "text-plum-700" : "text-muted-foreground"}`}>
-            {description}
-          </p>
-        </div>
+        <ArrowRight className={`h-4 w-4 shrink-0 ${isPrimary ? "" : "text-muted-foreground"}`} />
       </div>
-      <ArrowRight className={`h-4 w-4 shrink-0 ${isPrimary ? "" : "text-muted-foreground"}`} />
     </Button>
   );
 }

@@ -1,69 +1,81 @@
-"use client";
+"use client"
 
-import { z } from "zod";
-import { useState } from "react";
-import { useAppForm, SchedulingFields } from "@/shared/form";
-import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
+import { useState, useEffect, useRef } from "react"
+import { z } from "zod"
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
+import { getFieldErrors } from "@/shared/lib/zod"
+import { toDateTimeLocalInput } from "@/shared/lib/scheduling"
+import { FormInput } from "@/shared/ui"
+import { createStage, updateStage } from "@/entities/stage/stageActions"
 import {
 	Dialog,
 	DialogContent,
-	DialogDescription,
-	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { createStage, updateStage } from "@/entities/stage/stageActions";
-import { Plus, Save } from "lucide-react";
-
-/**
- * Single stateful Add/Edit Stage modal (Task 5.7) — mirrors the
- * Phase/Module/Workflow modal structure. `stage` null = create mode,
- * non-null = pre-populated edit mode.
- */
+	DialogDescription,
+	DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 const stageFormSchema = z.object({
 	name: z
 		.string()
 		.min(1, "Stage name is required")
 		.max(60, "Stage name must be 60 characters or less"),
-	description: z.string().optional().default(""),
+	description: z
+		.string()
+		.max(160, "Description must be 160 characters or less")
+		.optional()
+		.default(""),
 	planStart: z.date().nullable().optional(),
 	planEnd: z.date().nullable().optional(),
 	actualStart: z.date().nullable().optional(),
 	actualEnd: z.date().nullable().optional(),
-});
-
-type StageFormValues = z.input<typeof stageFormSchema>;
+})
 
 export interface StageFormData {
-	name: string;
-	description?: string;
-	startDate?: Date | null;
-	endDate?: Date | null;
-	actualStart?: Date | null;
-	actualEnd?: Date | null;
+	name: string
+	description: string
+	planStart: Date | null
+	planEnd: Date | null
+	actualStart: Date | null
+	actualEnd: Date | null
 }
 
 interface StageModalProps {
-	isOpen: boolean;
+	isOpen: boolean
 	/** Non-null when editing an existing stage. */
 	stage: {
-		stage_id: string;
-		name: string;
-		description?: string | null;
-		planStart?: Date | null;
-		planEnd?: Date | null;
-		actualStart?: Date | null;
-		actualEnd?: Date | null;
-	} | null;
-	projectId: string;
-	onClose: () => void;
+		stage_id: string
+		name: string
+		description?: string | null
+		planStart?: Date | null
+		planEnd?: Date | null
+		actualStart?: Date | null
+		actualEnd?: Date | null
+	} | null
+	projectId: string
+	onClose: () => void
 	/**
 	 * Called after a successful create or update. Receives the saved stage
 	 * (create mode returns the DB row) so callers can sync local lists.
 	 */
-	onSaved?: (saved: { stage_id: string; name: string }) => void;
+	onSaved?: (saved: { stage_id: string; name: string }) => void
+}
+
+const emptyFormData: StageFormData = {
+	name: "",
+	description: "",
+	planStart: null,
+	planEnd: null,
+	actualStart: null,
+	actualEnd: null,
+}
+
+type FieldErrors = Partial<Record<keyof StageFormData, string>>
+
+function toDateInput(date: Date | null): string {
+	return toDateTimeLocalInput(date)
 }
 
 export function StageModal({
@@ -73,123 +85,241 @@ export function StageModal({
 	onClose,
 	onSaved,
 }: StageModalProps) {
-	const isEditMode = stage !== null;
-	const [serverError, setServerError] = useState<string | null>(null);
+	// Freeze the "displayed" stage while the dialog is open/closing so the
+	// exit animation doesn't flash Add-mode when the parent clears `stage`
+	// at the same time it sets isOpen=false.
+	const [displayStage, setDisplayStage] = useState(stage)
+	useEffect(() => {
+		if (isOpen) setDisplayStage(stage)
+	}, [isOpen, stage])
 
-	const defaultValues: StageFormValues = {
-		name: stage?.name ?? "",
-		description: stage?.description ?? "",
-		planStart: stage?.planStart ?? null,
-		planEnd: stage?.planEnd ?? null,
-		actualStart: stage?.actualStart ?? null,
-		actualEnd: stage?.actualEnd ?? null,
-	};
+	const isEditMode = displayStage !== null
 
-	const form = useAppForm({
-		defaultValues,
-		validators: { onSubmit: stageFormSchema },
-		onSubmit: async ({ value }) => {
-			setServerError(null);
-			const result = isEditMode
+	const getInitialFormData = (): StageFormData => {
+		if (stage) {
+			return {
+				name: stage.name,
+				description: stage.description ?? "",
+				planStart: stage.planStart ?? null,
+				planEnd: stage.planEnd ?? null,
+				actualStart: stage.actualStart ?? null,
+				actualEnd: stage.actualEnd ?? null,
+			}
+		}
+		return emptyFormData
+	}
+
+	const [formData, setFormData] = useState<StageFormData>(getInitialFormData)
+	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+	const [serverError, setServerError] = useState<string | null>(null)
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const mountedRef = useRef(true)
+
+	useEffect(() => {
+		mountedRef.current = true
+		return () => {
+			mountedRef.current = false
+		}
+	}, [])
+
+	// Sync form data when stage prop changes
+	useEffect(() => {
+		if (isOpen) {
+			setFormData(
+				stage
+					? {
+							name: stage.name,
+							description: stage.description ?? "",
+							planStart: stage.planStart ?? null,
+							planEnd: stage.planEnd ?? null,
+							actualStart: stage.actualStart ?? null,
+							actualEnd: stage.actualEnd ?? null,
+						}
+					: emptyFormData
+			)
+			setFieldErrors({})
+			setServerError(null)
+		}
+	}, [isOpen, stage])
+
+	// Reset form state on Add mode open
+	useResetOnOpen(isOpen && !stage, () => {
+		setFormData(emptyFormData)
+		setFieldErrors({})
+		setServerError(null)
+	})
+
+	const formKey = isEditMode ? displayStage!.stage_id : "new"
+
+	const handleClose = () => {
+		setFormData(emptyFormData)
+		setFieldErrors({})
+		setServerError(null)
+		onClose()
+	}
+
+	const clearFieldError = (field: keyof StageFormData) => {
+		if (fieldErrors[field]) {
+			setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
+		}
+	}
+
+	const handleSubmit = async () => {
+		const result = stageFormSchema.safeParse(formData)
+		if (!result.success) {
+			const mapped = getFieldErrors(result)
+			setFieldErrors(mapped)
+			return
+		}
+
+		setFieldErrors({})
+		setServerError(null)
+		setIsSubmitting(true)
+
+		try {
+			const res = isEditMode
 				? await updateStage(
-						stage!.stage_id,
-						value.name,
-						value.planStart ?? undefined,
-						value.planEnd ?? undefined,
-						value.actualStart ?? undefined,
-						value.actualEnd ?? undefined,
+						displayStage!.stage_id,
+						formData.name,
+						formData.planStart ?? undefined,
+						formData.planEnd ?? undefined,
+						formData.actualStart ?? undefined,
+						formData.actualEnd ?? undefined
 					)
 				: await createStage(
 						projectId,
-						value.name,
-						value.planStart ?? undefined,
-						value.planEnd ?? undefined,
-						value.actualStart ?? undefined,
-						value.actualEnd ?? undefined,
-					);
+						formData.name,
+						formData.planStart ?? undefined,
+						formData.planEnd ?? undefined,
+						formData.actualStart ?? undefined,
+						formData.actualEnd ?? undefined
+					)
 
-			if (!result.success || !result.data) {
-				setServerError(
-					typeof result.error === "string"
-						? result.error
-						: "Failed to save the stage.",
-				);
-				return;
+			if (!res.success || !res.data) {
+				if (mountedRef.current) {
+					setServerError(
+						typeof res.error === "string"
+							? res.error
+							: "Failed to save the stage."
+					)
+				}
+				return
 			}
-			onSaved?.({
-				stage_id: isEditMode ? stage!.stage_id : result.data.stage_id,
-				name: result.data.name,
-			});
-			onClose();
-		},
-	});
 
-	useResetOnOpen(isOpen, () => {
-		setServerError(null);
-		form.reset();
-	});
+			onSaved?.({
+				stage_id: isEditMode ? displayStage!.stage_id : res.data.stage_id,
+				name: res.data.name,
+			})
+			handleClose()
+		} catch {
+			if (mountedRef.current) {
+				setServerError("An unexpected error occurred.")
+			}
+		} finally {
+			if (mountedRef.current) {
+				setIsSubmitting(false)
+			}
+		}
+	}
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose() }}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{isEditMode ? `Edit Stage ${stage?.name}` : "Create New Stage"}</DialogTitle>
+					<DialogTitle>
+						{isEditMode ? `Edit Stage ${displayStage?.name ?? ""}` : "Create New Stage"}
+					</DialogTitle>
 					<DialogDescription>
 						{isEditMode
 							? "Update the stage details."
 							: "Fill in the details to create a new stage."}
 					</DialogDescription>
 				</DialogHeader>
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						void form.handleSubmit();
-					}}
-					className="px-6"
-				>
-					<div className="flex flex-col gap-4">
-						<form.AppField
-							name="name"
-							children={(field) => (
-								<field.TextField
-									label="Stage Name"
-									required
-									placeholder="e.g., Discovery & UX"
-									maxLength={60}
-								/>
-							)}
+
+				<div className="space-y-4" key={formKey}>
+					{/* Stage Name */}
+					<FormInput
+						variant="input"
+						label="Stage Name"
+						required
+						maxLength={60}
+						value={formData.name}
+						placeholder="e.g., Discovery & UX"
+						error={fieldErrors.name}
+						onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+						onClearError={() => clearFieldError("name")}
+					/>
+
+					{/* Description */}
+					<FormInput
+						variant="textarea"
+						label="Description"
+						maxLength={160}
+						rows={3}
+						value={formData.description}
+						placeholder="Describe the objectives and scope of this stage..."
+						error={fieldErrors.description}
+						onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+						onClearError={() => clearFieldError("description")}
+					/>
+
+					{/* Planned Dates Section */}
+					<div className="flex gap-4">
+						<FormInput
+							variant="datetime-local"
+							label="Start Date"
+							type="datetime-local"
+							value={toDateInput(formData.planStart)}
+							error={fieldErrors.planStart}
+							containerClassName="flex-1"
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									planStart: e.target.value ? new Date(e.target.value) : null,
+								})
+							}
+							onClearError={() => clearFieldError("planStart")}
 						/>
-						<form.AppField
-							name="description"
-							children={(field) => (
-								<field.TextAreaField
-									label="Description"
-									placeholder="Describe the objectives and scope of this stage..."
-									rows={3}
-								/>
-							)}
+
+						<FormInput
+							variant="datetime-local"
+							label="Deadline Date"
+							type="datetime-local"
+							value={toDateInput(formData.planEnd)}
+							error={fieldErrors.planEnd}
+							containerClassName="flex-1"
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									planEnd: e.target.value ? new Date(e.target.value) : null,
+								})
+							}
+							onClearError={() => clearFieldError("planEnd")}
 						/>
-						<SchedulingFields form={form} showActuals={false} />
-						{serverError && (
-							<p className="text-xs text-destructive" role="alert">
-								{serverError}
-							</p>
-						)}
 					</div>
-					<DialogFooter showCloseButton={false}>
-						<Button type="button" variant="ghost" onClick={onClose}>
-							Cancel
-						</Button>
-						<form.AppForm>
-							<form.SubmitButton pendingLabel={isEditMode ? "Saving…" : "Adding…"}>
-								{isEditMode ? <Save /> : <Plus />}
-								{isEditMode ? "Save Changes" : "Add Stage"}
-							</form.SubmitButton>
-						</form.AppForm>
-					</DialogFooter>
-				</form>
+
+					{serverError && (
+						<p className="text-xs text-destructive" role="alert">
+							{serverError}
+						</p>
+					)}
+				</div>
+
+				<DialogFooter>
+					<Button onClick={handleClose} variant="ghost" disabled={isSubmitting}>
+						Cancel
+					</Button>
+					<Button onClick={handleSubmit} disabled={isSubmitting}>
+						{isSubmitting
+							? isEditMode
+								? "Saving…"
+								: "Adding…"
+							: isEditMode
+								? "Save Changes"
+								: "Create Stage"}
+					</Button>
+				</DialogFooter>
 			</DialogContent>
 		</Dialog>
-	);
+	)
 }
