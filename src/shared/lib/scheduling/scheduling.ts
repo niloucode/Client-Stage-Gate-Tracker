@@ -1,4 +1,20 @@
 import { z } from "zod";
+import { hasValidActualRange, hasValidPlannedRange } from "./chronology";
+
+/** Normalize the schema's undefined-laden shape to the canonical vocabulary. */
+export function toSchedulingDates(d: {
+	planStart?: Date | null;
+	planEnd?: Date | null;
+	actualStart?: Date | null;
+	actualEnd?: Date | null;
+}): SchedulingDates {
+	return {
+		planStart: d.planStart ?? null,
+		planEnd: d.planEnd ?? null,
+		actualStart: d.actualStart ?? null,
+		actualEnd: d.actualEnd ?? null,
+	};
+}
 
 /**
  * Canonical scheduling vocabulary (Task 1.5).
@@ -28,26 +44,14 @@ export const schedulingDatesSchema = z
 		actualStart: z.date().nullable().optional(),
 		actualEnd: z.date().nullable().optional(),
 	})
-	.refine(
-		(d) =>
-			!d.planStart ||
-			!d.planEnd ||
-			d.planStart.getTime() <= d.planEnd.getTime(),
-		{
-			message: "Plan Start must be before or equal to Plan End",
-			path: ["planStart"],
-		},
-	)
-	.refine(
-		(d) =>
-			!d.actualStart ||
-			!d.actualEnd ||
-			d.actualStart.getTime() <= d.actualEnd.getTime(),
-		{
-			message: "Actual Start must be before or equal to Actual End",
-			path: ["actualStart"],
-		},
-	);
+	.refine((d) => hasValidPlannedRange(toSchedulingDates(d)), {
+		message: "Plan Start must be before or equal to Plan End",
+		path: ["planStart"],
+	})
+	.refine((d) => hasValidActualRange(toSchedulingDates(d)), {
+		message: "Actual Start must be before or equal to Actual End",
+		path: ["actualStart"],
+	});
 
 export type SchedulingDatesInput = z.input<typeof schedulingDatesSchema>;
 export type SchedulingDatesOutput = z.output<typeof schedulingDatesSchema>;

@@ -3,8 +3,8 @@ import { z } from "zod";
 // ── Upload ───────────────────────────────────────────────────────────────────
 
 export const contractUploadSchema = z.object({
-	clientId: z.string().uuid("Invalid client ID"),
-	projectId: z.string().uuid("Invalid project ID"),
+	clientId: z.uuid({ message: "Invalid client ID" }),
+	projectId: z.uuid({ message: "Invalid project ID" }),
 	contractName: z
 		.string()
 		.min(1, "Contract name is required")
@@ -16,7 +16,7 @@ export type ContractUploadInput = z.infer<typeof contractUploadSchema>;
 // ── Sign ─────────────────────────────────────────────────────────────────────
 
 export const contractSignSchema = z.object({
-	projectId: z.string().uuid("Invalid project ID"),
+	projectId: z.uuid({ message: "Invalid project ID" }),
 	role: z.enum(["Client Viewer", "Project Owner"], {
 		message: "Role must be 'Client Viewer' or 'Project Owner'",
 	}),
@@ -35,7 +35,7 @@ export type ContractSignInput = z.infer<typeof contractSignSchema>;
 // ── Change Name ──────────────────────────────────────────────────────────────
 
 export const contractChangeNameSchema = z.object({
-	projectId: z.string().uuid("Invalid project ID"),
+	projectId: z.uuid({ message: "Invalid project ID" }),
 	contractName: z
 		.string()
 		.min(1, "Contract name is required")

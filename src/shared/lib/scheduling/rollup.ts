@@ -21,9 +21,10 @@ export function rollupEnd(d: SchedulingDates): Date | null {
  * Parent boundary from children: start = earliest child start,
  * end = latest child end. Returns nulls when no child contributes dates.
  */
-export function rollupChildrenDates(
-	children: SchedulingDates[],
-): { start: Date | null; end: Date | null } {
+export function rollupChildrenDates(children: SchedulingDates[]): {
+	start: Date | null;
+	end: Date | null;
+} {
 	const starts = children
 		.map((c) => rollupStart(c))
 		.filter((v): v is Date => v !== null);

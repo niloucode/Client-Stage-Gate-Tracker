@@ -1,26 +1,45 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { useDebouncedCallback } from "use-debounce"
-import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
-import { useProjectMembers, useAddProjectMember, useRemoveProjectMember } from "@/entities/project"
-import { searchProfilesForProject } from "@/entities/project/projectActions"
-import { departmentBadgeStyle } from "@/shared/lib/colors"
-import { LucideSearch, X, UserPlus, Check } from "lucide-react"
-import { toast } from "@/components/ui/toast"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Searching, Lacking } from "@/shared/ui/search-status"
+import { useState, useEffect, useRef } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
+import {
+	useProjectMembers,
+	useAddProjectMember,
+	useRemoveProjectMember,
+} from "@/entities/project";
+import { searchProfilesForProject } from "@/entities/project/projectActions";
+import { departmentBadgeStyle } from "@/shared/lib/colors";
+import { LucideSearch, X, UserPlus, Check } from "lucide-react";
+import { toast } from "@/components/ui/toast";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+} from "@/components/ui/dialog";
+import { Searching, Lacking } from "@/shared/ui/search-status";
 
 interface ManageMembersModalProps {
-	isOpen: boolean
-	projectId: string
-	onClose: () => void
+	isOpen: boolean;
+	projectId: string;
+	onClose: () => void;
 }
 
-export function DepartmentDisplay({departmentName}:{departmentName:string})
-{
-	return <div className={`px-2 w-25 text-center py-0.5 rounded-xl text-xs 
-		${departmentBadgeStyle(departmentName)}`}>{departmentName}</div>
+export function DepartmentDisplay({
+	departmentName,
+}: {
+	departmentName: string;
+}) {
+	return (
+		<div
+			className={`px-2 w-25 text-center py-0.5 rounded-xl text-xs 
+		${departmentBadgeStyle(departmentName)}`}
+		>
+			{departmentName}
+		</div>
+	);
 }
 
 export function ManageMembersModal({
@@ -28,49 +47,50 @@ export function ManageMembersModal({
 	projectId,
 	onClose,
 }: ManageMembersModalProps) {
-	const [searchQuery, setSearchQuery] = useState("")
+	const [searchQuery, setSearchQuery] = useState("");
 	const [searchResults, setSearchResults] = useState<
 		Awaited<ReturnType<typeof searchProfilesForProject>>
-	>([])
-	const [isSearching, setIsSearching] = useState(false)
-	const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+	>([]);
+	const [isSearching, setIsSearching] = useState(false);
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-	const mountedRef = useRef(true)
-	const latestQueryRef = useRef("")
-	const searchContainerRef = useRef<HTMLDivElement>(null)
+	const mountedRef = useRef(true);
+	const latestQueryRef = useRef("");
+	const searchContainerRef = useRef<HTMLDivElement>(null);
 
-	const { data: members, isLoading: membersLoading } =
-		useProjectMembers(isOpen ? projectId : null)
-	const addMemberMutation = useAddProjectMember()
-	const removeMemberMutation = useRemoveProjectMember()
+	const { data: members, isLoading: membersLoading } = useProjectMembers(
+		isOpen ? projectId : null,
+	);
+	const addMemberMutation = useAddProjectMember();
+	const removeMemberMutation = useRemoveProjectMember();
 
 	// Reset search when modal closes
 	useResetOnOpen(
 		isOpen,
 		() => {
-			setSearchQuery("")
-			setSearchResults([])
-			setIsDropdownOpen(false)
+			setSearchQuery("");
+			setSearchResults([]);
+			setIsDropdownOpen(false);
 		},
 		false,
-	)
+	);
 
 	// Track mount state for async safety
 	useEffect(() => {
-		mountedRef.current = true
+		mountedRef.current = true;
 		return () => {
-			mountedRef.current = false
-		}
-	}, [])
+			mountedRef.current = false;
+		};
+	}, []);
 
 	// Automatically open dropdown when searchQuery is non-empty
 	useEffect(() => {
 		if (searchQuery.trim().length > 0) {
-			setIsDropdownOpen(true)
+			setIsDropdownOpen(true);
 		} else {
-			setIsDropdownOpen(false)
+			setIsDropdownOpen(false);
 		}
-	}, [searchQuery])
+	}, [searchQuery]);
 
 	// Close search results when clicking outside
 	useEffect(() => {
@@ -79,71 +99,94 @@ export function ManageMembersModal({
 				searchContainerRef.current &&
 				!searchContainerRef.current.contains(event.target as Node)
 			) {
-				setIsDropdownOpen(false)
+				setIsDropdownOpen(false);
 			}
 		}
 
-		document.addEventListener("mousedown", handleClickOutside)
+		document.addEventListener("mousedown", handleClickOutside);
 		return () => {
-			document.removeEventListener("mousedown", handleClickOutside)
-		}
-	}, [])
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, []);
 
 	// Debounced search
 	const debouncedSearch = useDebouncedCallback(async (query: string) => {
-		const trimmed = query.trim()
+		const trimmed = query.trim();
 		if (trimmed.length < 1) {
-			if (mountedRef.current) setSearchResults([])
-			return
+			if (mountedRef.current) setSearchResults([]);
+			return;
 		}
-		if (mountedRef.current) setIsSearching(true)
-		latestQueryRef.current = trimmed
+		if (mountedRef.current) setIsSearching(true);
+		latestQueryRef.current = trimmed;
 		try {
-			const results = await searchProfilesForProject(trimmed)
+			const results = await searchProfilesForProject(trimmed);
 			// Filter out client profiles
-			const filtered = results.filter((p) => !p.client_id)
+			const filtered = results.filter((p) => !p.client_id);
 			if (mountedRef.current && latestQueryRef.current === trimmed) {
-				setSearchResults(filtered)
+				setSearchResults(filtered);
 			}
 		} catch {
-			if (mountedRef.current) setSearchResults([])
+			if (mountedRef.current) setSearchResults([]);
 		} finally {
-			if (mountedRef.current) setIsSearching(false)
+			if (mountedRef.current) setIsSearching(false);
 		}
-	}, 300)
+	}, 300);
 
-	const handleAddMember = async (profileId : string, firstName : string, roleName: string = "Project Team Member") => {
-		const result = await addMemberMutation.mutateAsync({ projectId, profileId, roleName })
+	const handleAddMember = async (
+		profileId: string,
+		firstName: string,
+		roleName: string = "Project Team",
+	) => {
+		const result = await addMemberMutation.mutateAsync({
+			projectId,
+			profileId,
+			roleName,
+		});
 		if (!result.success) {
-			alert(result.error ?? "Failed to add member")
-			return
+			alert(result.error ?? "Failed to add member");
+			return;
 		}
 		// Retain search input, results list, and open state.
-		toast.add({ title: "Given access", description: firstName+" successfully added" })
-	}
+		toast.add({
+			title: "Given access",
+			description: firstName + " successfully added",
+		});
+	};
 
-	const handleRemoveMember = (profileId : string, firstName : string) => {
-		removeMemberMutation.mutate({ projectId, profileId })
-		toast.add({ title: "Removed Access", description: firstName+" successfully removed" })
-	}
+	const handleRemoveMember = (profileId: string, firstName: string) => {
+		removeMemberMutation.mutate({ projectId, profileId });
+		toast.add({
+			title: "Removed Access",
+			description: firstName + " successfully removed",
+		});
+	};
 
 	// Support matching on both user_id and profile_id
 	const memberIds = new Set(
-		(members ?? []).flatMap((m) => [m.user_id, m.Users?.profile_id].filter(Boolean)),
-	)
+		(members ?? []).flatMap((m) =>
+			[m.user_id, m.Profile?.profile_id].filter(Boolean),
+		),
+	);
 
 	const ownerCount = (members ?? []).filter(
 		(m) => m.Roles?.name === "Project Owner",
-	).length
+	).length;
 
-	const nonClientMembers = (members ?? []).filter((m) => !m.Users?.client_id)
+	const nonClientMembers = (members ?? []).filter((m) => !m.Profile?.client_id);
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+		<Dialog
+			open={isOpen}
+			onOpenChange={(open) => {
+				if (!open) onClose();
+			}}
+		>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Manage Project Members</DialogTitle>
-					<DialogDescription>Find and remove members for this project.</DialogDescription>
+					<DialogDescription>
+						Find and remove members for this project.
+					</DialogDescription>
 				</DialogHeader>
 
 				{/* Search Input */}
@@ -161,11 +204,11 @@ export function ManageMembersModal({
 								type="text"
 								value={searchQuery}
 								onFocus={() => {
-									if (searchQuery.trim().length > 0) setIsDropdownOpen(true)
+									if (searchQuery.trim().length > 0) setIsDropdownOpen(true);
 								}}
 								onChange={(e) => {
-									setSearchQuery(e.target.value)
-									debouncedSearch(e.target.value)
+									setSearchQuery(e.target.value);
+									debouncedSearch(e.target.value);
 								}}
 								placeholder="Search for people to add"
 								className="w-full pl-9 pr-3 py-2 bg-neutral-surface border border-brand-100 rounded text-sm text-foreground placeholder:text-brand-100 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
@@ -177,15 +220,17 @@ export function ManageMembersModal({
 							<div className="absolute top-full left-0 right-0 z-30 bg-neutral-surface mt-1 overflow-y-auto max-h-60 rounded-xl border border-brand-100 shadow-2xl ring-1 ring-black/5 origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 ease-out">
 								{isSearching ? (
 									<Searching />
-								) : searchQuery.trim().length > 0 && searchResults.length === 0 ? (
+								) : searchQuery.trim().length > 0 &&
+								  searchResults.length === 0 ? (
 									<Lacking />
 								) : searchResults.length > 0 ? (
 									<div className="flex flex-col gap-y-2 items-center w-full divide-y divide-brand-100/60">
 										{searchResults.map((profile) => {
-											const isAlreadyMember = memberIds.has(profile.profile_id)
-											const firstName = profile.first_name || ""
-											const lastName = profile.last_name || ""
-											const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase()
+											const isAlreadyMember = memberIds.has(profile.profile_id);
+											const firstName = profile.first_name || "";
+											const lastName = profile.last_name || "";
+											const initials =
+												`${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase();
 
 											return (
 												<div
@@ -220,18 +265,30 @@ export function ManageMembersModal({
 															handleAddMember(profile.profile_id, firstName)
 														}
 														disabled={isAlreadyMember}
-														title={isAlreadyMember ? "Already a member" : `Add ${firstName}`}
-														aria-label={isAlreadyMember ? "Already a member" : `Add ${firstName}`}
+														title={
+															isAlreadyMember
+																? "Already a member"
+																: `Add ${firstName}`
+														}
+														aria-label={
+															isAlreadyMember
+																? "Already a member"
+																: `Add ${firstName}`
+														}
 														className={`ml-4 mr-2 p-1.5 rounded-lg transition-all flex items-center justify-center shrink-0 ${
 															isAlreadyMember
 																? "bg-emerald-50 text-emerald-600 cursor-default"
 																: "text-brand-500 hover:text-brand-600 active:scale-95"
 														}`}
 													>
-														{isAlreadyMember ? <Check size={16} /> : <UserPlus size={16} />}
+														{isAlreadyMember ? (
+															<Check size={16} />
+														) : (
+															<UserPlus size={16} />
+														)}
 													</button>
 												</div>
-											)
+											);
 										})}
 									</div>
 								) : null}
@@ -251,8 +308,12 @@ export function ManageMembersModal({
 							<table className="w-full border-collapse text-left">
 								<thead className="sticky top-0 z-10 bg-brand-50 border-b border-brand-100 text-xs font-semibold text-neutral-border">
 									<tr>
-										<th scope="col" className="px-3 py-2.5">NAME</th>
-										<th scope="col" className="px-3 py-2.5 w-[140px]">DEPARTMENT</th>
+										<th scope="col" className="px-3 py-2.5">
+											NAME
+										</th>
+										<th scope="col" className="px-3 py-2.5 w-[140px]">
+											DEPARTMENT
+										</th>
 										<th scope="col" className="px-3 py-2.5 w-12 text-right">
 											<span className="sr-only">Actions</span>
 										</th>
@@ -260,18 +321,24 @@ export function ManageMembersModal({
 								</thead>
 								<tbody className="divide-y divide-brand-100/60 bg-neutral-surface">
 									{nonClientMembers.map((member) => {
-										const user = member.Users
-										const firstName = user?.first_name || ""
-										const lastName = user?.last_name || ""
-										const fullName = `${firstName} ${lastName}`.trim() || "Unknown User"
-										const initials = `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() || "?"
+										const user = member.Profile;
+										const firstName = user?.first_name || "";
+										const lastName = user?.last_name || "";
+										const fullName =
+											`${firstName} ${lastName}`.trim() || "Unknown User";
+										const initials =
+											`${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase() ||
+											"?";
 
-										const isOwner = member.Roles?.name === "Project Owner"
-										const cannotRemove = isOwner && ownerCount <= 1
+										const isOwner = member.Roles?.name === "Project Owner";
+										const cannotRemove = isOwner && ownerCount <= 1;
 
 										return (
 											<tr
-												key={member.user_id || `${member.role_id}-${user?.profile_id}`}
+												key={
+													member.user_id ||
+													`${member.role_id}-${user?.profile_id}`
+												}
 												className="transition-colors hover:bg-neutral-subtle/20"
 											>
 												<td className="px-3 py-3 align-middle">
@@ -291,7 +358,9 @@ export function ManageMembersModal({
 												</td>
 												<td className="px-3 py-3 align-middle text-sm text-neutral-subtle">
 													{user?.Department?.name ? (
-														<DepartmentDisplay departmentName={user.Department.name} />
+														<DepartmentDisplay
+															departmentName={user.Department.name}
+														/>
 													) : (
 														<span className="text-xs text-slate-400">—</span>
 													)}
@@ -299,7 +368,9 @@ export function ManageMembersModal({
 												<td className="px-3 py-3 align-middle text-right w-12">
 													<button
 														type="button"
-														onClick={() => handleRemoveMember(user?.profile_id, firstName)}
+														onClick={() =>
+															handleRemoveMember(user?.profile_id, firstName)
+														}
 														disabled={cannotRemove}
 														title={
 															cannotRemove
@@ -317,7 +388,7 @@ export function ManageMembersModal({
 													</button>
 												</td>
 											</tr>
-										)
+										);
 									})}
 								</tbody>
 							</table>
@@ -326,5 +397,5 @@ export function ManageMembersModal({
 				</div>
 			</DialogContent>
 		</Dialog>
-	)
+	);
 }

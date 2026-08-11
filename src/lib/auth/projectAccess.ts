@@ -1,3 +1,4 @@
+import "server-only";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { cache } from "react";
@@ -21,7 +22,8 @@ export const getCurrentUserId = cache(async (): Promise<string | null> => {
 		} = await supabase.auth.getUser();
 		if (!user) return null;
 		return user.id;
-	} catch {
+	} catch (error) {
+		console.error("getCurrentUserId error:", error);
 		return null;
 	}
 });
@@ -36,12 +38,14 @@ export async function requireProjectMember(
 	return !!assignment;
 }
 
+const PROJECT_OWNER_ROLE = "Project Owner";
+
 export async function requireProjectOwner(
 	projectId: string,
 	userId: string,
 ): Promise<boolean> {
 	const ownerRole = await prisma.roles.findUnique({
-		where: { name: "Project Owner" },
+		where: { name: PROJECT_OWNER_ROLE },
 		select: { role_id: true },
 	});
 	if (!ownerRole) return false;
@@ -56,8 +60,7 @@ export async function requireProjectOwner(
 }
 
 export type AuthResult =
-	| { ok: true; userId: string }
-	| { ok: false; error: string };
+	{ ok: true; userId: string } | { ok: false; error: string };
 
 /**
  * Verifies the current session user is a member of the project.
@@ -103,12 +106,12 @@ export async function resolvePhaseProject(
 export async function resolveModuleProject(
 	moduleId: string,
 ): Promise<string | null> {
-	const module = await prisma.modules.findUnique({
+	const moduleRow = await prisma.modules.findUnique({
 		where: { module_id: moduleId },
 		select: { phase_id: true },
 	});
-	if (!module) return null;
-	return resolvePhaseProject(module.phase_id);
+	if (!moduleRow) return null;
+	return resolvePhaseProject(moduleRow.phase_id);
 }
 
 export async function resolveWorkflowProject(
@@ -129,7 +132,8 @@ export async function resolveTicketProject(
 		where: { ticket_id: ticketId },
 		select: { workflow_id: true },
 	});
-	if (!ticket?.workflow_id) return null;
+	if (!ticket) return null;
+	// workflow_id is NOT NULL (schema invariant), so no null guard needed.
 	return resolveWorkflowProject(ticket.workflow_id);
 }
 
@@ -138,7 +142,11 @@ export async function resolveGateProject(
 ): Promise<string | null> {
 	const gate = await prisma.gates.findUnique({
 		where: { gate_id: gateId },
-		select: { project_id: true },
+		select: {
+			Stages: { select: { project_id: true } },
+		},
 	});
-	return gate?.project_id ?? null;
+	// Gates link to a Stage; the project resolves through it. stage_id is
+	// nullable until legacy gates are re-mapped (migration 4 backfill note).
+	return gate?.Stages?.project_id ?? null;
 }

@@ -3,14 +3,14 @@ import { z } from "zod";
 // ── Profile (full DB row) ────────────────────────────────────────────────────
 
 export const profileSchema = z.object({
-	profile_id: z.string().uuid(),
+	profile_id: z.uuid(),
 	first_name: z.string().trim().min(1),
 	last_name: z.string().trim().min(1),
 	phone: z.string().nullable(),
-	image_id: z.string().uuid().nullable(),
-	client_id: z.string().uuid().nullable(),
-	department_id: z.string().uuid().nullable(),
-	email: z.string().email(),
+	image_id: z.uuid().nullable(),
+	client_id: z.uuid().nullable(),
+	department_id: z.uuid().nullable(),
+	email: z.email(),
 	job_title: z.string().nullable(),
 	is_deleted: z.boolean().default(false),
 	deleted_at: z.date().nullable(),

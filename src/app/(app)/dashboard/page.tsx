@@ -1,11 +1,7 @@
-import { notFound } from "next/navigation";
-import { guardDevOnly } from "@/shared/lib/devOnly";
-import { getPlannedView } from "@/shared/lib/plannedViews";
-import { PlannedViewPlaceholder } from "@/shared/ui/PlannedViewPlaceholder";
+import { redirect } from "next/navigation";
 
+// The landing dashboard is not built yet — route to /projects until it is
+// (see the previous planned-view description for this intent).
 export default function DashboardPage() {
-	guardDevOnly();
-	const view = getPlannedView("/dashboard");
-	if (!view) notFound();
-	return <PlannedViewPlaceholder view={view} />;
+	redirect("/projects");
 }

@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useDraggable } from "@dnd-kit/core"
+import { useState } from "react";
+import { useDraggable } from "@dnd-kit/core";
 
-import { type Ticket } from "@/entities/types"
-import { Dot } from "lucide-react"
-import { LucidePencil, LucideTrash2 } from "lucide-react"
-import { status } from "@/lib/generated/prisma"
-import { getInitials } from "@/shared/lib/strings"
+import { type Ticket } from "@/entities/types";
+import { Dot } from "lucide-react";
+import { LucidePencil, LucideTrash2 } from "lucide-react";
+import { status } from "@/lib/generated/prisma";
+import { getInitials } from "@/shared/lib/strings";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
 	AlertDialog,
 	AlertDialogContent,
@@ -21,7 +21,7 @@ import {
 	AlertDialogFooter,
 	AlertDialogCancel,
 	AlertDialogAction,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 
 /**
  * Renders the internal visual contents, layout, and contextual menus of a single ticket.
@@ -32,15 +32,15 @@ export function TicketCardContent({
 	onEdit,
 	onDelete,
 }: {
-	ticket: Ticket
-	onSelect: (ticket: Ticket) => void
-	onEdit: (ticket: Ticket) => void
-	onDelete: (ticketId: string) => void
+	ticket: Ticket;
+	onSelect: (ticket: Ticket) => void;
+	onEdit: (ticket: Ticket) => void;
+	onDelete: (ticketId: string) => void;
 }) {
-	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-	const today = new Date()
-	today.setHours(0, 0, 0, 0)
-	const isOverdue = ticket.plan_end_at ? ticket.plan_end_at < today : false
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	const isOverdue = ticket.plan_end_at ? ticket.plan_end_at < today : false;
 
 	return (
 		<>
@@ -69,9 +69,9 @@ export function TicketCardContent({
 								variant="ghost"
 								size="icon"
 								onClick={(e) => {
-									e.stopPropagation()
-									onSelect(ticket)
-									onEdit(ticket)
+									e.stopPropagation();
+									onSelect(ticket);
+									onEdit(ticket);
 								}}
 							>
 								<LucidePencil size={14} strokeWidth={2} />
@@ -80,8 +80,8 @@ export function TicketCardContent({
 								variant="ghost"
 								size="icon"
 								onClick={(e) => {
-									e.stopPropagation()
-									setIsDeleteModalOpen(true)
+									e.stopPropagation();
+									setIsDeleteModalOpen(true);
 								}}
 							>
 								<LucideTrash2 size={14} strokeWidth={2} />
@@ -91,11 +91,11 @@ export function TicketCardContent({
 
 					{/* Bottom row: deadline + assignee avatar */}
 					<div className="mt-auto h-3 flex items-center">
-						{ticket.Profiles ? (
+						{ticket.Profile ? (
 							<Avatar className="w-6 h-6 text-[9px]">
 								<AvatarFallback className="bg-gray-600 text-neutral-surface text-[9px] font-bold">
 									{getInitials(
-										`${ticket.Profiles?.first_name} ${ticket.Profiles?.last_name}`,
+										`${ticket.Profile?.first_name} ${ticket.Profile?.last_name}`,
 									)}
 								</AvatarFallback>
 							</Avatar>
@@ -118,7 +118,10 @@ export function TicketCardContent({
 								{isOverdue && (
 									<>
 										<Dot />
-										<Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+										<Badge
+											variant="destructive"
+											className="text-[10px] px-1.5 py-0"
+										>
 											Overdue
 										</Badge>
 									</>
@@ -129,28 +132,38 @@ export function TicketCardContent({
 				</div>
 			</div>
 
-			<AlertDialog open={isDeleteModalOpen} onOpenChange={(open) => { if (!open) setIsDeleteModalOpen(false) }}>
+			<AlertDialog
+				open={isDeleteModalOpen}
+				onOpenChange={(open) => {
+					if (!open) setIsDeleteModalOpen(false);
+				}}
+			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>Delete Ticket?</AlertDialogTitle>
 						<AlertDialogDescription>
 							Are you sure you want to delete{" "}
-							<span className="font-medium text-foreground">{ticket.name}</span>?
-							This action cannot be undone.
+							<span className="font-medium text-foreground">{ticket.name}</span>
+							? This action cannot be undone.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel onClick={() => setIsDeleteModalOpen(false)}>
 							Cancel
 						</AlertDialogCancel>
-						<AlertDialogAction onClick={() => { setIsDeleteModalOpen(false); onDelete(ticket.ticket_id) }}>
+						<AlertDialogAction
+							onClick={() => {
+								setIsDeleteModalOpen(false);
+								onDelete(ticket.ticket_id);
+							}}
+						>
 							Delete
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
 		</>
-	)
+	);
 }
 
 /**
@@ -164,15 +177,15 @@ export default function TicketCard({
 	onEdit,
 	onDelete,
 }: {
-	ticket: Ticket
-	onSelect: (ticket: Ticket) => void
-	onEdit: (ticket: Ticket) => void
-	onDelete: (ticketId: string) => void
+	ticket: Ticket;
+	onSelect: (ticket: Ticket) => void;
+	onEdit: (ticket: Ticket) => void;
+	onDelete: (ticketId: string) => void;
 }) {
 	const { attributes, listeners, setNodeRef, transform, isDragging } =
 		useDraggable({
 			id: ticket.ticket_id,
-		})
+		});
 
 	const style = {
 		transform: transform
@@ -182,7 +195,7 @@ export default function TicketCard({
 		zIndex: isDragging ? 50 : undefined,
 		position: isDragging ? ("relative" as const) : undefined,
 		width: "100%",
-	}
+	};
 
 	return (
 		<div
@@ -199,5 +212,5 @@ export default function TicketCard({
 				onDelete={onDelete}
 			/>
 		</div>
-	)
+	);
 }

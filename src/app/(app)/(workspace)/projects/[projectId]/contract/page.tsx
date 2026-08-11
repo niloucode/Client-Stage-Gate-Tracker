@@ -127,8 +127,8 @@ export default function ContractPage() {
 			// --- PROJECT OWNER SIGNATORY ---
 			const ownerAssignment = await getProjectOwnerByProjectId(projectId);
 
-			if (ownerAssignment?.Users) {
-				const ownerProfile = ownerAssignment.Users;
+			if (ownerAssignment?.Profile) {
+				const ownerProfile = ownerAssignment.Profile;
 				const ownerSigned = !!contract?.project_owner_signed_at;
 
 				localCanSign = user?.profile_id == ownerProfile.profile_id;
@@ -147,19 +147,19 @@ export default function ContractPage() {
 			if (contract?.client_id) {
 				const clientAssignment = await getClientByProjectId(projectId);
 
-				if (clientAssignment?.Users) {
+				if (clientAssignment?.Profile) {
 					const clientSigned = !!contract.client_signed_at;
 					setHasClient(true);
 					setClientSigned(clientSigned);
 					if (!localCanSign) {
 						localCanSign =
-							user?.profile_id == clientAssignment.Users.profile_id;
+							user?.profile_id == clientAssignment.Profile.profile_id;
 					}
 
 					temp.push({
-						id: clientAssignment.Users.profile_id,
-						email: clientAssignment.Users.email,
-						name: `${clientAssignment.Users.first_name} ${clientAssignment.Users.last_name}`,
+						id: clientAssignment.Profile.profile_id,
+						email: clientAssignment.Profile.email,
+						name: `${clientAssignment.Profile.first_name} ${clientAssignment.Profile.last_name}`,
 						signed_name: contract?.client_signature ?? null,
 						role: "Client",
 						status: clientSigned ? "signed" : "pending",

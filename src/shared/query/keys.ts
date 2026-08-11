@@ -35,10 +35,6 @@ export const clientKeys = {
 	detail: (id: string) => [...clientKeys.details(), id] as const,
 };
 
-export const departmentKeys = {
-	all: ["departments"] as const,
-};
-
 export const phaseKeys = {
 	all: ["phases"] as const,
 	detail: (id: string) => [...phaseKeys.all, "detail", id] as const,
@@ -86,5 +82,6 @@ export const projectKeys = {
 	lists: () => [...projectKeys.all, "list"] as const,
 	details: () => [...projectKeys.all, "detail"] as const,
 	detail: (id: string) => [...projectKeys.details(), id] as const,
-	members: (projectId: string) => [...projectKeys.detail(projectId), "members"] as const,
+	members: (projectId: string) =>
+		[...projectKeys.detail(projectId), "members"] as const,
 };

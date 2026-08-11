@@ -15,9 +15,7 @@ function keyed(ids: string[]): SortableSibling[] {
 function orderedKeys(siblings: SortableSibling[]): (string | null)[] {
 	return siblings
 		.slice()
-		.sort((x, y) =>
-			(x.sort_key ?? "") < (y.sort_key ?? "") ? -1 : 1,
-		)
+		.sort((x, y) => ((x.sort_key ?? "") < (y.sort_key ?? "") ? -1 : 1))
 		.map((s) => s.id);
 }
 

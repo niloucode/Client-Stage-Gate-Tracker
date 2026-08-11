@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import {
-	fromDateTimeLocalInput,
-	toDateTimeLocalInput,
-} from "./dateInput";
+import { fromDateTimeLocalInput, toDateTimeLocalInput } from "./dateInput";
 
 describe("toDateTimeLocalInput", () => {
 	it("returns an empty string for null/undefined", () => {
 		expect(toDateTimeLocalInput(null)).toBe("");
 		expect(toDateTimeLocalInput(undefined)).toBe("");
+	});
+
+	it("returns an empty string for an invalid Date", () => {
+		expect(toDateTimeLocalInput(new Date("not-a-date"))).toBe("");
 	});
 
 	it("formats a Date as a local datetime-local string (yyyy-MM-ddTHH:mm)", () => {

@@ -67,15 +67,11 @@ describe("earliest/latest", () => {
 	};
 
 	it("picks the earliest non-null date", () => {
-		expect(earliestDate(block)?.toISOString()).toBe(
-			"2024-03-01T00:00:00.000Z",
-		);
+		expect(earliestDate(block)?.toISOString()).toBe("2024-03-01T00:00:00.000Z");
 	});
 
 	it("picks the latest non-null date", () => {
-		expect(latestDate(block)?.toISOString()).toBe(
-			"2024-03-20T00:00:00.000Z",
-		);
+		expect(latestDate(block)?.toISOString()).toBe("2024-03-20T00:00:00.000Z");
 	});
 
 	it("returns null when no dates are set", () => {
@@ -115,12 +111,8 @@ describe("rollup helpers", () => {
 	});
 
 	it("rollupStart/rollupEnd mirror earliest/latest", () => {
-		expect(rollupStart(childA)?.toISOString()).toBe(
-			"2024-04-01T00:00:00.000Z",
-		);
-		expect(rollupEnd(childA)?.toISOString()).toBe(
-			"2024-04-10T00:00:00.000Z",
-		);
+		expect(rollupStart(childA)?.toISOString()).toBe("2024-04-01T00:00:00.000Z");
+		expect(rollupEnd(childA)?.toISOString()).toBe("2024-04-10T00:00:00.000Z");
 	});
 });
 
@@ -136,6 +128,20 @@ describe("schedulingDatesSchema", () => {
 		if (!result.success) {
 			const issues = result.error.issues;
 			expect(issues.some((i) => i.path.includes("planStart"))).toBe(true);
+		}
+	});
+
+	it("rejects actualStart after actualEnd with a field error", () => {
+		const result = schedulingDatesSchema.safeParse({
+			planStart: null,
+			planEnd: null,
+			actualStart: d("2024-05-10T00:00:00Z"),
+			actualEnd: d("2024-05-01T00:00:00Z"),
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const issues = result.error.issues;
+			expect(issues.some((i) => i.path.includes("actualStart"))).toBe(true);
 		}
 	});
 

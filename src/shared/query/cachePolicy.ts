@@ -29,6 +29,3 @@ export const CACHE_POLICY = {
 		retry: 0,
 	},
 } as const;
-
-/** Registry of server-action result errors, in case callers need them typed. */
-export const ACTION_RESULT_ERROR = "Server action failed" as const;

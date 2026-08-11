@@ -22,8 +22,12 @@ export type ActionErrorCode =
 export class ActionError extends Error {
 	readonly code: ActionErrorCode;
 
-	constructor(code: ActionErrorCode, message: string) {
-		super(message);
+	constructor(
+		code: ActionErrorCode,
+		message: string,
+		options?: { cause?: unknown },
+	) {
+		super(message, options);
 		this.name = "ActionError";
 		this.code = code;
 	}
@@ -45,8 +49,9 @@ export const actionClient = createSafeActionClient({
 });
 
 /**
- * Authenticated action client: runs the session check in middleware so
- * authentication cannot be skipped by an action body.
+ * Authenticated action client: resolves the session user in the
+ * next-safe-action `use` hook (NOT the Next.js proxy) so authentication
+ * cannot be skipped by an action body.
  */
 export const authActionClient = actionClient.use(async ({ next }) => {
 	const userId = await getCurrentUserId();

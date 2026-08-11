@@ -11,6 +11,7 @@
  */
 export function toDateTimeLocalInput(date: Date | null | undefined): string {
 	if (!date) return "";
+	if (Number.isNaN(date.getTime())) return "";
 	return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
 		.toISOString()
 		.slice(0, 16);

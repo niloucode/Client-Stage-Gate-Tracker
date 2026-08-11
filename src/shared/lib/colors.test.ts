@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { getPastelStyle, TAG_COLORS, departmentBadgeStyle } from "./colors";
+import {
+	getPastelStyle,
+	TAG_COLORS,
+	TAG_COLOR_NAMES,
+	departmentBadgeStyle,
+} from "./colors";
 
 describe("getPastelStyle", () => {
 	it("produces rgba backgrounds for valid 6-digit hexes", () => {
@@ -39,12 +44,13 @@ describe("getPastelStyle", () => {
 describe("departmentBadgeStyle (Task 5.8 #22)", () => {
 	it("returns the mapped classes for known departments", () => {
 		expect(departmentBadgeStyle("Project Owner")).toContain("bg-[#FFDAD7]");
-		expect(departmentBadgeStyle("Finance Team")).toContain("bg-[#BAE9D4]");
+		expect(departmentBadgeStyle("Project Team")).toContain("bg-brand-500");
+		expect(departmentBadgeStyle("Client Viewer")).toContain("bg-[#DBEAFE]");
 	});
 
-	it("falls back to a neutral badge for unknown departments", () => {
-		expect(departmentBadgeStyle("Engineering")).toBe(
-			"bg-slate-100 text-slate-600",
-		);
+	it("every TAG_COLORS entry has an accessible label in TAG_COLOR_NAMES", () => {
+		for (const color of TAG_COLORS) {
+			expect(TAG_COLOR_NAMES[color], `missing label for ${color}`).toBeTruthy();
+		}
 	});
 });

@@ -4,7 +4,7 @@ import { getFieldErrors } from "./zod";
 
 const schema = z.object({
 	name: z.string().min(3, "Name must be at least 3 characters"),
-	email: z.string().email("Invalid email"),
+	email: z.email({ message: "Invalid email" }),
 	age: z.number().min(18, "Must be 18 or older").optional(),
 });
 

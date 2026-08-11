@@ -1,13 +1,13 @@
 import { Prisma } from "@/lib/generated/prisma";
 
 export const commentInclude = {
-  Profiles: true,
+	Profile: true,
 } as const;
 
 export type CommentPayload = Prisma.CommentsGetPayload<{
-  include: typeof commentInclude;
+	include: typeof commentInclude;
 }>;
 
 export type CommentWithImages = CommentPayload & {
-  images: Prisma.ImagesGetPayload<object>[];
+	images: Prisma.ImagesGetPayload<object>[];
 };

@@ -7,7 +7,7 @@ export async function getRoleAssignmentByProfileId(profileId: string) {
 			user_id: profileId,
 		},
 		include: {
-			Users: true,
+			Profile: true,
 			Roles: true,
 		},
 	});
@@ -23,7 +23,7 @@ export async function getRoleAssignmentByProfileProjectId(
 			project_id: projectId,
 		},
 		include: {
-			Users: true,
+			Profile: true,
 			Roles: true,
 		},
 	});
@@ -34,10 +34,10 @@ export async function getClientByProjectId(projectId: string) {
 		where: {
 			project_id: projectId,
 			Roles: { name: "Client Viewer" },
-			Users: { is_deleted: false },
+			Profile: { is_deleted: false },
 		},
 		include: {
-			Users: true,
+			Profile: true,
 			Roles: true,
 		},
 	});
@@ -48,10 +48,10 @@ export async function getProjectOwnerByProjectId(projectId: string) {
 		where: {
 			project_id: projectId,
 			Roles: { name: "Project Owner" },
-			Users: { is_deleted: false },
+			Profile: { is_deleted: false },
 		},
 		include: {
-			Users: true,
+			Profile: true,
 			Roles: true,
 		},
 	});
