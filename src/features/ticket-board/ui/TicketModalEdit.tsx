@@ -305,7 +305,7 @@ export default function TicketModalEdit({
 							</span>
 						</div>
 						<div className="flex flex-col gap-3 max-h-85 overflow-auto select-none mt-2">
-							<div className="drop-shadow-md rounded-lg p-2 bg-neutral-surface flex flex-col border border-brand-100">
+							<div className="drop-shadow-md rounded-md p-2 bg-neutral-surface flex flex-col border border-brand-100">
 								<span className="font-mono text-sm text-brand-500">
 									LRN-BNN
 								</span>
@@ -332,7 +332,7 @@ export default function TicketModalEdit({
 										key={img.image_id}
 										src={img.image_src}
 										alt="Ticket attachment"
-										className="h-16 w-auto rounded-lg border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+										className="h-16 w-auto rounded-md border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
 										onClick={() => setLightboxSrc(img.image_src)}
 									/>
 								))}
@@ -355,14 +355,14 @@ export default function TicketModalEdit({
 					<button
 						type="button"
 						onClick={onClose}
-						className="text-sm font-medium text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100"
+						className="text-sm font-medium text-gray-500 px-4 py-2 rounded-md hover:bg-gray-100"
 					>
 						Cancel
 					</button>
 					<button
 						type="button"
 						onClick={handleSave}
-						className="text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
+						className="text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 px-4 py-2 rounded-md transition-colors"
 					>
 						Save Changes
 					</button>
@@ -446,7 +446,7 @@ function TicketTitleAndStatus({
 
 				{/* Status Dropdown Modal */}
 				<DropdownMenu>
-					<DropdownMenuTrigger className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 select-none cursor-pointer focus:outline-none shrink-0">
+					<DropdownMenuTrigger className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1 select-none cursor-pointer focus:outline-none shrink-0">
 						<span
 							className={`h-2.5 w-2.5 rounded-full shrink-0 ${currentStatusConfig.dotClass}`}
 						/>
@@ -511,7 +511,7 @@ function TicketTitleAndStatus({
 				</div>
 
 				<DropdownMenu>
-					<DropdownMenuTrigger className="text-xs text-brand-600 hover:text-indigo-700 font-medium px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors focus:outline-none shrink-0 ml-auto">
+					<DropdownMenuTrigger className="text-xs text-brand-600 hover:text-indigo-700 font-medium px-2 py-1 rounded-md border border-indigo-200 hover:bg-indigo-50 transition-colors focus:outline-none shrink-0 ml-auto">
 						+ Add Tags
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
@@ -771,7 +771,7 @@ function TicketApiDetails({
 					onChange={(e) =>
 						setApiMethod(e.target.value as "GET" | "POST" | "PUT" | "DELETE")
 					}
-					className="w-full rounded-lg border border-gray-200 bg-neutral-surface px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+					className="w-full rounded-md border border-gray-200 bg-neutral-surface px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
 				>
 					{["GET", "POST", "PUT", "DELETE"].map((m) => (
 						<option key={m}>{m}</option>
@@ -881,7 +881,7 @@ function TicketSchedule({
 					return (
 						<div
 							onClick={() => setIsIssueModalOpen(true)}
-							className={`h-9 w-full rounded-lg border px-2.5 py-1 text-xs flex items-center justify-between select-none cursor-pointer transition-colors ${style.box}`}
+							className={`h-9 w-full rounded-md border px-2.5 py-1 text-xs flex items-center justify-between select-none cursor-pointer transition-colors ${style.box}`}
 						>
 							<div className="flex items-center gap-2 min-w-0 flex-1 pr-1">
 								<Bug size={14} className={`shrink-0 ${style.icon}`} />
@@ -1061,7 +1061,7 @@ function TicketActivitySection({
 										name={`${comment.Profile?.first_name ?? ""} ${comment.Profile?.last_name ?? ""}`}
 									/>
 									<div className="flex-1 min-w-0">
-										<div className="bg-neutral-surface border-brand-100 border rounded-lg px-3 py-2.5">
+										<div className="bg-neutral-surface border-brand-100 border rounded-md px-3 py-2.5">
 											{comment.images?.length > 0 && (
 												<div className="flex flex-wrap gap-2 mb-2">
 													{comment.images.map((img: any) => (
@@ -1097,7 +1097,7 @@ function TicketActivitySection({
 						<UserAvatar
 							name={`${currentUser?.first_name ?? ""} ${currentUser?.last_name ?? ""}`}
 						/>
-						<div className="w-full border border-brand-100 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
+						<div className="w-full border border-brand-100 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
 							{commentImagePreviews.length > 0 && (
 								<div className="px-3 pt-2.5 flex flex-wrap gap-2">
 									{commentImagePreviews.map((preview, idx) => (

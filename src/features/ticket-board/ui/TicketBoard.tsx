@@ -285,7 +285,7 @@ export default function TicketBoard({
 
 					<Button
 						onClick={() => setTagManagerOpen(true)}
-						className="flex items-center gap-1.5 bg-transparent text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+						className="flex items-center gap-1.5 bg-transparent text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
 					>
 						<Tag />
 						Tags

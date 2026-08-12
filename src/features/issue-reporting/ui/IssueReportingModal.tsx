@@ -190,7 +190,7 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-xl overflow-hidden">
+      <DialogContent className="rounded-md overflow-hidden">
         {/* Header */}
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle>Report an Issue</DialogTitle>

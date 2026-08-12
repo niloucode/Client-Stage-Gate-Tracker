@@ -1,4 +1,4 @@
- "use client"
+"use client"
 
 import { useState, useMemo } from "react"
 import {
@@ -17,11 +17,19 @@ import { DeleteProjectModal } from "@/features/project-manager/ui/modals/DeleteP
 import { ProjectSection } from "./ProjectSection"
 import { ProjectCard } from "./ProjectCard"
 
-import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas"
 import { toast } from "@/components/ui/toast"
 
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+
+// Feels wrong maybe should use zod/tanstack...
+interface EditProjectFormData {
+	name: string
+	description: string
+	client_id: string | null
+	start_date: Date | null
+	deadline_date: Date | null
+}
 
 interface ModalState {
 	project_id: string
@@ -88,12 +96,15 @@ export function ProjectDashboard() {
 		})
 	}
 
-	// Modal debugger
-	// useEffect(() =>
-	// {showToast("Project Deleted","Project successfully deleted","delete")},[])
-
-	const handleCreate = async (data: ProjectCreateInput) => {
-		const result = await createMutation.mutateAsync(data)
+	const handleCreate = async (data: EditProjectFormData) => {
+		if (!data.client_id) return
+		const result = await createMutation.mutateAsync({
+			name: data.name,
+			description: data.description,
+			client_id: data.client_id,
+			start_date: data.start_date,
+			deadline_date: data.deadline_date,
+		})
 		if (result.success && result.data) {
 			setShowAddModal(false)
 			setManageMembersProjectId(result.data.project_id)
@@ -101,8 +112,15 @@ export function ProjectDashboard() {
 		}
 	}
 
-	const handleUpdate = async (data: ProjectUpdateInput) => {
-		const result = await updateMutation.mutateAsync(data)
+	const handleUpdate = async (data: EditProjectFormData & { project_id: string }) => {
+		const result = await updateMutation.mutateAsync({
+			project_id: data.project_id,
+			name: data.name,
+			description: data.description,
+			client_id: data.client_id ?? undefined,
+			start_date: data.start_date,
+			deadline_date: data.deadline_date,
+		})
 		if (result.success) {
 			setEditProject(null)
 			toast.add({ title: "Project Edited", description: "Project successfully edited" })
@@ -123,12 +141,12 @@ export function ProjectDashboard() {
 
 	if (isLoading) {
 		return (
-			<div className="p-8 max-w-[1550px] mx-auto">
+			<div className="p-8 max-w-387.5 mx-auto">
 				<div className="animate-pulse space-y-6">
 					<div className="h-8 bg-slate-100 rounded w-48" />
 					<div className="h-4 bg-slate-100 rounded w-72" />
 					{[1, 2, 3].map((i) => (
-						<div key={i} className="h-24 bg-slate-100 rounded-xl" />
+						<div key={i} className="h-24 bg-slate-100 rounded-md" />
 					))}
 				</div>
 			</div>
@@ -144,12 +162,12 @@ export function ProjectDashboard() {
 	}
 	
 	return (
-		<div className="">
+		<div>
 			{/* Page Header */}
-			<div className="flex justify-between items-end align-middle mb-6">
+			<div className="flex justify-between items-end mb-6">
 				<div>
-					<h1 className="text-4xl font-bold text-foreground tracking-tight">Projects</h1>
-					<p className="text-m text-neutral-border mt-1">
+					<h1>Projects</h1>
+					<p className="text-sm text-neutral-border mt-1">
 						Manage and track the projects assigned to you.
 					</p>
 				</div>

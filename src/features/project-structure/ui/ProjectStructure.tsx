@@ -258,7 +258,7 @@ function StatCard({ label, done, total, icon: Icon }: StatItem) {
   return (
     <Card size="sm" className="border border-warm-gray-200 bg-neutral-surface shadow-xs">
       <CardContent className="flex items-center gap-3.5 p-3.5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-brand-500/20 bg-brand-500/10 text-brand-600">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-brand-500/20 bg-brand-500/10 text-brand-600">
           <Icon className="h-3.5 w-3.5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -352,7 +352,7 @@ function StageActionButton({
   return (
     <Button
       variant="outline"
-      className={`h-auto w-full rounded-xl p-3.5 text-left font-normal ${
+      className={`h-auto w-full rounded-md p-3.5 text-left font-normal ${
         isPrimary
           ? "border-brand-500/30 bg-brand-50/50 text-brand-600 hover:bg-brand-50"
           : "border-warm-gray-200 bg-neutral-surface text-charcoal hover:bg-neutral-subtle/50"
@@ -361,7 +361,7 @@ function StageActionButton({
     >
       <div className="flex w-full items-center justify-between gap-3 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand-600 text-white">
             <Icon className="h-4 w-4" />
           </div>
           <div className="min-w-0">
@@ -454,7 +454,7 @@ export function ProjectStructure({
         </div>
 
         {/* Stage Sequence & Detailed Content */}
-        <Card className="overflow-hidden rounded-2xl border border-warm-gray-200 bg-neutral-surface shadow-xs lg:col-span-10">
+        <Card className="overflow-hidden rounded-md border border-warm-gray-200 bg-neutral-surface shadow-xs lg:col-span-10">
           {/* Stage Sequence Header */}
           <div className="border-b border-warm-gray-200 px-4 pb-7">
             <StageSequence
@@ -516,7 +516,7 @@ export function ProjectStructure({
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2 text-brand-600 self-start sm:px-4 sm:py-2.5 lg:self-auto">
+              <div className="flex shrink-0 items-center gap-2 rounded-md border border-brand-200 bg-brand-50 px-3.5 py-2 text-brand-600 self-start sm:px-4 sm:py-2.5 lg:self-auto">
                 <Calendar className="h-3.5 w-3.5 shrink-0" />
                 <span className="text-xs font-semibold sm:whitespace-nowrap">
                   {currentStage.dateRange}

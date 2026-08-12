@@ -34,7 +34,7 @@ export function DepartmentDisplay({
 }) {
 	return (
 		<div
-			className={`px-2 w-25 text-center py-0.5 rounded-xl text-xs 
+			className={`px-2 w-25 text-center py-0.5 rounded-md text-xs 
 		${departmentBadgeStyle(departmentName)}`}
 		>
 			{departmentName}
@@ -275,7 +275,7 @@ export function ManageMembersModal({
 																? "Already a member"
 																: `Add ${firstName}`
 														}
-														className={`ml-4 mr-2 p-1.5 rounded-lg transition-all flex items-center justify-center shrink-0 ${
+														className={`ml-4 mr-2 p-1.5 rounded-md transition-all flex items-center justify-center shrink-0 ${
 															isAlreadyMember
 																? "bg-emerald-50 text-emerald-600 cursor-default"
 																: "text-brand-500 hover:text-brand-600 active:scale-95"
@@ -378,7 +378,7 @@ export function ManageMembersModal({
 																: `Remove ${firstName}`
 														}
 														aria-label={`Remove ${fullName}`}
-														className={`p-1.5 rounded-lg transition-colors inline-flex items-center justify-center ${
+														className={`p-1.5 rounded-md transition-colors inline-flex items-center justify-center ${
 															cannotRemove
 																? "text-brand-100 cursor-not-allowed opacity-30"
 																: "text-slate-400 hover:text-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"

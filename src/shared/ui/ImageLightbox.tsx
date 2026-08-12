@@ -17,7 +17,7 @@ export default function ImageLightbox({ src, alt, onClose }: ImageLightboxProps)
 		>
 			<button
 				onClick={onClose}
-				className="absolute top-4 right-4 text-neutral-surface/70 hover:text-neutral-surface transition-colors p-1 rounded-lg hover:bg-neutral-surface/10"
+				className="absolute top-4 right-4 text-neutral-surface/70 hover:text-neutral-surface transition-colors p-1 rounded-md hover:bg-neutral-surface/10"
 				aria-label="Close"
 			>
 				<X size={20} strokeWidth={2.5} />
@@ -32,7 +32,7 @@ export default function ImageLightbox({ src, alt, onClose }: ImageLightboxProps)
 				unoptimized
 				width={0}
 				height={0}
-				className="max-h-[90vh] max-w-[90vw] w-auto h-auto rounded-lg object-contain"
+				className="max-h-[90vh] max-w-[90vw] w-auto h-auto rounded-md object-contain"
 				onClick={(e) => e.stopPropagation()}
 			/>
 		</div>

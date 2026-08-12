@@ -101,7 +101,7 @@ export function AccountMenu({
 					<button
 						type="button"
 						onClick={logout}
-						className="w-full py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm font-medium tracking-wide transition-colors"
+						className="w-full py-2.5 rounded-md bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm font-medium tracking-wide transition-colors"
 					>
 						LOG OUT
 					</button>

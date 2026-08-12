@@ -62,12 +62,12 @@ function PhoneInput({
 			value={{ variant, popupClassName, scrollAreaClassName }}
 		>
 			<BasePhoneInput.default
-				className={cn(
-					"flex",
-					props["aria-invalid"] &&
-						"[&_*[data-slot=combobox-trigger]]:border-destructive [&_*[data-slot=combobox-trigger]]:ring-destructive/50",
-					className,
-				)}
+					className={cn(
+						"flex [&_button]:border-gray-300 [&_input]:border-gray-300 [&_button]:bg-neutral-surface [&_input]:bg-neutral-surface",
+						props["aria-invalid"] &&
+							"[&_*[data-slot=combobox-trigger]]:border-destructive [&_*[data-slot=combobox-trigger]]:ring-destructive/50",
+						className,
+					)}
 				flagComponent={FlagComponent}
 				countrySelectComponent={CountrySelect}
 				inputComponent={InputComponent}
@@ -86,9 +86,10 @@ function InputComponent({ className, ...props }: ComponentProps<typeof Input>) {
 	const { variant } = useContext(PhoneInputContext);
 
 	return (
+		// Inside InputComponent:
 		<Input
 			className={cn(
-				"ring-none! rounded-s-none outline-none! focus:z-1",
+				"ring-none! rounded-s-none rounded-e-sm outline-none! focus:z-1",
 				variant === "sm" && "h-7 text-xs",
 				variant === "lg" && "h-9 text-base",
 				className,
@@ -152,11 +153,11 @@ function CountrySelect({
 			<ComboboxTrigger
 				render={
 					<Button
-						variant="outline"
+						variant="secondary"
 						size={variant}
 						type="button"
 						className={cn(
-							"rounded-s-lg rounded-e-none flex items-center gap-1.5 border-e-0 px-2.5 py-0 leading-none hover:bg-transparent focus:z-10 data-pressed:bg-transparent shrink-0",
+							"rounded-s-sm rounded-e-none flex items-center gap-1.5 border-e-0 px-2.5 py-5 leading-none focus:z-10 data-pressed:bg-transparent shrink-0",
 							disabled && "opacity-50",
 						)}
 						disabled={disabled}

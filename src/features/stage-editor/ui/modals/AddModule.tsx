@@ -124,7 +124,7 @@ export function AddModule({
 								setFormData({ ...formData, name: e.target.value })
 							}
 							placeholder="e.g., Authentication & Identity"
-							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
+							className={`w-full px-3 py-2 bg-neutral-surface border rounded-md text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
 						/>
 						<div className="flex justify-between mt-1">
 							{fieldErrors.name ? (
@@ -148,7 +148,7 @@ export function AddModule({
 									planEnd: fromDateTimeLocalInput(e.target.value),
 								})
 							}
-							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-md text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 				</div>

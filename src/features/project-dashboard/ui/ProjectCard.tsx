@@ -57,7 +57,7 @@ export function ProjectCard({
 	return (
 		<Link
 			href={targetHref}
-			className="bg-neutral-surface-subtle cursor-pointer rounded-xl border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none block"
+			className="bg-neutral-surface-subtle cursor-pointer rounded-md border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none block"
 		>
 			{/* Project Head: Name left, Status badge top-right */}
 			<div className="flex items-start justify-between gap-2 mb-3">
@@ -133,7 +133,7 @@ export function ProjectCard({
 					}}
 				>
 					<DropdownMenu>
-						<DropdownMenuTrigger className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-[popup-open]:bg-slate-100">
+						<DropdownMenuTrigger className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-[popup-open]:bg-slate-100">
 							<EllipsisVertical size={16} />
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-56">

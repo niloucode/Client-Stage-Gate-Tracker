@@ -149,7 +149,7 @@ export function OTPVerification({
 	// ── Verified state ──────────────────────────────────────────────────────────
 	if (otpState === "verified") {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-xl bg-[#ECFDF3] py-6 text-center">
+			<div className="flex flex-col items-center gap-2 rounded-md bg-[#ECFDF3] py-6 text-center">
 				<CheckCircle2 className="h-8 w-8 text-green-700" />
 				<p className="text-sm font-semibold text-green-700">
 					Identity Verified
@@ -171,7 +171,7 @@ export function OTPVerification({
 				<button
 					type="button"
 					onClick={triggerOTP}
-					className="w-full rounded-lg py-2.5 text-sm font-semibold text-neutral-surface transition-colors bg-[#510186] hover:bg-[#6f00b9]"
+					className="w-full rounded-md py-2.5 text-sm font-semibold text-neutral-surface transition-colors bg-[#510186] hover:bg-[#6f00b9]"
 				>
 					Request OTP
 				</button>
@@ -213,7 +213,7 @@ export function OTPVerification({
 						value={d}
 						onChange={(e) => handleDigitChange(i, e.target.value)}
 						onKeyDown={(e) => handleKeyDown(i, e)}
-						className={`h-10 w-full rounded-lg border text-center text-sm font-semibold outline-none transition-colors focus:ring-2 focus:ring-indigo-700 ${
+						className={`h-10 w-full rounded-md border text-center text-sm font-semibold outline-none transition-colors focus:ring-2 focus:ring-indigo-700 ${
 							otpState === "error"
 								? "border-red-400 bg-red-50 text-destructive focus:ring-red-400"
 								: "border-[#C4BFE6] bg-neutral-surface text-ink"
@@ -223,7 +223,7 @@ export function OTPVerification({
 			</div>
 
 			{otpState === "error" && (
-				<div className="flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2">
+				<div className="flex items-center gap-1.5 rounded-md bg-red-50 px-3 py-2">
 					<XCircle className="h-4 w-4 shrink-0 text-red-500" />
 					<p className="text-xs text-destructive">
 						{errorMessage ?? "Incorrect code. Please try again."}

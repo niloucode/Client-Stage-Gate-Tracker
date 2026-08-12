@@ -265,7 +265,7 @@ export default function TicketModalCreate({
 						<div>
 							<Label>Assigned To</Label>
 							<DropdownMenu>
-								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
 									<div className="flex flex-wrap gap-1 flex-1">
 										{assignedIds.length === 0 ? (
 											<span className="text-gray-400">Assign to...</span>
@@ -330,7 +330,7 @@ export default function TicketModalCreate({
 						<div>
 							<Label>Watcher</Label>
 							<DropdownMenu>
-								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
 									<span className="text-gray-400 truncate">
 										{watcherId
 											? (() => {
@@ -388,7 +388,7 @@ export default function TicketModalCreate({
 					<div>
 						<Label>Tags</Label>
 						<DropdownMenu>
-							<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+							<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
 								<div className="flex flex-wrap gap-1 flex-1">
 									{selectedTags.length === 0 ? (
 										<span className="text-gray-400">Select tags...</span>
@@ -460,7 +460,7 @@ export default function TicketModalCreate({
 							return (
 								<div
 									onClick={() => setIsIssueModalOpen(true)}
-									className={`h-9 w-full rounded-lg border px-2.5 py-1 text-xs flex items-center justify-between select-none cursor-pointer transition-colors ${style.box}`}
+									className={`h-9 w-full rounded-md border px-2.5 py-1 text-xs flex items-center justify-between select-none cursor-pointer transition-colors ${style.box}`}
 								>
 									<div className="flex items-center gap-2 min-w-0 flex-1 pr-1">
 										<Bug size={14} className={`shrink-0 ${style.icon}`} />
@@ -495,7 +495,7 @@ export default function TicketModalCreate({
 								(jpg, png · Max 5MB)
 							</span>
 						</div>
-						<label className="flex items-center gap-3 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-neutral-surface px-4 py-3.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
+						<label className="flex items-center gap-3 w-full cursor-pointer rounded-md border border-dashed border-gray-300 bg-neutral-surface px-4 py-3.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
 							<Paperclip size={16} className="shrink-0 text-gray-400" />
 							<span>
 								{imageFiles.length > 0
@@ -516,7 +516,7 @@ export default function TicketModalCreate({
 										<img
 											src={preview}
 											alt={`Preview ${idx + 1}`}
-											className="h-20 w-auto rounded-lg border border-gray-200 object-cover"
+											className="h-20 w-auto rounded-md border border-gray-200 object-cover"
 										/>
 										<button
 											type="button"
@@ -533,7 +533,7 @@ export default function TicketModalCreate({
 
 					{/* API Details — shown only when the "API" tag is applied */}
 					{isApiTagSelected && (
-						<div className="space-y-3 rounded-lg border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
+						<div className="space-y-3 rounded-md border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
 							<p className="text-xs font-semibold text-brand-600 uppercase tracking-wide">
 								API Details
 							</p>
@@ -547,7 +547,7 @@ export default function TicketModalCreate({
 												e.target.value as "GET" | "POST" | "PUT" | "DELETE",
 											)
 										}
-										className="w-full rounded-lg border border-gray-200 bg-neutral-surface px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+										className="w-full rounded-md border border-gray-200 bg-neutral-surface px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
 									>
 										{["GET", "POST", "PUT", "DELETE"].map((m) => (
 											<option key={m}>{m}</option>

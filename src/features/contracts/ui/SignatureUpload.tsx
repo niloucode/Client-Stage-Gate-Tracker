@@ -117,7 +117,7 @@ export function SignatureUpload({
 
 	if (state === "preview" && preview) {
 		return (
-			<div className="relative rounded-xl border border-[#C4BFE6] bg-[#F8F7FF] p-4">
+			<div className="relative rounded-md border border-[#C4BFE6] bg-[#F8F7FF] p-4">
 				<button
 					type="button"
 					onClick={handleClear}

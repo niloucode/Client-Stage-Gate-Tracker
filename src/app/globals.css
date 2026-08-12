@@ -74,6 +74,13 @@
   }
 } */
 
+h1 {
+    font-weight: 200;                     /* "200" = Extra Light / Thin */
+    font-size: clamp(44px, 5vw, 84px);    /* "44–84px" = fluid scaling between min and max */
+    letter-spacing: -0.035em;             /* Tightens the letters slightly */
+    line-height: 1.0;                     /* "1.0" = perfectly snug (no extra space between lines) */
+}
+
 body {
   font-family: var(--font-sans), sans-serif;
 }

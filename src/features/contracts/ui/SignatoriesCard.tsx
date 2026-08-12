@@ -151,7 +151,7 @@ function SignatureBox({ person }: { person: Signatory }) {
 	if (person.status !== "signed") return null;
 
 	return (
-		<div className="min-w-0 overflow-hidden grid grid-cols-[1fr_auto_auto] justify-center items-center gap-4 rounded-lg border border-lavender-200 bg-neutral-surface px-6 py-8">
+		<div className="min-w-0 overflow-hidden grid grid-cols-[1fr_auto_auto] justify-center items-center gap-4 rounded-md border border-lavender-200 bg-neutral-surface px-6 py-8">
 			{/* Hidden canvas used for rendering */}
 			<canvas ref={canvasRef} className="hidden" />
 

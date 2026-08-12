@@ -19,7 +19,7 @@ export function ExecutedBanner({
 
 	return (
 		<div
-			className={`flex items-center gap-4 rounded-2xl border border-[#BBF7D0] bg-[#F0FDF4] px-6 py-4 shadow-sm ${className}`}
+			className={`flex items-center gap-4 rounded-md border border-[#BBF7D0] bg-[#F0FDF4] px-6 py-4 shadow-sm ${className}`}
 		>
 			<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DCFCE7]">
 				<CheckCircle2 className="h-5 w-5 text-green-700" />

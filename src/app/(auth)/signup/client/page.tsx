@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { Hanken_Grotesk } from "next/font/google";
 import { ClientSignupForm } from "@/features/auth";
 
@@ -10,7 +9,7 @@ const hanken = Hanken_Grotesk({
 
 export default function ClientSignupPage() {
 	return (
-		<div className={`${hanken.className} flex w-full`}>
+		<div className={`flex w-full`}>
 			{/* ── Left Panel — scrollable ── */}
 			<div className="flex flex-col w-full lg:w-[58%] bg-background min-h-screen px-10 py-10">
 				{/* Brand mark */}
@@ -28,35 +27,15 @@ export default function ClientSignupPage() {
 				</div>
 
 				{/* Form */}
-				<div className="w-full bg-neutral-surface rounded-xl p-6 border border-brand-100 max-w-[380px] mx-auto mt-10 mb-10">
+				<div className="w-full bg-neutral-surface rounded-md p-6 border border-brand-100 max-w-[380px] mx-auto my-auto">
 					<div className="mb-7">
 						<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
 							Register your company
 						</h1>
 					</div>
-
 					<ClientSignupForm />
 				</div>
 
-				{/* Footer */}
-				<div className="text-center mt-auto">
-					<p className="text-[11px] text-gray-400 leading-relaxed">
-						By signing up, you agree to our{" "}
-						<Link
-							href="#"
-							className="underline hover:text-gray-500 transition-colors"
-						>
-							Terms of Service
-						</Link>{" "}
-						and{" "}
-						<Link
-							href="#"
-							className="underline hover:text-gray-500 transition-colors"
-						>
-							Privacy Policy
-						</Link>
-					</p>
-				</div>
 			</div>
 
 			{/* ── Right Panel — sticky ── */}

@@ -205,14 +205,14 @@ export function ModulesCard({
 			{/* Module Cards */}
 			<div className="space-y-4">
 				{activePhase === null ? (
-					<div className="bg-neutral-surface border border-slate-200 rounded-xl shadow-sm p-8 text-center">
+					<div className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm p-8 text-center">
 						<p className="text-sm text-neutral-subtle">No phase selected</p>
 						<p className="text-xs text-slate-400 mt-1">
 							Select a phase from the stepper above to manage its modules
 						</p>
 					</div>
 				) : modules.length === 0 ? (
-					<div className="bg-neutral-surface border border-slate-200 rounded-xl shadow-sm p-8 text-center">
+					<div className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm p-8 text-center">
 						<p className="text-sm text-neutral-subtle">
 							No modules yet for this phase.
 						</p>
@@ -234,7 +234,7 @@ export function ModulesCard({
 						return (
 							<div
 								key={module.module_id}
-								className="bg-neutral-surface border border-slate-200 rounded-xl shadow-sm overflow-hidden"
+								className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm overflow-hidden"
 							>
 								{/* Module Header */}
 								<div className="flex justify-between items-center px-5 py-4 bg-slate-50 border-b border-slate-200">

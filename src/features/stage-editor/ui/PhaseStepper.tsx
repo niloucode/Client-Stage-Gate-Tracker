@@ -202,7 +202,7 @@ export const PhaseStepper = forwardRef<
 
 	return (
 		<>
-			<div className="relative bg-neutral-surface border border-slate-200 rounded-xl shadow-sm mb-8">
+			<div className="relative bg-neutral-surface border border-slate-200 rounded-md shadow-sm mb-8">
 				<div className="px-8 py-8 relative">
 					{/* Empty State */}
 					{phases.length === 0 ? (

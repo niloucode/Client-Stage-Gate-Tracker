@@ -95,7 +95,7 @@ export default function TagListModal({
 												onClick={() => onEditTag(tag)}
 												title={`Edit ${tag.name}`}
 												aria-label={`Edit ${tag.name}`}
-												className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+												className="p-1.5 rounded-md text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
 											>
 												<Pencil size={15} />
 											</button>
@@ -104,7 +104,7 @@ export default function TagListModal({
 												onClick={() => onRequestDeleteTag(tag)}
 												title={`Delete ${tag.name}`}
 												aria-label={`Delete ${tag.name}`}
-												className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+												className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
 											>
 												<Trash2 size={15} />
 											</button>

@@ -76,7 +76,7 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
     <>
       {/* Main Table Modal */}
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl p-0 gap-0 border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+        <DialogContent className="max-w-5xl p-0 gap-0 border-none bg-card rounded-md overflow-hidden shadow-2xl">
           <IssueBox
             title="Project Issues"
             issues={issues}
