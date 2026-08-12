@@ -1,509 +1,182 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/shared/ui/PasswordInput";
-import { clientSignupSchema, type ClientSignupInput } from "@/shared/schemas";
-import { env } from "@/env";
+import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { FormInput } from "@/components/ui/forminput";
+import { clientCreate } from "@/entities/client";
 import { getFieldErrors } from "@/shared/lib/zod";
-import { createClient } from "@/lib/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { profileKeys } from "@/shared/query/keys";
-import { getProfileByEmail } from "@/entities/profile/profileActions";
-import {
-  clientSelectByNameTin,
-  clientCreate,
-  clientDeleteByID,
-} from "@/entities/client/clientActions";
-import type { ClientType } from "@/shared/schemas";
-import type { ProfileType } from "@/shared/schemas";
-
-type FieldKey = keyof ClientSignupInput;
-type Errors = Partial<Record<FieldKey, string>>;
-
-const emptyFields: ClientSignupInput = {
-	firstName: "",
-	lastName: "",
-	companyName: "",
-	email: "",
-	password: "",
-	confirmPassword: "",
-	streetNumber: "",
-	streetName: "",
-	city: "",
-	country: "",
-	tin: "",
-	phone: "",
-};
+import { clientCreateSchema } from "@/shared/schemas";
+import Link from "next/link";
 
 export function ClientSignupForm() {
-	const router = useRouter();
-	const supabase = createClient();
-	const queryClient = useQueryClient();
+	const [clientName, setClientName] = useState<string>("");
+	const [tin, setTin] = useState<string>("");
+	const [email, setEmail] = useState<string>("");
+	const [contactNumber, setContactNumber] = useState<string>("");
+	const [billingAddress, setBillingAddress] = useState<string>("");
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+	const [isLoading, setIsLoading] = useState<boolean>(false);
 
-	const [fields, setFields] = useState<ClientSignupInput>(emptyFields);
-
-	const [errors, setErrors] = useState<Errors>({});
-	const [apiError, setApiError] = useState<string | null>(null);
-	const [loading, setLoading] = useState(false);
-
-	function set(key: FieldKey) {
-		return (e: React.ChangeEvent<HTMLInputElement>) => {
-			setFields((prev) => ({ ...prev, [key]: e.target.value }));
-			if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-		};
-	}
-
-	function setNumeric(key: FieldKey) {
-		return (e: React.ChangeEvent<HTMLInputElement>) => {
-			const digits = e.target.value.replace(/\D/g, "");
-			setFields((prev) => ({ ...prev, [key]: digits }));
-			if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-		};
-	}
-
-	async function userSignUp(user: ProfileType, password: string) {
-		return await supabase.auth.signUp({
-			email: user.email,
-			password,
-			options: {
-				data: {
-					first_name: user.first_name,
-					last_name: user.last_name,
-					job_title: user.job_title,
-					client_id: user.client_id,
-					department_id: user.department_id,
-					phone: user.phone,
-					is_deleted: user.is_deleted,
-					deleted_at: user.deleted_at,
-				},
-				emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
-			},
+	// Helper to clear individual field errors on change
+	const handleClearError = (key: string): void => {
+		setFieldErrors((prev: Record<string, string>) => {
+			if (!prev[key]) return prev;
+			const newErrors = { ...prev };
+			delete newErrors[key];
+			return newErrors;
 		});
-	}
+	};
 
-	async function handleSubmit(e: React.BaseSyntheticEvent) {
+	const handleSubmit = async (e: React.FormEvent): Promise<void> => {
 		e.preventDefault();
-		setApiError(null);
+		setFieldErrors({});
 
-		const result = clientSignupSchema.safeParse(fields);
-		if (!result.success) {
-			const mapped = getFieldErrors(result);
-			setErrors(mapped);
-			return;
-		}
-		setErrors({});
-		setLoading(true);
+		const parsed = clientCreateSchema.safeParse({
+			client_name: clientName,
+			tin,
+			email,
+			phone: contactNumber,
+			billing_address: billingAddress,
+		});
 
-		// Duplicate email check (same pattern as StaffSignup)
-		const { success: emailOk, data: existingProfile } =
-			await getProfileByEmail(fields.email.trim());
-		if (emailOk && existingProfile) {
-			setApiError("An account with this email already exists.");
-			setLoading(false);
+		if (!parsed.success) {
+			setFieldErrors(getFieldErrors(parsed));
 			return;
 		}
 
-		// Check if client already exists
-		const existingClient = await clientSelectByNameTin(
-			fields.companyName.trim(),
-			fields.tin.trim(),
-		);
+		setIsLoading(true);
 
-		let client = existingClient ?? null;
-
-		// Create client if not found
-		if (!client) {
-			const address =
-				fields.streetNumber.trim() +
-				" " +
-				fields.streetName.trim() +
-				", " +
-				fields.city.trim() +
-				", " +
-				fields.country.trim();
-
-			const newClient: ClientType = {
-				client_id: "",
-				client_name: fields.companyName.trim(),
-				tin: fields.tin.trim(),
-				billing_address: address,
-				email: fields.email.trim(),
-				phone: fields.phone.trim(),
-				is_deleted: false,
-				deleted_at: null,
-			};
-
-			const created = await clientCreate(newClient);
-			if (!created.success) {
-				setApiError(created.error ?? "Unable to save company data.");
-				setLoading(false);
-				return;
-			}
-			client = created.data;
+		try {
+			await clientCreate(parsed.data);
+			// Redirect or post-signup logic here
+		} catch (error) {
+			console.error("Registration failed:", error);
+		} finally {
+			setIsLoading(false);
 		}
-
-		// Create profile and sign up
-		const user: ProfileType = {
-			profile_id: "",
-			first_name: fields.firstName.trim(),
-			last_name: fields.lastName.trim(),
-			phone: fields.phone.trim(),
-			image_id: null,
-			client_id: client.client_id,
-			department_id: null,
-			email: fields.email.trim(),
-			job_title: null,
-			is_deleted: false,
-			deleted_at: null,
-		};
-
-		const { data, error: signUpError } = await userSignUp(
-			user,
-			fields.password,
-		);
-
-		if (signUpError) {
-			setApiError(signUpError.message);
-			if (client && !existingClient) {
-				await clientDeleteByID(client.client_id);
-			}
-			setLoading(false);
-			return;
-		}
-
-		// Only triggers if email confirmation is OFF in Supabase
-		if (data.session) {
-			router.push("/login");
-			queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
-		} else {
-			setApiError(
-				"Account created! Check your email to confirm your account before logging in.",
-			);
-			setLoading(false);
-		}
-	}
-
-	function errClass(key: FieldKey) {
-		return errors[key] ? "border-red-400 focus:ring-red-400" : "";
-	}
+	};
 
 	return (
-		<form onSubmit={handleSubmit} className="space-y-4" noValidate>
-			{/* First Name + Last Name */}
-			<div className="flex gap-3">
-				<div className="flex-1 min-w-0">
-					<Label
-						htmlFor="firstName"
-						className="mb-1.5"
-						required
-						error={!!errors.firstName}
-					>
-						First Name
-					</Label>
-					<Input
-						id="firstName"
-						name="firstName"
-						type="text"
-						placeholder="Jane"
-						value={fields.firstName}
-						onChange={set("firstName")}
-						className={errClass("firstName")}
-					/>
-					{errors.firstName && (
-						<p className="text-xs text-destructive mt-1">{errors.firstName}</p>
-					)}
-				</div>
-				<div className="flex-1 min-w-0">
-					<Label
-						htmlFor="lastName"
-						className="mb-1.5"
-						required
-						error={!!errors.lastName}
-					>
-						Last Name
-					</Label>
-					<Input
-						id="lastName"
-						name="lastName"
-						type="text"
-						placeholder="Smith"
-						value={fields.lastName}
-						onChange={set("lastName")}
-						className={errClass("lastName")}
-					/>
-					{errors.lastName && (
-						<p className="text-xs text-destructive mt-1">{errors.lastName}</p>
-					)}
-				</div>
-			</div>
+		<form onSubmit={handleSubmit} className="flex flex-col gap-5">
+			{/* Client Name */}
+			<FormInput
+				label="Client Name"
+				required
+				maxLength={40}
+				placeholder="Teyvat Incorporated"
+				value={clientName}
+				error={fieldErrors.client_name}
+				onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+					setClientName(e.target.value)
+				}
+				onClearError={() => handleClearError("client_name")}
+			/>
 
-			{/* Company Name */}
-			<div>
-				<Label
-					htmlFor="companyName"
-					className="mb-1.5"
+			{/* TIN + Email */}
+			<div className="flex gap-4">
+				<FormInput
+					containerClassName="flex-1"
+					label="TIN"
+					type="tin"
 					required
-					error={!!errors.companyName}
-				>
-					Company Name
-				</Label>
-				<Input
-					id="companyName"
-					name="companyName"
-					type="text"
-					placeholder="Acme Corporation"
-					value={fields.companyName}
-					onChange={set("companyName")}
-					className={errClass("companyName")}
+					value={tin}
+					error={fieldErrors.tin}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						setTin(e.target.value)
+					}
+					onClearError={() => handleClearError("tin")}
 				/>
-				{errors.companyName && (
-					<p className="text-xs text-destructive mt-1">{errors.companyName}</p>
-				)}
-			</div>
 
-			{/* Email */}
-			<div>
-				<Label
-					htmlFor="email"
-					className="mb-1.5"
-					required
-					error={!!errors.email}
-				>
-					Email Address
-				</Label>
-				<Input
-					id="email"
-					name="email"
+				<FormInput
+					containerClassName="flex-1"
+					label="Email"
 					type="email"
-					placeholder="you@company.com"
-					value={fields.email}
-					onChange={set("email")}
-					className={errClass("email")}
-				/>
-				{errors.email && (
-					<p className="text-xs text-destructive mt-1">{errors.email}</p>
-				)}
-			</div>
-
-			{/* Password */}
-			<div>
-				<Label
-					htmlFor="password"
-					className="mb-1.5"
 					required
-					error={!!errors.password}
-				>
-					Password
-				</Label>
-				<PasswordInput
-					id="password"
-					name="password"
-					placeholder="Create a password"
-					value={fields.password}
-					onChange={set("password")}
-					className={errClass("password")}
+					placeholder="contact@client.com"
+					value={email}
+					error={fieldErrors.email}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						setEmail(e.target.value)
+					}
+					onClearError={() => handleClearError("email")}
 				/>
-				{errors.password && (
-					<p className="text-xs text-destructive mt-1">{errors.password}</p>
-				)}
 			</div>
 
-			{/* Confirm Password */}
-			<div>
-				<Label
-					htmlFor="confirmPassword"
-					className="mb-1.5"
-					required
-					error={!!errors.confirmPassword}
-				>
-					Confirm Password
-				</Label>
-				<PasswordInput
-					id="confirmPassword"
-					name="confirmPassword"
-					placeholder="Confirm your password"
-					value={fields.confirmPassword}
-					onChange={set("confirmPassword")}
-					className={errClass("confirmPassword")}
-				/>
-				{errors.confirmPassword && (
-					<p className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>
-				)}
-			</div>
-
-			{/* Address */}
-			<div className="pt-1">
-				<p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
-					Address
-				</p>
-
-				{/* Street Number + Street Name */}
-				<div className="flex gap-3 mb-3">
-					<div className="w-[30%] shrink-0">
-						<Label
-							htmlFor="streetNumber"
-							className="mb-1.5"
-							required
-							error={!!errors.streetNumber}
-						>
-							Street No.
-						</Label>
-						<Input
-							id="streetNumber"
-							name="streetNumber"
-							type="text"
-							placeholder="123"
-							value={fields.streetNumber}
-							onChange={set("streetNumber")}
-							className={errClass("streetNumber")}
-						/>
-						{errors.streetNumber && (
-							<p className="text-xs text-destructive mt-1">{errors.streetNumber}</p>
-						)}
-					</div>
-					<div className="flex-1 min-w-0">
-						<Label
-							htmlFor="streetName"
-							className="mb-1.5"
-							required
-							error={!!errors.streetName}
-						>
-							Street Name
-						</Label>
-						<Input
-							id="streetName"
-							name="streetName"
-							type="text"
-							placeholder="Main Street"
-							value={fields.streetName}
-							onChange={set("streetName")}
-							className={errClass("streetName")}
-						/>
-						{errors.streetName && (
-							<p className="text-xs text-destructive mt-1">{errors.streetName}</p>
-						)}
-					</div>
+			{/* Contact Number (Custom PhoneInput) */}
+			<div className="flex flex-col gap-2">
+				<div className="flex">
+					<Label required error={!!fieldErrors.phone}>
+						Contact Number
+					</Label>
+					{fieldErrors.phone && (
+						<div className="ml-auto text-xs text-destructive">
+							{fieldErrors.phone}
+						</div>
+					)}
 				</div>
+				<PhoneInput
+					value={contactNumber}
+					onChange={(val: string) => {
+						setContactNumber(val);
+						handleClearError("phone");
+					}}
+					placeholder="+1 (555) 000-0000"
+				/>
+			</div>
 
-				{/* City + Country */}
-				<div className="flex gap-3">
-					<div className="flex-1 min-w-0">
-						<Label
-							htmlFor="city"
-							className="mb-1.5"
-							required
-							error={!!errors.city}
+			{/* Billing Address */}
+			<FormInput
+				variant="textarea"
+				label="Billing Address"
+				required
+				rows={4}
+				maxLength={40}
+				placeholder="8960 Evernight Terrace, Mondstadt, Oregon, USA"
+				value={billingAddress}
+				error={fieldErrors.billing_address}
+				onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+					setBillingAddress(e.target.value)
+				}
+				onClearError={() => handleClearError("billing_address")}
+			/>
+
+				<div className="flex flex-col gap-2">
+				{/* Footer */}
+				<div className="text-center mt-auto mb-2">
+					<p className="text-[11px] text-gray-400 leading-relaxed">
+						By signing up, you agree to our{" "}
+						<Link
+							href="#"
+							className="underline hover:text-gray-500 transition-colors"
 						>
-							City
-						</Label>
-						<Input
-							id="city"
-							name="city"
-							type="text"
-							placeholder="New York"
-							value={fields.city}
-							onChange={set("city")}
-							className={errClass("city")}
-						/>
-						{errors.city && (
-							<p className="text-xs text-destructive mt-1">{errors.city}</p>
-						)}
-					</div>
-					<div className="flex-1 min-w-0">
-						<Label
-							htmlFor="country"
-							className="mb-1.5"
-							required
-							error={!!errors.country}
+							Terms of Service
+						</Link>{" "}
+						and{" "}
+						<Link
+							href="#"
+							className="underline hover:text-gray-500 transition-colors"
 						>
-							Country
-						</Label>
-						<Input
-							id="country"
-							name="country"
-							type="text"
-							placeholder="United States"
-							value={fields.country}
-							onChange={set("country")}
-							className={errClass("country")}
-						/>
-						{errors.country && (
-							<p className="text-xs text-destructive mt-1">{errors.country}</p>
-						)}
-					</div>
+							Privacy Policy
+						</Link>
+					</p>
 				</div>
-			</div>
-
-			{/* TIN */}
-			<div>
-				<Label htmlFor="tin" className="mb-1.5" required error={!!errors.tin}>
-					TIN (Tax Identification Number)
-				</Label>
-				<Input
-					id="tin"
-					name="tin"
-					type="text"
-					inputMode="numeric"
-					placeholder="000000000"
-					value={fields.tin}
-					onChange={setNumeric("tin")}
-					className={errClass("tin")}
-				/>
-				{errors.tin && (
-					<p className="text-xs text-destructive mt-1">{errors.tin}</p>
-				)}
-			</div>
-
-			{/* Phone Number */}
-			<div>
-				<Label
-					htmlFor="phone"
-					className="mb-1.5"
-					required
-					error={!!errors.phone}
-				>
-					Phone Number
-				</Label>
-				<Input
-					id="phone"
-					name="phone"
-					type="text"
-					inputMode="numeric"
-					placeholder="12025550100"
-					value={fields.phone}
-					onChange={setNumeric("phone")}
-					className={errClass("phone")}
-				/>
-				{errors.phone && (
-					<p className="text-xs text-destructive mt-1">{errors.phone}</p>
-				)}
-			</div>
-
-			{apiError && (
-				<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
-					{apiError}
-				</p>
-			)}
-
-			<Button type="submit" className="mt-2" disabled={loading}>
-				{loading ? "Creating account..." : "Sign Up"}
-			</Button>
-
-			{/* OR divider */}
-			<div className="relative my-6">
+				{/* Submit Button */}
+				<Button type="submit" className="w-full" disabled={isLoading}>
+					{isLoading ? "Registering..." : "Register Company"}
+				</Button>
+				{/* OR divider */}
+			<div className="relative my-4">
 				<div className="absolute inset-0 flex items-center">
 					<div className="w-full border-t border-gray-200" />
 				</div>
 				<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-					<span className="bg-background px-3 text-gray-400">OR</span>
+					<span className="bg-neutral-surface px-3 text-gray-400">OR</span>
 				</div>
 			</div>
 
+			{/* Sign in link */}
 			<p className="text-center text-sm text-gray-500">
 				Already have an account?{" "}
 				<Link
@@ -513,6 +186,7 @@ export function ClientSignupForm() {
 					Sign in
 				</Link>
 			</p>
+			</div>
 		</form>
 	);
 }

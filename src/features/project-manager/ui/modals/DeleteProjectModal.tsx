@@ -74,7 +74,7 @@ export function DeleteProjectModal({
 								setHasAttempted(false);
 							}}
 							placeholder="Project Name"
-							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all mt-1.5 ${
+							className={`w-full px-3 py-2 bg-neutral-surface border rounded-md text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all mt-1.5 ${
 								hasAttempted && !namesMatch
 									? "border-red-400 focus:ring-red-400"
 									: "border-brand-100"

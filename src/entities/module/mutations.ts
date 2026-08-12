@@ -20,8 +20,8 @@ export function useCreateModule() {
 		mutationFn: (
 			params: { phaseId: string; stageId: string } & ModuleCreateInput,
 		) => createModule(params.phaseId, params),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},
@@ -35,8 +35,8 @@ export function useUpdateModule() {
 		mutationFn: (
 			params: { moduleId: string; stageId: string } & ModuleUpdateInput,
 		) => updateModule(params.moduleId, params),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},
@@ -49,8 +49,8 @@ export function useDeleteModule() {
 	return useMutation({
 		mutationFn: (params: { moduleId: string; stageId: string }) =>
 			cascadeSoftDeleteModule(params.moduleId),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},

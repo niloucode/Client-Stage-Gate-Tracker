@@ -1,58 +1,45 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { ChevronRight, User } from "lucide-react"
-import { useAuth } from "@/features/auth"
-import { getDepartmentById } from "@/entities/department/departmentActions"
+import { ChevronRight, User } from "lucide-react";
+import { useAuth } from "@/features/auth";
+import { useDepartment } from "@/entities/department";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
 	DropdownMenu,
 	DropdownMenuTrigger,
 	DropdownMenuContent,
 	DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
 export interface ProfileMenuItem {
-	label: string
-	icon: "personal"
-	onClick?: () => void
+	label: string;
+	icon: "personal";
+	onClick?: () => void;
 }
 
 const ICONS = {
 	personal: User,
-}
+};
 //   security: Settings,
 //   notifications: Bell,
 
 const DEFAULT_MENU_ITEMS: ProfileMenuItem[] = [
 	{ label: "Personal Information", icon: "personal" },
-]
+];
 //   { label: "Security", icon: "security" },
 //   { label: "Notifications", icon: "notifications" },
 
 export function AccountMenu({
 	menuItems = DEFAULT_MENU_ITEMS,
 }: {
-	menuItems?: ProfileMenuItem[]
+	menuItems?: ProfileMenuItem[];
 }) {
 	const { user, logout } = useAuth();
-	const [departmentName, setDepartmentName] = useState<string>("No Department");
-
-	useEffect(() => {
-		async function fetchDepartment() {
-			if (user?.department_id) {
-				const department = await getDepartmentById(user.department_id);
-
-				if (department) {
-					setDepartmentName(department.name ?? "No Department");
-				}
-			}
-		}
-
-		fetchDepartment();
-	}, [user?.department_id]);
+	// Department lookup via TanStack Query (cached, keyed by department_id).
+	const { data: department } = useDepartment(user?.department_id ?? undefined);
+	const departmentName = department?.name ?? "No Department";
 
 	const userName = user
 		? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim()
@@ -78,15 +65,20 @@ export function AccountMenu({
 					<div className="text-foreground font-semibold text-base">
 						{userName}
 					</div>
-					<Badge variant="secondary" className="mt-1.5 text-[11px] font-medium tracking-wide uppercase">
+					<Badge
+						variant="secondary"
+						className="mt-1.5 text-[11px] font-medium tracking-wide uppercase"
+					>
 						{departmentName}
 					</Badge>
-					<div className="mt-1.5 text-xs text-muted-foreground">{userEmail}</div>
+					<div className="mt-1.5 text-xs text-muted-foreground">
+						{userEmail}
+					</div>
 				</div>
 
 				<div className="py-2">
 					{menuItems.map((item) => {
-						const Icon = ICONS[item.icon]
+						const Icon = ICONS[item.icon];
 						return (
 							<button
 								key={item.label}
@@ -100,7 +92,7 @@ export function AccountMenu({
 								</span>
 								<ChevronRight className="w-3 h-3 text-muted-foreground" />
 							</button>
-						)
+						);
 					})}
 				</div>
 
@@ -109,12 +101,12 @@ export function AccountMenu({
 					<button
 						type="button"
 						onClick={logout}
-						className="w-full py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm font-medium tracking-wide transition-colors"
+						className="w-full py-2.5 rounded-md bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm font-medium tracking-wide transition-colors"
 					>
 						LOG OUT
 					</button>
 				</div>
 			</DropdownMenuContent>
 		</DropdownMenu>
-	)
+	);
 }

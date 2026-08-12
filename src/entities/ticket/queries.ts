@@ -4,7 +4,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { ticketKeys } from "@/shared/query/keys";
 import { selectTicketsByWorkflow } from "./ticketActions";
 
-export const ticketQueryOptions = {
+const ticketQueryOptions = {
 	byWorkflow: (workflowId: string | undefined) =>
 		queryOptions({
 			queryKey: ticketKeys.list({ workflowId }),

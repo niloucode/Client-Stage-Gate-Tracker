@@ -15,7 +15,7 @@ function Label({
 		<label
 			data-slot="label"
 			className={cn(
-				"flex items-center gap-0.5 mb-1 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+				"uppercase text-brand-900/90 flex items-center gap-0.5 mb-1 text-xs font-inter leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
 				error && "text-destructive",
 				className,
 			)}

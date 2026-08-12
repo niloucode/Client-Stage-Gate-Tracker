@@ -15,10 +15,10 @@ export function useCreateTicket() {
 
 	return useMutation({
 		mutationFn: createTicket,
-		onSuccess: (data, variables) => {
-			queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
+		onSuccess: async (data, variables) => {
+			await queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
 			if (variables.performed_by) {
-				queryClient.invalidateQueries({
+				await queryClient.invalidateQueries({
 					queryKey: historyKeys.list(data.ticket_id),
 				});
 			}
@@ -31,10 +31,10 @@ export function useUpdateTicket() {
 
 	return useMutation({
 		mutationFn: updateTicket,
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
 			if (variables.performed_by) {
-				queryClient.invalidateQueries({
+				await queryClient.invalidateQueries({
 					queryKey: historyKeys.list(variables.ticket_id),
 				});
 			}
@@ -55,11 +55,11 @@ export function useUpdateTicketStatus() {
 			status: status;
 			performed_by?: string;
 		}) => updateTicketStatus(ticketId, status, performed_by),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
-			queryClient.invalidateQueries({ queryKey: stageKeys.all });
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
+			await queryClient.invalidateQueries({ queryKey: stageKeys.all });
 			if (variables.performed_by) {
-				queryClient.invalidateQueries({
+				await queryClient.invalidateQueries({
 					queryKey: historyKeys.list(variables.ticketId),
 				});
 			}
@@ -78,10 +78,10 @@ export function useDeleteTicket() {
 			ticketId: string;
 			performed_by?: string;
 		}) => cascadeSoftDeleteTicket(ticketId, performed_by),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
 			if (variables.performed_by) {
-				queryClient.invalidateQueries({
+				await queryClient.invalidateQueries({
 					queryKey: historyKeys.list(variables.ticketId),
 				});
 			}

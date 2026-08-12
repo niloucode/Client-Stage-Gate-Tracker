@@ -67,7 +67,7 @@ export function LoginForm() {
 	};
 
 	return (
-		<div className="bg-neutral-surface rounded-xl p-6 border border-brand-100">
+		<div className="bg-neutral-surface rounded-md p-6 border border-brand-100">
 			<div className="mb-7">
 				<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
 					Welcome back
@@ -131,8 +131,8 @@ export function LoginForm() {
 					</p>
 				)}
 
-				<Button type="submit" disabled={loading}>
-					{loading ? "Signing in…" : "Sign In"}
+				<Button className="w-full" type="submit" disabled={loading}>
+					{loading ? "Logging in…" : "Log In"}
 				</Button>
 			</form>
 

@@ -115,7 +115,7 @@ export function AdoptSignatureModal({
 						</span>
 					</div>
 
-					<div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-lg border border-lavender-200 bg-neutral-surface px-6 py-8">
+					<div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-md border border-lavender-200 bg-neutral-surface px-6 py-8">
 						<div className="min-w-0 overflow-hidden">
 							<div className="mb-1 text-[10px] font-semibold tracking-wide text-indigo-700">
 								SIGNED BY:

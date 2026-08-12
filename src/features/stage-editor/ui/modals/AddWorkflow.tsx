@@ -96,7 +96,7 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 
 	return (
 		<div className="fixed inset-0 bg-foregroundal-main/50 flex items-center justify-center z-50">
-			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-md p-6 relative">
+			<div className="bg-neutral-surface rounded-md shadow-xl w-full max-w-md p-6 relative">
 				<button
 					onClick={handleClose}
 					className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
@@ -129,7 +129,7 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
                                 setFormData({ ...formData, name: e.target.value })
                             }
                             placeholder="e.g., User Login Flow"
-                            className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
+                            className={`w-full px-3 py-2 bg-neutral-surface border rounded-md text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
                         />
                         <div className="flex justify-between mt-1">
 							{fieldErrors.name ? (
@@ -153,7 +153,7 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 									planEnd: fromDateTimeLocalInput(e.target.value),
 								})
 							}
-							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-md text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 				</div>
@@ -167,7 +167,7 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 					</button>
 					<button
 						onClick={handleSubmit}
-						className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-sm"
+						className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-md hover:bg-indigo-700 transition-all shadow-sm"
 					>
 						Create Workflow
 					</button>

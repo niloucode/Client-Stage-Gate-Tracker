@@ -8,6 +8,7 @@ import {
   EllipsisVertical,
   Pencil,
   Trash2,
+  LucideIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,21 +58,11 @@ interface StageSequenceProps {
 
 // ─── Shared UI Helpers ───────────────────────────────────────────────────────
 
-function SectionLabel({
-  icon: Icon,
-  label,
-  className = "",
-}: {
-  icon: React.ElementType;
-  label: string;
-  className?: string;
-}) {
+function SectionLabel({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div
-      className={`flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase ${className}`}
-    >
-      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span>{label}</span>
+    <div className="flex items-center gap-1.5">
+      <Icon className="h-3.5 w-3.5 shrink-0 section-title"/>
+      <span className="section-title">{label}</span>
     </div>
   );
 }
@@ -176,7 +167,7 @@ export function StageSequence({
           <button
             type="button"
             onClick={onAddStage}
-            className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-brand-600 bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-brand-500 w-full sm:w-auto"
+            className="flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-brand-600 bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-brand-500 w-full sm:w-auto"
           >
             <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
             <span>New Stage</span>
@@ -239,7 +230,7 @@ export function StageSequence({
                         aria-label={`Actions for ${stage.stageName}`}
                         className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                       >
-                        <EllipsisVertical className="border-2 border-brand-100 hover:opacity-100 opacity-0 transition-all duration-300 cursor-pointer absolute top-0 right-6 rounded-xl bg-neutral-surface" size={24} />
+                        <EllipsisVertical className="border-2 border-brand-100 hover:opacity-100 opacity-0 transition-all duration-300 cursor-pointer absolute top-0 right-6 rounded-md bg-neutral-surface" size={24} />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="absolute right-0 top-0 w-44">
                         {onEditStage && (

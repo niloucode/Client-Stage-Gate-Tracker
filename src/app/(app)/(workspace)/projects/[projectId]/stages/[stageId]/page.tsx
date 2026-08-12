@@ -92,10 +92,10 @@ function EditorContent({
 
 			<div className="flex justify-between items-end my-4">
 				<div>
-					<h1 className="text-4xl font-bold text-foreground tracking-tight">
+					<h1>
 						Stage Name Here
 					</h1>
-					<p className="text-m text-neutral-border mt-1">
+					<p className="subtitle">
 						Define project phases, modules, and workflows.
 					</p>
 				</div>

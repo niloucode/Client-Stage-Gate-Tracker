@@ -4,7 +4,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { tagKeys } from "@/shared/query/keys";
 import { selectTag } from "./tagActions";
 
-export const tagQueryOptions = {
+const tagQueryOptions = {
 	list: () =>
 		queryOptions({
 			queryKey: tagKeys.all,

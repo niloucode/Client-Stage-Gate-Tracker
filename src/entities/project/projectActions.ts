@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
+import type { Prisma } from "@/lib/generated/prisma";
 import {
 	projectCreateSchema,
 	projectUpdateSchema,
@@ -38,19 +38,15 @@ export interface ProjectWithStatus {
  * Fetches all non-deleted projects, ordered by name.
  */
 export async function selectProjects() {
-	try {
-		const userId = await getCurrentUserId();
-		if (!userId) return [];
+	// No catch: a thrown error lets React Query retry and surface isError.
+	const userId = await getCurrentUserId();
+	if (!userId) return [];
 
-		return await prisma.projects.findMany({
-			where: { is_deleted: false },
-			orderBy: { name: "asc" },
-			take: 200, // bound the list; paginate when callers need more
-		});
-	} catch (error) {
-		console.error("Failed to fetch projects:", error);
-		return [];
-	}
+	return prisma.projects.findMany({
+		where: { is_deleted: false },
+		orderBy: { name: "asc" },
+		take: 200, // bound the list; paginate when callers need more
+	});
 }
 
 /**
@@ -66,11 +62,8 @@ export async function selectProjects() {
  */
 export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 	try {
-		const supabase = await createClient();
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-		if (!user) return [];
+		const userId = await getCurrentUserId();
+		if (!userId) return [];
 
 		const ownerRole = await prisma.roles.findUnique({
 			where: { name: "Project Owner" },
@@ -81,7 +74,7 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 		// Fetch project IDs where this user is Project Owner
 		const assignments = await prisma.roleAssignments.findMany({
 			where: {
-				user_id: user.id,
+				user_id: userId,
 				role_id: ownerRole.role_id,
 				Projects: { is_deleted: false },
 			},
@@ -161,7 +154,11 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 				computedStatus = "ACTIVE";
 			}
 
-			// Sync the DB if stored status differs from computed
+			// Reconcile the stored status column when it drifted (idempotent:
+			// only writes when different, so steady-state reads are read-only).
+			// NOTE: a query with a write side-effect is an anti-pattern for
+			// React Query — keep this reconciliation, but revisit if status
+			// ever becomes a source for other reads.
 			if ((p.status as ProjectStatus) !== computedStatus) {
 				try {
 					await prisma.projects.update({
@@ -200,17 +197,12 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
  * Fetches a single project by its ID.
  */
 export async function getProjectById(projectId: string) {
-	try {
-		const userId = await getCurrentUserId();
-		if (!userId) return null;
+	const userId = await getCurrentUserId();
+	if (!userId) return null;
 
-		return await prisma.projects.findUnique({
-			where: { project_id: projectId },
-		});
-	} catch (error) {
-		console.error("Failed to fetch project:", error);
-		return null;
-	}
+	return prisma.projects.findUnique({
+		where: { project_id: projectId, is_deleted: false },
+	});
 }
 
 /**
@@ -221,25 +213,13 @@ export async function createProject(data: ProjectCreateInput) {
 	try {
 		projectCreateSchema.parse(data);
 
-		// Get the current user from the server session
-		const supabase = await createClient();
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-		if (!user) {
+		// The session user id IS the profile id (auth.users <-> Profiles 1:1 bridge).
+		const userId = await getCurrentUserId();
+		if (!userId) {
 			return {
 				success: false,
 				error: "You must be logged in to create a project.",
 			};
-		}
-
-		// Look up the Profile ID for this auth user
-		const profile = await prisma.profiles.findUnique({
-			where: { profile_id: user.id },
-			select: { profile_id: true },
-		});
-		if (!profile) {
-			return { success: false, error: "Profile not found." };
 		}
 
 		// Look up the "Project Owner" role
@@ -270,38 +250,37 @@ export async function createProject(data: ProjectCreateInput) {
 			await tx.roleAssignments.create({
 				data: {
 					role_id: ownerRole.role_id,
-					user_id: profile.profile_id,
+					user_id: userId,
 					project_id: project.project_id,
 				},
 			});
 
-			// If a client was selected, create a contract and assign client profiles
-			if (data.client_id && clientViewerRole) {
-				await tx.contracts.create({
-					data: {
+			// A project always has a client (Contracts.client_id NOT NULL —
+			// REASONIX invariant): create the contract unconditionally.
+			await tx.contracts.create({
+				data: {
+					project_id: project.project_id,
+					client_id: data.client_id,
+				},
+			});
+
+			// Find all profiles connected to this client
+			const clientProfiles = await tx.profiles.findMany({
+				where: { client_id: data.client_id, is_deleted: false },
+				select: { profile_id: true },
+			});
+
+			// Assign each client profile the "Client Viewer" role — one
+			// batched insert, duplicates silently skipped.
+			if (clientProfiles.length > 0 && clientViewerRole) {
+				await tx.roleAssignments.createMany({
+					data: clientProfiles.map((cp) => ({
+						role_id: clientViewerRole.role_id,
+						user_id: cp.profile_id,
 						project_id: project.project_id,
-						client_id: data.client_id,
-					},
+					})),
+					skipDuplicates: true,
 				});
-
-				// Find all profiles connected to this client
-				const clientProfiles = await tx.profiles.findMany({
-					where: { client_id: data.client_id, is_deleted: false },
-					select: { profile_id: true },
-				});
-
-				// Assign each client profile the "Client Viewer" role — one
-				// batched insert, duplicates silently skipped.
-				if (clientProfiles.length > 0) {
-					await tx.roleAssignments.createMany({
-						data: clientProfiles.map((cp) => ({
-							role_id: clientViewerRole.role_id,
-							user_id: cp.profile_id,
-							project_id: project.project_id,
-						})),
-						skipDuplicates: true,
-					});
-				}
 			}
 
 			return project;
@@ -329,18 +308,33 @@ export async function updateProject(data: ProjectUpdateInput) {
 		if (!isMember)
 			return { success: false, error: "You are not a member of this project." };
 
-		const updateData: Record<string, unknown> = {};
+		const updateData: Prisma.ProjectsUpdateInput = {};
 		if (data.name !== undefined) updateData.name = data.name;
 		if (data.description !== undefined)
 			updateData.description = data.description;
+		// plan_start_at/plan_end_at are NOT NULL: a cleared form date (null)
+		// means "leave unchanged" — never send null to the DB.
 		if (data.start_date !== undefined)
-			updateData.plan_start_at = data.start_date;
+			updateData.plan_start_at = data.start_date ?? undefined;
 		if (data.deadline_date !== undefined)
-			updateData.plan_end_at = data.deadline_date;
+			updateData.plan_end_at = data.deadline_date ?? undefined;
 
-		const updated = await prisma.projects.update({
-			where: { project_id: data.project_id },
-			data: updateData,
+		// The client linkage lives on the Contracts row (NOT NULL invariant);
+		// update it atomically with the project fields.
+		const updated = await prisma.$transaction(async (tx) => {
+			const project = await tx.projects.update({
+				where: { project_id: data.project_id },
+				data: updateData,
+			});
+
+			if (data.client_id !== undefined) {
+				await tx.contracts.update({
+					where: { project_id: data.project_id },
+					data: { client_id: data.client_id },
+				});
+			}
+
+			return project;
 		});
 
 		return { success: true, data: updated };
@@ -401,36 +395,31 @@ export async function softDeleteProject(
  * Fetches all members of a project, including their profile and role info.
  */
 export async function getProjectMembers(projectId: string) {
-	try {
-		const userId = await getCurrentUserId();
-		if (!userId) return [];
+	const userId = await getCurrentUserId();
+	if (!userId) return [];
 
-		const isMember = await requireProjectMember(projectId, userId);
-		if (!isMember) return [];
+	const isMember = await requireProjectMember(projectId, userId);
+	if (!isMember) return [];
 
-		return await prisma.roleAssignments.findMany({
-			where: { project_id: projectId },
-			include: {
-				Profile: {
-					select: {
-						profile_id: true,
-						first_name: true,
-						last_name: true,
-						email: true,
-						client_id: true,
-						department_id: true,
-						Department: { select: { name: true } },
-					},
-				},
-				Roles: {
-					select: { role_id: true, name: true },
+	return prisma.roleAssignments.findMany({
+		where: { project_id: projectId },
+		include: {
+			Profile: {
+				select: {
+					profile_id: true,
+					first_name: true,
+					last_name: true,
+					email: true,
+					client_id: true,
+					department_id: true,
+					Department: { select: { name: true } },
 				},
 			},
-		});
-	} catch (error) {
-		console.error("Failed to fetch project members:", error);
-		return [];
-	}
+			Roles: {
+				select: { role_id: true, name: true },
+			},
+		},
+	});
 }
 
 /**
@@ -439,36 +428,31 @@ export async function getProjectMembers(projectId: string) {
  * Excludes soft-deleted profiles.
  */
 export async function searchProfilesForProject(query: string) {
-	try {
-		const userId = await getCurrentUserId();
-		if (!userId) return [];
+	const userId = await getCurrentUserId();
+	if (!userId) return [];
 
-		if (!query || query.trim().length < 1) return [];
+	if (!query || query.trim().length < 1) return [];
 
-		return await prisma.profiles.findMany({
-			where: {
-				is_deleted: false,
-				OR: [
-					{ first_name: { contains: query, mode: "insensitive" } },
-					{ last_name: { contains: query, mode: "insensitive" } },
-					{ email: { contains: query, mode: "insensitive" } },
-				],
-			},
-			select: {
-				profile_id: true,
-				first_name: true,
-				last_name: true,
-				email: true,
-				client_id: true,
-				department_id: true,
-				Department: { select: { name: true } },
-			},
-			take: 20,
-		});
-	} catch (error) {
-		console.error("Failed to search profiles:", error);
-		return [];
-	}
+	return prisma.profiles.findMany({
+		where: {
+			is_deleted: false,
+			OR: [
+				{ first_name: { contains: query, mode: "insensitive" } },
+				{ last_name: { contains: query, mode: "insensitive" } },
+				{ email: { contains: query, mode: "insensitive" } },
+			],
+		},
+		select: {
+			profile_id: true,
+			first_name: true,
+			last_name: true,
+			email: true,
+			client_id: true,
+			department_id: true,
+			Department: { select: { name: true } },
+		},
+		take: 20,
+	});
 }
 
 /**

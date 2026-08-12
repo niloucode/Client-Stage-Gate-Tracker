@@ -8,7 +8,6 @@ import {
 	resolveGateProject,
 	resolveTicketProject,
 } from "@/lib/auth/projectAccess";
-import type { EntityFilterStatus } from "@/entities/types";
 
 export async function selectImagesByParent(
 	parentType: ImageParentType,
@@ -23,63 +22,62 @@ export async function selectComment(
 	parentType: CommentParentType,
 	parentId: string,
 ) {
-	try {
-		// Scoped to one parent (ticket/gate) — never the whole table.
-		// Polymorphic parent_type + parent_id (LOL #43/#44).
-		const comments = await prisma.comments.findMany({
-			where: {
-				parent_type: parentType,
-				parent_id: parentId,
-				is_deleted: false,
-			},
-			include: {
-				Profile: true,
-			},
-		});
+	// No catch here: a thrown error lets React Query retry (cachePolicy
+	// retry: 1) and surface isError instead of silently degrading to [].
+	// Scoped to one parent (ticket/gate) — never the whole table.
+	// Polymorphic parent_type + parent_id (LOL #43/#44).
+	const comments = await prisma.comments.findMany({
+		where: {
+			parent_type: parentType,
+			parent_id: parentId,
+			is_deleted: false,
+		},
+		include: {
+			Profile: true,
+		},
+	});
 
-		if (comments.length === 0) return [];
+	if (comments.length === 0) return [];
 
-		const commentIds = comments.map((c) => c.comment_id);
+	const commentIds = comments.map((c) => c.comment_id);
 
-		// Images are polymorphically linked (app-level integrity), so fetch
-		// them in one scoped query (bounded by commentIds — never the whole
-		// table) and join with a Map.
-		const images = await prisma.images.findMany({
-			where: {
-				parent_id: { in: commentIds },
-				parent_type: ImageParentType.TICKET_COMMENT,
-				is_deleted: false,
-			},
-		});
+	// Images are polymorphically linked (app-level integrity), so fetch
+	// them in one scoped query (bounded by commentIds — never the whole
+	// table) and join with a Map.
+	const images = await prisma.images.findMany({
+		where: {
+			parent_id: { in: commentIds },
+			parent_type: ImageParentType.TICKET_COMMENT,
+			is_deleted: false,
+		},
+	});
 
-		const imagesByComment = new Map<string, (typeof images)[number][]>();
-		for (const img of images) {
-			const list = imagesByComment.get(img.parent_id) ?? [];
-			list.push(img);
-			imagesByComment.set(img.parent_id, list);
-		}
-
-		return comments.map((comment) => ({
-			...comment,
-			images: imagesByComment.get(comment.comment_id) ?? [],
-		}));
-	} catch (error) {
-		console.error("Error fetching comments with images:", error);
-		return [];
+	const imagesByComment = new Map<string, (typeof images)[number][]>();
+	for (const img of images) {
+		const list = imagesByComment.get(img.parent_id) ?? [];
+		list.push(img);
+		imagesByComment.set(img.parent_id, list);
 	}
+
+	return comments.map((comment) => ({
+		...comment,
+		images: imagesByComment.get(comment.comment_id) ?? [],
+	}));
 }
 
 export async function createCommentWithImages(data: CommentCreateInput) {
 	commentCreateSchema.parse(data);
 
-	// Authorization: caller must be a member of the parent project
+	// Authorization: caller must be a member of the parent project.
+	// Throwing (not returning an error object) lets useMutation surface
+	// isError instead of resolving into onSuccess.
 	const projectId =
 		data.parent_type === "TICKET_COMMENT"
 			? await resolveTicketProject(data.parent_id)
 			: await resolveGateProject(data.parent_id);
-	if (!projectId) return { success: false, error: "Comment target not found." };
+	if (!projectId) throw new Error("Comment target not found.");
 	const auth = await assertProjectMember(projectId);
-	if (!auth.ok) return { success: false, error: auth.error };
+	if (!auth.ok) throw new Error(auth.error);
 
 	return await prisma.$transaction(async (tx) => {
 		const comment = await tx.comments.create({

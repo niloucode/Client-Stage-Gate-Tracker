@@ -54,7 +54,7 @@ export function ClientsDropdown({
 				<div
 					role="combobox"
 					aria-expanded={open}
-					className="relative flex w-full items-center rounded-lg px-4 py-0 text-left transition-colors hover:brightness-95"
+					className="relative flex w-full items-center rounded-md px-4 py-0 text-left transition-colors hover:brightness-95"
 					style={{
 						backgroundColor: "#faf8ff",
 						border: "1px solid #c7c4d8",

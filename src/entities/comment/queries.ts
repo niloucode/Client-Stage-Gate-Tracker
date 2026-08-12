@@ -5,12 +5,11 @@ import { commentKeys } from "@/shared/query/keys";
 import { selectComment, selectImagesByParent } from "./commentActions";
 import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 
-export const commentQueryOptions = {
+const commentQueryOptions = {
 	list: (ticketId: string | undefined) =>
 		queryOptions({
 			queryKey: commentKeys.list("TICKET", ticketId!),
-			queryFn: () =>
-				selectComment(CommentParentType.TICKET_COMMENT, ticketId!),
+			queryFn: () => selectComment(CommentParentType.TICKET_COMMENT, ticketId!),
 			enabled: !!ticketId,
 		}),
 	images: (ticketId: string | undefined) =>

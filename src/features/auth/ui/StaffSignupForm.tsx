@@ -25,6 +25,13 @@ import { signupSchema } from "@/shared/schemas";
 import { env } from "@/env";
 import { profileKeys } from "@/shared/query/keys";
 import { getProfileByEmail } from "@/entities/profile/profileActions";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"; // Adjust path as needed
 
 export function StaffSignupForm() {
 	const router = useRouter();
@@ -137,7 +144,7 @@ export function StaffSignupForm() {
 	return (
 		<form onSubmit={handleSignUp} className="space-y-4">
 			{/* First Name + Last Name */}
-			<div className="flex gap-3">
+			<div className="flex gap-3 ">
 				<div className="flex-1">
 					<Label
 						htmlFor="firstname"
@@ -150,7 +157,7 @@ export function StaffSignupForm() {
 					<Input
 						id="firstname"
 						type="text"
-						placeholder="First name"
+						placeholder="John"
 						value={firstName}
 						onChange={(e) => setFirstName(e.target.value)}
 						className={fieldErrClass("firstName")}
@@ -173,7 +180,7 @@ export function StaffSignupForm() {
 					<Input
 						id="lastname"
 						type="text"
-						placeholder="Last name"
+						placeholder="Cecil"
 						value={lastName}
 						onChange={(e) => setLastName(e.target.value)}
 						className={fieldErrClass("lastName")}
@@ -243,7 +250,7 @@ export function StaffSignupForm() {
 					<Input
 						id="jobtitle"
 						type="text"
-						placeholder="e.g. Product Manager"
+						placeholder="e.g. Product Director"
 						value={jobTitle}
 						onChange={(e) => setJobTitle(e.target.value)}
 						className={fieldErrClass("jobTitle")}
@@ -263,19 +270,27 @@ export function StaffSignupForm() {
 					>
 						Department
 					</Label>
-					<select
-						id="department"
+					<Select
 						value={department}
-						onChange={(e) => setDepartment(e.target.value)}
-						className={`w-full px-3.5 py-2.5 rounded-lg border border-gray-300 bg-neutral-surface text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent ${fieldErrors.department ? "border-red-400 focus:ring-red-400" : ""} ${department ? "text-gray-900" : "text-gray-400"}`}
+						onValueChange={(val) => setDepartment(val ?? "")}
 					>
-						<option value="" disabled>
-							Select...
-						</option>
-						<option value="Project Team">Project Team</option>
-						<option value="Project Owner">Project Owner</option>
-						<option value="Finance Team">Finance Team</option>
-					</select>
+						<SelectTrigger
+							id="department"
+							className={`w-full ${
+								fieldErrors.department
+									? "border-red-400 focus-visible:ring-red-400"
+									: ""
+							}`}
+							aria-invalid={!!fieldErrors.department}
+						>
+							<SelectValue/>
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="Project Team">Project Team</SelectItem>
+							<SelectItem value="Project Owner">Project Owner</SelectItem>
+							{/* <SelectItem value="Finance Team">Finance Team</SelectItem> */}
+						</SelectContent>
+					</Select>
 					{fieldErrors.department && (
 						<p className="text-xs text-destructive mt-1">
 							{fieldErrors.department}
@@ -338,10 +353,30 @@ export function StaffSignupForm() {
 					{error}
 				</p>
 			)}
+			<div>
+				<div className="text-center mt-6 mb-2">
+					<p className="text-[11px] text-gray-400 leading-relaxed">
+						By signing up, you agree to our{" "}
+						<Link
+							href="#"
+							className="underline hover:text-gray-500 transition-colors"
+						>
+							Terms of Service
+						</Link>{" "}
+						and{" "}
+						<Link
+							href="#"
+							className="underline hover:text-gray-500 transition-colors"
+						>
+							Privacy Policy
+						</Link>
+					</p>
+				</div>
+				<Button type="submit" className="mt-2 w-full" disabled={loading}>
+					{loading ? "Creating account..." : "Join Workspace"}
+				</Button>
+			</div>
 
-			<Button type="submit" className="mt-2" disabled={loading}>
-				{loading ? "Creating account..." : "Join Workspace"}
-			</Button>
 
 			{/* OR divider */}
 			<div className="relative my-6">
@@ -349,7 +384,7 @@ export function StaffSignupForm() {
 					<div className="w-full border-t border-gray-200" />
 				</div>
 				<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-					<span className="bg-background px-3 text-gray-400">OR</span>
+					<span className="bg-neutral-surface px-3 text-gray-400">OR</span>
 				</div>
 			</div>
 

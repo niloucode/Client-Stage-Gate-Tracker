@@ -24,8 +24,8 @@ export function useCreateWorkflow() {
 		mutationFn: (
 			params: { moduleId: string; stageId: string } & WorkflowCreateInput,
 		) => createWorkflow(params.moduleId, params),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},
@@ -39,8 +39,8 @@ export function useUpdateWorkflow() {
 		mutationFn: (
 			params: { workflowId: string; stageId: string } & WorkflowUpdateInput,
 		) => updateWorkflow(params.workflowId, params),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},
@@ -53,8 +53,8 @@ export function useDeleteWorkflow() {
 	return useMutation({
 		mutationFn: (params: { workflowId: string; stageId: string }) =>
 			cascadeSoftDeleteWorkflow(params.workflowId),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},
@@ -70,8 +70,8 @@ export function useReorderWorkflow() {
 			targetNumber: number;
 			stageId: string;
 		}) => reorderWorkflow(params.workflowId, params.targetNumber),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},

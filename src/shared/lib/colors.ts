@@ -81,7 +81,7 @@ export function getPastelStyle(hex: string): {
  * Single source of truth — previously duplicated inline in
  * `ManageMembersModal`. Unknown departments fall back to a neutral slate.
  */
-export const DEPARTMENT_BADGE_STYLES: Record<string, string> = {
+const DEPARTMENT_BADGE_STYLES: Record<string, string> = {
 	"Project Owner": "bg-[#FFDAD7] text-[#410004]",
 	"Project Team": "bg-brand-500 text-[#DAD7FF]",
 	"Client Viewer": "bg-[#DBEAFE] text-[#1E3A8A]",

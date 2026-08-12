@@ -16,8 +16,8 @@ export function useCreateProject() {
 
 	return useMutation({
 		mutationFn: (data: ProjectCreateInput) => createProject(data),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
 		},
 	});
 }
@@ -27,9 +27,9 @@ export function useUpdateProject() {
 
 	return useMutation({
 		mutationFn: (data: ProjectUpdateInput) => updateProject(data),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+			await queryClient.invalidateQueries({
 				queryKey: projectKeys.detail(variables.project_id),
 			});
 		},
@@ -47,8 +47,8 @@ export function useDeleteProject() {
 			projectId: string;
 			confirmationName: string;
 		}) => softDeleteProject(projectId, confirmationName),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
 		},
 	});
 }
@@ -66,8 +66,8 @@ export function useAddProjectMember() {
 			profileId: string;
 			roleName: string;
 		}) => addProjectMember(projectId, profileId, roleName),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: projectKeys.members(variables.projectId),
 			});
 		},
@@ -99,8 +99,7 @@ export function useRemoveProjectMember() {
 				(old: unknown[] | undefined) => {
 					if (!old) return old;
 					return old.filter(
-						(m: unknown) =>
-							(m as { user_id: string }).user_id !== profileId,
+						(m: unknown) => (m as { user_id: string }).user_id !== profileId,
 					);
 				},
 			);
@@ -115,8 +114,8 @@ export function useRemoveProjectMember() {
 				);
 			}
 		},
-		onSettled: (_data, _error, variables) => {
-			queryClient.invalidateQueries({
+		onSettled: async (_data, _error, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: projectKeys.members(variables.projectId),
 			});
 		},

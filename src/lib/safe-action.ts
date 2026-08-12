@@ -38,7 +38,7 @@ export class ActionError extends Error {
  * ever receives a stable error code (plus the code for ActionError) — no
  * raw exception text, no internal details.
  */
-export const actionClient = createSafeActionClient({
+const actionClient = createSafeActionClient({
 	handleServerError: (error) => {
 		if (error instanceof ActionError) {
 			return error.code;

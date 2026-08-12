@@ -15,7 +15,12 @@ export function useResetOnOpen(
 	whenOpen = true,
 ) {
 	const resetRef = useRef(resetFn);
-	resetRef.current = resetFn;
+
+	// Keep the ref fresh without writing during render (react-hooks/refs).
+	// Runs after every render, before the scheduling effect below.
+	useEffect(() => {
+		resetRef.current = resetFn;
+	});
 
 	useEffect(() => {
 		const shouldReset = whenOpen ? trigger : !trigger;

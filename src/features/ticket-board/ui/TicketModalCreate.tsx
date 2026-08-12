@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { FormInput } from "@/components/ui/forminput";
 import { Label } from "@/components/ui/label";
 import { Tag } from "@/entities/types";
+import { TagBadge } from "@/entities/tag/ui/TagBadge";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
+import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
+import type { IssueItem } from "@/features/issue-reporting/ui/IssueDashboard";
 
 import {
 	Dialog,
@@ -13,28 +17,57 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog";
+
 import {
 	DropdownMenu,
 	DropdownMenuTrigger,
 	DropdownMenuContent,
-	DropdownMenuSeparator,
 	DropdownMenuCheckboxItem,
 	DropdownMenuRadioGroup,
 	DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Paperclip } from "lucide-react";
+import { ChevronDown, Paperclip, Bug } from "lucide-react";
 import { useProfiles } from "@/entities/profile/queries";
 import { createClient } from "@/lib/supabase/client";
 import type { CreateTicketParams } from "@/shared/schemas";
 
-// Sample bugs list for linking issues to tickets
-const SAMPLE_BUGS = [
-	{ id: "iss-1", name: "Authentication Token Expiration Bug" },
-	{ id: "iss-2", name: "Client Dropdown Not Populating" },
-	{ id: "iss-5", name: "Broken Navigation Links in Footer" },
-	{ id: "iss-6", name: "Database Timeout on Analytics Load" },
-];
+/** Helper to derive box colors based strictly on issue urgency */
+function getIssueUrgencyStyle(issue: IssueItem | null) {
+	if (!issue) {
+		return {
+			box: "border-dashed border-gray-300 bg-gray-50/50 hover:bg-gray-100/60 text-gray-400",
+			icon: "text-gray-400",
+			text: "font-normal italic text-gray-400",
+			close: "",
+		};
+	}
+
+	switch (issue.urgency) {
+		case "high":
+			return {
+				box: "border-red-200 bg-red-50/70 hover:bg-red-100/80 text-gray-700",
+				icon: "text-red-500",
+				text: "font-semibold text-red-600",
+				close: "text-red-400 hover:text-red-600",
+			};
+		case "medium":
+			return {
+				box: "border-amber-200 bg-amber-50/70 hover:bg-amber-100/80 text-gray-700",
+				icon: "text-amber-500",
+				text: "font-semibold text-amber-600",
+				close: "text-amber-400 hover:text-amber-600",
+			};
+		case "low":
+		default:
+			return {
+				box: "border-green-200 bg-green-50/70 hover:bg-green-100/80 text-gray-700",
+				icon: "text-green-500",
+				text: "font-semibold text-green-600",
+				close: "text-green-400 hover:text-green-600",
+			};
+	}
+}
 
 /** Fields the modal collects — everything except workflow_id and status (added by TicketBoard). */
 type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
@@ -54,11 +87,12 @@ export default function TicketModalCreate({
 }: CreateTicketModalProps) {
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
-	const [startDate, setStartDate] = useState("");
-	const [deadline, setDeadline] = useState("");
+	const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+	const [deadline, setDeadline] = useState<Date | undefined>(undefined);
 
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);
-	const [selectedBugId, setSelectedBugId] = useState("");
+	const [linkedIssue, setLinkedIssue] = useState<IssueItem | null>(null);
+	const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
 
 	const { data: profiles = [] } = useProfiles();
 
@@ -155,8 +189,8 @@ export default function TicketModalCreate({
 
 		onCreateTicket({
 			name: title.trim(),
-			plan_start_at: startDate ? new Date(startDate) : null,
-			plan_end_at: deadline ? new Date(deadline) : new Date(),
+			plan_start_at: startDate ?? null,
+			plan_end_at: deadline ?? new Date(),
 			watcher_id: watcherId || null,
 			TicketAssigned: assignedIds,
 			tagIds: selectedTags,
@@ -168,10 +202,10 @@ export default function TicketModalCreate({
 
 		setTitle("");
 		setDescription("");
-		setStartDate("");
-		setDeadline("");
+		setStartDate(undefined);
+		setDeadline(undefined);
 		setWatcherId("");
-		setSelectedBugId("");
+		setLinkedIssue(null);
 		setSelectedTags([]);
 		setAssignedIds([]);
 		setImageFiles([]);
@@ -181,25 +215,15 @@ export default function TicketModalCreate({
 		onClose();
 	}
 
-	const colorClasses = {
-		indigo: "bg-indigo-50 text-indigo-700",
-		red: "bg-red-50 text-red-700",
-		green: "bg-green-50 text-green-700",
-		blue: "bg-blue-50 text-blue-700",
-		yellow: "bg-yellow-50 text-yellow-700",
-		purple: "bg-purple-50 text-purple-700",
-		pink: "bg-pink-50 text-pink-700",
-		gray: "bg-gray-50 text-gray-700",
-	};
-
 	return (
+		<>
 		<Dialog
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open) onClose();
 			}}
 		>
-			<DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+			<DialogContent className="sm:max-w-2xl max-h-[70vh] flex flex-col overflow-hidden">
 				{/* Modal header */}
 				<DialogHeader>
 					<DialogTitle>New Ticket</DialogTitle>
@@ -208,12 +232,11 @@ export default function TicketModalCreate({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="h-px bg-gray-100 shrink-0" />
 
 				{/* Form */}
 				<form
 					onSubmit={handleSubmit}
-					className="flex-1 overflow-y-auto px-1 space-y-5"
+					className="flex-1 overflow-y-auto px-2 space-y-5"
 				>
 					{/* Ticket Name */}
 					<FormInput
@@ -239,10 +262,10 @@ export default function TicketModalCreate({
 					{/* Assigned to + Watchers row */}
 					<div className="grid grid-cols-2 gap-4">
 						{/* Assigned To */}
-						<div className="space-y-1.5">
+						<div>
 							<Label>Assigned To</Label>
 							<DropdownMenu>
-								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
 									<div className="flex flex-wrap gap-1 flex-1">
 										{assignedIds.length === 0 ? (
 											<span className="text-gray-400">Assign to...</span>
@@ -276,7 +299,6 @@ export default function TicketModalCreate({
 								</DropdownMenuTrigger>
 
 								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
-									<DropdownMenuSeparator />
 									{profiles.map((profile) => {
 										const isChecked = assignedIds.includes(profile.profile_id);
 										const name = `${profile.first_name} ${profile.last_name}`;
@@ -305,10 +327,10 @@ export default function TicketModalCreate({
 						</div>
 
 						{/* Watcher */}
-						<div className="space-y-1.5">
+						<div>
 							<Label>Watcher</Label>
 							<DropdownMenu>
-								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
 									<span className="text-gray-400 truncate">
 										{watcherId
 											? (() => {
@@ -325,7 +347,6 @@ export default function TicketModalCreate({
 								</DropdownMenuTrigger>
 
 								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
-									<DropdownMenuSeparator />
 									<DropdownMenuRadioGroup
 										value={watcherId}
 										onValueChange={setWatcherId}
@@ -363,142 +384,118 @@ export default function TicketModalCreate({
 						</div>
 					</div>
 
-					{/* Tags + Bugs Row */}
-					<div className="grid grid-cols-2 gap-4">
-						{/* Tags */}
-						<div className="space-y-1.5">
-							<Label>Tags</Label>
-							<DropdownMenu>
-								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
-									<div className="flex flex-wrap gap-1 flex-1">
-										{selectedTags.length === 0 ? (
-											<span className="text-gray-400">Select tags...</span>
-										) : (
-											selectedTags.map((tag_id) => {
-												const tag = tags.find((t) => t.tag_id === tag_id);
-												const colorClass =
-													colorClasses[
-														tag?.color as keyof typeof colorClasses
-													] ?? colorClasses.indigo;
-												return (
-													<span
-														key={tag_id}
-														className={`${colorClass} inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium`}
-													>
-														{tag?.name}
-														<span
-															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
-															onClick={(e) => {
-																e.stopPropagation();
-																e.preventDefault();
-																toggleTag(tag_id);
-															}}
-														>
-															×
-														</span>
-													</span>
-												);
-											})
-										)}
-									</div>
-									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-								</DropdownMenuTrigger>
+					{/* Tags */}
+					<div>
+						<Label>Tags</Label>
+						<DropdownMenu>
+							<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+								<div className="flex flex-wrap gap-1 flex-1">
+									{selectedTags.length === 0 ? (
+										<span className="text-gray-400">Select tags...</span>
+									) : (
+										selectedTags.map((tag_id) => {
+											const tag = tags.find((t) => t.tag_id === tag_id);
+											return tag ? (
+												<TagBadge
+													key={tag_id}
+													tag={tag}
+													onClick={() => {
+														toggleTag(tag_id);
+													}}
+												/>
+											) : null;
+										})
+									)}
+								</div>
+								<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+							</DropdownMenuTrigger>
 
-								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
-									<DropdownMenuSeparator />
-									{tags.map((tag) => {
-										const isChecked = selectedTags.includes(tag.tag_id);
-										const colorClass =
-											colorClasses[tag.color as keyof typeof colorClasses] ??
-											colorClasses.indigo;
-										return (
-											<DropdownMenuCheckboxItem
-												key={tag.tag_id}
-												checked={isChecked}
-												onCheckedChange={() => toggleTag(tag.tag_id)}
-												className="cursor-pointer"
-											>
-												<span
-													className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${colorClass}`}
-												>
-													{tag.name}
-												</span>
-											</DropdownMenuCheckboxItem>
-										);
-									})}
-								</DropdownMenuContent>
-							</DropdownMenu>
-						</div>
-
-						{/* Bugs */}
-						<div className="space-y-1.5">
-							<Label>Bugs</Label>
-							<DropdownMenu>
-								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
-									<span className="text-gray-400 truncate">
-										{selectedBugId
-											? SAMPLE_BUGS.find((b) => b.id === selectedBugId)?.name
-											: "Link a bug..."}
-									</span>
-									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-								</DropdownMenuTrigger>
-
-								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
-									<DropdownMenuSeparator />
-									<DropdownMenuRadioGroup
-										value={selectedBugId}
-										onValueChange={setSelectedBugId}
-									>
-										<DropdownMenuRadioItem
-											value=""
-											className="cursor-pointer text-gray-400"
+							<DropdownMenuContent className="w-[var(--anchor-width)] max-h-52 overflow-y-auto">
+								{tags.map((tag) => {
+									const isChecked = selectedTags.includes(tag.tag_id);
+									return (
+										<DropdownMenuCheckboxItem
+											key={tag.tag_id}
+											checked={isChecked}
+											onCheckedChange={() => toggleTag(tag.tag_id)}
+											className="cursor-pointer"
 										>
-											None
-										</DropdownMenuRadioItem>
-										{SAMPLE_BUGS.map((bug) => (
-											<DropdownMenuRadioItem
-												key={bug.id}
-												value={bug.id}
-												className="cursor-pointer"
-											>
-												<span className="truncate">{bug.name}</span>
-											</DropdownMenuRadioItem>
-										))}
-									</DropdownMenuRadioGroup>
-								</DropdownMenuContent>
-							</DropdownMenu>
-						</div>
+											<TagBadge tag={tag} />
+										</DropdownMenuCheckboxItem>
+									);
+								})}
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 
 					{/* Start Date + Deadline row */}
 					<div className="grid grid-cols-2 gap-4">
-						<FormInput
-							variant="datetime-local"
-							type="datetime-local"
-							label="Planned Start"
-							value={startDate}
-							onChange={(e) => setStartDate(e.target.value)}
-							containerClassName="flex-1"
-						/>
-						<FormInput
-							variant="datetime-local"
-							type="datetime-local"
-							label="Deadline"
-							value={deadline}
-							onChange={(e) => setDeadline(e.target.value)}
-							containerClassName="flex-1"
-						/>
+						<div className="space-y-1.5">
+							<Label>
+								Planned Start
+							</Label>
+							<DateTimePicker
+								value={startDate}
+								onChange={setStartDate}
+								placeholder="Pick planned start date"
+							/>
+						</div>
+						<div className="space-y-1.5">
+							<Label>
+								Deadline
+							</Label>
+							<DateTimePicker
+								value={deadline}
+								onChange={setDeadline}
+								placeholder="Pick deadline"
+							/>
+						</div>
+					</div>
+
+					{/* Linked Issue Box */}
+					<div>
+						<Label >Linked Issue</Label>
+						{(() => {
+							const style = getIssueUrgencyStyle(linkedIssue);
+							return (
+								<div
+									onClick={() => setIsIssueModalOpen(true)}
+									className={`h-9 w-full rounded-md border px-2.5 py-1 text-xs flex items-center justify-between select-none cursor-pointer transition-colors ${style.box}`}
+								>
+									<div className="flex items-center gap-2 min-w-0 flex-1 pr-1">
+										<Bug size={14} className={`shrink-0 ${style.icon}`} />
+										<span className={`truncate ${style.text}`}>
+											{linkedIssue ? linkedIssue.name : "Link an issue..."}
+										</span>
+									</div>
+
+									{linkedIssue && (
+										<button
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												setLinkedIssue(null);
+											}}
+											className={`text-xs font-bold px-1 shrink-0 ${style.close}`}
+											title="Unlink Issue"
+										>
+											✕
+										</button>
+									)}
+								</div>
+							);
+						})()}
 					</div>
 
 					{/* Image Attachment */}
-					<div className="space-y-2">
+					<div>
 						<div className="flex items-center justify-between">
 							<Label>Attachment</Label>
 							<span className="text-xs text-gray-400 font-normal">
 								(jpg, png · Max 5MB)
 							</span>
 						</div>
-						<label className="flex items-center gap-3 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-neutral-surface px-4 py-3.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
+						<label className="flex items-center gap-3 w-full cursor-pointer rounded-md border border-dashed border-gray-300 bg-neutral-surface px-4 py-3.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
 							<Paperclip size={16} className="shrink-0 text-gray-400" />
 							<span>
 								{imageFiles.length > 0
@@ -519,7 +516,7 @@ export default function TicketModalCreate({
 										<img
 											src={preview}
 											alt={`Preview ${idx + 1}`}
-											className="h-20 w-auto rounded-lg border border-gray-200 object-cover"
+											className="h-20 w-auto rounded-md border border-gray-200 object-cover"
 										/>
 										<button
 											type="button"
@@ -536,7 +533,7 @@ export default function TicketModalCreate({
 
 					{/* API Details — shown only when the "API" tag is applied */}
 					{isApiTagSelected && (
-						<div className="space-y-3 rounded-lg border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
+						<div className="space-y-3 rounded-md border border-indigo-100 bg-indigo-50/40 px-4 py-3.5">
 							<p className="text-xs font-semibold text-brand-600 uppercase tracking-wide">
 								API Details
 							</p>
@@ -550,7 +547,7 @@ export default function TicketModalCreate({
 												e.target.value as "GET" | "POST" | "PUT" | "DELETE",
 											)
 										}
-										className="w-full rounded-lg border border-gray-200 bg-neutral-surface px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+										className="w-full rounded-md border border-gray-200 bg-neutral-surface px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
 									>
 										{["GET", "POST", "PUT", "DELETE"].map((m) => (
 											<option key={m}>{m}</option>
@@ -578,6 +575,15 @@ export default function TicketModalCreate({
 					</Button>
 				</DialogFooter>
 			</DialogContent>
+
 		</Dialog>
+		
+		{/* Issue Table Modal */}
+		<IssueTableModal
+			open={isIssueModalOpen}
+			onOpenChange={setIsIssueModalOpen}
+			onSelectIssue={(issue) => setLinkedIssue(issue)}
+		/>
+		</>
 	);
 }

@@ -47,6 +47,7 @@ type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
 // Icons
 import { Tag, Plus } from "lucide-react";
 import { useAuth } from "@/features/auth";
+import { Button } from "@/components/ui/button";
 
 // ── Main board ────────────────────────────────────────────────────────────────
 
@@ -281,21 +282,21 @@ export default function TicketBoard({
 				</div>
 
 				<div className="flex items-center gap-3">
-					<button
+
+					<Button
 						onClick={() => setTagManagerOpen(true)}
-						className="flex items-center gap-1.5 text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+						className="flex items-center gap-1.5 bg-transparent text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
 					>
 						<Tag />
 						Tags
-					</button>
+					</Button>
 
-					<button
+					<Button
 						onClick={() => setModalOpen(true)}
-						className="flex items-center gap-1.5 text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
 					>
 						<Plus />
 						New Issue
-					</button>
+					</Button>
 				</div>
 			</div>
 

@@ -14,3 +14,13 @@ export const clientSchema = z.object({
 });
 
 export type ClientType = z.infer<typeof clientSchema>;
+
+// Create input: server-owned fields (client_id, is_deleted, deleted_at) are
+// excluded — UUIDs originate from the DB (project rule), never the client.
+export const clientCreateSchema = clientSchema.omit({
+	client_id: true,
+	is_deleted: true,
+	deleted_at: true,
+});
+
+export type ClientCreateType = z.infer<typeof clientCreateSchema>;

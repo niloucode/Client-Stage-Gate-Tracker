@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	rollupWorkflowDates,
-	rollupModuleDates,
-} from "./dateRollup";
+import { rollupWorkflowDates, rollupModuleDates } from "./dateRollup";
 
 const d = (iso: string) => new Date(iso);
 const t = (
@@ -37,9 +34,7 @@ describe("rollupWorkflowDates (Task 3.2)", () => {
 		expect(result.plan_start_at?.toISOString()).toBe(
 			"2024-01-01T00:00:00.000Z",
 		);
-		expect(result.plan_end_at?.toISOString()).toBe(
-			"2024-01-20T00:00:00.000Z",
-		);
+		expect(result.plan_end_at?.toISOString()).toBe("2024-01-20T00:00:00.000Z");
 	});
 
 	it("actualStart falls back to plan_start_at when unset", () => {
@@ -119,9 +114,7 @@ describe("rollupModuleDates (Task 3.2)", () => {
 		expect(result.plan_start_at?.toISOString()).toBe(
 			"2024-04-01T00:00:00.000Z",
 		);
-		expect(result.plan_end_at?.toISOString()).toBe(
-			"2024-04-15T00:00:00.000Z",
-		);
+		expect(result.plan_end_at?.toISOString()).toBe("2024-04-15T00:00:00.000Z");
 	});
 
 	it("actualEnd requires every workflow to have finished", () => {

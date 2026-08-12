@@ -58,15 +58,15 @@ export default function ClientPage() {
 			<main className="flex flex-1 flex-col overflow-hidden">
 				<div className="mb-6">
 					<h1 className="text-4xl font-bold tracking-wide text-foreground">
-						Client List
+						Clients
 					</h1>
-					<p className="mt-1 text-base text-muted-foreground">
+					<p className="subtitle">
 						View the clients your company is working with.
 					</p>
 				</div>
 
 				<div className="mb-5 flex gap-6 justify-between items-center max-h-10">
-					<div className="flex w-[749px] items-center gap-2 rounded-lg border border-border bg-neutral-surface px-4 py-2">
+					<div className="flex w-[749px] items-center gap-2 rounded-md border border-border bg-neutral-surface px-4 py-2">
 						<Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground" />
 						<Input
 							type="text"
@@ -83,7 +83,7 @@ export default function ClientPage() {
 				</div>
 
 				{/* Table */}
-				<div className="flex flex-col overflow-hidden rounded-2xl border border-brand-100 bg-neutral-surface">
+				<div className="flex flex-col overflow-hidden rounded-md border border-brand-100 bg-neutral-surface">
 					<div className="max-h-[calc(60vh)] overflow-auto">
 						<table className="w-full min-w-[960px] border-collapse text-left">
 							{/* Sticky Header */}

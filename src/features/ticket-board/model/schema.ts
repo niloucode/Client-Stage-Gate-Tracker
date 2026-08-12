@@ -18,12 +18,12 @@ const ACTION_ENUM = z.enum([
  */
 export const ticketHistoryEntrySchema = z
 	.object({
-		history_event_id: z.string().uuid(),
+		history_event_id: z.uuid(),
 		action: ACTION_ENUM,
 		date_performed: z.coerce.date(),
-		ticket_id: z.string().uuid(),
-		target_profile_id: z.string().uuid().nullable().optional(),
-		performed_by: z.string().uuid(),
+		ticket_id: z.uuid(),
+		target_profile_id: z.uuid().nullable().optional(),
+		performed_by: z.uuid(),
 		details: z.string().nullable().optional(),
 		performerName: z.string().min(1),
 		targetName: z.string().nullable(),
@@ -86,7 +86,8 @@ export const ticketHistoryEntrySchema = z
 		if (entry.action === "WATCHER_CHANGED" && entry.details) {
 			try {
 				const parsed = JSON.parse(entry.details);
-				if (typeof parsed !== "object" || !parsed) throw new Error("invalid shape");
+				if (typeof parsed !== "object" || !parsed)
+					throw new Error("invalid shape");
 				if (parsed.from !== null && typeof parsed.from !== "string")
 					throw new Error("invalid from");
 				if (parsed.to !== null && typeof parsed.to !== "string")

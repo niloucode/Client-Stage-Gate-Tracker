@@ -34,7 +34,7 @@ export default function SignupPage() {
 
 				{/* Form — vertically centred */}
 				<div className="flex flex-col justify-center flex-1">
-					<div className="w-full max-w-[340px] mx-auto">
+					<div className="w-full bg-neutral-surface rounded-md p-6 border border-brand-100 max-w-[380px] mx-auto">
 						<div className="mb-7">
 							<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
 								Create your account
@@ -45,24 +45,6 @@ export default function SignupPage() {
 				</div>
 
 				{/* Footer */}
-				<div className="text-center mt-6">
-					<p className="text-[11px] text-gray-400 leading-relaxed">
-						By signing up, you agree to our{" "}
-						<Link
-							href="#"
-							className="underline hover:text-gray-500 transition-colors"
-						>
-							Terms of Service
-						</Link>{" "}
-						and{" "}
-						<Link
-							href="#"
-							className="underline hover:text-gray-500 transition-colors"
-						>
-							Privacy Policy
-						</Link>
-					</p>
-				</div>
 			</div>
 
 			{/* ── Right Panel ── */}

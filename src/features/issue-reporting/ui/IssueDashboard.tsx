@@ -239,7 +239,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   textColor,
   className = "",
 }) => (
-  <Card className={`border border-border bg-card shadow-xs hover:shadow-sm transition-all rounded-2xl ${className}`}>
+  <Card className={`border border-border bg-card shadow-xs hover:shadow-sm transition-all rounded-md ${className}`}>
     <CardHeader className="pb-2 space-y-0">
       <CardTitle className="text-xs font-semibold text-muted-foreground tracking-wide">
         {title}
@@ -258,20 +258,22 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 export interface IssueCardProps {
   issue: IssueItem;
   onClick?: () => void;
+  onLinkClick?: (issue: IssueItem) => void; // Callback to link this specific issue
   className?: string;
 }
 
 export const IssueCard: React.FC<IssueCardProps> = ({
   issue,
   onClick,
+  onLinkClick,
   className = "",
 }) => {
   const urgencyDotColor =
     issue.urgency === "high"
       ? "bg-red-600"
       : issue.urgency === "medium"
-      ? "bg-yellow-500"
-      : "bg-green-600";
+      ? "bg-orange-500"
+      : "bg-yellow-600";
 
   const formattedType =
     issue.type === "other" && issue.specificType
@@ -281,13 +283,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`flex items-center justify-between p-4 bg-card border border-border rounded-2xl hover:border-brand-200 hover:bg-brand-10/50 cursor-pointer transition-all group ${className}`}
+      className={`flex items-center justify-between p-3.5 bg-card border border-border rounded-md hover:border-brand-200 hover:bg-brand-10/50 cursor-pointer transition-all group ${className}`}
     >
-      <div className="flex items-center gap-4 min-w-0">
+      <div className="flex items-center gap-3.5 min-w-0">
         {issue.status !== "resolved" && (
           <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${urgencyDotColor}`} />
         )}
-        <div className="space-y-1 min-w-0">
+        <div className="space-y-0.5 min-w-0">
           <h4 className="text-sm font-bold text-foreground truncate group-hover:text-brand-500 transition-colors">
             {issue.name}
           </h4>
@@ -296,7 +298,25 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           </p>
         </div>
       </div>
-      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground shrink-0 ml-4 transition-colors" />
+
+      <div className="flex items-center gap-2 shrink-0 ml-4">
+        {/* Row-Level "Link" Button */}
+        {onLinkClick && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevents opening the details modal
+              onLinkClick(issue);
+            }}
+            className="h-8 gap-1.5 text-xs font-semibold text-brand-600 border-brand-200 hover:bg-brand-50 hover:text-brand-700 rounded-md"
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+            <span>Link</span>
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
@@ -304,6 +324,12 @@ export const IssueCard: React.FC<IssueCardProps> = ({
 /* -------------------------------------------------------------------------- */
 /* 3. ISSUE DETAILS MODAL (EXPORTED)                                          */
 /* -------------------------------------------------------------------------- */
+
+export interface IssueDetailsModalProps {
+  issue: IssueItem | null;
+  open: boolean;
+  onClose: () => void;
+}
 
 export interface IssueDetailsModalProps {
   issue: IssueItem | null;
@@ -320,7 +346,7 @@ export const IssueDetailsModal: React.FC<IssueDetailsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className="max-w-2xl bg-card border-border rounded-2xl">
+      <DialogContent className="max-w-2xl bg-card border-border rounded-md shadow-2xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <DialogTitle className="text-foreground font-bold">Issue Details</DialogTitle>
@@ -383,7 +409,7 @@ export const IssueDetailsModal: React.FC<IssueDetailsModalProps> = ({
 
           <div className="space-y-1.5">
             <span className="text-xs font-semibold text-muted-foreground block">Description</span>
-            <p className="text-sm leading-relaxed bg-brand-10 p-3 rounded-xl border border-border text-foreground">
+            <p className="text-sm leading-relaxed bg-brand-10 p-3 rounded-md border border-border text-foreground">
               {issue.description || "No description provided."}
             </p>
           </div>
@@ -395,7 +421,7 @@ export const IssueDetailsModal: React.FC<IssueDetailsModalProps> = ({
                 <span className="text-xs font-semibold text-muted-foreground block">Steps to Reproduce</span>
                 <div className="space-y-2.5">
                   {issue.steps.map((step, idx) => (
-                    <div key={step.id || idx} className="flex items-center gap-3 bg-brand-10/80 p-3 rounded-xl border border-border">
+                    <div key={step.id || idx} className="flex items-center gap-3 bg-brand-10/80 p-3 rounded-md border border-border">
                       <div className="w-6 h-6 rounded-full bg-brand-500 text-primary-foreground text-xs font-semibold flex items-center justify-center shrink-0">
                         {idx + 1}
                       </div>
@@ -430,6 +456,8 @@ export interface IssueBoxProps {
   defaultUrgencyFilter?: UrgencyFilterOption;
   onIssueClick?: (issue: IssueItem) => void;
   onNewIssueClick?: () => void;
+  showNewIssueButton?: boolean;
+  onLinkIssue?: (issue: IssueItem) => void; // Fired when row "Link" button is clicked
   className?: string;
 }
 
@@ -442,6 +470,8 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
   defaultUrgencyFilter = "all",
   onIssueClick,
   onNewIssueClick,
+  showNewIssueButton = true,
+  onLinkIssue,
   className = "",
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -489,10 +519,11 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
   };
 
   return (
-    <Card className={`shadow-xs rounded-2xl border border-border overflow-hidden bg-card ${className}`}>
-      {/* Box Header */}
-      <div className="px-6 py-4 border-b border-border flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
+    <Card className={`shadow-xs rounded-md border border-border overflow-hidden bg-card ${className}`}>
+      {/* Box Header - Tight padding level with the close X button */}
+      <div className="px-5 py-2.5 pr-12 border-b border-border flex items-center justify-between flex-wrap gap-2.5">
+        {/* Left side: Title, Badge, and Filter/Sort Controls */}
+        <div className="flex items-center gap-2.5 flex-wrap">
           <h3 className="text-base font-bold capitalize text-foreground">
             {title}
           </h3>
@@ -502,11 +533,9 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
           >
             {filteredByUrgency.length} / {totalCountDenominator}
           </Badge>
-        </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
           {/* Urgency Filter Dropdown */}
-          <div className="flex items-center gap-1.5 border border-border bg-card rounded-xl px-2.5 h-9 text-xs font-medium text-foreground hover:bg-neutral-subtle transition-colors">
+          <div className="flex items-center gap-1.5 border border-border bg-card rounded-md px-2.5 h-8 text-xs font-medium text-foreground hover:bg-neutral-subtle transition-colors">
             <Filter className="w-3.5 h-3.5 text-muted-foreground" />
             <select
               value={urgencyFilter}
@@ -525,7 +554,7 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
             variant="outline"
             size="sm"
             onClick={toggleSortOrder}
-            className="text-xs h-9 gap-1.5 font-medium rounded-xl border-border bg-card hover:bg-neutral-subtle text-foreground"
+            className="text-xs h-8 gap-1.5 font-medium rounded-md border-border bg-card hover:bg-neutral-subtle text-foreground"
           >
             {sortByUrgency === "desc" && <ArrowDown className="w-3.5 h-3.5 text-red-600" />}
             {sortByUrgency === "asc" && <ArrowUp className="w-3.5 h-3.5 text-green-600" />}
@@ -539,24 +568,26 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
                 : "Default"}
             </span>
           </Button>
+        </div>
 
-          {/* New Issue Button */}
-          {onNewIssueClick && (
+        {/* Right side: New Issue Button (ONLY shown if showNewIssueButton is true) */}
+        {showNewIssueButton && onNewIssueClick && (
+          <div className="flex items-center gap-2">
             <Button
               onClick={onNewIssueClick}
-              className="bg-brand-500 hover:bg-brand-600 text-primary-foreground text-xs font-bold px-4 h-9 rounded-xl flex items-center gap-1.5 shrink-0 shadow-xs"
+              className="bg-brand-500 hover:bg-brand-600 text-primary-foreground text-xs font-bold px-3.5 h-8 rounded-md flex items-center gap-1.5 shrink-0 shadow-xs"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>New Issue</span>
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* List Content */}
-      <CardContent className="space-y-3 p-6">
+      <CardContent className="space-y-2.5 p-4">
         {paginatedIssues.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center space-y-2">
+          <div className="py-10 text-center text-muted-foreground flex flex-col items-center justify-center space-y-2">
             <AlertCircle className="w-8 h-8 text-muted-foreground/40" />
             <p className="text-sm">No issues match the selected urgency criteria.</p>
           </div>
@@ -566,13 +597,14 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
               key={issue.id}
               issue={issue}
               onClick={() => onIssueClick && onIssueClick(issue)}
+              onLinkClick={onLinkIssue}
             />
           ))
         )}
       </CardContent>
 
       {/* Pagination Controls Footer */}
-      <div className="px-6 py-4 border-t border-border flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium">
+      <div className="px-5 py-3 border-t border-border flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium">
         <Button
           variant="ghost"
           size="icon"
@@ -676,7 +708,7 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
           </div>
 
           {/* Filter Tabs Toolbar Row */}
-          <div className="bg-brand-50/60 p-1.5 rounded-2xl flex items-center justify-between gap-3 border border-border">
+          <div className="bg-brand-50/60 p-1.5 rounded-md flex items-center justify-between gap-3 border border-border">
             <div className="flex items-center gap-2 flex-1">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -687,7 +719,7 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
                     type="button"
                     variant={isActive ? "default" : "ghost"}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 h-10 gap-2 text-xs font-semibold rounded-xl transition-all ${
+                    className={`flex-1 h-10 gap-2 text-xs font-semibold rounded-md transition-all ${
                       isActive
                         ? "bg-brand-500 text-primary-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground hover:bg-transparent"

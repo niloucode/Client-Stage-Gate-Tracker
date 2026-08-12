@@ -2,10 +2,10 @@
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
-import { clientKeys } from "@/shared/query/keys"
-import { clientSelectAll } from "./clientActions"
+import { clientKeys } from "@/shared/query/keys";
+import { clientSelectAll } from "./clientActions";
 
-export const clientQueryOptions = {
+const clientQueryOptions = {
 	list: () =>
 		queryOptions({
 			queryKey: clientKeys.lists(),

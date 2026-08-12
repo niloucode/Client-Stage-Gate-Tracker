@@ -21,7 +21,7 @@ import { SubmitButton } from "./SubmitButton";
  *     <form.AppForm><form.SubmitButton /></form.AppForm>
  *   </form>
  */
-export const fieldComponents = {
+const fieldComponents = {
 	TextField,
 	TextAreaField,
 	SelectField,
@@ -29,7 +29,7 @@ export const fieldComponents = {
 	PhoneField,
 };
 
-export const formComponents = {
+const formComponents = {
 	SubmitButton,
 };
 

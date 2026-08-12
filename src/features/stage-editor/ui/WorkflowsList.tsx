@@ -325,7 +325,7 @@ export function WorkflowsList({
 								<div>
 									<Link
 										href={`/projects/${projectId}/workflows/${workflow.workflow_id}`}
-										className="font-normal text-sm text-slate-900 hover:text-brand-600 transition-colors"
+										className="font-light text-sm text-slate-900 hover:text-brand-600 transition-colors"
 									>
 										{workflow.name}
 									</Link>

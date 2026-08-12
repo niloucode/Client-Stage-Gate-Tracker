@@ -337,7 +337,7 @@ export function ContractViewer({
 								<embed
 									src={`${fileUrl}#toolbar=0`}
 									type="application/pdf"
-									className="aspect-[8.5/11] w-full rounded-lg border border-lavender-100 bg-[#D2D9F4] shadow-sm"
+									className="aspect-[8.5/11] w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
 								/>
 							</div>
 						</div>

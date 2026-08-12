@@ -4,7 +4,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { contractKeys } from "@/shared/query/keys";
 import { getContractByProjectId } from "./contractActions";
 
-export const contractQueryOptions = {
+const contractQueryOptions = {
 	detail: (projectId: string | undefined) =>
 		queryOptions({
 			queryKey: contractKeys.detail(projectId!),

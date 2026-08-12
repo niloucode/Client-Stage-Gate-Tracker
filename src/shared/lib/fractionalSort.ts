@@ -14,7 +14,7 @@ export interface SortableSibling {
 	sort_key: string | null;
 }
 
-export interface ReorderResult {
+interface ReorderResult {
 	success: boolean;
 	error?: string;
 	/** New fractional sort key; set when the row actually moves. */

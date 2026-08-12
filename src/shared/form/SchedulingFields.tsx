@@ -3,14 +3,14 @@
 import type { AppForm } from "./useAppForm";
 import { cn } from "@/lib/utils";
 
-export interface SchedulingFieldNames {
+interface SchedulingFieldNames {
 	planStart?: string;
 	planEnd?: string;
 	actualStart?: string;
 	actualEnd?: string;
 }
 
-export interface SchedulingFieldsProps {
+interface SchedulingFieldsProps {
 	/** The form instance from `useAppForm`. */
 	form: AppForm;
 	/** Field names in the form values; defaults to the canonical vocabulary. */
