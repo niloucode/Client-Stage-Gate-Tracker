@@ -8,6 +8,7 @@ import {
   EllipsisVertical,
   Pencil,
   Trash2,
+  LucideIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,21 +58,11 @@ interface StageSequenceProps {
 
 // ─── Shared UI Helpers ───────────────────────────────────────────────────────
 
-function SectionLabel({
-  icon: Icon,
-  label,
-  className = "",
-}: {
-  icon: React.ElementType;
-  label: string;
-  className?: string;
-}) {
+function SectionLabel({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div
-      className={`flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase ${className}`}
-    >
-      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span>{label}</span>
+    <div className="flex items-center gap-1.5">
+      <Icon className="h-3.5 w-3.5 shrink-0 section-title"/>
+      <span className="section-title">{label}</span>
     </div>
   );
 }

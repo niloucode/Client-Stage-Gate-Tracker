@@ -58,9 +58,9 @@ export default function ClientPage() {
 			<main className="flex flex-1 flex-col overflow-hidden">
 				<div className="mb-6">
 					<h1 className="text-4xl font-bold tracking-wide text-foreground">
-						Client List
+						Clients
 					</h1>
-					<p className="mt-1 text-base text-muted-foreground">
+					<p className="subtitle">
 						View the clients your company is working with.
 					</p>
 				</div>

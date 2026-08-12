@@ -105,9 +105,9 @@ export function TicketCardContent({
 					</div>
 
 					{/* Title */}
-					<span className="w-3/4 text-lg font-semibold text-gray-900 leading-snug break-words min-w-0 mt-0.5">
+					<h3 className="line-clamp-1">
 						{ticket.name}
-					</span>
+					</h3>
 
 					{/* Description */}
 					<div className="w-3/4 text-xs text-neutral-border line-clamp-2 min-w-0 mt-1 break-words">

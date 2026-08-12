@@ -21,7 +21,7 @@ const stageFormSchema = z.object({
 	name: z
 		.string()
 		.min(1, "Stage name is required")
-		.max(60, "Stage name must be 60 characters or less"),
+		.max(20, "Stage name must be 20 characters or less"),
 	description: z
 		.string()
 		.max(160, "Description must be 160 characters or less")
@@ -242,7 +242,7 @@ export function StageModal({
 						variant="input"
 						label="Stage Name"
 						required
-						maxLength={60}
+						maxLength={32}
 						value={formData.name}
 						placeholder="e.g., Discovery & UX"
 						error={fieldErrors.name}

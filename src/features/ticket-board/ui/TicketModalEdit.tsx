@@ -231,7 +231,7 @@ export default function TicketModalEdit({
 
 			{/* Modal Panel */}
 			<div
-				className={`fixed top-0 right-0 h-full w-[40rem] bg-neutral-surface shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+				className={`fixed top-0 right-0 h-full w-160 bg-neutral-surface shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
 			>
 				{/* 1. Header */}
 				<div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
@@ -309,10 +309,10 @@ export default function TicketModalEdit({
 								<span className="font-mono text-sm text-brand-500">
 									LRN-BNN
 								</span>
-								<span className="font-semibold text-lg">
+								<span className="font-light text-lg">
 									Lorens Banana Recipe for Rogers
 								</span>
-								<div className="flex items-center gap-2 text-sm font-bold text-neutral-border">
+								<div className="flex items-center gap-2 text-sm font-light text-neutral-border">
 									<Calendar size={12} strokeWidth={3} />
 									<span>Lorens Banana</span>
 								</div>
@@ -359,13 +359,9 @@ export default function TicketModalEdit({
 					>
 						Cancel
 					</button>
-					<button
-						type="button"
-						onClick={handleSave}
-						className="text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 px-4 py-2 rounded-md transition-colors"
-					>
+					<Button	onClick={handleSave}>
 						Save Changes
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -436,7 +432,7 @@ function TicketTitleAndStatus({
 							setTicket((t) => (t ? { ...t, name: e.target.value } : t))
 						}
 						placeholder="Ticket title..."
-						className="-ml-1 text-ellipsis text-2xl font-bold text-gray-900 bg-transparent border border-transparent hover:border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none rounded-md px-1.5 py-0.5 leading-tight placeholder:text-gray-300 max-w-[calc(100%-2rem)] [field-sizing:content]"
+						className="-ml-1 text-ellipsis text-2xl font-light text-gray-900 bg-transparent border border-transparent hover:border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none rounded-md px-1.5 py-0.5 leading-tight placeholder:text-gray-300 max-w-[calc(100%-2rem)] [field-sizing:content]"
 					/>
 					<Pencil
 						size={16}
@@ -511,7 +507,7 @@ function TicketTitleAndStatus({
 				</div>
 
 				<DropdownMenu>
-					<DropdownMenuTrigger className="text-xs text-brand-600 hover:text-indigo-700 font-medium px-2 py-1 rounded-md border border-indigo-200 hover:bg-indigo-50 transition-colors focus:outline-none shrink-0 ml-auto">
+					<DropdownMenuTrigger className="text-xs text-brand-600 hover:text-indigo-700 font-medium px-2 py-1 rounded-sm border border-brand-100 hover:bg-indigo-50 transition-colors focus:outline-none shrink-0 ml-auto">
 						+ Add Tags
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
@@ -568,7 +564,7 @@ function TicketAssignees({
 					</Label>
 					{availableProfiles.length > 0 && (
 						<DropdownMenu>
-							<DropdownMenuTrigger className="text-2xs text-brand-600 hover:bg-indigo-50 font-medium transition-colors border border-indigo-200 rounded px-1.5 focus:outline-none inline-flex items-center justify-center gap-1 leading-none">
+							<DropdownMenuTrigger className="text-2xs text-brand-600 hover:bg-indigo-50 font-medium transition-colors rounded-sm border border-brand-100 px-1.5 focus:outline-none inline-flex items-center justify-center gap-1 leading-none">
 								<Plus className="w-3 h-3 stroke-[2.5]" />
 								<span>Add</span>
 							</DropdownMenuTrigger>
@@ -665,7 +661,7 @@ function TicketAssignees({
 						WATCHER
 					</Label>
 					<DropdownMenu>
-						<DropdownMenuTrigger className="text-2xs text-brand-600 hover:bg-indigo-50 font-medium transition-colors border border-indigo-200 rounded px-1.5 py-0.5 focus:outline-none inline-flex items-center justify-center gap-1 leading-none">
+						<DropdownMenuTrigger className="text-2xs text-brand-600 hover:bg-indigo-50 font-medium transition-colors rounded-sm border border-brand-100 px-1.5 py-0.5 focus:outline-none inline-flex items-center justify-center gap-1 leading-none">
 							<Plus className="w-3 h-3 stroke-[2.5]" />
 							<span>Assign</span>
 						</DropdownMenuTrigger>

@@ -785,7 +785,7 @@ const DateTimePicker = React.forwardRef<
 					disabled={disabled}
 					render={
 						<Button
-							variant="outline"
+							variant="secondary"
 							className={cn(
 								"w-full justify-start text-left font-normal",
 								!value && "text-muted-foreground",

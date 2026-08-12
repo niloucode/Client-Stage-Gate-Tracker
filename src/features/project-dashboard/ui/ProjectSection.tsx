@@ -64,17 +64,17 @@ export function ProjectSection({
                 onClick={onToggle}
                 className="rounded-md cursor-pointer select-none border border-brand-100 w-full flex items-center justify-between px-5 py-3 bg-neutral-surface-subtle transition-colors hover:bg-neutral-subtle"
             >
-                <div className="flex items-center gap-2">
-                    <IconComponent size={18} className={config.icolor} />
-                    <h2 className="text-[23px] font-semibold text-foreground">{title}</h2>
+                <div className="flex items-center gap-5 py-1">
+                    <IconComponent size={24} className={config.icolor} />
+                    <h2>{title}</h2>
                     <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.color} ${config.bg}`}
+                        className={`text-md font-semibold px-4 py-0.5 rounded-full ${config.color} ${config.bg}`}
                     >
                         {projects.length}
                     </span>
                 </div>
                 <ChevronDown
-                    size={20}
+                    size={24}
                     className={`text-neutral-border transform transition-transform duration-300 ease-in-out ${
                         isExpanded ? "rotate-180" : ""
                     }`}

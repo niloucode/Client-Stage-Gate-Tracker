@@ -78,7 +78,59 @@ h1 {
     font-weight: 200;                     /* "200" = Extra Light / Thin */
     font-size: clamp(44px, 5vw, 84px);    /* "44–84px" = fluid scaling between min and max */
     letter-spacing: -0.035em;             /* Tightens the letters slightly */
-    line-height: 1.0;                     /* "1.0" = perfectly snug (no extra space between lines) */
+    line-height: 1.0;   
+		padding:0.0;
+		margin:0.0;                  /* "1.0" = perfectly snug (no extra space between lines) */
+}
+
+/* H2 - Subheading */
+h2 {
+    font-weight: 300;
+    font-size: clamp(28px, 4vw, 36px);
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    margin: 0;
+    padding: 0;
+    color: #262626;  /* neutral-800 */
+}
+
+/* H3 - Card Title */
+h3 {
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    margin: 0;
+    padding: 0;
+    color: #404040;  /* neutral-700 */
+}
+
+/* H4 - Small Heading */
+h4 {
+    font-weight: 300;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0;
+    color: #525252;  /* neutral-600 */
+}
+
+.subtitle {
+		margin-top: 10px;
+		font-family: 'Inter', sans-serif;
+    font-weight: 300;              /* Light weight */
+    font-size: clamp(16px, 1.5vw, 18px);  /* Scales from 16px to 18px */
+    line-height: 1.75;             /* Comfortable reading spacing (175% of font size) */
+		color:#7E7384;
+}
+
+.section-title {
+		font-family: 'Inter', sans-serif;
+    font-weight: 300;              /* Light weight */
+    font-size: 15px;  /* Scales from 16px to 18px */
+		color:#7E7384;    
+		text-transform: uppercase;
 }
 
 body {

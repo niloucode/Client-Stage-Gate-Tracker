@@ -177,9 +177,9 @@ const DEFAULT_MOCK_DATA = {
 
 function SectionLabel({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-2xs font-semibold tracking-wider text-muted-foreground uppercase">
-      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span>{label}</span>
+    <div className="flex items-center gap-1.5">
+      <Icon className="h-3.5 w-3.5 shrink-0 section-title"/>
+      <span className="section-title">{label}</span>
     </div>
   );
 }
@@ -189,16 +189,13 @@ function ProjectOverviewCard({ projectName, progress }: { projectName: string; p
     <Card className="h-full border border-warm-gray-200 bg-neutral-surface shadow-xs">
       <CardHeader>
         <SectionLabel icon={LayoutDashboard} label="Project Overview" />
-        <CardTitle className="mt-1 text-2xl font-bold tracking-tight text-charcoal sm:text-3xl">
+        <h2>
           {projectName}
-        </CardTitle>
+        </h2>
       </CardHeader>
-      <CardContent className="pt-1 space-y-2">
+      <CardContent className="flex flex-col gap-1 pt-1 mt-6">
         <SectionLabel icon={BarChart2} label="Overall Progress" />
-        <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{progress}</span>
-          <span className="text-xl font-semibold text-muted-foreground sm:text-2xl">%</span>
-        </div>
+        <h2>{progress}%</h2>
         <div className="h-2.5 w-full overflow-hidden rounded-full border border-neutral-border/10 bg-neutral-subtle">
           <div
             className="h-full rounded-full bg-green-600 transition-all duration-500"
@@ -256,7 +253,7 @@ function ProjectAccessCard({
 
 function StatCard({ label, done, total, icon: Icon }: StatItem) {
   return (
-    <Card size="sm" className="border border-warm-gray-200 bg-neutral-surface shadow-xs">
+    <Card size="sm" className=" bg-neutral-surface">
       <CardContent className="flex items-center gap-3.5 p-3.5">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-brand-500/20 bg-brand-500/10 text-brand-600">
           <Icon className="h-3.5 w-3.5" />
@@ -264,7 +261,7 @@ function StatCard({ label, done, total, icon: Icon }: StatItem) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-2xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
           <p className="text-xl font-bold leading-tight text-brand-600 sm:text-2xl">
-            {done} <span className="text-xs font-normal text-muted-foreground">/ {total}</span>
+            {done} <span className="text-sm font-normal text-muted-foreground">/ {total}</span>
           </p>
         </div>
       </CardContent>
@@ -287,7 +284,7 @@ function TicketCard({ title, workflowName, daysLeft, isExpiring, isUrgent, assig
             <Workflow className="h-3 w-3 shrink-0" />
             <span>{workflowName}</span>
           </Badge>
-          <span className="truncate text-xs font-medium text-charcoal sm:text-sm">{title}</span>
+          <h4>{title}</h4>
         </div>
 
         {/* Center: Assignees & Watcher Profile */}
@@ -352,11 +349,7 @@ function StageActionButton({
   return (
     <Button
       variant="outline"
-      className={`h-auto w-full rounded-md p-3.5 text-left font-normal ${
-        isPrimary
-          ? "border-brand-500/30 bg-brand-50/50 text-brand-600 hover:bg-brand-50"
-          : "border-warm-gray-200 bg-neutral-surface text-charcoal hover:bg-neutral-subtle/50"
-      }`}
+      className={`h-auto w-full rounded-sm! p-3.5 text-left font-normal ${"border-brand-500/30 bg-neutral-surface text-brand-600 hover:bg-brand-50"}`}
       {...props}
     >
       <div className="flex w-full items-center justify-between gap-3 min-w-0">
@@ -456,7 +449,7 @@ export function ProjectStructure({
         {/* Stage Sequence & Detailed Content */}
         <Card className="overflow-hidden rounded-md border border-warm-gray-200 bg-neutral-surface shadow-xs lg:col-span-10">
           {/* Stage Sequence Header */}
-          <div className="border-b border-warm-gray-200 px-4 pb-7">
+          <div className="border-b border-warm-gray-200 px-4">
             <StageSequence
               stages={visibleStages}
               selectedId={selectedStageId}
@@ -560,8 +553,10 @@ export function ProjectStructure({
             <Card className="border border-warm-gray-200 bg-neutral-subtle/50">
               <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <CardTitle className="text-base font-bold text-charcoal sm:text-lg">
+                  <CardTitle>
+                    <h3>
                     {currentPhase.name}
+                    </h3>
                   </CardTitle>
                   <CardDescription className="mt-0.5 text-xs text-muted-foreground">
                     {currentPhase.description}

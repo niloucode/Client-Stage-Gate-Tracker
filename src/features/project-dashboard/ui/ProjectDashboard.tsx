@@ -167,7 +167,7 @@ export function ProjectDashboard() {
 			<div className="flex justify-between items-end mb-6">
 				<div>
 					<h1>Projects</h1>
-					<p className="text-sm text-neutral-border mt-1">
+					<p className="subtitle">
 						Manage and track the projects assigned to you.
 					</p>
 				</div>

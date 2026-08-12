@@ -325,7 +325,7 @@ export function WorkflowsList({
 								<div>
 									<Link
 										href={`/projects/${projectId}/workflows/${workflow.workflow_id}`}
-										className="font-normal text-sm text-slate-900 hover:text-brand-600 transition-colors"
+										className="font-light text-sm text-slate-900 hover:text-brand-600 transition-colors"
 									>
 										{workflow.name}
 									</Link>
@@ -407,7 +407,7 @@ export function WorkflowsList({
 				{/* Add Workflow Button */}
 				<button
 					onClick={openCreateWorkflowModal}
-					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-md flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
+					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
 					style={{ width: "calc(100% - 24px)" }}
 				>
 					<Plus size={16} className={"text-brand-200"} />
