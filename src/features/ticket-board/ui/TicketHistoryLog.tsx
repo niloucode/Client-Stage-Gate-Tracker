@@ -310,7 +310,7 @@ export default function TicketHistoryLog({
 	const hasMore = history.length > INITIAL_VISIBLE;
 
 	return (
-		<div className="px-5 pb-4 max-h-[20rem] mb-6 overflow-y-scroll border-b border-gray-100">
+		<div className="px-5 pb-4 max-h-[12rem] mb-6 overflow-y-scroll border-b border-gray-100">
 
 			{isLoading ? (
 				<p className="text-sm text-gray-400">Loading activity…</p>

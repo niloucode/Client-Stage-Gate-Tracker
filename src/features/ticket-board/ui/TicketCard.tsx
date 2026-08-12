@@ -138,7 +138,7 @@ export function TicketCardContent({
 							)}
 						</div>
 
-						{ticket.Profiles ? (
+						{ticket.Profile ? (
 							<Avatar className="w-6 h-6 text-[9px] shrink-0">
 								<AvatarFallback className="bg-gray-600 text-neutral-surface text-[9px] font-bold">
 									{getInitials(

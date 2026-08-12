@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react"
-import { FormInput } from "@/components/ui/forminput"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tag } from "@/entities/types"
+import { useState } from "react";
+import { FormInput } from "@/components/ui/forminput";
+import { Label } from "@/components/ui/label";
+import { Tag } from "@/entities/types";
 
 import {
 	Dialog,
@@ -14,13 +13,28 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuSeparator,
+	DropdownMenuCheckboxItem,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Check, Paperclip } from "lucide-react";
+import { ChevronDown, Paperclip } from "lucide-react";
 import { useProfiles } from "@/entities/profile/queries";
 import { createClient } from "@/lib/supabase/client";
 import type { CreateTicketParams } from "@/shared/schemas";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Sample bugs list for linking issues to tickets
+const SAMPLE_BUGS = [
+	{ id: "iss-1", name: "Authentication Token Expiration Bug" },
+	{ id: "iss-2", name: "Client Dropdown Not Populating" },
+	{ id: "iss-5", name: "Broken Navigation Links in Footer" },
+	{ id: "iss-6", name: "Database Timeout on Analytics Load" },
+];
 
 /** Fields the modal collects — everything except workflow_id and status (added by TicketBoard). */
 type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
@@ -32,8 +46,6 @@ interface CreateTicketModalProps {
 	tags: Tag[];
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export default function TicketModalCreate({
 	isOpen,
 	onClose,
@@ -44,20 +56,14 @@ export default function TicketModalCreate({
 	const [description, setDescription] = useState("");
 	const [startDate, setStartDate] = useState("");
 	const [deadline, setDeadline] = useState("");
-	const today = new Date().toISOString().split("T")[0];
 
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);
-	const [tagsOpen, setTagsOpen] = useState(false);
-	const tagsRef = useRef<HTMLDivElement>(null);
+	const [selectedBugId, setSelectedBugId] = useState("");
 
 	const { data: profiles = [] } = useProfiles();
 
-	const [assignedOpen, setAssignedOpen] = useState(false);
 	const [assignedIds, setAssignedIds] = useState<string[]>([]);
 	const [watcherId, setWatcherId] = useState("");
-	const [watcherOpen, setWatcherOpen] = useState(false);
-	const assignedRef = useRef<HTMLDivElement>(null);
-	const watcherRef = useRef<HTMLDivElement>(null);
 
 	const [imageFiles, setImageFiles] = useState<File[]>([]);
 	const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -66,28 +72,6 @@ export default function TicketModalCreate({
 		"GET",
 	);
 	const [apiRoute, setApiRoute] = useState("");
-
-	useEffect(() => {
-		function handleClickOutside(e: MouseEvent) {
-			if (tagsRef.current && !tagsRef.current.contains(e.target as Node)) {
-				setTagsOpen(false);
-			}
-			if (
-				assignedRef.current &&
-				!assignedRef.current.contains(e.target as Node)
-			) {
-				setAssignedOpen(false);
-			}
-			if (
-				watcherRef.current &&
-				!watcherRef.current.contains(e.target as Node)
-			) {
-				setWatcherOpen(false);
-			}
-		}
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
 
 	function toggleTag(tagId: string) {
 		setSelectedTags((prev) =>
@@ -140,7 +124,6 @@ export default function TicketModalCreate({
 
 		const imageUrls: string[] = [];
 
-		// Upload images to Supabase
 		if (imageFiles.length > 0) {
 			try {
 				const supabase = createClient();
@@ -172,7 +155,7 @@ export default function TicketModalCreate({
 
 		onCreateTicket({
 			name: title.trim(),
-			// start_date: startDate ? new Date(startDate) : null,
+			plan_start_at: startDate ? new Date(startDate) : null,
 			plan_end_at: deadline ? new Date(deadline) : new Date(),
 			watcher_id: watcherId || null,
 			TicketAssigned: assignedIds,
@@ -188,6 +171,7 @@ export default function TicketModalCreate({
 		setStartDate("");
 		setDeadline("");
 		setWatcherId("");
+		setSelectedBugId("");
 		setSelectedTags([]);
 		setAssignedIds([]);
 		setImageFiles([]);
@@ -215,12 +199,12 @@ export default function TicketModalCreate({
 				if (!open) onClose();
 			}}
 		>
-			<DialogContent className="sm:max-w-2xl">
+			<DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
 				{/* Modal header */}
 				<DialogHeader>
 					<DialogTitle>New Ticket</DialogTitle>
 					<DialogDescription>
-						Create a new ticket for the board board.
+						Create a new ticket for the board.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -255,14 +239,10 @@ export default function TicketModalCreate({
 					{/* Assigned to + Watchers row */}
 					<div className="grid grid-cols-2 gap-4">
 						{/* Assigned To */}
-						<div className="space-y-1.5" ref={assignedRef}>
+						<div className="space-y-1.5">
 							<Label>Assigned To</Label>
-							<div className="relative">
-								<button
-									type="button"
-									onClick={() => setAssignedOpen((o) => !o)}
-									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
-								>
+							<DropdownMenu>
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
 									<div className="flex flex-wrap gap-1 flex-1">
 										{assignedIds.length === 0 ? (
 											<span className="text-gray-400">Assign to...</span>
@@ -279,7 +259,11 @@ export default function TicketModalCreate({
 														{profile?.first_name + " " + profile?.last_name}
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
-															onClick={() => toggleAssigned(profileId)}
+															onClick={(e) => {
+																e.stopPropagation();
+																e.preventDefault();
+																toggleAssigned(profileId);
+															}}
 														>
 															×
 														</span>
@@ -288,198 +272,222 @@ export default function TicketModalCreate({
 											})
 										)}
 									</div>
-									<ChevronDown />
-								</button>
+									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+								</DropdownMenuTrigger>
 
-								{assignedOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-										{profiles.map((profile) => (
-											<div
+								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
+									<DropdownMenuSeparator />
+									{profiles.map((profile) => {
+										const isChecked = assignedIds.includes(profile.profile_id);
+										const name = `${profile.first_name} ${profile.last_name}`;
+										const initials = name
+											.split(" ")
+											.map((n) => n[0])
+											.join("");
+										return (
+											<DropdownMenuCheckboxItem
 												key={profile.profile_id}
-												onClick={() => toggleAssigned(profile.profile_id)}
-												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+												checked={isChecked}
+												onCheckedChange={() => toggleAssigned(profile.profile_id)}
+												className="cursor-pointer"
 											>
-												<div
-													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
-														assignedIds.includes(profile.profile_id)
-															? "bg-brand-600 border-brand-600"
-															: "border-gray-300"
-													}`}
-												>
-													{assignedIds.includes(profile.profile_id) && (
-														<Check
-															size={10}
-															strokeWidth={2}
-															className="text-neutral-surface"
-														/>
-													)}
-												</div>
-												<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
-													{(profile.first_name + " " + profile.last_name)
-														.split(" ")
-														.map((n) => n[0])
-														.join("")}
-												</div>
-												{profile?.first_name + " " + profile?.last_name}
-											</div>
-										))}
-									</div>
-								)}
-							</div>
+												<span className="flex items-center gap-2">
+													<span className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
+														{initials}
+													</span>
+													<span className="truncate">{name}</span>
+												</span>
+											</DropdownMenuCheckboxItem>
+										);
+									})}
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 
 						{/* Watcher */}
-						<div className="space-y-1.5" ref={watcherRef}>
+						<div className="space-y-1.5">
 							<Label>Watcher</Label>
-							<div className="relative">
-								<button
-									type="button"
-									onClick={() => setWatcherOpen((o) => !o)}
-									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
-								>
-									<span className="text-gray-400">
+							<DropdownMenu>
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+									<span className="text-gray-400 truncate">
 										{watcherId
-											? profiles.find((p) => p.profile_id === watcherId)
-													?.first_name +
-												" " +
-												profiles.find((p) => p.profile_id === watcherId)
-													?.last_name
+											? (() => {
+													const p = profiles.find(
+														(x) => x.profile_id === watcherId,
+													);
+													return p
+														? `${p.first_name} ${p.last_name}`
+														: "Add watchers...";
+											  })()
 											: "Add watchers..."}
 									</span>
-									<ChevronDown />
-								</button>
-								{watcherOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-										<div
-											onClick={() => {
-												setWatcherId("");
-												setWatcherOpen(false);
-											}}
-											className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+								</DropdownMenuTrigger>
+
+								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
+									<DropdownMenuSeparator />
+									<DropdownMenuRadioGroup
+										value={watcherId}
+										onValueChange={setWatcherId}
+									>
+										<DropdownMenuRadioItem
+											value=""
+											className="cursor-pointer text-gray-400"
 										>
-											<span className="text-gray-400">None</span>
-										</div>
-										{profiles.map((profile) => (
-											<div
-												key={profile.profile_id}
-												onClick={() => {
-													setWatcherId(profile.profile_id);
-													setWatcherOpen(false);
-												}}
-												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
-											>
-												<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
-													{(profile.first_name + " " + profile.last_name)
-														.split(" ")
-														.map((n) => n[0])
-														.join("")}
-												</div>
-												{profile?.first_name + " " + profile?.last_name}
-											</div>
-										))}
-									</div>
-								)}
-							</div>
+											None
+										</DropdownMenuRadioItem>
+										{profiles.map((profile) => {
+											const name = `${profile.first_name} ${profile.last_name}`;
+											const initials = name
+												.split(" ")
+												.map((n) => n[0])
+												.join("");
+											return (
+												<DropdownMenuRadioItem
+													key={profile.profile_id}
+													value={profile.profile_id}
+													className="cursor-pointer"
+												>
+													<span className="flex items-center gap-2">
+														<span className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
+															{initials}
+														</span>
+														<span className="truncate">{name}</span>
+													</span>
+												</DropdownMenuRadioItem>
+											);
+										})}
+									</DropdownMenuRadioGroup>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					</div>
 
-					{/* Tags */}
-					<div className="space-y-1.5" ref={tagsRef}>
-						<Label>Tags</Label>
-						<div className="relative">
-							<button
-								type="button"
-								onClick={() => setTagsOpen((o) => !o)}
-								className="w-full flex items-center overflow-x-hidden justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
-							>
-								<div className="flex flex-wrap gap-1 flex-1">
-									{selectedTags.length === 0 ? (
-										<span className="text-gray-400">Select tags...</span>
-									) : (
-										selectedTags.map((tag_id) => {
-											const tag = tags.find((t) => t.tag_id === tag_id);
-											return (
-												<span
-													key={tag_id}
-													className={
-														(colorClasses[
-															tag?.color as keyof typeof colorClasses
-														] ?? colorClasses.indigo) +
-														" inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
-													}
-												>
-													{tag?.name}
+					{/* Tags + Bugs Row */}
+					<div className="grid grid-cols-2 gap-4">
+						{/* Tags */}
+						<div className="space-y-1.5">
+							<Label>Tags</Label>
+							<DropdownMenu>
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+									<div className="flex flex-wrap gap-1 flex-1">
+										{selectedTags.length === 0 ? (
+											<span className="text-gray-400">Select tags...</span>
+										) : (
+											selectedTags.map((tag_id) => {
+												const tag = tags.find((t) => t.tag_id === tag_id);
+												const colorClass =
+													colorClasses[
+														tag?.color as keyof typeof colorClasses
+													] ?? colorClasses.indigo;
+												return (
 													<span
-														className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
-														onClick={() => toggleTag(tag_id)}
+														key={tag_id}
+														className={`${colorClass} inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium`}
 													>
-														×
+														{tag?.name}
+														<span
+															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
+															onClick={(e) => {
+																e.stopPropagation();
+																e.preventDefault();
+																toggleTag(tag_id);
+															}}
+														>
+															×
+														</span>
 													</span>
-												</span>
-											);
-										})
-									)}
-								</div>
-								<ChevronDown />
-							</button>
+												);
+											})
+										)}
+									</div>
+									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+								</DropdownMenuTrigger>
 
-							{tagsOpen && (
-								<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-									{tags.map((tag) => (
-										<div
-											key={tag.tag_id}
-											onClick={() => toggleTag(tag.tag_id)}
-											className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
-										>
-											<div
-												className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
-													selectedTags.includes(tag.tag_id)
-														? "bg-brand-600 border-brand-600"
-														: "border-gray-300"
-												}`}
+								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
+									<DropdownMenuSeparator />
+									{tags.map((tag) => {
+										const isChecked = selectedTags.includes(tag.tag_id);
+										const colorClass =
+											colorClasses[tag.color as keyof typeof colorClasses] ??
+											colorClasses.indigo;
+										return (
+											<DropdownMenuCheckboxItem
+												key={tag.tag_id}
+												checked={isChecked}
+												onCheckedChange={() => toggleTag(tag.tag_id)}
+												className="cursor-pointer"
 											>
-												{selectedTags.includes(tag.tag_id) && (
-													<Check
-														size={10}
-														strokeWidth={2}
-														className="text-neutral-surface"
-													/>
-												)}
-											</div>
-											{tag.name}
-										</div>
-									))}
-								</div>
-							)}
+												<span
+													className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${colorClass}`}
+												>
+													{tag.name}
+												</span>
+											</DropdownMenuCheckboxItem>
+										);
+									})}
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</div>
+
+						{/* Bugs */}
+						<div className="space-y-1.5">
+							<Label>Bugs</Label>
+							<DropdownMenu>
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+									<span className="text-gray-400 truncate">
+										{selectedBugId
+											? SAMPLE_BUGS.find((b) => b.id === selectedBugId)?.name
+											: "Link a bug..."}
+									</span>
+									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+								</DropdownMenuTrigger>
+
+								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
+									<DropdownMenuSeparator />
+									<DropdownMenuRadioGroup
+										value={selectedBugId}
+										onValueChange={setSelectedBugId}
+									>
+										<DropdownMenuRadioItem
+											value=""
+											className="cursor-pointer text-gray-400"
+										>
+											None
+										</DropdownMenuRadioItem>
+										{SAMPLE_BUGS.map((bug) => (
+											<DropdownMenuRadioItem
+												key={bug.id}
+												value={bug.id}
+												className="cursor-pointer"
+											>
+												<span className="truncate">{bug.name}</span>
+											</DropdownMenuRadioItem>
+										))}
+									</DropdownMenuRadioGroup>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					</div>
 
 					{/* Start Date + Deadline row */}
 					<div className="grid grid-cols-2 gap-4">
-						{/* Start Date */}
-						<div className="space-y-1.5">
-							<Label>Start Date</Label>
-							<Input
-								type="datetime-local"
-								value={startDate}
-								onChange={(e) => setStartDate(e.target.value)}
-								min={today}
-								placeholder="Select start date..."
-								className="text-gray-500"
-							/>
-						</div>
-
-						{/* Deadline */}
-						<div className="space-y-1.5">
-							<Label>Deadline</Label>
-							<Input
-								type="datetime-local"
-								value={deadline}
-								onChange={(e) => setDeadline(e.target.value)}
-								min={startDate || today}
-								className="text-gray-500"
-							/>
-						</div>
+						<FormInput
+							variant="datetime-local"
+							type="datetime-local"
+							label="Planned Start"
+							value={startDate}
+							onChange={(e) => setStartDate(e.target.value)}
+							containerClassName="flex-1"
+						/>
+						<FormInput
+							variant="datetime-local"
+							type="datetime-local"
+							label="Deadline"
+							value={deadline}
+							onChange={(e) => setDeadline(e.target.value)}
+							containerClassName="flex-1"
+						/>
 					</div>
 
 					{/* Image Attachment */}
@@ -490,7 +498,7 @@ export default function TicketModalCreate({
 								(jpg, png · Max 5MB)
 							</span>
 						</div>
-						<label className="flex items-center gap-3 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
+						<label className="flex items-center gap-3 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-neutral-surface px-4 py-3.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
 							<Paperclip size={16} className="shrink-0 text-gray-400" />
 							<span>
 								{imageFiles.length > 0
@@ -549,14 +557,12 @@ export default function TicketModalCreate({
 										))}
 									</select>
 								</div>
-								<div className="space-y-1.5">
-									<Label>API Route</Label>
-									<Input
-										placeholder="/api/v1/resource"
-										value={apiRoute}
-										onChange={(e) => setApiRoute(e.target.value)}
-									/>
-								</div>
+								<FormInput
+									label="API Route"
+									placeholder="/api/v1/resource"
+									value={apiRoute}
+									onChange={(e) => setApiRoute(e.target.value)}
+								/>
 							</div>
 						</div>
 					)}
