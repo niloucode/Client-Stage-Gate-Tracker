@@ -9,16 +9,19 @@ import {
 } from "react";
 import type { Phase } from "../types";
 import { ConfirmDeleteModal } from "@/shared/ui";
-import { AddPhase } from "@/features/stage-editor/ui/modals/AddPhase";
-import { EditPhase } from "@/features/stage-editor/ui/modals/EditPhase";
-import { useDeletePhase, useReorderPhase } from "@/entities/phase/mutations";
+import { PhaseModal } from "@/features/stage-editor/ui/modals/PhaseModal";
+import {
+	useDeletePhase,
+	useReorderPhase,
+	useUpdatePhase,
+} from "@/entities/phase/mutations";
+import { Label } from "@/components/ui/label";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
 	Pencil,
 	X,
 	ChevronLeft,
 	ChevronRight,
-	Calendar,
-	CheckCircle2,
 } from "lucide-react";
 
 interface PhaseStepperProps {
@@ -33,7 +36,6 @@ export const PhaseStepper = forwardRef<
 	PhaseStepperProps
 >(({ phases, stageId, activePhase, setActivePhase }, ref) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [phaseToEdit, setPhaseToEdit] = useState<Phase | null>(null);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 	const [phaseToDelete, setPhaseToDelete] = useState<number | null>(null);
@@ -44,9 +46,13 @@ export const PhaseStepper = forwardRef<
 
 	const deletePhaseMutation = useDeletePhase();
 	const reorderPhaseMutation = useReorderPhase();
+	const updatePhaseMutation = useUpdatePhase();
 
 	useImperativeHandle(ref, () => ({
-		openCreateModal: () => setIsModalOpen(true),
+		openCreateModal: () => {
+			setPhaseToEdit(null);
+			setIsModalOpen(true);
+		},
 	}));
 
 	const checkScroll = () => {
@@ -77,7 +83,7 @@ export const PhaseStepper = forwardRef<
 
 	const openEditModal = (phase: Phase) => {
 		setPhaseToEdit(phase);
-		setIsEditModalOpen(true);
+		setIsModalOpen(true);
 	};
 
 	const confirmDelete = (phaseNumber: number) => {
@@ -176,6 +182,23 @@ export const PhaseStepper = forwardRef<
 
 	// Find the current active phase to populate the details section
 	const currentPhase = phases.find((p) => p.number === activePhase);
+
+	const handleUpdatePlannedDate = async (
+		field: "planStart" | "planEnd",
+		newDate: Date | undefined
+	) => {
+		if (!currentPhase) return;
+		await updatePhaseMutation.mutateAsync({
+			phaseId: currentPhase.phase_id,
+			stageId,
+			name: currentPhase.name,
+			description: currentPhase.description ?? undefined,
+			planStart: field === "planStart" ? newDate : (currentPhase.planStart ? new Date(currentPhase.planStart) : undefined),
+			planEnd: field === "planEnd" ? newDate : (currentPhase.planEnd ? new Date(currentPhase.planEnd) : undefined),
+			actualStart: currentPhase.actualStart ? new Date(currentPhase.actualStart) : undefined,
+			actualEnd: currentPhase.actualEnd ? new Date(currentPhase.actualEnd) : undefined,
+		});
+	};
 
 	return (
 		<>
@@ -279,7 +302,7 @@ export const PhaseStepper = forwardRef<
 														</div>
 													</button>
 
-													{/* Edit Button on Group Hover (Task 1.4 pilot) */}
+													{/* Edit Button on Group Hover */}
 													<button
 														onClick={() => openEditModal(phase)}
 														className="flex items-center justify-center h-4 w-4 absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
@@ -306,19 +329,19 @@ export const PhaseStepper = forwardRef<
 												<div className="mt-3 text-center">
 													<div
 														className={`
-                                                            text-xs font-semibold tracking-wide
-                                                            max-w-[120px] truncate
-                                                            ${
-																															isActive
-																																? "text-brand-600"
-																																: "text-neutral-muted"
-																														}
-                                                        `}
+															text-xs font-semibold tracking-wide
+															max-w-[120px] truncate
+															${
+																isActive
+																	? "text-brand-600"
+																	: "text-neutral-muted"
+															}
+														`}
 														title={phase.name}
 													>
 														{phase.name}
 													</div>
-													{/* 4-date display (Task 5.7): planStart–planEnd, then actualStart–actualEnd when execution dates exist; fall back to plan dates when actuals are missing */}
+													{/* 4-date display */}
 													{phase.planStart && phase.planEnd && (
 														<div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
 															{new Date(phase.planStart).toLocaleDateString(
@@ -365,92 +388,87 @@ export const PhaseStepper = forwardRef<
 						</>
 					)}
 				</div>
+
 				{/* Phase Details Section */}
 				{currentPhase && (
-					<div className="flex items-start justify-between gap-6 p-6 pl-8 border-t border-slate-200 bg-neutral-surface rounded-b-xl">
-						<div className="flex flex-col min-w-[200px]">
+					<div className="flex flex-col lg:flex-row items-start justify-between gap-6 p-6 border-t border-slate-200 bg-neutral-surface rounded-b-xl">
+						{/* Left: Phase Title & Description */}
+						<div className="flex flex-col flex-1 min-w-0">
 							<h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
 								{currentPhase.name}
 							</h2>
-							<div className="mt-2 text-sm w-3/4 text-foreground min-h-[20px]">
+							<p className="mt-2 text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
 								{currentPhase.description || "No description provided."}
-							</div>
+							</p>
 						</div>
 
-						<div className="flex  gap-3">
-							{/* Planned dates */}
-							<div className="w-65 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
-								<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-500 text-white">
-									<Calendar className="h-5 w-5" />
-								</div>
-								<div>
-									<label className="block text-xs font-medium uppercase tracking-wide text-blue-700">
-										Planned Duration
-									</label>
-									<div className="flex items-center gap-1.5">
-										<span className="text-sm font-semibold text-blue-900">
-											{currentPhase.planStart
-												? new Date(currentPhase.planStart).toLocaleDateString()
-												: "—"}
-										</span>
-										<span className="text-sm font-semibold text-blue-400">
-											—
-										</span>
-										<span className="text-sm font-semibold text-blue-900">
-											{currentPhase.planEnd
-												? new Date(currentPhase.planEnd).toLocaleDateString()
-												: "—"}
-										</span>
-									</div>
-								</div>
+						{/* Right: 2x2 Date Picker Grid */}
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full lg:max-w-md shrink-0">
+							{/* Planned Start */}
+							<div className="space-y-1.5">
+								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+									PLANNED START
+								</Label>
+								<DateTimePicker
+									value={currentPhase.planStart ? new Date(currentPhase.planStart) : undefined}
+									onChange={(date) => handleUpdatePlannedDate("planStart", date)}
+									placeholder="Pick planned start"
+									className="h-9 text-xs"
+								/>
 							</div>
 
-							{/* Actual dates */}
-							<div className="w-65 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-								<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-white">
-									<CheckCircle2 className="h-5 w-5" />
-								</div>
-								<div>
-									<label className="block text-xs font-medium uppercase tracking-wide text-emerald-700">
-										Actual Duration
-									</label>
-									<div className="flex items-center gap-1.5">
-										<span className="text-sm font-semibold text-emerald-900">
-											{currentPhase.actualStart
-												? new Date(
-														currentPhase.actualStart,
-													).toLocaleDateString()
-												: "—"}
-										</span>
-										<span className="text-sm font-semibold text-emerald-400">
-											—
-										</span>
-										<span className="text-sm font-semibold text-emerald-900">
-											{currentPhase.actualEnd
-												? new Date(currentPhase.actualEnd).toLocaleDateString()
-												: "—"}
-										</span>
-									</div>
-								</div>
+							{/* Planned End */}
+							<div className="space-y-1.5">
+								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+									PLANNED END
+								</Label>
+								<DateTimePicker
+									value={currentPhase.planEnd ? new Date(currentPhase.planEnd) : undefined}
+									onChange={(date) => handleUpdatePlannedDate("planEnd", date)}
+									placeholder="Pick planned end"
+									className="h-9 text-xs"
+								/>
+							</div>
+
+							{/* Actual Start (Disabled) */}
+							<div className="space-y-1.5">
+								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+									ACTUAL START
+								</Label>
+								<DateTimePicker
+									value={currentPhase.actualStart ? new Date(currentPhase.actualStart) : undefined}
+									disabled
+									placeholder="Not started yet"
+									className="h-9 text-xs opacity-75"
+								/>
+							</div>
+
+							{/* Actual End (Disabled) */}
+							<div className="space-y-1.5">
+								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+									ACTUAL END
+								</Label>
+								<DateTimePicker
+									value={currentPhase.actualEnd ? new Date(currentPhase.actualEnd) : undefined}
+									disabled
+									placeholder="Not finished yet"
+									className="h-9 text-xs opacity-75"
+								/>
 							</div>
 						</div>
 					</div>
 				)}
 			</div>
 
-			{/* Add Phase Modal */}
-			<AddPhase
+			{/* Phase Modal (Handles both Add & Edit modes) */}
+			<PhaseModal
 				isOpen={isModalOpen}
-				onClose={() => setIsModalOpen(false)}
-				stageId={stageId}
-			/>
-
-			{/* Edit Phase Modal (Task 1.4 pilot) */}
-			<EditPhase
-				isOpen={isEditModalOpen}
-				onClose={() => setIsEditModalOpen(false)}
-				stageId={stageId}
 				phase={phaseToEdit}
+				stageId={stageId}
+				onClose={() => {
+					setIsModalOpen(false);
+					setPhaseToEdit(null);
+				}}
 			/>
 
 			{/* Delete Confirmation Modal */}
