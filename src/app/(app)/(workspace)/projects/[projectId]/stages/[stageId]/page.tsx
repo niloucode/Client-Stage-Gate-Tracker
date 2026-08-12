@@ -4,13 +4,13 @@ import { use, useState, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
 	PhaseStepper,
-	ActivePhaseDetails,
 	ModulesCard,
 } from "@/features/stage-editor"
 import type { Phase } from "@/features/stage-editor/types"
 import { useStageTree } from "@/entities/stage/queries"
-import { Plus } from "lucide-react"
-import { Button } from "@/shared/ui/button"
+import { Plus, ChevronLeft } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Back } from "@/components/ui/back"
 
 interface PageParams {
 	projectId: string
@@ -87,16 +87,19 @@ function EditorContent({
 
 	return (
 		<div>
-			<div className="flex justify-between items-end mb-6">
+      {/* Navigation Link */}
+			<Back link={"/projects/"} />
+
+			<div className="flex justify-between items-end my-4">
 				<div>
 					<h1 className="text-4xl font-bold text-foreground tracking-tight">
-						Structure Editor
+						Stage Name Here
 					</h1>
 					<p className="text-m text-neutral-border mt-1">
 						Define project phases, modules, and workflows.
 					</p>
 				</div>
-				<Button icon="add" onClick={() => stepperRef.current?.openCreateModal()}>Add Phase</Button>
+				<Button onClick={() => stepperRef.current?.openCreateModal()}><Plus />Add Phase</Button>
 			</div>
 
 			<PhaseStepper
@@ -105,12 +108,6 @@ function EditorContent({
 				stageId={stageId}
 				activePhase={activePhase}
 				setActivePhase={setActivePhase}
-			/>
-
-			<ActivePhaseDetails
-				activePhase={activePhase}
-				phases={phases}
-				stageId={stageId}
 			/>
 
 			<ModulesCard

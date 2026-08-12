@@ -3,10 +3,7 @@ import { z } from "zod";
 // ── Login ────────────────────────────────────────────────────────────────────
 
 export const loginSchema = z.object({
-	email: z
-		.string()
-		.min(1, "Email is required")
-		.email("Enter a valid email address"),
+	email: z.email({ message: "Enter a valid email address" }),
 	password: z.string().min(1, "Password is required"),
 });
 
@@ -18,10 +15,7 @@ export const signupSchema = z
 	.object({
 		firstName: z.string().min(1, "First name is required"),
 		lastName: z.string().min(1, "Last name is required"),
-		email: z
-			.string()
-			.min(1, "Email is required")
-			.email("Enter a valid email address"),
+		email: z.email({ message: "Enter a valid email address" }),
 		phone: z.string().min(1, "Phone number is required"),
 		jobTitle: z.string().min(1, "Job title is required"),
 		department: z.string().min(1, "Department is required"),
@@ -42,10 +36,7 @@ export const clientSignupSchema = z
 		firstName: z.string().min(1, "First name is required"),
 		lastName: z.string().min(1, "Last name is required"),
 		companyName: z.string().min(1, "Company name is required"),
-		email: z
-			.string()
-			.min(1, "Email address is required")
-			.email("Enter a valid email address"),
+		email: z.email({ message: "Enter a valid email address" }),
 		password: z.string().min(6, "Password must be at least 6 characters"),
 		confirmPassword: z.string().min(1, "Please confirm your password"),
 		streetNumber: z.string().min(1, "Street number is required"),

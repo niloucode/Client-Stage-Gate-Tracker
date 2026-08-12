@@ -1,131 +1,121 @@
-import type { Tag } from "@/entities/types"
-import {
-	Backdrop,
-	CloseButton,
-} from "@/features/tag-manager/ui/TagModals"
-import { TagBadge } from "@/shared/ui/tagbadge"
+"use client";
+
+import { useState } from "react";
+import type { Tag } from "@/entities/types";
+import { Pencil, Trash2, LucideSearch } from "lucide-react";
+import { TagBadge } from "@/entities/tag/ui/TagBadge";
+import { Lacking } from "@/shared/ui/search-status";
 
 export default function TagListModal({
 	tags,
-	onClose,
 	onEditTag,
 	onRequestDeleteTag,
 }: {
-	tags: Tag[]
-	onClose: () => void
-	onEditTag: (tag: Tag) => void
-	onRequestDeleteTag: (tag: Tag) => void
+	tags: Tag[];
+	onClose: () => void;
+	onEditTag: (tag: Tag) => void;
+	onRequestDeleteTag: (tag: Tag) => void;
 }) {
+	const [searchQuery, setSearchQuery] = useState("");
+
+	const filteredTags = tags.filter((tag) => {
+		const q = searchQuery.toLowerCase().trim();
+		if (!q) return true;
+		return (
+			tag.name.toLowerCase().includes(q) ||
+			(tag.description && tag.description.toLowerCase().includes(q))
+		);
+	});
+
 	return (
-		<div className="flex flex-col items-center ">
-			{/* Header */}
-					{/* Table Body Area */}
-					<div className="overflow-hidden w-[32rem] flex flex-col">
-						{/* Purple-tinted header — sticky, sits above the scroll area */}
-						<table className="w-full table-fixed mt-4">
-							<colgroup>
-								<col style={{ width: "28%" }} />
-								<col style={{ width: "48%" }} />
-								<col style={{ width: "24%" }} />
-							</colgroup>
-							<thead>
+		<div className="px-6 w-full flex flex-col gap-3">
+			{/* Search / Filter Bar */}
+			<div className="relative flex items-center w-full">
+				<LucideSearch className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
+				<label htmlFor="tag-search" className="sr-only">
+					Search tags
+				</label>
+				<input
+					id="tag-search"
+					type="text"
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
+					placeholder="Search tags by name or description..."
+					className="w-full pl-9 pr-3 py-2 bg-neutral-surface border border-b border-brand-100 rounded text-sm text-foreground placeholder:text-brand-100 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+				/>
+			</div>
+
+			{/* Table Container */}
+			<div className="w-full bg-neutral-surface overflow-x-auto rounded h-80 overflow-y-auto border border-brand-100">
+				{filteredTags.length === 0 ? (
+					<Lacking />
+				) : (
+					<table className="w-full border-collapse text-left">
+						{/* Sticky Header */}
+						<thead className="sticky top-0 z-10 bg-brand-50 border-b-2 border-brand-100 text-xs font-semibold text-neutral-border">
+							<tr>
+								<th scope="col" className="px-4 py-2.5 w-[30%]">
+									NAME
+								</th>
+								<th scope="col" className="px-4 py-2.5 w-[55%]">
+									DESCRIPTION
+								</th>
+								<th scope="col" className="px-4 py-2.5 w-[15%] text-right">
+									<span className="sr-only">Actions</span>
+								</th>
+							</tr>
+						</thead>
+
+						{/* Table Body */}
+						<tbody className="bg-neutral-surface">
+							{filteredTags.map((tag) => (
 								<tr
-									className="text-xs font-semibold tracking-wider"
-									style={{ backgroundColor: "#EEF2FF", color: "#6366F1" }}
+									key={tag.tag_id}
+									className="transition-colors hover:bg-neutral-subtle/20 border-b border-brand-100/60"
 								>
-									<th className="text-left py-2.5 px-3 rounded-l-lg">{tags.length} Tags</th>
-									<th className="text-left py-2.5 px-3"></th>
-									<th className="text-left py-2.5 px-3 rounded-r-lg"></th>
-								</tr>
-							</thead>
-						</table>
+									{/* Tag Badge Column */}
+									<td className="px-4 py-3 align-middle">
+										<TagBadge tag={tag} />
+									</td>
 
-						{/* Scrollable rows */}
-						<div className="tag-scroll overflow-y-auto">
-							<style>{`
-                                .tag-scroll::-webkit-scrollbar { width: 5px }
-                                .tag-scroll::-webkit-scrollbar-track { background: #F5F3FF border-radius: 99px }
-                                .tag-scroll::-webkit-scrollbar-thumb { background: #C7D2FE border-radius: 99px }
-                                .tag-scroll::-webkit-scrollbar-thumb:hover { background: #A5B4FC }
-                            `}</style>
-							<table className="w-full table-fixed">
-								<colgroup>
-									<col style={{ width: "10%" }} />
-									<col style={{ width: "20%" }} />
-									<col style={{ width: "10%" }} />
-								</colgroup>
-								<tbody className="divide-y divide-gray-200">
-									{tags.length === 0 && (
-										<tr>
-											<td colSpan={3} className="py-8 text-left text-sm text-gray-400">
-												No tags yet. Create one to get started.
-											</td>
-										</tr>
-									)}
-									{tags.map((tag) => (
-										<tr
-											key={tag.tag_id}
-											className="group hover:bg-indigo-50/50 transition-colors"
-										>
-											<td className="py-3 px-3 align-middle text-left">
-												<TagBadge tag={tag} />
-											</td>
-											<td
-												className="py-3 px-3 text-sm text-gray-500 text-left align-middle neutral-surfacespace-normal break-words"
+									{/* Description Column */}
+									<td className="px-4 py-3 align-middle text-sm text-slate-600 whitespace-normal break-words">
+										{tag.description || (
+											<span className="text-xs text-slate-400 italic">
+												No description
+											</span>
+										)}
+									</td>
+
+									{/* Actions Column */}
+									<td className="px-4 py-3 align-middle text-right">
+										<div className="flex items-center justify-end gap-1">
+											<button
+												type="button"
+												onClick={() => onEditTag(tag)}
+												title={`Edit ${tag.name}`}
+												aria-label={`Edit ${tag.name}`}
+												className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
 											>
-												{tag.description}
-											</td>
-											<td className="py-3 px-3 align-middle">
-												<div className="flex items-center justify-end gap-2">
-													<button
-														onClick={() => onEditTag(tag)}
-														className="text-indigo-400 hover:text-brand-600 transition-colors"
-														aria-label="Edit tag"
-													>
-														<svg
-															width="14"
-															height="14"
-															viewBox="0 0 24 24"
-															fill="none"
-															stroke="currentColor"
-															strokeWidth={2}
-															strokeLinecap="round"
-														>
-															<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-															<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-														</svg>
-													</button>
-													<button
-														onClick={() => onRequestDeleteTag(tag)}
-														className="text-red-400 hover:text-red-600 transition-colors"
-														aria-label="Delete tag"
-													>
-														<svg
-															width="14"
-															height="14"
-															viewBox="0 0 24 24"
-															fill="none"
-															stroke="currentColor"
-															strokeWidth={2}
-															strokeLinecap="round"
-														>
-															<polyline points="3 6 5 6 21 6" />
-															<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-															<path d="M10 11v6M14 11v6" />
-															<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-														</svg>
-													</button>
-												</div>
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-					</div>
-
-					{/* Footer Divider */}
-					<div className="h-px bg-gray-100 shrink-0" />
+												<Pencil size={15} />
+											</button>
+											<button
+												type="button"
+												onClick={() => onRequestDeleteTag(tag)}
+												title={`Delete ${tag.name}`}
+												aria-label={`Delete ${tag.name}`}
+												className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+											>
+												<Trash2 size={15} />
+											</button>
+										</div>
+									</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				)}
+			</div>
 		</div>
-	)
+	);
 }

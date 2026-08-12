@@ -24,11 +24,11 @@ export async function getDepartmentById(departmentId?: string) {
       },
       select: {
         department_id: true,
-        name: true, // Direct property on the departments table
+        name: true,
       },
     });
   } catch (error) {
     console.error("Failed to fetch department:", error);
-    return null; // Return null instead of [] on error
+    return null;
   }
 }

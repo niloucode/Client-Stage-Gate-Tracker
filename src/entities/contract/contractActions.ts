@@ -1,14 +1,32 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/adminClient";
 import { prisma } from "@/lib/prisma";
 import {
 	contractUploadSchema,
 	contractSignSchema,
 	contractChangeNameSchema,
 } from "@/shared/schemas";
+import { assertProjectMember } from "@/lib/auth/projectAccess";
 
 // ── UPLOAD ────────────────────────────────────────────────────────────────────
+
+/**
+ * Server-side PDF magic-byte check. A PDF starts with "%PDF-"
+ * (0x25 0x50 0x44 0x46 0x2D). `File.type` is browser-supplied metadata and
+ * cannot be trusted (Task 2.7).
+ */
+export async function isPdfFile(file: File): Promise<boolean> {
+	const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+	return (
+		head.length === 5 &&
+		head[0] === 0x25 &&
+		head[1] === 0x50 &&
+		head[2] === 0x44 &&
+		head[3] === 0x46 &&
+		head[4] === 0x2d
+	);
+}
 
 export async function uploadContract(formData: FormData) {
   const clientId = formData.get("clientId") as string;
@@ -16,6 +34,10 @@ export async function uploadContract(formData: FormData) {
   const file = formData.get("file") as File;
   const contractName = formData.get("contractName") as string;
 	try {
+		// Authorization: caller must be a member of the project
+		const auth = await assertProjectMember(projectId);
+		if (!auth.ok) return { success: false, error: auth.error };
+
 		const parsed = contractUploadSchema.safeParse({
 			clientId,
 			projectId,
@@ -28,10 +50,23 @@ export async function uploadContract(formData: FormData) {
 			};
 		}
 
-		const supabaseAdmin = createAdminClient(
-			process.env.NEXT_PUBLIC_SUPABASE_URL!,
-			process.env.SUPABASE_SERVICE_ROLE_KEY!,
-		);
+		// Server-side file validation — never trust the client's accept attr
+		// or the browser-reported MIME type. The contract flow is PDF-only
+		// (see ContractViewer's accept attr and the .pdf storage path).
+		const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
+		if (!file || file.size === 0) {
+			return { success: false, error: "No file was provided." };
+		}
+		if (file.size > MAX_FILE_SIZE) {
+			return { success: false, error: "File is too large (max 15 MB)." };
+		}
+		// Magic-byte sniffing: a PDF starts with "%PDF-" — `file.type` is
+		// browser-supplied metadata and cannot be trusted (Task 2.7).
+		if (!(await isPdfFile(file))) {
+			return { success: false, error: "Only PDF files are allowed." };
+		}
+
+		const supabaseAdmin = createAdminClient();
 
 		// Upsert — create or reset soft-delete on existing
 		const updatedContract = await prisma.contracts.upsert({
@@ -46,8 +81,11 @@ export async function uploadContract(formData: FormData) {
 			},
 		});
 
-		const fileName =
-			contractName.trim() === "" ? updatedContract.contract_id : contractName;
+		const rawName =
+			contractName.trim() === "" ? updatedContract.contract_id : contractName.trim();
+		// Storage paths must stay flat under <projectId>/ — strip slashes and
+		// backslashes so every uploaded path matches the deleteContract guard.
+		const fileName = rawName.replace(/[\\/]+/g, "-");
 		const filePath = `${projectId}/${fileName}.pdf`;
 
 		const { error: uploadError } = await supabaseAdmin.storage
@@ -120,10 +158,19 @@ export async function getContractUrl(filePath: string) {
 // ── SOFT DELETE ───────────────────────────────────────────────────────────────
 export async function deleteContract(projectId: string, filePath: string) {
   try {
-    const adminSupabase = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!, // service role, not anon key
-    );
+    // Authorization: caller must be a member of the project
+    const auth = await assertProjectMember(projectId);
+    if (!auth.ok) return { success: false, error: auth.error };
+
+    // Bind the storage path to this project — never delete a path supplied
+    // for a different project, and no `../` traversal. Escape projectId so
+    // the interpolated regex stays anchored even for non-UUID ids.
+    const escapedProjectId = projectId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (!new RegExp(`^${escapedProjectId}/[^/]+\\.pdf$`).test(filePath)) {
+      return { success: false, error: "Invalid file path for this project." };
+    }
+
+    const adminSupabase = createAdminClient();
 
     const { error: storageError } = await adminSupabase.storage
       .from("contracts")
@@ -196,6 +243,10 @@ export async function changeContractName(
 				error: parsed.error.flatten().fieldErrors,
 			};
 		}
+
+		// Authorization: caller must be a member of the project
+		const auth = await assertProjectMember(projectId);
+		if (!auth.ok) return { success: false, error: auth.error };
 
 		const updated = await prisma.contracts.update({
 			where: { project_id: projectId },

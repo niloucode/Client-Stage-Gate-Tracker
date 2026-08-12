@@ -1,5 +1,6 @@
 "use server";
 import {prisma} from "@/lib/prisma";
+import { getCurrentUserId } from "@/lib/auth/projectAccess";
 import { tagCreateSchema, type TagCreateInput, type TagUpdateInput } from "@/shared/schemas";
 import { z } from "zod";
 
@@ -15,11 +16,15 @@ export async function selectTag() {
         {
             where: { is_deleted: false },
             orderBy: {name: 'asc'},
+            take: 100, // bound the list; paginate when callers need more
         },);
 }
 
 export async function createTag(data: TagCreateInput) {
     tagCreateSchema.parse(data);
+    // Authorization: any authenticated user may manage global tags
+    const userId = await getCurrentUserId();
+    if (!userId) return { success: false, error: "Authentication required." };
     try {
         const newTag = await prisma.tags.create({
             data: {
@@ -41,6 +46,9 @@ export async function createTag(data: TagCreateInput) {
 export async function updateTag(data: TagUpdateInput) {
     z.string().uuid().parse(data.tag_id);
     tagCreateSchema.parse({ name: data.name, description: data.description, color: data.color });
+    // Authorization: any authenticated user may manage global tags
+    const userId = await getCurrentUserId();
+    if (!userId) return { success: false, error: "Authentication required." };
     return prisma.tags.update({
         where: { tag_id: data.tag_id },
         data: {
@@ -59,6 +67,9 @@ export async function updateTag(data: TagUpdateInput) {
  * @returns {Promise<{success: boolean, error?: string}>}
  */
 export async function softDeleteTag(tagId: string) {
+    // Authorization: any authenticated user may manage global tags
+    const userId = await getCurrentUserId();
+    if (!userId) return { success: false, error: "Authentication required." };
     try {
         await prisma.tags.update({
             where: {

@@ -12,14 +12,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Button } from "@/shared/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
+import { getFieldErrors } from "@/shared/lib/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProfileType } from "@/shared/types";
 import { createClient } from "@/lib/supabase/client";
 import { signupSchema } from "@/shared/schemas";
+import { env } from "@/env";
 import { profileKeys } from "@/shared/query/keys";
 import { getProfileByEmail } from "@/entities/profile/profileActions";
 
@@ -58,7 +61,7 @@ export function StaffSignupForm() {
 					is_deleted: user.is_deleted,
 					deleted_at: user.deleted_at,
 				},
-				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
+				emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
 			},
 		});
 	}
@@ -81,11 +84,7 @@ export function StaffSignupForm() {
 		});
 
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: Record<string, string> = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
 			return;
 		}
@@ -131,7 +130,6 @@ export function StaffSignupForm() {
 			setError(
 				"Account created! Check your email to confirm your account before logging in.",
 			);
-			console.log(data);
 			setLoading(false);
 		}
 	};
@@ -158,7 +156,9 @@ export function StaffSignupForm() {
 						className={fieldErrClass("firstName")}
 					/>
 					{fieldErrors.firstName && (
-						<p className="text-xs text-red-500 mt-1">{fieldErrors.firstName}</p>
+						<p className="text-xs text-destructive mt-1">
+							{fieldErrors.firstName}
+						</p>
 					)}
 				</div>
 				<div className="flex-1">
@@ -179,7 +179,9 @@ export function StaffSignupForm() {
 						className={fieldErrClass("lastName")}
 					/>
 					{fieldErrors.lastName && (
-						<p className="text-xs text-red-500 mt-1">{fieldErrors.lastName}</p>
+						<p className="text-xs text-destructive mt-1">
+							{fieldErrors.lastName}
+						</p>
 					)}
 				</div>
 			</div>
@@ -203,7 +205,7 @@ export function StaffSignupForm() {
 					className={fieldErrClass("email")}
 				/>
 				{fieldErrors.email && (
-					<p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
+					<p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>
 				)}
 			</div>
 
@@ -217,16 +219,13 @@ export function StaffSignupForm() {
 				>
 					Phone Number
 				</Label>
-				<Input
-					id="phone"
-					type="tel"
-					placeholder="+1 (555) 000-0000"
+				<PhoneInput
 					value={phone}
-					onChange={(e) => setPhone(e.target.value)}
-					className={fieldErrClass("phone")}
+					onChange={(value) => setPhone(value ?? "")}
+					placeholder="+1 (555) 000-0000"
 				/>
 				{fieldErrors.phone && (
-					<p className="text-xs text-red-500 mt-1">{fieldErrors.phone}</p>
+					<p className="text-xs text-destructive mt-1">{fieldErrors.phone}</p>
 				)}
 			</div>
 
@@ -250,7 +249,9 @@ export function StaffSignupForm() {
 						className={fieldErrClass("jobTitle")}
 					/>
 					{fieldErrors.jobTitle && (
-						<p className="text-xs text-red-500 mt-1">{fieldErrors.jobTitle}</p>
+						<p className="text-xs text-destructive mt-1">
+							{fieldErrors.jobTitle}
+						</p>
 					)}
 				</div>
 				<div className="flex-1">
@@ -276,7 +277,7 @@ export function StaffSignupForm() {
 						<option value="Finance Team">Finance Team</option>
 					</select>
 					{fieldErrors.department && (
-						<p className="text-xs text-red-500 mt-1">
+						<p className="text-xs text-destructive mt-1">
 							{fieldErrors.department}
 						</p>
 					)}
@@ -301,7 +302,9 @@ export function StaffSignupForm() {
 					className={fieldErrClass("password")}
 				/>
 				{fieldErrors.password && (
-					<p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
+					<p className="text-xs text-destructive mt-1">
+						{fieldErrors.password}
+					</p>
 				)}
 			</div>
 
@@ -323,7 +326,7 @@ export function StaffSignupForm() {
 					className={fieldErrClass("confirmPassword")}
 				/>
 				{fieldErrors.confirmPassword && (
-					<p className="text-xs text-red-500 mt-1">
+					<p className="text-xs text-destructive mt-1">
 						{fieldErrors.confirmPassword}
 					</p>
 				)}
@@ -331,7 +334,7 @@ export function StaffSignupForm() {
 
 			{/* Error message */}
 			{error && (
-				<p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+				<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
 					{error}
 				</p>
 			)}

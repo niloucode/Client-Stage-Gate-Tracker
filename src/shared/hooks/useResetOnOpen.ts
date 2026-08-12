@@ -1,0 +1,28 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+
+/**
+ * Runs `resetFn` on the frame after `trigger` becomes truthy (or after it
+ * becomes falsy when `whenOpen` is false). The deferred call lets the dialog
+ * finish mounting before controlled inputs are reset — replacing the
+ * hand-rolled `useEffect` + `setTimeout(fn, 0)` pattern duplicated across
+ * modals.
+ */
+export function useResetOnOpen(
+	trigger: boolean,
+	resetFn: () => void,
+	whenOpen = true,
+) {
+	const resetRef = useRef(resetFn);
+	resetRef.current = resetFn;
+
+	useEffect(() => {
+		const shouldReset = whenOpen ? trigger : !trigger;
+		if (!shouldReset) return;
+		const id = setTimeout(() => {
+			resetRef.current();
+		}, 0);
+		return () => clearTimeout(id);
+	}, [trigger, whenOpen]);
+}

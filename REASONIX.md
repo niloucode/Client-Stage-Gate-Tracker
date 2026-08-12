@@ -64,3 +64,31 @@ is not meaningful (the ticket itself is the subject of the deletion).
 | Query key factory | `src/shared/query/keys.ts` |
 | Zod schemas | `src/shared/schemas/` |
 | Stage editor feature | `src/features/stage-editor/` |
+
+---
+
+## Definition of Done (Task 4.5)
+
+Every task in `planned-codebase-changes.md` must record, at sign-off:
+
+1. **Dependencies & prerequisites** — packages added/removed; prior tasks it
+   builds on.
+2. **DB migration & rollback impact** — migration files created (pending
+   deploy), or explicitly "no schema change".
+3. **Acceptance criteria** — the ACs from the plan task, restated as verified.
+4. **Tests required** — unit/component tests added, with counts.
+5. **Verification commands** — the actual commands run and their results
+   (`prisma validate`, `tsc --noEmit`, `vitest run`, `eslint`, `next build`,
+   `knip`).
+
+## Library Policy (Task 4.5)
+
+- **Conditional (add only on measured need):** `nuqs` (typed URL search
+  params), `date-fns` (only if the shared native date adapter becomes too
+  complex — define timezone/UTC policy first), Storybook (only if the team
+  maintains component stories; should replace `/dev/ui` showcase),
+  Sentry (before production launch, with ownership/privacy/alerting policy).
+- **Avoid list:** Redux, Zustand, Axios, Lodash, Moment.js, generic Prisma
+  repository frameworks, second form/query libraries, auto-import plugins —
+  unless a measured need appears that the current stack cannot meet.
+

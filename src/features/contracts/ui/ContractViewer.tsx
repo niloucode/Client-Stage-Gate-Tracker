@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import {
 	FileText,
 	Upload,
@@ -12,19 +19,26 @@ import {
 	X,
 	AlertTriangle,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { getContractUrl } from "@/entities/contract";
 import {
 	useUploadContract,
 	useDeleteContract,
 	useChangeContractName,
 } from "@/entities/contract";
+import { ConfirmTextModal, ContractDetails } from "./ConfirmTextModal";
 
 interface PDFViewerProps {
 	className?: string;
 	projectId: string;
 	clientId: string;
 	profileId?: string | null;
+	contractDetails: ContractDetails;
 	initialFilePath?: string | null; //null if contract DOESN'T exist yet
+	initialContractName?: string | null;
+	onSuccess: () => void;
 }
 
 export function ContractViewer({
@@ -32,12 +46,13 @@ export function ContractViewer({
 	projectId,
 	clientId,
 	initialFilePath,
+	initialContractName,
+	contractDetails,
+	onSuccess,
 }: PDFViewerProps) {
 	const [file, setFile] = useState<File | null>(null);
 	const [fileUrl, setFileUrl] = useState<string | null>(null);
 	const [pendingFile, setPendingFile] = useState<File | null>(null);
-	const [removeRequested, setRemoveRequested] = useState(false);
-	const [removeConfirmText, setRemoveConfirmText] = useState("");
 	const [fileError, setFileError] = useState<string | null>(null);
 	const [zoom, setZoom] = useState(100);
 	const [isDragging, setIsDragging] = useState(false);
@@ -46,18 +61,22 @@ export function ContractViewer({
 	const [contractName, setContractName] = useState(
 		file && fileUrl ? file.name : "",
 	); //ADDED THISSS
-	const [changeName, setChangeName] = useState(
-		file && fileUrl ? file.name : "",
-	);
+	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
 	const uploadMutation = useUploadContract();
 	const deleteMutation = useDeleteContract();
 	const changeNameMutation = useChangeContractName();
 
+	const delete_client_phrase = "Yes, I'm Sure";
+	const delete_client_text = `You're about to permanently delete ${contractName} 
+	from [PROJECT NAME]. This action will also remove all associated signatures from 
+	the contract. To proceed, type "${delete_client_phrase}" below.`;
+
 	// Revoke the object URL whenever it changes or the component unmounts
 	useEffect(() => {
-		setContractName(file && fileUrl ? file.name : "");
-		setChangeName(file && fileUrl ? file.name : "");
+		if (file && fileUrl) {
+			setContractName((prev) => prev || initialContractName || file.name);
+		}
 	}, [file, fileUrl]);
 
 	useEffect(() => {
@@ -120,6 +139,7 @@ export function ContractViewer({
 				contractName: contractName.trim(),
 			});
 
+			setContractName("");
 			if (!result.success) {
 				setFileError(
 					typeof result.error === "string"
@@ -144,6 +164,7 @@ export function ContractViewer({
 	};
 
 	const cancelUpload = () => {
+		setContractName("");
 		setPendingFile(null);
 	};
 
@@ -158,29 +179,31 @@ export function ContractViewer({
 		selectFile(e.dataTransfer.files?.[0]);
 	};
 
-	const requestRemove = () => {
-		setRemoveConfirmText("");
-		setRemoveRequested(true);
-	};
+	// const handleDownload = async () => {
+	// 	if (!fileUrl) return;
+	// 	const response = await fetch(fileUrl);
+	// 	const blob = await response.blob();
+	// 	const blobUrl = URL.createObjectURL(blob);
+	// 	const a = document.createElement("a");
+	// 	a.href = blobUrl;
+	// 	a.download = changeName || file?.name || "document.pdf";
+	// 	if (!a.download.endsWith(".pdf")) a.download += ".pdf";
+	// 	a.click();
+	// 	URL.revokeObjectURL(blobUrl);
+	// };
 
-	const cancelRemove = () => {
-		setRemoveRequested(false);
-		setRemoveConfirmText("");
+	const requestRemove = () => {
+		setDeleteModalOpen(true);
 	};
 
 	const confirmRemove = async () => {
-		if (
-			!file ||
-			removeConfirmText !== file.name ||
-			!initialFilePath ||
-			!projectId
-		)
-			return;
+		if (!file || !initialFilePath || !projectId) return;
 		try {
 			const result = await deleteMutation.mutateAsync({
 				projectId,
 				filePath: initialFilePath,
 			});
+			setContractName("");
 
 			if (!result.success) {
 				setFileError(
@@ -194,268 +217,224 @@ export function ContractViewer({
 			if (fileUrl) URL.revokeObjectURL(fileUrl);
 			setFile(null);
 			setFileUrl(null);
-			setRemoveRequested(false);
-			setRemoveConfirmText("");
+			setDeleteModalOpen(false);
 		} catch (err) {
 			setFileError("Deletion failed. Please try again.");
 		}
 	};
 
-	const handlePrint = () => {
-		if (!fileUrl) return;
-		const win = window.open(fileUrl, "_blank");
-		if (!win) return;
-		win.addEventListener("load", () => win.print());
-	};
+	// const handlePrint = () => {
+	// 	if (!fileUrl) return;
+	// 	const win = window.open(fileUrl, "_blank");
+	// 	if (!win) return;
+	// 	win.addEventListener("load", () => win.print());
+	// };
 
 	const zoomIn = () => setZoom((z) => Math.min(z + 10, 200));
 	const zoomOut = () => setZoom((z) => Math.max(z - 10, 50));
 
 	return (
 		<>
-			<div
-				className={`flex flex-col overflow-hidden rounded-2xl border border-[#E6E4F0] bg-neutral-surface shadow-sm ${className}`}
-			>
-				{/* Toolbar */}
-				<div className="flex items-center justify-between gap-3 border-b border-[#E6E4F0] px-4 py-3">
-					<div className="flex min-w-0 items-center gap-2">
-						<FileText className="h-5 w-5 shrink-0 text-[#4338CA]" />
-						<input
-							type="text"
-							className="truncate text-sm font-medium text-[#181724] border border-transparent hover:border-foreground"
-							value={changeName}
-							onChange={(e) => setChangeName(e.target.value)}
-							//trigger saving when I click enter
-							onKeyDown={(e) => {
-								if (e.key === "Enter") e.currentTarget.blur();
-							}}
-							onBlur={() => {
-								//check if contract exists first
-								if (!changeName || !file) return;
-								changeNameMutation.mutate({
-									projectId,
-									contractName: changeName.trim(),
-								});
-							}}
-						></input>
-					</div>
-
-					<div className="flex shrink-0 items-center gap-1">
-						{fileUrl ? (
-							<>
-								<button
-									onClick={zoomOut}
-									aria-label="Zoom out"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
-									<ZoomOut className="h-4 w-4" />
-								</button>
-								<button
-									onClick={() => setZoom(100)}
-									className="min-w-[3.25rem] rounded-lg px-1.5 py-1 text-xs font-medium text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
-									{zoom}%
-								</button>
-								<button
-									onClick={zoomIn}
-									aria-label="Zoom in"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
-									<ZoomIn className="h-4 w-4" />
-								</button>
-								<span className="mx-1 h-4 w-px bg-[#E6E4F0]" />
-								<a
-									href={fileUrl}
-									download={file?.name ?? "document.pdf"}
-									aria-label="Download"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
-									<Download className="h-4 w-4" />
-								</a>
-								<button
-									onClick={handlePrint}
-									aria-label="Print"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#F6F5FB] hover:text-[#181724]"
-								>
-									<Printer className="h-4 w-4" />
-								</button>
-								<button
-									onClick={requestRemove}
-									aria-label="Remove document"
-									className="rounded-lg p-1.5 text-[#6E6B82] hover:bg-[#FEF2F2] hover:text-[#DC2626]"
-								>
-									<X className="h-4 w-4" />
-								</button>
-							</>
-						) : (
-							<button
-								onClick={() => inputRef.current?.click()}
-								className="flex items-center gap-1.5 rounded-lg bg-[#4338CA] px-3 py-1.5 text-xs font-medium text-neutral-surface hover:bg-[#3730A3]"
-							>
-								<Upload className="h-3.5 w-3.5" />
-								Upload Contract
-							</button>
-						)}
-					</div>
-				</div>
-
-				<input
-					ref={inputRef}
-					type="file"
-					accept="application/pdf"
-					onChange={handleInputChange}
-					className="hidden"
-				/>
-
-				{/* Content */}
-				{fileUrl ? (
-					<div className="flex-1 overflow-auto bg-[#F6F5FB] p-6">
-						<div
-							style={{
-								width: `${10000 / zoom}%`,
-								transform: `scale(${zoom / 100})`,
-								transformOrigin: "top left",
-							}}
-						>
-							<embed
-								src={`${fileUrl}#toolbar=0`}
-								type="application/pdf"
-								className="aspect-[8.5/11] w-full rounded-lg border border-[#E6E4F0] bg-neutral-surface shadow-sm"
-							/>
+			<Card className={`flex flex-col overflow-hidden ${className}`}>
+				<CardContent className="flex flex-1 flex-col overflow-hidden p-0">
+					{/* Toolbar */}
+					<div className="flex items-center justify-between gap-3 border-b border-lavender-100 px-4 py-3">
+						<div className="flex min-w-0 items-center gap-2">
+							<FileText className="h-5.5 w-5.5 shrink-0 text-[#500086]" />
+							{/* {contractName.trim() != "" && (
+								<input
+									type="text"
+									className="block leading-none py-0 truncate text-sm font-medium text-ink border border-transparent hover:border-foreground"
+									value={changeName}
+									onChange={(e) => setContractName(e.target.value)}
+									//trigger saving when I click enter
+									onKeyDown={(e) => {
+										if (e.key === "Enter") e.currentTarget.blur();
+									}}
+									onBlur={() => {
+										//check if contract exists first
+										if (!changeName || !file) return;
+										changeNameMutation.mutate({
+											projectId,
+											contractName: changeName.trim(),
+										});
+									}}
+								/>
+							)} */}
 						</div>
-					</div>
-				) : (
-					<div
-						onDragOver={(e) => {
-							e.preventDefault();
-							setIsDragging(true);
-						}}
-						onDragLeave={() => setIsDragging(false)}
-						onDrop={handleDrop}
-						onClick={() => inputRef.current?.click()}
-						className={`flex flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-6 py-20 text-center transition-colors ${
-							isDragging ? "bg-[#EEF0FF]" : "bg-[#FAFAFD]"
-						}`}
-					>
-						<div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#EEF0FF]">
-							<Upload className="h-5 w-5 text-[#4338CA]" />
-						</div>
-						<div>
-							<p className="text-sm font-medium text-[#181724]">
-								Click to upload or drag and drop a PDF
-							</p>
-							<p className="mt-1 text-xs text-[#6E6B82]">
-								Select a document from your computer to preview it here
-							</p>
-							{fileError && (
-								<p className="mt-2 text-xs font-medium text-[#DC2626]">
-									{fileError}
-								</p>
+
+						<div className="flex shrink-0 items-center gap-1">
+							{fileUrl ? (
+								<>
+									<Button
+										variant="ghost"
+										size="icon"
+										onClick={zoomOut}
+										aria-label="Zoom out"
+									>
+										<ZoomOut className="h-4 w-4" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setZoom(100)}
+										className="min-w-[3.25rem]"
+									>
+										{zoom}%
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										onClick={zoomIn}
+										aria-label="Zoom in"
+									>
+										<ZoomIn className="h-4 w-4" />
+									</Button>
+									<span className="mx-1 h-4 w-px bg-lavender-100" />
+
+									<Button
+										variant="ghost"
+										size="icon"
+										onClick={requestRemove}
+										aria-label="Remove document"
+										className="hover:bg-[#FEF2F2] hover:text-red-600"
+									>
+										<X className="h-4 w-4" />
+									</Button>
+								</>
+							) : (
+								<Button
+									variant="default"
+									size="sm"
+									onClick={() => inputRef.current?.click()}
+									className={"px-4 py-5 bg-[#500086]"}
+								>
+									<Upload size={14} />
+									Upload Contract
+								</Button>
 							)}
 						</div>
 					</div>
-				)}
-			</div>
 
-			{pendingFile &&
-				createPortal(
-					<div className="fixed inset-0 z-50 flex items-center justify-center bg-foregroundal-main/40 px-4">
-						<div className="w-full max-w-sm rounded-2xl bg-neutral-surface p-6 shadow-xl">
-							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFFBEB]">
+					<input
+						ref={inputRef}
+						type="file"
+						accept="application/pdf"
+						onChange={handleInputChange}
+						className="hidden"
+					/>
+
+					{/* Content */}
+					{fileUrl ? (
+						<div className="flex-1 overflow-auto bg-[#F6F5FB] p-6">
+							<div
+								style={{
+									width: `${10000 / zoom}%`,
+									transform: `scale(${zoom / 100})`,
+									transformOrigin: "top left",
+								}}
+							>
+								<embed
+									src={`${fileUrl}#toolbar=0`}
+									type="application/pdf"
+									className="aspect-[8.5/11] w-full rounded-lg border border-lavender-100 bg-[#D2D9F4] shadow-sm"
+								/>
+							</div>
+						</div>
+					) : (
+						<div
+							onDragOver={(e) => {
+								e.preventDefault();
+								setIsDragging(true);
+							}}
+							onDragLeave={() => setIsDragging(false)}
+							onDrop={handleDrop}
+							onClick={() => inputRef.current?.click()}
+							className={`flex flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
+								isDragging ? "bg-lavender-50" : "bg-[#FFFFFF]"
+							}`}
+						>
+							<div
+								className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${isDragging ? "bg-[#E0B9FF]" : "bg-[#F1DAFF]"}`}
+							>
+								<Upload className="h-5 w-5 text-[#500086]" />
+							</div>
+							<div>
+								<p className="text-sm font-medium text-ink w-[250px]">
+									Click to upload or drag and drop a PDF
+								</p>
+								<p className="mt-1 text-xs text-plum-400 w-[250px]">
+									Select a document from your computer to preview and prepare
+									for signing here.
+								</p>
+								{fileError && (
+									<p className="mt-2 text-xs font-medium text-red-600">
+										{fileError}
+									</p>
+								)}
+							</div>
+						</div>
+					)}
+				</CardContent>
+			</Card>
+
+			<Dialog
+				open={!!pendingFile}
+				onOpenChange={(open) => !open && cancelUpload()}
+			>
+				<DialogContent className="max-w-sm">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-3">
+							<span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFFBEB]">
 								<AlertTriangle className="h-5 w-5 text-[#B45309]" />
-							</div>
-							<h3 className="mt-4 text-sm font-semibold text-[#181724]">
-								Upload this as the contract?
-							</h3>
-							<p className="mt-1.5 text-sm leading-relaxed text-[#6E6B82]">
-								<span className="font-medium text-[#181724]">
-									{pendingFile.name}
-								</span>{" "}
-								will become the active contract between you and the client. The
-								client will be able to see this document right away.
-							</p>
+							</span>
+							Upload this as the contract?
+						</DialogTitle>
+						<DialogDescription className="pt-2">
+							<span className="font-medium text-ink">{contractName}</span>{" "}
+							will become the active contract between you and the client. The
+							client will be able to see this document right away.
+						</DialogDescription>
+					</DialogHeader>
+					<label className="block text-xs font-medium text-plum-400">
+						Contract name
+					</label>
+					<Input
+						value={contractName}
+						onChange={(e) => setContractName(e.target.value)}
+						placeholder="e.g. Input Contract Name here"
+						autoFocus
+						className="mt-1.5"
+					/>
+					<DialogFooter showCloseButton={false}>
+						<Button variant="ghost" onClick={cancelUpload} className="flex-1">
+							Cancel
+						</Button>
+						<Button
+							variant="default"
+							onClick={confirmUpload}
+							disabled={!contractName.trim()}
+							className="flex-1"
+						>
+							Yes, upload
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
-							<label className="mt-4 block text-xs font-medium text-[#6E6B82]">
-								{" "}
-								{/* ALSO ADDED THIS */}
-								Contract name
-							</label>
-							<input
-								value={contractName}
-								onChange={(e) => setContractName(e.target.value)}
-								placeholder="e.g. Input Contract Name here"
-								autoFocus
-								className="mt-1.5 w-full rounded-lg border border-[#E6E4F0] px-3 py-2 text-sm text-[#181724] outline-none focus:border-[#4338CA]"
-							/>
-
-							<div className="mt-5 flex gap-2">
-								<button
-									onClick={cancelUpload}
-									className="flex-1 rounded-lg border border-[#E6E4F0] py-2 text-sm font-medium text-[#6E6B82] hover:bg-[#F6F5FB]"
-								>
-									Cancel
-								</button>
-								<button
-									onClick={confirmUpload}
-									disabled={!contractName.trim()}
-									className="flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-neutral-surface hover:bg-[#3730A3] disabled:cursor-not-allowed disabled:opacity-50"
-								>
-									Yes, upload
-								</button>
-							</div>
-						</div>
-					</div>,
-					document.body,
-				)}
-
-			{removeRequested &&
-				file &&
-				createPortal(
-					<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/70 backdrop-blur-sm px-4">
-						<div className="w-full max-w-sm rounded-2xl bg-neutral-surface p-6 shadow-xl">
-							<div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FEF2F2]">
-								<AlertTriangle className="h-5 w-5 text-[#DC2626]" />
-							</div>
-							<h3 className="mt-4 text-sm font-semibold text-[#181724]">
-								Remove this contract?
-							</h3>
-							<p className="mt-1.5 text-sm leading-relaxed text-[#6E6B82]">
-								This removes{" "}
-								<span className="font-medium text-[#181724]">{file.name}</span>{" "}
-								from view. To confirm, type the file name below.
-							</p>
-
-							<input
-								value={removeConfirmText}
-								onChange={(e) => setRemoveConfirmText(e.target.value)}
-								placeholder={file.name}
-								autoFocus
-								className="mt-4 w-full rounded-lg border border-[#E6E4F0] px-3 py-2 text-sm text-[#181724] outline-none focus:border-[#DC2626]"
-							/>
-
-							<div className="mt-5 flex gap-2">
-								<button
-									onClick={cancelRemove}
-									className="flex-1 rounded-lg border border-[#E6E4F0] py-2 text-sm font-medium text-[#6E6B82] hover:bg-[#F6F5FB]"
-								>
-									Cancel
-								</button>
-								<button
-									onClick={confirmRemove}
-									disabled={removeConfirmText !== file.name}
-									className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-colors disabled:opacity-100 disabled:visible ${
-										removeConfirmText !== file.name
-											? "border-[#E6E4F0] bg-neutral-surface text-[#6E6B82] cursor-not-allowed"
-											: "flex-1 rounded-lg bg-[#4338CA] py-2 text-sm font-medium text-neutral-surface hover:bg-[#3730A3]"
-									}`}
-								>
-									Remove
-								</button>
-							</div>
-						</div>
-					</div>,
-					document.body,
-				)}
+			{deleteModalOpen && file && (
+				<ConfirmTextModal
+					open={deleteModalOpen}
+					onClose={() => setDeleteModalOpen(false)}
+					noParamFunc={confirmRemove}
+					contractDetails={contractDetails}
+					confirmPhrase={delete_client_phrase}
+					displayText={delete_client_text}
+					displayTitle="Confirm Contract Deletion"
+					buttonText="Delete Contract"
+					onSuccess={onSuccess}
+				/>
+			)}
 		</>
 	);
 }

@@ -1,27 +1,50 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { Input, Label, Backdrop, FormInput } from "@/shared/ui"
-import { Tag } from "@/entities/types"
+import { useState } from "react";
+import { FormInput } from "@/components/ui/forminput";
+import { Label } from "@/components/ui/label";
+import { Tag } from "@/entities/types";
 
-import { X, ChevronDown } from "lucide-react"
-import { useProfiles } from "@/entities/profile/queries"
-import { createClient } from "@/lib/supabase/client"
-import type { CreateTicketParams } from "@/shared/schemas"
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+	DialogFooter,
+} from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuSeparator,
+	DropdownMenuCheckboxItem,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, Paperclip } from "lucide-react";
+import { useProfiles } from "@/entities/profile/queries";
+import { createClient } from "@/lib/supabase/client";
+import type { CreateTicketParams } from "@/shared/schemas";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Sample bugs list for linking issues to tickets
+const SAMPLE_BUGS = [
+	{ id: "iss-1", name: "Authentication Token Expiration Bug" },
+	{ id: "iss-2", name: "Client Dropdown Not Populating" },
+	{ id: "iss-5", name: "Broken Navigation Links in Footer" },
+	{ id: "iss-6", name: "Database Timeout on Analytics Load" },
+];
 
 /** Fields the modal collects — everything except workflow_id and status (added by TicketBoard). */
-type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">
+type CreateTicketFormData = Omit<CreateTicketParams, "workflow_id" | "status">;
 
 interface CreateTicketModalProps {
-	isOpen: boolean
-	onClose: () => void
-	onCreateTicket: (data: CreateTicketFormData) => Promise<void>
-	tags: Tag[]
+	isOpen: boolean;
+	onClose: () => void;
+	onCreateTicket: (data: CreateTicketFormData) => Promise<void>;
+	tags: Tag[];
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function TicketModalCreate({
 	isOpen,
@@ -29,52 +52,31 @@ export default function TicketModalCreate({
 	onCreateTicket,
 	tags,
 }: CreateTicketModalProps) {
-	const [title, setTitle] = useState("")
-	const [description, setDescription] = useState("")
-	const [deadline, setDeadline] = useState("")
-	const today = new Date().toISOString().split("T")[0]
+	const [title, setTitle] = useState("");
+	const [description, setDescription] = useState("");
+	const [startDate, setStartDate] = useState("");
+	const [deadline, setDeadline] = useState("");
 
-	const [selectedTags, setSelectedTags] = useState<string[]>([])
-	const [tagsOpen, setTagsOpen] = useState(false)
-	const tagsRef = useRef<HTMLDivElement>(null)
+	const [selectedTags, setSelectedTags] = useState<string[]>([]);
+	const [selectedBugId, setSelectedBugId] = useState("");
 
-	const { data: profiles = [] } = useProfiles()
+	const { data: profiles = [] } = useProfiles();
 
-	const [assignedOpen, setAssignedOpen] = useState(false)
-	const [assignedIds, setAssignedIds] = useState<string[]>([])
-	const [watcherId, setWatcherId] = useState("")
-	const [watcherOpen, setWatcherOpen] = useState(false)
-	const assignedRef = useRef<HTMLDivElement>(null)
-	const watcherRef = useRef<HTMLDivElement>(null)
+	const [assignedIds, setAssignedIds] = useState<string[]>([]);
+	const [watcherId, setWatcherId] = useState("");
 
-	const [imageFiles, setImageFiles] = useState<File[]>([])
-	const [imagePreviews, setImagePreviews] = useState<string[]>([])
+	const [imageFiles, setImageFiles] = useState<File[]>([]);
+	const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
 	const [apiMethod, setApiMethod] = useState<"GET" | "POST" | "PUT" | "DELETE">(
 		"GET",
-	)
-	const [apiRoute, setApiRoute] = useState("")
-
-	useEffect(() => {
-		function handleClickOutside(e: MouseEvent) {
-			if (tagsRef.current && !tagsRef.current.contains(e.target as Node)) {
-				setTagsOpen(false)
-			}
-			if (assignedRef.current && !assignedRef.current.contains(e.target as Node)) {
-				setAssignedOpen(false)
-			}
-			if (watcherRef.current && !watcherRef.current.contains(e.target as Node)) {
-				setWatcherOpen(false)
-			}
-		}
-		document.addEventListener("mousedown", handleClickOutside)
-		return () => document.removeEventListener("mousedown", handleClickOutside)
-	}, [])
+	);
+	const [apiRoute, setApiRoute] = useState("");
 
 	function toggleTag(tagId: string) {
 		setSelectedTags((prev) =>
 			prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId],
-		)
+		);
 	}
 
 	function toggleAssigned(profileId: string) {
@@ -82,78 +84,79 @@ export default function TicketModalCreate({
 			prev.includes(profileId)
 				? prev.filter((id) => id !== profileId)
 				: [...prev, profileId],
-		)
+		);
 	}
 
 	const isApiTagSelected = selectedTags.some(
 		(tagId) =>
 			tags.find((t) => t.tag_id === tagId)?.name?.toLowerCase() === "api",
-	)
+	);
 
 	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-		const files = e.target.files
-		if (!files || files.length === 0) return
-		const newFiles: File[] = []
-		const newPreviews: string[] = []
+		const files = e.target.files;
+		if (!files || files.length === 0) return;
+		const newFiles: File[] = [];
+		const newPreviews: string[] = [];
 		for (const file of Array.from(files)) {
 			if (file.size > 5 * 1024 * 1024) {
-				alert(`Image "${file.name}" must be under 5MB.`)
-				continue
+				alert(`Image "${file.name}" must be under 5MB.`);
+				continue;
 			}
-			newFiles.push(file)
-			newPreviews.push(URL.createObjectURL(file))
+			newFiles.push(file);
+			newPreviews.push(URL.createObjectURL(file));
 		}
 		if (newFiles.length > 0) {
-			setImageFiles((prev) => [...prev, ...newFiles])
-			setImagePreviews((prev) => [...prev, ...newPreviews])
+			setImageFiles((prev) => [...prev, ...newFiles]);
+			setImagePreviews((prev) => [...prev, ...newPreviews]);
 		}
-		e.target.value = ""
+		e.target.value = "";
 	}
 
 	function removeCreateImage(index: number) {
-		URL.revokeObjectURL(imagePreviews[index])
-		setImageFiles((prev) => prev.filter((_, i) => i !== index))
-		setImagePreviews((prev) => prev.filter((_, i) => i !== index))
+		URL.revokeObjectURL(imagePreviews[index]);
+		setImageFiles((prev) => prev.filter((_, i) => i !== index));
+		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
 	}
 
-		async function handleSubmit(e: React.FormEvent) {
-		e.preventDefault()
-		if (!title.trim()) return
+	async function handleSubmit(e: React.FormEvent) {
+		e.preventDefault();
+		if (!title.trim()) return;
 
-		const imageUrls: string[] = []
+		const imageUrls: string[] = [];
 
-		// Upload images to Supabase
 		if (imageFiles.length > 0) {
 			try {
-				const supabase = createClient()
+				const supabase = createClient();
 				for (const file of imageFiles) {
-					const fileExt = file.name.split(".").pop()
-					const fileName = `${crypto.randomUUID()}.${fileExt}`
-					const filePath = `tickets/${fileName}`
+					const fileExt = file.name.split(".").pop();
+					const fileName = `${crypto.randomUUID()}.${fileExt}`;
+					const filePath = `tickets/${fileName}`;
 
 					const { error } = await supabase.storage
 						.from("images")
 						.upload(filePath, file, {
 							cacheControl: "3600",
 							upsert: false,
-						})
+						});
 
-					if (error) throw new Error(`Failed to upload image: ${error.message}`)
+					if (error)
+						throw new Error(`Failed to upload image: ${error.message}`);
 
 					const {
 						data: { publicUrl },
-					} = supabase.storage.from("images").getPublicUrl(filePath)
+					} = supabase.storage.from("images").getPublicUrl(filePath);
 
-					imageUrls.push(publicUrl)
+					imageUrls.push(publicUrl);
 				}
 			} catch (err) {
-				console.error("Image upload failed:", err)
+				console.error("Image upload failed:", err);
 			}
 		}
 
 		onCreateTicket({
 			name: title.trim(),
-			deadline_date: deadline ? new Date(deadline) : new Date(),
+			plan_start_at: startDate ? new Date(startDate) : null,
+			plan_end_at: deadline ? new Date(deadline) : new Date(),
 			watcher_id: watcherId || null,
 			TicketAssigned: assignedIds,
 			tagIds: selectedTags,
@@ -161,22 +164,22 @@ export default function TicketModalCreate({
 			api_route: apiRoute || null,
 			api_method: apiMethod || null,
 			image_urls: imageUrls,
-		})
+		});
 
-		setTitle("")
-		setDescription("")
-		setDeadline("")
-		setWatcherId("")
-		setSelectedTags([])
-		setAssignedIds([])
-		setImageFiles([])
-		setImagePreviews([])
-		setApiMethod("GET")
-		setApiRoute("")
-		onClose()
+		setTitle("");
+		setDescription("");
+		setStartDate("");
+		setDeadline("");
+		setWatcherId("");
+		setSelectedBugId("");
+		setSelectedTags([]);
+		setAssignedIds([]);
+		setImageFiles([]);
+		setImagePreviews([]);
+		setApiMethod("GET");
+		setApiRoute("");
+		onClose();
 	}
-
-	if (!isOpen) return null
 
 	const colorClasses = {
 		indigo: "bg-indigo-50 text-indigo-700",
@@ -187,67 +190,67 @@ export default function TicketModalCreate({
 		purple: "bg-purple-50 text-purple-700",
 		pink: "bg-pink-50 text-pink-700",
 		gray: "bg-gray-50 text-gray-700",
-	}
+	};
 
 	return (
-		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div className="bg-neutral-surface rounded-2xl w-full max-w-153 max-h-[92vh] flex flex-col shadow-2xl">
+		<Dialog
+			open={isOpen}
+			onOpenChange={(open) => {
+				if (!open) onClose();
+			}}
+		>
+			<DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
 				{/* Modal header */}
-				<div className="flex items-center justify-between px-6 pt-6 pb-5 shrink-0">
-					<h2 className="text-lg font-semibold text-gray-900">New Ticket</h2>
-					<button
-						onClick={onClose}
-						className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
-					>
-						<X />
-					</button>
-				</div>
+				<DialogHeader>
+					<DialogTitle>New Ticket</DialogTitle>
+					<DialogDescription>
+						Create a new ticket for the board.
+					</DialogDescription>
+				</DialogHeader>
 
 				<div className="h-px bg-gray-100 shrink-0" />
 
 				{/* Form */}
 				<form
 					onSubmit={handleSubmit}
-					className="flex-1 overflow-y-auto px-6 py-5 space-y-5"
+					className="flex-1 overflow-y-auto px-1 space-y-5"
 				>
 					{/* Ticket Name */}
 					<FormInput
-					label="Ticket Name"
-					required
-					placeholder="e.g., Update Landing Page Hero"
-					value={title}
-					onChange={(e) => setTitle(e.target.value)}
-					maxLength={50}
+						label="Ticket Name"
+						required
+						placeholder="e.g., Update Landing Page Hero"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						maxLength={50}
 					/>
 
 					{/* Description */}
 					<FormInput
-					variant="textarea"
-					label="Description"
-					placeholder="Provide detailed information about this ticket..."
-					value={description}
-					onChange={(e) => setDescription(e.target.value)}
-					rows={4}
-					maxLength={160}
+						variant="textarea"
+						label="Description"
+						placeholder="Provide detailed information about this ticket..."
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+						rows={4}
+						maxLength={160}
 					/>
 
 					{/* Assigned to + Watchers row */}
 					<div className="grid grid-cols-2 gap-4">
 						{/* Assigned To */}
-						<div className="space-y-1.5" ref={assignedRef}>
+						<div className="space-y-1.5">
 							<Label>Assigned To</Label>
-							<div className="relative">
-								<button
-									type="button"
-									onClick={() => setAssignedOpen((o) => !o)}
-									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
-								>
+							<DropdownMenu>
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
 									<div className="flex flex-wrap gap-1 flex-1">
 										{assignedIds.length === 0 ? (
 											<span className="text-gray-400">Assign to...</span>
 										) : (
 											assignedIds.map((profileId) => {
-												const profile = profiles.find((p) => p.profile_id === profileId)
+												const profile = profiles.find(
+													(p) => p.profile_id === profileId,
+												);
 												return (
 													<span
 														key={profileId}
@@ -257,207 +260,251 @@ export default function TicketModalCreate({
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
 															onClick={(e) => {
-																e.stopPropagation()
-																toggleAssigned(profileId)
+																e.stopPropagation();
+																e.preventDefault();
+																toggleAssigned(profileId);
 															}}
 														>
 															×
 														</span>
 													</span>
-												)
+												);
 											})
 										)}
 									</div>
-									<ChevronDown />
-								</button>
+									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+								</DropdownMenuTrigger>
 
-								{assignedOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-										{profiles.map((profile) => (
-											<div
+								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
+									<DropdownMenuSeparator />
+									{profiles.map((profile) => {
+										const isChecked = assignedIds.includes(profile.profile_id);
+										const name = `${profile.first_name} ${profile.last_name}`;
+										const initials = name
+											.split(" ")
+											.map((n) => n[0])
+											.join("");
+										return (
+											<DropdownMenuCheckboxItem
 												key={profile.profile_id}
-												onClick={() => toggleAssigned(profile.profile_id)}
-												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+												checked={isChecked}
+												onCheckedChange={() => toggleAssigned(profile.profile_id)}
+												className="cursor-pointer"
 											>
-												<div
-													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
-														assignedIds.includes(profile.profile_id)
-															? "bg-brand-600 border-brand-600"
-															: "border-gray-300"
-													}`}
-												>
-													{assignedIds.includes(profile.profile_id) && (
-														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline points="2 6 5 9 10 3" stroke="neutral-surface" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-														</svg>
-													)}
-												</div>
-												<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
-													{(profile.first_name + " " + profile.last_name).split(" ").map((n) => n[0]).join("")}
-												</div>
-												{profile?.first_name + " " + profile?.last_name}
-											</div>
-										))}
-									</div>
-								)}
-							</div>
+												<span className="flex items-center gap-2">
+													<span className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
+														{initials}
+													</span>
+													<span className="truncate">{name}</span>
+												</span>
+											</DropdownMenuCheckboxItem>
+										);
+									})}
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 
 						{/* Watcher */}
-						<div className="space-y-1.5" ref={watcherRef}>
+						<div className="space-y-1.5">
 							<Label>Watcher</Label>
-							<div className="relative">
-								<button
-									type="button"
-									onClick={() => setWatcherOpen((o) => !o)}
-									className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
-								>
-									<span className="text-gray-400">
+							<DropdownMenu>
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+									<span className="text-gray-400 truncate">
 										{watcherId
-											? profiles.find((p) => p.profile_id === watcherId)?.first_name + " " + profiles.find((p) => p.profile_id === watcherId)?.last_name
+											? (() => {
+													const p = profiles.find(
+														(x) => x.profile_id === watcherId,
+													);
+													return p
+														? `${p.first_name} ${p.last_name}`
+														: "Add watchers...";
+											  })()
 											: "Add watchers..."}
 									</span>
-									<ChevronDown />
-								</button>
-								{watcherOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-										<div
-											onClick={() => { setWatcherId("") 
-												setWatcherOpen(false) }}
-											className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+								</DropdownMenuTrigger>
+
+								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
+									<DropdownMenuSeparator />
+									<DropdownMenuRadioGroup
+										value={watcherId}
+										onValueChange={setWatcherId}
+									>
+										<DropdownMenuRadioItem
+											value=""
+											className="cursor-pointer text-gray-400"
 										>
-											<span className="text-gray-400">None</span>
-										</div>
-										{profiles.map((profile) => (
-											<div
-												key={profile.profile_id}
-												onClick={() => { setWatcherId(profile.profile_id) 
-													setWatcherOpen(false) }}
-												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
-											>
-												<div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
-													{(profile.first_name + " " + profile.last_name)
-														.split(" ")
-														.map((n) => n[0])
-														.join("")}
-												</div>
-												{profile?.first_name + " " + profile?.last_name}
-											</div>
-										))}
-									</div>
-								)}
-							</div>
+											None
+										</DropdownMenuRadioItem>
+										{profiles.map((profile) => {
+											const name = `${profile.first_name} ${profile.last_name}`;
+											const initials = name
+												.split(" ")
+												.map((n) => n[0])
+												.join("");
+											return (
+												<DropdownMenuRadioItem
+													key={profile.profile_id}
+													value={profile.profile_id}
+													className="cursor-pointer"
+												>
+													<span className="flex items-center gap-2">
+														<span className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center text-[10px] font-bold text-neutral-surface shrink-0">
+															{initials}
+														</span>
+														<span className="truncate">{name}</span>
+													</span>
+												</DropdownMenuRadioItem>
+											);
+										})}
+									</DropdownMenuRadioGroup>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					</div>
 
-					{/* Tags + Deadline row */}
+					{/* Tags + Bugs Row */}
 					<div className="grid grid-cols-2 gap-4">
 						{/* Tags */}
-						<div className="space-y-1.5" ref={tagsRef}>
+						<div className="space-y-1.5">
 							<Label>Tags</Label>
-							<div className="relative">
-								<button
-									type="button"
-									onClick={() => setTagsOpen((o) => !o)}
-									className="w-full flex items-center overflow-x-hidden justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5"
-								>
+							<DropdownMenu>
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
 									<div className="flex flex-wrap gap-1 flex-1">
 										{selectedTags.length === 0 ? (
 											<span className="text-gray-400">Select tags...</span>
 										) : (
 											selectedTags.map((tag_id) => {
-												const tag = tags.find((t) => t.tag_id === tag_id)
+												const tag = tags.find((t) => t.tag_id === tag_id);
+												const colorClass =
+													colorClasses[
+														tag?.color as keyof typeof colorClasses
+													] ?? colorClasses.indigo;
 												return (
 													<span
 														key={tag_id}
-														className={
-															(colorClasses[tag?.color as keyof typeof colorClasses] ??
-																colorClasses.indigo) +
-															" inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
-														}
+														className={`${colorClass} inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium`}
 													>
 														{tag?.name}
 														<span
 															className="cursor-pointer opacity-60 hover:opacity-100 text-sm leading-none"
 															onClick={(e) => {
-																e.stopPropagation()
-																toggleTag(tag_id)
+																e.stopPropagation();
+																e.preventDefault();
+																toggleTag(tag_id);
 															}}
 														>
 															×
 														</span>
 													</span>
-												)
+												);
 											})
 										)}
 									</div>
-									<ChevronDown />
-								</button>
+									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+								</DropdownMenuTrigger>
 
-								{tagsOpen && (
-									<div className="absolute z-10 mt-1 w-full bg-neutral-surface border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-48 overflow-y-auto">
-										{tags.map((tag) => (
-											<div
+								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
+									<DropdownMenuSeparator />
+									{tags.map((tag) => {
+										const isChecked = selectedTags.includes(tag.tag_id);
+										const colorClass =
+											colorClasses[tag.color as keyof typeof colorClasses] ??
+											colorClasses.indigo;
+										return (
+											<DropdownMenuCheckboxItem
 												key={tag.tag_id}
-												onClick={() => toggleTag(tag.tag_id)}
-												className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm cursor-pointer hover:bg-gray-50 text-gray-700"
+												checked={isChecked}
+												onCheckedChange={() => toggleTag(tag.tag_id)}
+												className="cursor-pointer"
 											>
-												<div
-													className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 ${
-														selectedTags.includes(tag.tag_id)
-															? "bg-brand-600 border-brand-600"
-															: "border-gray-300"
-													}`}
+												<span
+													className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${colorClass}`}
 												>
-													{selectedTags.includes(tag.tag_id) && (
-														<svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-															<polyline points="2 6 5 9 10 3" stroke="neutral-surface" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-														</svg>
-													)}
-												</div>
-												{tag.name}
-											</div>
-										))}
-									</div>
-								)}
-							</div>
+													{tag.name}
+												</span>
+											</DropdownMenuCheckboxItem>
+										);
+									})}
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 
-						{/* Deadline */}
+						{/* Bugs */}
 						<div className="space-y-1.5">
-							<Label>Deadline</Label>
-							<Input
-								type="datetime-local"
-								value={deadline}
-								onChange={(e) => setDeadline(e.target.value)}
-								min={today}
-								className="text-gray-500"
-							/>
+							<Label>Bugs</Label>
+							<DropdownMenu>
+								<DropdownMenuTrigger className="w-full flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-neutral-surface px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent min-h-9.5 text-left cursor-pointer">
+									<span className="text-gray-400 truncate">
+										{selectedBugId
+											? SAMPLE_BUGS.find((b) => b.id === selectedBugId)?.name
+											: "Link a bug..."}
+									</span>
+									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+								</DropdownMenuTrigger>
+
+								<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
+									<DropdownMenuSeparator />
+									<DropdownMenuRadioGroup
+										value={selectedBugId}
+										onValueChange={setSelectedBugId}
+									>
+										<DropdownMenuRadioItem
+											value=""
+											className="cursor-pointer text-gray-400"
+										>
+											None
+										</DropdownMenuRadioItem>
+										{SAMPLE_BUGS.map((bug) => (
+											<DropdownMenuRadioItem
+												key={bug.id}
+												value={bug.id}
+												className="cursor-pointer"
+											>
+												<span className="truncate">{bug.name}</span>
+											</DropdownMenuRadioItem>
+										))}
+									</DropdownMenuRadioGroup>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 					</div>
 
+					{/* Start Date + Deadline row */}
+					<div className="grid grid-cols-2 gap-4">
+						<FormInput
+							variant="datetime-local"
+							type="datetime-local"
+							label="Planned Start"
+							value={startDate}
+							onChange={(e) => setStartDate(e.target.value)}
+							containerClassName="flex-1"
+						/>
+						<FormInput
+							variant="datetime-local"
+							type="datetime-local"
+							label="Deadline"
+							value={deadline}
+							onChange={(e) => setDeadline(e.target.value)}
+							containerClassName="flex-1"
+						/>
+					</div>
+
 					{/* Image Attachment */}
-					<div className="space-y-1.5">
-						<Label>
-							Attachment{" "}
+					<div className="space-y-2">
+						<div className="flex items-center justify-between">
+							<Label>Attachment</Label>
 							<span className="text-xs text-gray-400 font-normal">
 								(jpg, png · Max 5MB)
 							</span>
-						</Label>
-						<label className="flex items-center gap-2.5 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
-							<svg
-								width="15"
-								height="15"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth={2}
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-							</svg>
-							<span>{imageFiles.length > 0 ? `${imageFiles.length} file(s) selected` : "Click to attach images..."}</span>
+						</div>
+						<label className="flex items-center gap-3 w-full cursor-pointer rounded-lg border border-dashed border-gray-300 bg-neutral-surface px-4 py-3.5 text-sm text-gray-500 hover:border-indigo-400 hover:bg-indigo-50/40 transition-colors">
+							<Paperclip size={16} className="shrink-0 text-gray-400" />
+							<span>
+								{imageFiles.length > 0
+									? `${imageFiles.length} file(s) selected`
+									: "Click to attach images..."}
+							</span>
 							<input
 								type="file"
 								accept="image/jpeg,image/png"
@@ -466,7 +513,7 @@ export default function TicketModalCreate({
 							/>
 						</label>
 						{imagePreviews.length > 0 && (
-							<div className="flex flex-wrap gap-2 mt-1">
+							<div className="flex flex-wrap gap-3 pt-1">
 								{imagePreviews.map((preview, idx) => (
 									<div key={idx} className="relative inline-block">
 										<img
@@ -499,7 +546,9 @@ export default function TicketModalCreate({
 									<select
 										value={apiMethod}
 										onChange={(e) =>
-											setApiMethod(e.target.value as "GET" | "POST" | "PUT" | "DELETE")
+											setApiMethod(
+												e.target.value as "GET" | "POST" | "PUT" | "DELETE",
+											)
 										}
 										className="w-full rounded-lg border border-gray-200 bg-neutral-surface px-2.5 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
 									>
@@ -508,39 +557,27 @@ export default function TicketModalCreate({
 										))}
 									</select>
 								</div>
-								<div className="space-y-1.5">
-									<Label>API Route</Label>
-									<Input
-										placeholder="/api/v1/resource"
-										value={apiRoute}
-										onChange={(e) => setApiRoute(e.target.value)}
-									/>
-								</div>
+								<FormInput
+									label="API Route"
+									placeholder="/api/v1/resource"
+									value={apiRoute}
+									onChange={(e) => setApiRoute(e.target.value)}
+								/>
 							</div>
 						</div>
 					)}
 				</form>
 
 				{/* Footer */}
-				<div className="h-px bg-gray-100 shrink-0" />
-				<div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0">
-					<button
-						type="button"
-						onClick={onClose}
-						className="cursor-pointer px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-					>
+				<DialogFooter>
+					<Button onClick={onClose} variant="ghost">
 						Cancel
-					</button>
-					<button
-						type="button"
-						onClick={handleSubmit}
-						disabled={!title.trim()}
-						className="cursor-pointer px-5 py-2.5 text-sm font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-					>
+					</Button>
+					<Button onClick={handleSubmit} disabled={!title.trim()}>
 						Create Ticket
-					</button>
-				</div>
-			</div>
-		</Backdrop>
-	)
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
 }

@@ -1,9 +1,20 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
-import { cascadeSoftDeleteTicket } from "../ticket/ticketActions";
-
-export type EntityFilterStatus = "active" | "deleted" | "all";
+import {
+	assertProjectMember,
+	resolveModuleProject,
+	resolveWorkflowProject,
+} from "@/lib/auth/projectAccess";
+import { generateKeyBetween } from "fractional-indexing";
+import { reorderBySortKey } from "@/shared/lib/fractionalSort";
+import {
+	workflowCreateSchema,
+	workflowUpdateSchema,
+	type WorkflowCreateInput,
+	type WorkflowUpdateInput,
+} from "@/shared/schemas";
+import type { EntityFilterStatus } from "@/entities/types";
 
 /**
  * Creates a new workflow and maps it to its parent module.
@@ -19,28 +30,40 @@ export type EntityFilterStatus = "active" | "deleted" | "all";
  */
 export async function createWorkflow(
 	moduleId: string,
-	workflowName: string,
-	startDate?: Date | null,
-	endDate?: Date | null,
-	deadlineDate?: Date | null,
-	isApproved: boolean = false,
+	input: WorkflowCreateInput,
 ) {
+	const parsed = workflowCreateSchema.safeParse(input);
+	if (!parsed.success) {
+		return { success: false, error: "Invalid workflow data." };
+	}
+	const { name, planStart, planEnd, actualStart, actualEnd, isApproved } =
+		parsed.data;
+
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveModuleProject(moduleId);
+	if (!projectId) return { success: false, error: "Module not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
-		const maxNumber = await prisma.workflows.aggregate({
+		// Fractional sort key: append after the last sibling — a single-key
+		// insert that never requires renumbering existing rows.
+		const lastWorkflow = await prisma.workflows.findFirst({
 			where: { module_id: moduleId, is_deleted: false },
-			_max: { number: true },
+			orderBy: { sort_key: { sort: "desc", nulls: "last" } },
+			select: { sort_key: true },
 		});
-		const nextNumber = (maxNumber._max.number ?? 0) + 1;
+		const nextKey = generateKeyBetween(lastWorkflow?.sort_key ?? null, null);
 
 		const newWorkflow = await prisma.workflows.create({
 			data: {
-				name: workflowName,
-				start_date: startDate,
-				finish_date: endDate,
-				is_approved: isApproved,
-				number: nextNumber,
+				name,
+				sort_key: nextKey,
+				plan_start_at: planStart ?? new Date(),
+				actual_end_at: actualEnd ?? null,
+				actual_start_at: actualStart ?? null,
+				is_approved: isApproved ?? false,
 				module_id: moduleId,
-				deadline_date: deadlineDate ?? null,
+				plan_end_at: planEnd ?? new Date(),
 			},
 		});
 		return { success: true, data: newWorkflow };
@@ -79,7 +102,11 @@ export async function getWorkflowById(
 				is_deleted: isDeletedFilter,
 			},
 			include: {
-				Modules: true,
+				Modules: {
+					include: {
+						Phases: true,
+					},
+				},
 			},
 		});
 
@@ -124,7 +151,7 @@ export async function getTicketsByWorkflowId(
 				is_deleted: isDeletedFilter,
 			},
 			orderBy: {
-				start_date: "asc",
+				plan_start_at: "asc",
 			},
 		});
 
@@ -149,22 +176,31 @@ export async function getTicketsByWorkflowId(
  */
 export async function updateWorkflow(
 	workflowId: string,
-	workflowName?: string,
-	startDate?: Date | null,
-	endDate?: Date | null,
-	isApproved?: boolean,
-	deadlineDate?: Date | null,
+	input: WorkflowUpdateInput,
 ) {
+	const parsed = workflowUpdateSchema.safeParse(input);
+	if (!parsed.success) {
+		return { success: false, error: "Invalid workflow data." };
+	}
+	const { name, planStart, planEnd, actualStart, actualEnd, isApproved } =
+		parsed.data;
+
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveWorkflowProject(workflowId);
+	if (!projectId) return { success: false, error: "Workflow not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const updatedWorkflow = await prisma.workflows.update({
 			where: {
 				workflow_id: workflowId,
 			},
 			data: {
-				name: workflowName,
-				start_date: startDate,
-				finish_date: endDate,
-				deadline_date: deadlineDate,
+				name: name ?? undefined,
+				plan_start_at: planStart ?? undefined,
+				actual_end_at: actualEnd ?? undefined,
+				actual_start_at: actualStart ?? undefined,
+				plan_end_at: planEnd ?? undefined,
 				is_approved: isApproved,
 			},
 		});
@@ -186,6 +222,11 @@ export async function updateWorkflow(
  * Returns `success: false` and an error message if the workflow contains tickets or the query fails.
  */
 export async function softDeleteWorkflow(workflowId: string) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveWorkflowProject(workflowId);
+	if (!projectId) return { success: false, error: "Workflow not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const attachedTicketsCount = await prisma.tickets.count({
 			where: {
@@ -200,52 +241,13 @@ export async function softDeleteWorkflow(workflowId: string) {
 			};
 		}
 
-		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-			// Read the workflow's number before nulling it
-			const wf = await tx.workflows.findUnique({
-				where: { workflow_id: workflowId },
-				select: { module_id: true, number: true },
-			});
-
-			await tx.workflows.update({
-				where: { workflow_id: workflowId },
-				data: {
-					is_deleted: true,
-					deleted_at: new Date(),
-					number: null,
-				} as any,
-			});
-
-			// Renumber remaining workflows to close the gap
-			if (wf?.number != null) {
-				const higherWorkflows = await tx.workflows.findMany({
-					where: {
-						module_id: wf.module_id,
-						number: { gt: wf.number },
-						is_deleted: false,
-					},
-					select: { workflow_id: true, number: true },
-					orderBy: { number: "asc" },
-				});
-
-				if (higherWorkflows.length > 0) {
-					await tx.workflows.updateMany({
-						where: {
-							workflow_id: {
-								in: higherWorkflows.map((w) => w.workflow_id),
-							},
-						},
-						data: { number: null },
-					});
-
-					for (const w of higherWorkflows) {
-						await tx.workflows.update({
-							where: { workflow_id: w.workflow_id },
-							data: { number: w.number! - 1 },
-						});
-					}
-				}
-			}
+		await prisma.workflows.update({
+			where: { workflow_id: workflowId },
+			data: {
+				is_deleted: true,
+				deleted_at: new Date(),
+				number: null,
+			},
 		});
 
 		return { success: true };
@@ -275,56 +277,29 @@ export async function cascadeSoftDeleteWorkflow(
 	workflowId: string,
 	txClient?: Prisma.TransactionClient,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveWorkflowProject(workflowId);
+	if (!projectId) return { success: false, error: "Workflow not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
-		// Read the workflow's number before nulling it
-		const wf = await tx.workflows.findUnique({
-			where: { workflow_id: workflowId },
-			select: { module_id: true, number: true },
-		});
-
 		await tx.workflows.update({
 			where: { workflow_id: workflowId },
-			data: { is_deleted: true, deleted_at: new Date(), number: null } as any,
+			data: { is_deleted: true, deleted_at: new Date(), number: null },
 		});
 
+		// Batch child tickets with a single updateMany instead of per-ticket calls
 		const childTickets = await tx.tickets.findMany({
 			where: { workflow_id: workflowId, is_deleted: false },
 			select: { ticket_id: true },
 		});
+		const ticketIds = childTickets.map((t) => t.ticket_id);
 
-		for (const ticket of childTickets) {
-			await cascadeSoftDeleteTicket(ticket.ticket_id, undefined, tx);
-		}
-
-		// Renumber remaining workflows to close the gap
-		if (wf?.number != null) {
-			const higherWorkflows = await tx.workflows.findMany({
-				where: {
-					module_id: wf.module_id,
-					number: { gt: wf.number },
-					is_deleted: false,
-				},
-				select: { workflow_id: true, number: true },
-				orderBy: { number: "asc" },
+		if (ticketIds.length > 0) {
+			await tx.tickets.updateMany({
+				where: { ticket_id: { in: ticketIds } },
+				data: { is_deleted: true, deleted_at: new Date() },
 			});
-
-			if (higherWorkflows.length > 0) {
-				await tx.workflows.updateMany({
-					where: {
-						workflow_id: {
-							in: higherWorkflows.map((w) => w.workflow_id),
-						},
-					},
-					data: { number: null },
-				});
-
-				for (const w of higherWorkflows) {
-					await tx.workflows.update({
-						where: { workflow_id: w.workflow_id },
-						data: { number: w.number! - 1 },
-					});
-				}
-			}
 		}
 	};
 
@@ -361,80 +336,45 @@ export async function reorderWorkflow(
 	workflowId: string,
 	targetNumber: number,
 ) {
+	// Authorization: caller must be a member of the parent project
+	const projectId = await resolveWorkflowProject(workflowId);
+	if (!projectId) return { success: false, error: "Workflow not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
 			const wf = await tx.workflows.findUnique({
 				where: { workflow_id: workflowId },
+				select: { module_id: true },
 			});
 
 			if (!wf) {
 				throw new Error(`Workflow ${workflowId} not found.`);
 			}
-			if (wf.number === null) {
-				throw new Error(
-					`Workflow ${workflowId} has no sequence number (number is null).`,
-				);
-			}
 
-			const moduleId = wf.module_id;
-			const oldNumber = wf.number;
-
-			// No-op if already at the target position
-			if (oldNumber === targetNumber) return;
-
-			// Validate target range
-			const activeCount = await tx.workflows.count({
-				where: { module_id: moduleId, is_deleted: false },
-			});
-			if (targetNumber < 1 || targetNumber > activeCount) {
-				throw new Error(
-					`Target number ${targetNumber} is out of bounds (1–${activeCount}).`,
-				);
-			}
-
-			// Step 1: Fetch every workflow in the affected range (dragged + shifted)
-			const rangeStart = Math.min(oldNumber, targetNumber);
-			const rangeEnd = Math.max(oldNumber, targetNumber);
-			const affected = await tx.workflows.findMany({
-				where: {
-					module_id: moduleId,
-					number: { gte: rangeStart, lte: rangeEnd },
-					is_deleted: false,
-				},
-				select: { workflow_id: true, number: true },
+			// Fractional-indexing move via the shared core (Task 3.4):
+			// compute the key between the neighbors at the target position
+			// and update a single row. No renumbering.
+			const siblings = await tx.workflows.findMany({
+				where: { module_id: wf.module_id, is_deleted: false, sort_key: { not: null } },
+				select: { workflow_id: true, sort_key: true },
+				orderBy: { sort_key: { sort: "asc", nulls: "last" } },
 			});
 
-			// Step 2: Null ALL affected workflows at once —
-			//         multiple NULLs don't violate the unique constraint
-			await tx.workflows.updateMany({
-				where: {
-					workflow_id: { in: affected.map((w) => w.workflow_id) },
-				},
-				data: { number: null },
-			});
-
-			// Step 3: Reassign each workflow one at a time (safe — all numbers are null)
-			for (const w of affected) {
-				if (w.workflow_id === workflowId) {
-					// The dragged workflow lands at the target
-					await tx.workflows.update({
-						where: { workflow_id: w.workflow_id },
-						data: { number: targetNumber },
-					});
-				} else if (oldNumber < targetNumber) {
-					// Moving right: items shift down by 1
-					await tx.workflows.update({
-						where: { workflow_id: w.workflow_id },
-						data: { number: w.number! - 1 },
-					});
-				} else {
-					// Moving left: items shift up by 1
-					await tx.workflows.update({
-						where: { workflow_id: w.workflow_id },
-						data: { number: w.number! + 1 },
-					});
-				}
+			const result = reorderBySortKey(
+				siblings.map((s) => ({ id: s.workflow_id, sort_key: s.sort_key })),
+				workflowId,
+				targetNumber,
+			);
+			if (!result.success) {
+				throw new Error(result.error);
 			}
+			if (result.newKey === undefined) return;
+
+			await tx.workflows.update({
+				where: { workflow_id: workflowId },
+				data: { sort_key: result.newKey },
+			});
 		});
 
 		return { success: true };

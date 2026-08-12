@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Workflow } from "../types";
 import { AddWorkflow } from "@/features/stage-editor/ui/modals/AddWorkflow";
 import { EditWorkflow } from "@/features/stage-editor/ui/modals/EditWorkflow";
-import { DeleteWorkflow } from "@/features/stage-editor/ui/modals/DeleteWorkflow";
+import { ConfirmDeleteModal } from "@/shared/ui";
 import {
 	useCreateWorkflow,
 	useUpdateWorkflow,
@@ -13,7 +13,7 @@ import {
 	useReorderWorkflow,
 } from "@/entities/workflow/mutations";
 
-import { Pencil, X, Plus } from "lucide-react"
+import { Pencil, X, Plus, Clock, GripVertical,EllipsisVertical } from "lucide-react";
 
 interface WorkflowsListProps {
 	workflows: Workflow[];
@@ -21,6 +21,86 @@ interface WorkflowsListProps {
 	projectId: string;
 	stageId: string;
 }
+
+/**
+ * NOTE ON DATA MODEL
+ * ------------------
+ * The `Workflow` type exposes the canonical scheduling vocabulary
+ * (Task 1.5 / 3.1):
+ *   - planStart  -> PLANNED START (PS)
+ *   - planEnd    -> PLANNED END (PE) — fixed, never swapped for actualEnd
+ *   - actualEnd  -> ACTUAL END (AE), set once the workflow has ended
+ *   - actualStart -> ACTUAL START (AS), distinct from the planned one
+ */
+type WorkflowWithActuals = Workflow & {
+	/** Actual start is now first-class on Workflow (canonical vocabulary) */
+	actualStart?: Date | null;
+};
+
+type WorkflowStatus = "not_started" | "started" | "ended";
+
+type DeadlineState =
+	| "upcoming" // > 3 days out, not started/started
+	| "approaching" // 1-3 days out, not started/started
+	| "overdue" // past deadline, not yet ended
+	| "on_time_done" // ended, AE <= PE
+	| "late_done"; // ended, AE > PE
+
+const DAY_MS = 1000 * 60 * 60 * 24;
+
+/** Not Started / Started Already / Ended, derived from what dates we actually have. */
+function getWorkflowStatus(workflow: WorkflowWithActuals): WorkflowStatus {
+	if (workflow.actualEnd) return "ended";
+	if (workflow.actualStart) return "started";
+	if (workflow.planStart && workflow.planStart.getTime() <= Date.now()) {
+		return "started";
+	}
+	return "not_started";
+}
+
+/**
+ * Returns the actual start date to display. Falls back to `planStart`
+ * (i.e. assumes an on-time start) when the real field isn't populated yet.
+ */
+function getActualStart(workflow: WorkflowWithActuals): Date | null {
+	return workflow.actualStart ?? workflow.planStart ?? null;
+}
+
+/** Days late a workflow started, relative to its planned start. Null if not late / not started. */
+function getStartDelayDays(workflow: WorkflowWithActuals): number | null {
+	const planned = workflow.planStart;
+	const actual = getActualStart(workflow);
+	if (!planned || !actual) return null;
+	const diffDays = Math.round((actual.getTime() - planned.getTime()) / DAY_MS);
+	return diffDays > 0 ? diffDays : null;
+}
+
+/** Three-state (upcoming/approaching/overdue) while active, or on-time/late once ended. */
+function getDeadlineState(
+	status: WorkflowStatus,
+	deadline: Date | null,
+	actualEnd: Date | null,
+): DeadlineState {
+	if (status === "ended") {
+		if (deadline && actualEnd && actualEnd.getTime() > deadline.getTime()) {
+			return "late_done";
+		}
+		return "on_time_done";
+	}
+	if (!deadline) return "upcoming";
+	const daysUntil = (deadline.getTime() - Date.now()) / DAY_MS;
+	if (daysUntil < 0) return "overdue";
+	if (daysUntil <= 3) return "approaching";
+	return "upcoming";
+}
+
+const DEADLINE_STYLES: Record<DeadlineState, string> = {
+	upcoming: "text-[#8392a6]",
+	approaching: "text-amber-600",
+	overdue: "text-red-600 font-medium",
+	on_time_done: "text-emerald-600",
+	late_done: "text-red-600",
+};
 
 export function WorkflowsList({
 	workflows,
@@ -45,7 +125,7 @@ export function WorkflowsList({
 	const openEditWorkflowModal = (workflow: Workflow) =>
 		setEditingWorkflow(workflow);
 
-	const formatDateTime = (date: Date | null) => {
+	const formatDateTime = (date: Date | null | undefined) => {
 		if (!date) return "——";
 		return date.toLocaleString("en-US", {
 			month: "short",
@@ -59,35 +139,35 @@ export function WorkflowsList({
 
 	const handleAddWorkflow = async (data: {
 		name: string;
-		start_date: Date | null;
-		deadline_date: Date | null;
-		finish_date: Date | null;
+		planStart: Date | null;
+		planEnd: Date | null;
+		actualEnd: Date | null;
 	}) => {
 		await createWorkflowMutation.mutateAsync({
 			moduleId,
 			stageId,
 			name: data.name,
-			start_date: data.start_date ?? undefined,
-			deadline_date: data.deadline_date ?? undefined,
-			finish_date: data.finish_date ?? undefined,
+			planStart: data.planStart ?? undefined,
+			planEnd: data.planEnd ?? undefined,
+			actualEnd: data.actualEnd ?? undefined,
 		});
 		setIsAddOpen(false);
 	};
 
 	const handleSaveWorkflow = async (data: {
 		name: string;
-		start_date: Date | null;
-		deadline_date: Date | null;
-		finish_date: Date | null;
+		planStart: Date | null;
+		planEnd: Date | null;
+		actualEnd: Date | null;
 	}) => {
 		if (!editingWorkflow) return;
 		await updateWorkflowMutation.mutateAsync({
 			workflowId: editingWorkflow.workflow_id,
 			stageId,
 			name: data.name,
-			start_date: data.start_date ?? undefined,
-			deadline_date: data.deadline_date ?? undefined,
-			finish_date: data.finish_date ?? undefined,
+			planStart: data.planStart ?? undefined,
+			planEnd: data.planEnd ?? undefined,
+			actualEnd: data.actualEnd ?? undefined,
 		});
 		setEditingWorkflow(null);
 	};
@@ -176,120 +256,161 @@ export function WorkflowsList({
 		<>
 			{/* Workflows List */}
 			<div className="bg-neutral-surface">
-				{workflows.map((workflow, index) => (
-					<div
-						key={workflow.workflow_id}
-						className="flex items-center justify-between px-4 py-3 border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors group cursor-grab active:cursor-grabbing"
-						draggable={true}
-						onDragStart={(e) => handleDragStart(e, index)}
-						onDragEnd={handleDragEnd}
-						onDragOver={(e) => handleDragOver(e, index)}
-						onDragLeave={handleDragLeave}
-						onDrop={(e) => handleDrop(e, index)}
-					>
-						<div className="flex items-center gap-3 flex-1">
-							{/* Drag handle */}
-							<svg
-								width="8"
-								height="12"
-								viewBox="0 0 8 12"
-								fill="none"
-								className="text-[#94A3B8] opacity-40 group-hover:opacity-100 transition-opacity"
-							>
-								<circle cx="1" cy="1" r="1" fill="currentColor" />
-								<circle cx="1" cy="6" r="1" fill="currentColor" />
-								<circle cx="1" cy="11" r="1" fill="currentColor" />
-								<circle cx="5" cy="1" r="1" fill="currentColor" />
-								<circle cx="5" cy="6" r="1" fill="currentColor" />
-								<circle cx="5" cy="11" r="1" fill="currentColor" />
-							</svg>
-							<div>
-								<Link
-									href={`/projects/${projectId}/workflows/${workflow.workflow_id}`}
-									className="font-normal text-sm text-[#0F172A] hover:text-brand-600 transition-colors"
-								>
-									{workflow.name}
-								</Link>
-								<p className="text-xs text-[#8392a6] mt-0.5">
-									Deadline: {formatDateTime(workflow.deadline_date)}
-								</p>
-							</div>
-						</div>
+				{workflows.map((workflow, index) => {
+					const wf = workflow as WorkflowWithActuals;
+					const status = getWorkflowStatus(wf);
+					const actualStart = getActualStart(wf);
+					const startDelayDays = getStartDelayDays(wf);
+					const deadlineState = getDeadlineState(
+						status,
+						wf.planEnd ?? null,
+						wf.actualEnd ?? null,
+					);
 
-						<div className="flex items-center gap-4">
-							{/* Date Badge */}
-							<div className="px-3 py-1 bg-[#ffffff] border border-slate-300 rounded-md">
-								<span className="font-medium text-xs text-slate-400">
-									{formatDateTime(workflow.start_date)} –{" "}
-									{workflow.finish_date
-										? formatDateTime(workflow.finish_date)
-										: "Unfinished"}
-								</span>
-							</div>
+					// --- Start column label + tooltip ---
+					let startLabel: React.ReactNode;
+					let startTooltip: string | undefined;
 
-							{/* Ticket Count */}
-							<div className="flex items-center gap-1.5 min-w-[90px]">
-								<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-									<path
-										d="M6 0L7.5 3.5L11 4L8.5 6.5L9 10L6 8L3 10L3.5 6.5L1 4L4.5 3.5L6 0Z"
-										fill="#94A3B8"
-									/>
-								</svg>
-								<span className="text-xs text-neutral-subtle">
-									{workflow.ticketCount} Tickets
-								</span>
-							</div>
-
-							{/* Progress Bar */}
-							<div className="flex items-center gap-2 min-w-[140px]">
-								{workflow.ticketCount === 0 ? (
-									<>
-										<div className="w-20 h-1.5 bg-[#F1F5F9] rounded-full" />
-										<span className="text-[11px] font-semibold text-[#94A3B8]">
-											- %
-										</span>
-									</>
-								) : (
-									<>
-										<div className="w-20 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
-											<div
-												className="h-full bg-brand-500 rounded-full transition-all"
-												style={{ width: `${workflow.progress}%` }}
-											/>
-										</div>
-										<span className="text-[11px] font-semibold text-[#475569]">
-											{workflow.progress}%
-										</span>
-									</>
+					if (status === "not_started") {
+						startLabel = `Starting: ${formatDateTime(wf.planStart)}`;
+					} else if (status === "started") {
+						startLabel = (
+							<>
+								Started: {formatDateTime(actualStart)}
+								{startDelayDays && (
+									<span className="text-amber-600 font-medium">
+										{" "}
+										({startDelayDays}d late)
+									</span>
 								)}
+							</>
+						);
+						startTooltip = `Planned start: ${formatDateTime(wf.planStart)}`;
+					} else {
+						startLabel = (
+							<>
+								Started: {formatDateTime(actualStart)} — Ended:{" "}
+								{formatDateTime(wf.actualEnd)}
+							</>
+						);
+						startTooltip = startDelayDays
+							? `Planned start: ${formatDateTime(wf.planStart)} (started ${startDelayDays}d late)`
+							: `Planned start: ${formatDateTime(wf.planStart)}`;
+					}
+
+					// --- Deadline column label ---
+					let deadlineSuffix = "";
+					if (deadlineState === "approaching") deadlineSuffix = " · DUE SOON";
+					if (deadlineState === "overdue") deadlineSuffix = " · OVERDUE";
+					if (deadlineState === "on_time_done") deadlineSuffix = " · ON TIME";
+					if (deadlineState === "late_done") deadlineSuffix = " · LATE";
+
+					return (
+						<div
+							key={workflow.workflow_id}
+							className="flex items-center justify-between px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors group cursor-grab active:cursor-grabbing"
+							draggable={true}
+							onDragStart={(e) => handleDragStart(e, index)}
+							onDragEnd={handleDragEnd}
+							onDragOver={(e) => handleDragOver(e, index)}
+							onDragLeave={handleDragLeave}
+							onDrop={(e) => handleDrop(e, index)}
+						>
+							<div className="flex items-center gap-3 flex-1">
+								{/* Drag handle */}
+								<GripVertical
+									size={14}
+									className="text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity"
+								/>
+								<div>
+									<Link
+										href={`/projects/${projectId}/workflows/${workflow.workflow_id}`}
+										className="font-normal text-sm text-slate-900 hover:text-brand-600 transition-colors"
+									>
+										{workflow.name}
+									</Link>
+									{/* Start column: adapts PS -> AS -> AS+AE by status */}
+									<p
+										className="text-xs text-[#8392a6] mt-0.5 w-fit"
+										title={startTooltip}
+									>
+										{startLabel}
+									</p>
+								</div>
 							</div>
 
-							{/* Workflow Actions */}
-							<div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-								<button
-									onClick={() => openEditWorkflowModal(workflow)}
-									title="Edit workflow"
-								>
-									<Pencil size={12} className={"text-brand-200"}/>
-								</button>
-								<button
-									onClick={() => confirmDelete(workflow)}
-									title="Delete workflow"
-								>
-									<X size={12} className={"text-brand-200"}/>
-								</button>
+							<div className="flex items-center gap-4">
+								{/* Deadline column: always bound to planEnd, never swapped */}
+								<div className="flex flex-col items-end gap-0.5">
+									<span className="text-[10px] uppercase tracking-wide text-slate-400">
+										Deadline
+									</span>
+									<span
+										className={`flex items-center gap-1 text-xs ${DEADLINE_STYLES[deadlineState]}`}
+									>
+										<Clock size={11} />
+										{formatDateTime(wf.planEnd)}
+										{deadlineSuffix}
+									</span>
+								</div>
+
+								{/* Ticket Count */}
+								<div className="flex gap-1.5 min-w-[80px]">
+									<span className="ml-auto text-xs text-neutral-border">
+										{workflow.ticketCount} Tickets
+									</span>
+								</div>
+
+								{/* Progress Bar */}
+								<div className="flex items-center gap-2 min-w-[100px]">
+									{workflow.ticketCount === 0 ? (
+										<>
+											<div className="w-20 h-1.5 bg-slate-100 rounded-full" />
+											<span className="text-[11px] font-semibold text-slate-400">
+												- %
+											</span>
+										</>
+									) : (
+										<>
+											<div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+												<div
+													className="h-full bg-brand-500 rounded-full transition-all"
+													style={{ width: `${workflow.progress}%` }}
+												/>
+											</div>
+											<span className="text-[11px] font-semibold text-slate-600">
+												{workflow.progress}%
+											</span>
+										</>
+									)}
+								</div>
+
+								{/* Workflow Actions — edit hidden when completed (Task 5.7) */}
+								<div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+									{getWorkflowStatus(workflow as WorkflowWithActuals) !== "ended" && (
+										<button
+											onClick={() => openEditWorkflowModal(workflow)}
+											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
+										>
+											<EllipsisVertical
+												size={14}
+												className="text-slate-500"
+											/>
+										</button>
+									)}
+								</div>
 							</div>
 						</div>
-					</div>
-				))}
+					);
+				})}
 
 				{/* Add Workflow Button */}
 				<button
 					onClick={openCreateWorkflowModal}
-					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-[#F8FAFC] hover:border-brand-500 transition-all"
+					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
 					style={{ width: "calc(100% - 24px)" }}
 				>
-					<Plus size={16} className={"text-brand-200"}/>
+					<Plus size={16} className={"text-brand-200"} />
 					<span className="text-sm font-medium text-neutral-border">
 						Add Workflow
 					</span>
@@ -313,9 +434,12 @@ export function WorkflowsList({
 			/>
 
 			{/* Delete Confirmation Modal */}
-			<DeleteWorkflow
+			<ConfirmDeleteModal
 				isOpen={isDeleteConfirmOpen}
-				workflowLabel={workflowToDelete?.name}
+				noun="Workflow"
+				title={
+					workflowToDelete ? `Delete ${workflowToDelete.name}` : undefined
+				}
 				onConfirm={handleDeleteWorkflow}
 				onCancel={() => {
 					setIsDeleteConfirmOpen(false);

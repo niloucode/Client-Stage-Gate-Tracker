@@ -1,8 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
-import { Backdrop } from "@/shared/ui/backdrop";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+	DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { clientUpdate } from "@/entities/client";
+import { getFieldErrors } from "@/shared/lib/zod";
+import { clientSchema } from "@/shared/schemas";
 
 const CLIENT_NAME_MAX = 40;
 
@@ -16,139 +30,157 @@ interface ClientData {
 
 interface EditClientModalProps {
 	isOpen: boolean;
+	clientId?: string;
 	initialData?: Partial<ClientData>;
 	onClose: () => void;
-	onSubmit?: (data: ClientData) => void;
-}
-
-function RequiredLabel({ children }: { children: string }) {
-	return (
-		<label className="text-base font-normal" style={{ color: "#464555" }}>
-			{children}
-			<span className="text-red-500">*</span>
-		</label>
-	);
 }
 
 export default function EditClientModal({
 	isOpen,
+	clientId,
 	initialData,
 	onClose,
-	onSubmit,
 }: EditClientModalProps) {
-	const [clientName, setClientName] = useState(
-		initialData?.clientName ?? "Acme Corp",
+	const [clientName, setClientName] = useState(initialData?.clientName ?? "");
+	const [tin, setTin] = useState(initialData?.tin ?? "");
+	const [email, setEmail] = useState(initialData?.email ?? "");
+	const [contactNumber, setContactNumber] = useState(
+		initialData?.contactNumber ?? "",
 	);
+	const [billingAddress, setBillingAddress] = useState(
+		initialData?.billingAddress ?? "",
+	);
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
 	return (
-		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div
-				className="w-full max-w-[512px] overflow-hidden rounded-xl shadow-xl"
-				style={{ backgroundColor: "#f9f9ff" }}
-			>
-				{/* Header */}
-				<div
-					className="flex items-center justify-between px-6 py-5"
-					style={{
-						backgroundColor: "#f0f3ff",
-						borderBottom: "1px solid #c7c4d8",
-					}}
-				>
-					<h3 className="text-base font-bold" style={{ color: "#151c27" }}>
-						Edit Client Details
-					</h3>
-					<button
-						onClick={onClose}
-						className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-foreground/10"
-						aria-label="Close"
-					>
-						<X className="h-4 w-4" style={{ color: "#464555" }} />
-					</button>
-				</div>
+		<Dialog
+			open={isOpen}
+			onOpenChange={(open) => {
+				if (!open) onClose();
+			}}
+		>
+			<DialogContent className="sm:max-w-lg">
+				<DialogHeader>
+					<DialogTitle>Edit Client Details</DialogTitle>
+					<DialogDescription>
+						Update the client information below.
+					</DialogDescription>
+				</DialogHeader>
 
-				{/* Body */}
 				<div className="flex flex-col gap-5 px-6 py-6">
 					{/* Client Name */}
 					<div className="flex flex-col gap-2">
-						<RequiredLabel>Client Name</RequiredLabel>
-						<input
+						<div className="flex items-center justify-between">
+							<Label required>Client Name</Label>
+							<span className="text-[10px] text-muted-foreground">
+								{clientName.length}/{CLIENT_NAME_MAX}
+							</span>
+						</div>
+						<Input
 							type="text"
 							maxLength={CLIENT_NAME_MAX}
 							value={clientName}
 							onChange={(e) => setClientName(e.target.value)}
-							className="w-full rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
-							style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
 						/>
-						<span className="text-base" style={{ color: "#737280" }}>
-							{clientName.length}/{CLIENT_NAME_MAX}
-						</span>
+						{fieldErrors.client_name && (
+							<p className="text-xs text-destructive mt-1">
+								{fieldErrors.client_name}
+							</p>
+						)}
 					</div>
 
 					{/* TIN + Email */}
 					<div className="flex gap-4">
 						<div className="flex flex-1 flex-col gap-2">
-							<RequiredLabel>TIN</RequiredLabel>
-							<input
+							<Label required>TIN</Label>
+							<Input
 								type="text"
-								defaultValue={initialData?.tin ?? "4444444444"}
-								className="w-full rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
-								style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
+								value={tin}
+								onChange={(e) => setTin(e.target.value)}
 							/>
+							{fieldErrors.tin && (
+								<p className="text-xs text-destructive mt-1">
+									{fieldErrors.tin}
+								</p>
+							)}
 						</div>
 						<div className="flex flex-1 flex-col gap-2">
-							<RequiredLabel>Email</RequiredLabel>
-							<input
+							<Label required>Email</Label>
+							<Input
 								type="email"
-								defaultValue={initialData?.email ?? "contact@client.com"}
-								className="w-full rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
-								style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
 							/>
+							{fieldErrors.email && (
+								<p className="text-xs text-destructive mt-1">
+									{fieldErrors.email}
+								</p>
+							)}
 						</div>
 					</div>
 
 					{/* Contact Number */}
 					<div className="flex flex-col gap-2">
-						<RequiredLabel>Contact Number</RequiredLabel>
-						<input
-							type="tel"
-							defaultValue={initialData?.contactNumber ?? "+1 (555) 000-0000"}
-							className="w-full rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
-							style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
+						<Label required>Contact Number</Label>
+						<PhoneInput
+							value={contactNumber}
+							onChange={(value) => setContactNumber(value ?? "")}
 						/>
+						{fieldErrors.phone && (
+							<p className="text-xs text-destructive mt-1">
+								{fieldErrors.phone}
+							</p>
+						)}
 					</div>
 
 					{/* Billing Address */}
 					<div className="flex flex-col gap-2">
-						<RequiredLabel>Billing Address</RequiredLabel>
-						<textarea
-							defaultValue={initialData?.billingAddress ?? "4050 Oz Street"}
+						<Label required>Billing Address</Label>
+						<Textarea
 							rows={4}
-							className="w-full resize-none rounded-md bg-neutral-surface px-4 py-3 text-base outline-none focus:ring-1 focus:ring-brand-500"
-							style={{ border: "1px solid #c7c4d8", color: "#151c27" }}
+							value={billingAddress}
+							onChange={(e) => setBillingAddress(e.target.value)}
 						/>
+						{fieldErrors.billing_address && (
+							<p className="text-xs text-destructive mt-1">
+								{fieldErrors.billing_address}
+							</p>
+						)}
 					</div>
 				</div>
 
-				{/* Footer */}
-				<div
-					className="flex items-center justify-end gap-3 px-6 py-5"
-					style={{ backgroundColor: "#f0f3ff", borderTop: "1px solid #c7c4d8" }}
-				>
-					<button
-						onClick={onClose}
-						className="rounded-md px-5 py-3 text-base font-bold transition-colors hover:bg-foreground/5"
-						style={{ border: "1px solid #c7c4d8", color: "#464555" }}
-					>
-						Cancel
-					</button>
-					<button
-						className="rounded-xl px-5 py-3 text-base font-bold text-neutral-surface transition-colors hover:opacity-90"
-						style={{ backgroundColor: "#4f46e5" }}
-					>
-						Save Changes
-					</button>
-				</div>
-			</div>
-		</Backdrop>
+				<DialogFooter className="bg-muted/50 border-t p-6">
+					<div className="flex items-center justify-end gap-3 w-full">
+						<Button variant="ghost" onClick={onClose}>
+							Cancel
+						</Button>
+						<Button
+							onClick={async () => {
+								if (!clientId) return;
+								const result = clientSchema.safeParse({
+									client_id: clientId,
+									client_name: clientName,
+									tin,
+									email,
+									phone: contactNumber,
+									billing_address: billingAddress,
+									is_deleted: false,
+								});
+								if (!result.success) {
+									const mapped = getFieldErrors(result);
+									setFieldErrors(mapped);
+									return;
+								}
+								setFieldErrors({});
+								await clientUpdate(result.data);
+								onClose();
+							}}
+						>
+							Save Changes
+						</Button>
+					</div>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }

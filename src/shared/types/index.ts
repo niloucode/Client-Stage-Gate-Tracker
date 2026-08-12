@@ -1,6 +1,9 @@
-export type Role = "PRODUCT_OWNER" | "PRODUCT_TEAM" | "FINANCE" | "CLIENT";
+// Role names mirror the seeded `Roles` table values.
+export type Role = "Project Team" | "Project Owner" | "Client Viewer";
 
-export type TicketStatus = "PENDING" | "IN_PROGRESS" | "FINISHED";
+// Status type kept in lockstep with the database enum via Prisma.
+import type { status as TicketStatus } from "@/lib/generated/prisma";
+export type { TicketStatus };
 
 export type { ProfileType } from "@/shared/schemas";
 export type { ClientType } from "@/shared/schemas";

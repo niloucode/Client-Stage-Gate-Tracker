@@ -3,102 +3,118 @@
 import { prisma } from "@/lib/prisma";
 import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 import { commentCreateSchema, type CommentCreateInput } from "@/shared/schemas";
+import {
+	assertProjectMember,
+	resolveGateProject,
+	resolveTicketProject,
+} from "@/lib/auth/projectAccess";
+import type { EntityFilterStatus } from "@/entities/types";
 
-export async function selectImagesByParent(parentType: ImageParentType, parentId: string) {
+export async function selectImagesByParent(
+	parentType: ImageParentType,
+	parentId: string,
+) {
 	return prisma.images.findMany({
 		where: { parent_type: parentType, parent_id: parentId, is_deleted: false },
 	});
 }
 
-export type EntityFilterStatus = 'active' | 'deleted' | 'all';
+export async function selectComment(
+	parentType: CommentParentType,
+	parentId: string,
+) {
+	try {
+		// Scoped to one parent (ticket/gate) — never the whole table.
+		// Polymorphic parent_type + parent_id (LOL #43/#44).
+		const comments = await prisma.comments.findMany({
+			where: {
+				parent_type: parentType,
+				parent_id: parentId,
+				is_deleted: false,
+			},
+			include: {
+				Profile: true,
+			},
+		});
 
-export async function selectComment() {
-    try {
-        // Fetch all comments first
-        const comments = await prisma.comments.findMany({
-            where: { is_deleted: false },
-            include: {
-                Profiles: true // or the actual relation name in your schema
-            }
-        });
+		if (comments.length === 0) return [];
 
-        // If no comments, then just return nothing
-        if (comments.length === 0) return [];
+		const commentIds = comments.map((c) => c.comment_id);
 
-        // If there are comments, make a String array of comment ids
-        const commentIds = comments.map(c => c.comment_id);
+		// Images are polymorphically linked (app-level integrity), so fetch
+		// them in one scoped query (bounded by commentIds — never the whole
+		// table) and join with a Map.
+		const images = await prisma.images.findMany({
+			where: {
+				parent_id: { in: commentIds },
+				parent_type: ImageParentType.TICKET_COMMENT,
+				is_deleted: false,
+			},
+		});
 
-        // Afterward, let's find for images, ONLY that are linked to these comments
-        // Essentially, ur left with [img1] [img2] both of whos parent ids are ones that arent delted
-        const images = await prisma.images.findMany({
-            where: {
-                parent_id: { in: commentIds },
-                parent_type: ImageParentType.TICKET_COMMENT
-            }
-        });
+		const imagesByComment = new Map<string, (typeof images)[number][]>();
+		for (const img of images) {
+			const list = imagesByComment.get(img.parent_id) ?? [];
+			list.push(img);
+			imagesByComment.set(img.parent_id, list);
+		}
 
-        // Lastly, let's link list of comments to the images related to them.
-        // Essentially -> comment1: [img1, img2]
-        // Can I get my chagee now?
-        return comments.map(comment => ({
-            ...comment,
-            images: images.filter(img => img.parent_id === comment.comment_id)
-        }));
-
-    } catch (error) {
-        console.error("Error fetching comments with images:", error);
-        return [];
-    }
-}
-
-export async function selectTicketComment() {
-    try {
-        return await prisma.comments.findMany({
-            where: { is_deleted: false },
-        });
-    } catch (error) {
-        console.error("Error fetching comments:", error);
-        return [];
-    }
+		return comments.map((comment) => ({
+			...comment,
+			images: imagesByComment.get(comment.comment_id) ?? [],
+		}));
+	} catch (error) {
+		console.error("Error fetching comments with images:", error);
+		return [];
+	}
 }
 
 export async function createCommentWithImages(data: CommentCreateInput) {
-    commentCreateSchema.parse(data);
+	commentCreateSchema.parse(data);
 
-    return await prisma.$transaction(async (tx) => {
-        const comment = await tx.comments.create({
-            data: {
-                profile_id: data.profile_id,
-                description: data.description,
-                parent_type: data.parent_type,
-                parent_id: data.parent_id,
-            },
-        });
+	// Authorization: caller must be a member of the parent project
+	const projectId =
+		data.parent_type === "TICKET_COMMENT"
+			? await resolveTicketProject(data.parent_id)
+			: await resolveGateProject(data.parent_id);
+	if (!projectId) return { success: false, error: "Comment target not found." };
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
 
-        if (data.imageUrls.length > 0) {
-            const imageData = data.imageUrls.map((url: string) => ({
-                image_src: url,
-                parent_id: comment.comment_id,
-                parent_type: ImageParentType.TICKET_COMMENT,
-            }));
+	return await prisma.$transaction(async (tx) => {
+		const comment = await tx.comments.create({
+			data: {
+				profile_id: data.profile_id,
+				description: data.description,
+				parent_type: data.parent_type,
+				parent_id: data.parent_id,
+			},
+		});
 
-            await tx.images.createMany({
-                data: imageData,
-            });
-        }
+		if (data.imageUrls.length > 0) {
+			const imageData = data.imageUrls.map((url: string) => ({
+				image_src: url,
+				parent_id: comment.comment_id,
+				parent_type: ImageParentType.TICKET_COMMENT,
+			}));
 
-        // ── Write HistoryEvent for ticket comments ──────────────────────
-        // Only TICKET_COMMENT maps to a ticket; GATE_COMMENT parent_id is a gate.
-        if (data.parent_type === "TICKET_COMMENT") {
-            await tx.historyEvent.create({
-                data: {
-                    action: "COMMENT_ADDED",
-                    performed_by: data.profile_id,
-                    ticket_id: data.parent_id,
-                },
-            });
-        }
+			await tx.images.createMany({
+				data: imageData,
+			});
+		}
 
-        return comment;
-    });
+		// ── Write HistoryEvent for ticket comments ──────────────────────
+		// Only TICKET_COMMENT maps to a ticket; GATE_COMMENT parent_id is a gate.
+		if (data.parent_type === "TICKET_COMMENT") {
+			await tx.historyEvent.create({
+				data: {
+					action: "COMMENT_ADDED",
+					performed_by: data.profile_id,
+					ticket_id: data.parent_id,
+				},
+			});
+		}
+
+		return comment;
+	});
 }

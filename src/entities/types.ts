@@ -1,3 +1,5 @@
+export type EntityFilterStatus = "active" | "deleted" | "all";
+
 export type { TicketPayload as Ticket } from "@/entities/ticket/types";
 export type { CommentWithImages as Comment } from "@/entities/comment/types";
 

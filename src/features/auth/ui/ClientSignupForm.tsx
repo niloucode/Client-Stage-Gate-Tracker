@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Button } from "@/shared/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
 import { clientSignupSchema, type ClientSignupInput } from "@/shared/schemas";
+import { env } from "@/env";
+import { getFieldErrors } from "@/shared/lib/zod";
 import { createClient } from "@/lib/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { profileKeys } from "@/shared/query/keys";
@@ -79,7 +81,7 @@ export function ClientSignupForm() {
 					is_deleted: user.is_deleted,
 					deleted_at: user.deleted_at,
 				},
-				emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/login`,
+				emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
 			},
 		});
 	}
@@ -90,11 +92,7 @@ export function ClientSignupForm() {
 
 		const result = clientSignupSchema.safeParse(fields);
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: Errors = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key as FieldKey] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setErrors(mapped);
 			return;
 		}
@@ -134,16 +132,19 @@ export function ClientSignupForm() {
 				client_name: fields.companyName.trim(),
 				tin: fields.tin.trim(),
 				billing_address: address,
+				email: fields.email.trim(),
+				phone: fields.phone.trim(),
 				is_deleted: false,
 				deleted_at: null,
 			};
 
-			client = await clientCreate(newClient);
-			if (!client) {
-				setApiError("Unable to save company data.");
+			const created = await clientCreate(newClient);
+			if (!created.success) {
+				setApiError(created.error ?? "Unable to save company data.");
 				setLoading(false);
 				return;
 			}
+			client = created.data;
 		}
 
 		// Create profile and sign up
@@ -214,7 +215,7 @@ export function ClientSignupForm() {
 						className={errClass("firstName")}
 					/>
 					{errors.firstName && (
-						<p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
+						<p className="text-xs text-destructive mt-1">{errors.firstName}</p>
 					)}
 				</div>
 				<div className="flex-1 min-w-0">
@@ -236,7 +237,7 @@ export function ClientSignupForm() {
 						className={errClass("lastName")}
 					/>
 					{errors.lastName && (
-						<p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
+						<p className="text-xs text-destructive mt-1">{errors.lastName}</p>
 					)}
 				</div>
 			</div>
@@ -261,7 +262,7 @@ export function ClientSignupForm() {
 					className={errClass("companyName")}
 				/>
 				{errors.companyName && (
-					<p className="text-xs text-red-500 mt-1">{errors.companyName}</p>
+					<p className="text-xs text-destructive mt-1">{errors.companyName}</p>
 				)}
 			</div>
 
@@ -285,7 +286,7 @@ export function ClientSignupForm() {
 					className={errClass("email")}
 				/>
 				{errors.email && (
-					<p className="text-xs text-red-500 mt-1">{errors.email}</p>
+					<p className="text-xs text-destructive mt-1">{errors.email}</p>
 				)}
 			</div>
 
@@ -308,7 +309,7 @@ export function ClientSignupForm() {
 					className={errClass("password")}
 				/>
 				{errors.password && (
-					<p className="text-xs text-red-500 mt-1">{errors.password}</p>
+					<p className="text-xs text-destructive mt-1">{errors.password}</p>
 				)}
 			</div>
 
@@ -331,7 +332,7 @@ export function ClientSignupForm() {
 					className={errClass("confirmPassword")}
 				/>
 				{errors.confirmPassword && (
-					<p className="text-xs text-red-500 mt-1">{errors.confirmPassword}</p>
+					<p className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>
 				)}
 			</div>
 
@@ -362,7 +363,7 @@ export function ClientSignupForm() {
 							className={errClass("streetNumber")}
 						/>
 						{errors.streetNumber && (
-							<p className="text-xs text-red-500 mt-1">{errors.streetNumber}</p>
+							<p className="text-xs text-destructive mt-1">{errors.streetNumber}</p>
 						)}
 					</div>
 					<div className="flex-1 min-w-0">
@@ -384,7 +385,7 @@ export function ClientSignupForm() {
 							className={errClass("streetName")}
 						/>
 						{errors.streetName && (
-							<p className="text-xs text-red-500 mt-1">{errors.streetName}</p>
+							<p className="text-xs text-destructive mt-1">{errors.streetName}</p>
 						)}
 					</div>
 				</div>
@@ -410,7 +411,7 @@ export function ClientSignupForm() {
 							className={errClass("city")}
 						/>
 						{errors.city && (
-							<p className="text-xs text-red-500 mt-1">{errors.city}</p>
+							<p className="text-xs text-destructive mt-1">{errors.city}</p>
 						)}
 					</div>
 					<div className="flex-1 min-w-0">
@@ -432,7 +433,7 @@ export function ClientSignupForm() {
 							className={errClass("country")}
 						/>
 						{errors.country && (
-							<p className="text-xs text-red-500 mt-1">{errors.country}</p>
+							<p className="text-xs text-destructive mt-1">{errors.country}</p>
 						)}
 					</div>
 				</div>
@@ -454,7 +455,7 @@ export function ClientSignupForm() {
 					className={errClass("tin")}
 				/>
 				{errors.tin && (
-					<p className="text-xs text-red-500 mt-1">{errors.tin}</p>
+					<p className="text-xs text-destructive mt-1">{errors.tin}</p>
 				)}
 			</div>
 
@@ -479,12 +480,12 @@ export function ClientSignupForm() {
 					className={errClass("phone")}
 				/>
 				{errors.phone && (
-					<p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+					<p className="text-xs text-destructive mt-1">{errors.phone}</p>
 				)}
 			</div>
 
 			{apiError && (
-				<p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+				<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
 					{apiError}
 				</p>
 			)}

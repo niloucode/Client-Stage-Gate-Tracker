@@ -1,40 +1,17 @@
 "use client"
 
-import { X } from "lucide-react"
-import { Backdrop } from "@/shared/ui/backdrop"
+import { useState, useEffect } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
-interface TeamMember {
+// 1. Defined TeamMember Interface
+export interface TeamMember {
 	id: string
 	firstName: string
 	lastName: string
 	email: string
-	phone: string
-	avatarUrl?: string
+	phone: string | null
 }
-
-const PLACEHOLDER_MEMBERS: TeamMember[] = [
-	{
-		id: "1",
-		firstName: "Sarah",
-		lastName: "Jenkins",
-		email: "sarah.j@acme.com",
-		phone: "77777777777",
-	},
-	{
-		id: "2",
-		firstName: "Sarah",
-		lastName: "Jenkins",
-		email: "sarah.j@acme.com",
-		phone: "77777777777",
-	},
-	{
-		id: "3",
-		firstName: "Sarah",
-		lastName: "Jenkins",
-		email: "sarah.j@acme.com",
-		phone: "77777777777",
-	},
-]
 
 interface ViewTeamMembersModalProps {
 	isOpen: boolean
@@ -42,111 +19,62 @@ interface ViewTeamMembersModalProps {
 	onClose: () => void
 }
 
-function MemberAvatar({
-	firstName,
-	lastName,
-	avatarUrl,
-}: {
-	firstName: string
-	lastName: string
-	avatarUrl?: string
-}) {
-	const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase()
-	if (avatarUrl) {
-		return (
-			<img
-				src={avatarUrl}
-				alt={`${firstName} ${lastName}`}
-				className="h-10 w-10 rounded-full object-cover"
-				style={{ border: "1px solid #c7c4d7" }}
-			/>
-		)
-	}
-	return (
-		<div
-			className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-neutral-surface"
-			style={{ backgroundColor: "#4f46e5", border: "1px solid #c7c4d7" }}
-		>
-			{initials}
-		</div>
-	)
-}
-
 export default function ViewTeamMembersModal({
 	isOpen,
-	members = PLACEHOLDER_MEMBERS,
+	members,
 	onClose,
 }: ViewTeamMembersModalProps) {
+	// Cache members so they remain visible during the exit/closing transition
+	const [cachedMembers, setCachedMembers] = useState<TeamMember[] | undefined>(members)
+
+	useEffect(() => {
+		if (members && members.length > 0) {
+			setCachedMembers(members)
+		}
+	}, [members])
+
+	// Fallback to cached members if the prop gets cleared/reset while closing
+	const displayMembers = members?.length ? members : cachedMembers
+
 	return (
-		<Backdrop isOpen={isOpen} onClose={onClose}>
-			<div
-					className="w-full max-w-[672px] overflow-hidden rounded-xl bg-neutral-surface shadow-xl"
-					style={{ border: "1px solid #c7c4d7" }}
-				>
-					{/* Header */}
+		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+			<DialogContent className="max-w-[672px]">
+				<DialogHeader>
+					<DialogTitle>Team Members</DialogTitle>
+				</DialogHeader>
+				<div className="">
+					{/* Table header */}
 					<div
-						className="flex items-center justify-between px-6 py-5"
-						style={{
-							backgroundColor: "#f8f9fc",
-							borderBottom: "1px solid #c7c4d7",
-						}}
+						className="grid px-4 pb-2 border-b border-border"
+						style={{ gridTemplateColumns: "1fr 1fr 1fr" }}
 					>
-						<h2 className="text-2xl font-semibold" style={{ color: "#191c1e" }}>
-							Team Members
-						</h2>
-						<button
-							onClick={onClose}
-							className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-foreground/10"
-							aria-label="Close"
-						>
-							<X className="h-4 w-4" style={{ color: "#464555" }} />
-						</button>
+						{["Member", "Email", "Phone Number"].map((col) => (
+							<span key={col} className="text-xs font-bold text-muted-foreground">
+								{col}
+							</span>
+						))}
 					</div>
-
-					{/* Content */}
-					<div className="p-6">
-						{/* Table header */}
-						<div
-							className="grid px-4 py-4"
-							style={{
-								gridTemplateColumns: "1fr 1fr 1fr",
-								borderBottom: "1px solid #c7c4d7",
-							}}
-						>
-							{["Member", "Email", "Phone Number"].map((col) => (
-								<span
-									key={col}
-									className="text-xs font-bold"
-									style={{ color: "#464555" }}
-								>
-									{col}
-								</span>
-							))}
-						</div>
-
-						{/* Scrollable rows */}
-						<div className="team-scroll max-h-[300px] overflow-y-auto">
-							{members.map((member, i) => (
+					{/* Scrollable rows */}
+					{displayMembers && (
+						<div className="max-h-[300px] overflow-y-auto">
+							{displayMembers.map((member, i) => (
 								<div
 									key={member.id}
 									className="grid items-center px-4 py-4"
 									style={{
 										gridTemplateColumns: "1fr 1fr 1fr",
 										borderBottom:
-											i < members.length - 1 ? "1px solid #f1f0f8" : "none",
+											i < displayMembers.length - 1 ? "1px solid hsl(var(--border))" : "none",
 									}}
 								>
 									{/* Member */}
 									<div className="flex items-center gap-3">
-										<MemberAvatar
-											firstName={member.firstName}
-											lastName={member.lastName}
-											avatarUrl={member.avatarUrl}
-										/>
-										<span
-											className="text-sm font-semibold leading-snug"
-											style={{ color: "#191c1e" }}
-										>
+										<Avatar className="h-10 w-10">
+											<AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+												{`${member.firstName[0] ?? ""}${member.lastName[0] ?? ""}`.toUpperCase()}
+											</AvatarFallback>
+										</Avatar>
+										<span className="text-sm font-semibold leading-snug text-foreground">
 											{member.firstName}
 											<br />
 											{member.lastName}
@@ -154,19 +82,20 @@ export default function ViewTeamMembersModal({
 									</div>
 
 									{/* Email */}
-									<span className="text-sm" style={{ color: "#464555" }}>
+									<span className="text-sm text-muted-foreground truncate">
 										{member.email}
 									</span>
 
 									{/* Phone */}
-									<span className="text-sm" style={{ color: "#464555" }}>
+									<span className="text-sm text-muted-foreground">
 										{member.phone}
 									</span>
 								</div>
 							))}
 						</div>
-					</div>
+					)}
 				</div>
-		</Backdrop>
+			</DialogContent>
+		</Dialog>
 	)
 }

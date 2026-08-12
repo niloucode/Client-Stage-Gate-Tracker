@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { X, Plus } from "lucide-react";
 import { workflowCreateSchema } from "@/shared/schemas";
-import { Label } from "@/shared/ui/label";
+import { getFieldErrors } from "@/shared/lib/zod";
+import {
+	fromDateTimeLocalInput,
+	toDateTimeLocalInput,
+} from "@/shared/lib/scheduling";
+import { Label } from "@/components/ui/label";
 
 interface AddWorkflowFormData {
 	name: string;
-	start_date: Date | null;
-	deadline_date: Date | null;
-	finish_date: Date | null;
+	planStart: Date | null;
+	planEnd: Date | null;
+	actualEnd: Date | null;
 }
 
 interface AddWorkflowProps {
@@ -19,9 +25,9 @@ interface AddWorkflowProps {
 
 const emptyFormData: AddWorkflowFormData = {
 	name: "",
-	start_date: null,
-	deadline_date: null,
-	finish_date: null,
+	planStart: null,
+	planEnd: null,
+	actualEnd: null,
 };
 
 type FieldErrors = Partial<Record<keyof AddWorkflowFormData, string>>;
@@ -37,16 +43,16 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 		setFormData((prev) => {
 			if (
 				next &&
-				prev.finish_date &&
-				next.getTime() + MIN_GAP_MS > prev.finish_date.getTime()
+				prev.actualEnd &&
+				next.getTime() + MIN_GAP_MS > prev.actualEnd.getTime()
 			) {
 				return {
 					...prev,
-					start_date: next,
-					finish_date: new Date(next.getTime() + MIN_GAP_MS),
+					planStart: next,
+					actualEnd: new Date(next.getTime() + MIN_GAP_MS),
 				};
 			}
-			return { ...prev, start_date: next };
+			return { ...prev, planStart: next };
 		});
 	};
 
@@ -55,16 +61,16 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 		setFormData((prev) => {
 			if (
 				next &&
-				prev.start_date &&
-				prev.start_date.getTime() + MIN_GAP_MS > next.getTime()
+				prev.planStart &&
+				prev.planStart.getTime() + MIN_GAP_MS > next.getTime()
 			) {
 				return {
 					...prev,
-					finish_date: next,
-					start_date: new Date(next.getTime() - MIN_GAP_MS),
+					actualEnd: next,
+					planStart: new Date(next.getTime() - MIN_GAP_MS),
 				};
 			}
-			return { ...prev, finish_date: next };
+			return { ...prev, actualEnd: next };
 		});
 	};
 
@@ -79,12 +85,7 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 	const handleSubmit = () => {
 		const result = workflowCreateSchema.safeParse(formData);
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: FieldErrors = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0)
-					mapped[key as keyof AddWorkflowFormData] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
 			return;
 		}
@@ -98,19 +99,12 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 			<div className="bg-neutral-surface rounded-xl shadow-xl w-full max-w-md p-6 relative">
 				<button
 					onClick={handleClose}
-					className="absolute top-4 right-4 text-[#94A3B8] hover:text-[#475569] transition-colors"
+					className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
 				>
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<path
-							d="M15 5L5 15M5 5L15 15"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-						/>
-					</svg>
+					<X size={20} />
 				</button>
 
-				<h2 className="text-xl font-bold text-[#0F172A] mb-2">
+				<h2 className="text-xl font-bold text-slate-900 mb-2">
 					Create New Workflow
 				</h2>
 				<p className="text-sm text-neutral-subtle mb-6">
@@ -118,71 +112,62 @@ export function AddWorkflow({ isOpen, onClose, onSubmit }: AddWorkflowProps) {
 				</p>
 
 				<div className="space-y-4">
-					<div>
-						<Label required error={!!fieldErrors.name}>
-							Workflow Name
-						</Label>
-						<input
-							type="text"
-							maxLength={35}
-							value={formData.name}
-							onChange={(e) =>
-								setFormData({ ...formData, name: e.target.value })
-							}
-							placeholder="e.g., User Login Flow"
-							className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
-						/>
-						<div className="flex justify-between mt-1">
+                    <div>
+                        <div className="flex justify-between items-center">
+                            <Label required error={!!fieldErrors.name}>
+                                Workflow Name
+                            </Label>
+                            <span className="text-[10px] text-muted-foreground">
+                                {formData.name.length}/35
+                            </span>
+                        </div>
+                        <input
+                            type="text"
+                            maxLength={35}
+                            value={formData.name}
+                            onChange={(e) =>
+                                setFormData({ ...formData, name: e.target.value })
+                            }
+                            placeholder="e.g., User Login Flow"
+                            className={`w-full px-3 py-2 bg-neutral-surface border rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all ${fieldErrors.name ? "border-red-400 focus:ring-red-400" : "border-brand-100"}`}
+                        />
+                        <div className="flex justify-between mt-1">
 							{fieldErrors.name ? (
-								<p className="text-xs text-red-500">{fieldErrors.name}</p>
+								<p className="text-xs text-destructive">{fieldErrors.name}</p>
 							) : (
 								<span />
 							)}
-							<span className="text-[10px] text-[#94A3B8]">
-								{formData.name.length}/35
-							</span>
 						</div>
 					</div>
 
 					<div>
-						<label className="block text-xs font-semibold text-[#475569] mb-1.5">
+						<label className="block text-xs font-semibold text-slate-600 mb-1.5">
 							Deadline Date
 						</label>
 						<input
 							type="datetime-local"
-							value={
-								formData.deadline_date
-									? new Date(
-											formData.deadline_date.getTime() -
-												formData.deadline_date.getTimezoneOffset() * 60000,
-										)
-											.toISOString()
-											.slice(0, 16)
-									: ""
-							}
+							value={toDateTimeLocalInput(formData.planEnd)}
 							onChange={(e) =>
 								setFormData({
 									...formData,
-									deadline_date: e.target.value
-										? new Date(e.target.value)
-										: null,
+									planEnd: fromDateTimeLocalInput(e.target.value),
 								})
 							}
-							className="w-full px-3 py-2 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-[#0F172A] focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+							className="w-full px-3 py-2 pr-14 bg-neutral-surface border border-brand-100 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
 						/>
 					</div>
 				</div>
 
-				<div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#F1F5F9]">
+				<div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
 					<button
 						onClick={handleClose}
-						className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-[#0F172A] transition-colors"
+						className="px-4 py-2 text-sm font-semibold text-neutral-subtle hover:text-slate-900 transition-colors"
 					>
 						Cancel
 					</button>
 					<button
 						onClick={handleSubmit}
-						className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-[#4338CA] transition-all shadow-sm"
+						className="px-4 py-2 bg-brand-500 text-neutral-surface text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-sm"
 					>
 						Create Workflow
 					</button>

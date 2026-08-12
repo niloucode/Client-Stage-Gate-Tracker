@@ -9,20 +9,17 @@ import {
 } from "./moduleActions";
 import type { ModuleCreateInput, ModuleUpdateInput } from "@/shared/schemas";
 
+/**
+ * Module mutations use the canonical scheduling vocabulary
+ * (planStart/planEnd/actualStart/actualEnd) — see Task 3.1.
+ */
 export function useCreateModule() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: (
 			params: { phaseId: string; stageId: string } & ModuleCreateInput,
-		) =>
-			createModule(
-				params.phaseId,
-				params.name,
-				params.start_date,
-				params.finish_date,
-				params.deadline_date,
-			),
+		) => createModule(params.phaseId, params),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
@@ -37,14 +34,7 @@ export function useUpdateModule() {
 	return useMutation({
 		mutationFn: (
 			params: { moduleId: string; stageId: string } & ModuleUpdateInput,
-		) =>
-			updateModule(
-				params.moduleId,
-				params.name,
-				params.start_date,
-				params.finish_date,
-				params.deadline_date,
-			),
+		) => updateModule(params.moduleId, params),
 		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),

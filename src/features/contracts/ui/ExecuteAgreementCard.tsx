@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SignatureUpload } from "./SignatureUpload";
 import { OTPVerification } from "./OTPVerification";
 import { useSignContract } from "@/entities/contract";
@@ -13,7 +14,7 @@ interface ExecuteAgreementCardProps {
 }
 
 export function ExecuteAgreementCard({
-	maskedEmail = "a***@client.com",
+	maskedEmail,
 	className = "",
 	role,
 	projectId,
@@ -56,8 +57,8 @@ export function ExecuteAgreementCard({
 
 	if (signed) {
 		return (
-			<div className="rounded-2xl border border-[#E6E4F0] bg-neutral-surface p-6 shadow-sm">
-				<p className="text-sm font-medium text-[#15803D]">
+			<div className="rounded-2xl border border-lavender-100 bg-neutral-surface p-6 shadow-sm">
+				<p className="text-sm font-medium text-green-700">
 					✓ You have signed this contract.
 				</p>
 			</div>
@@ -65,36 +66,34 @@ export function ExecuteAgreementCard({
 	}
 
 	return (
-		<div
-			className={`rounded-2xl border border-[#E6E4F0] bg-neutral-surface p-6 shadow-sm ${className}`}
-		>
-			<h2 className="mb-1 text-base font-semibold text-[#181724]">
-				Execute Agreement
-			</h2>
-			<p className="mb-5 text-xs text-[#6E6B82]">
-				Review the document and provide your signature to execute this
-				agreement.
-			</p>
+		<Card className={className}>
+			<CardHeader className="gap-5">
+				<CardTitle>Execute Agreement</CardTitle>
+				<CardDescription className="text-[#464555]">
+					By signing this contract, you acknowledge that your electronic signature will be applied to the document and that you agree to its terms.
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<div className="flex flex-col gap-5">
+					<SignatureUpload
+						onSignatureChange={setSignatureFile}
+						setSigned={setSigned}
+						onSignatureAdopted={handleSignatureAdopted}
+					/>
 
-			<div className="flex flex-col gap-5">
-				<SignatureUpload
-					onSignatureChange={setSignatureFile}
-					setSigned={setSigned}
-					onSignatureAdopted={handleSignatureAdopted}
-				/>
+					{signatureFile && (
+						<>
+							<hr className="border-lavender-100" />
 
-				{signatureFile && (
-					<>
-						<hr className="border-[#E6E4F0]" />
-
-						<OTPVerification
-							maskedEmail={maskedEmail}
-							onVerified={handleVerified}
-						/>
-					</>
-				)}
-			</div>
-		</div>
+							<OTPVerification
+								maskedEmail={maskedEmail}
+								onVerified={handleVerified}
+							/>
+						</>
+					)}
+				</div>
+			</CardContent>
+		</Card>
 	);
 }
 

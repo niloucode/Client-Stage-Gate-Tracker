@@ -1,30 +1,46 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI for branch Dev
+name: CI
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [main]
   pull_request:
-    branches: [ "dev" ]
 
 jobs:
-  build:
-
+  verify:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [24.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm test
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # t3-env validates server vars at import time (Task 1.8), so the
+          # build needs the full set — NEXT_PUBLIC_* are inlined into the
+          # client bundle, DATABASE_URL/SUPABASE_SERVICE_ROLE_KEY are
+          # validated server-side.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SKIP_ENV_VALIDATION: ${{ secrets.SKIP_ENV_VALIDATION }}
+
+      # Lint is not a hard gate yet: the repo carries ~800 pre-existing
+      # legacy-code lint errors. Run it visibly so the count stays on the
+      # radar while the debt is paid down (see Planned-Fixes.md Phase 6).
+      - name: Lint (non-blocking)
+        run: npm run lint
+        continue-on-error: true

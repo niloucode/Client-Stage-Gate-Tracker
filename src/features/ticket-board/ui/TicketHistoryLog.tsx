@@ -307,11 +307,10 @@ export default function TicketHistoryLog({
 	const { data: history = [], isLoading, isError, error } = useTicketHistory(ticketId);
 	const [expanded, setExpanded] = useState(false);
 
-	const visibleEntries = expanded ? history : history.slice(0, INITIAL_VISIBLE);
 	const hasMore = history.length > INITIAL_VISIBLE;
 
 	return (
-		<div className="px-5 pb-4 border-b border-gray-100">
+		<div className="px-5 pb-4 max-h-[12rem] mb-6 overflow-y-scroll border-b border-gray-100">
 
 			{isLoading ? (
 				<p className="text-sm text-gray-400">Loading activity…</p>
@@ -325,23 +324,13 @@ export default function TicketHistoryLog({
 			) : (
 				<>
 					<ol className="space-y-3">
-						{visibleEntries.map((entry) => (
+						{history.map((entry) => (
 							<HistoryEntryRow
 								key={entry.history_event_id}
 								entry={entry}
 							/>
 						))}
 					</ol>
-					{hasMore && (
-						<button
-							onClick={() => setExpanded((v) => !v)}
-							className="mt-3 text-xs font-medium text-brand-600 hover:text-indigo-700 transition-colors"
-						>
-							{expanded
-								? "Show less"
-								: `Show all ${history.length} entries`}
-						</button>
-					)}
 				</>
 			)}
 		</div>

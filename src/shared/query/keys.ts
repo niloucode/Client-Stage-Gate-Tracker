@@ -24,16 +24,15 @@ export const commentKeys = {
 	lists: () => [...commentKeys.all, "list"] as const,
 	list: (parentType: string, parentId: string) =>
 		[...commentKeys.lists(), parentType, parentId] as const,
+	images: (parentType: string, parentId: string) =>
+		[...commentKeys.all, "images", parentType, parentId] as const,
 };
 
 export const clientKeys = {
 	all: ["clients"] as const,
+	lists: () => [...clientKeys.all, "list"] as const,
 	details: () => [...clientKeys.all, "detail"] as const,
 	detail: (id: string) => [...clientKeys.details(), id] as const,
-};
-
-export const departmentKeys = {
-	all: ["departments"] as const,
 };
 
 export const phaseKeys = {
@@ -83,5 +82,6 @@ export const projectKeys = {
 	lists: () => [...projectKeys.all, "list"] as const,
 	details: () => [...projectKeys.all, "detail"] as const,
 	detail: (id: string) => [...projectKeys.details(), id] as const,
-	members: (projectId: string) => [...projectKeys.detail(projectId), "members"] as const,
+	members: (projectId: string) =>
+		[...projectKeys.detail(projectId), "members"] as const,
 };

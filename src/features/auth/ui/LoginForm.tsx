@@ -11,10 +11,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import { Button } from "@/shared/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
+import { getFieldErrors } from "@/shared/lib/zod";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/features/auth";
 import { loginSchema } from "@/shared/schemas";
@@ -43,11 +44,7 @@ export function LoginForm() {
 
 		const result = loginSchema.safeParse({ email, password });
 		if (!result.success) {
-			const flattened = result.error.flatten().fieldErrors;
-			const mapped: Record<string, string> = {};
-			for (const [key, msgs] of Object.entries(flattened)) {
-				if (msgs && msgs.length > 0) mapped[key] = msgs[0];
-			}
+			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
 			return;
 		}
@@ -70,7 +67,7 @@ export function LoginForm() {
 	};
 
 	return (
-		<>
+		<div className="bg-neutral-surface rounded-xl p-6 border border-brand-100">
 			<div className="mb-7">
 				<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
 					Welcome back
@@ -97,7 +94,7 @@ export function LoginForm() {
 						className={fieldErrClass("email")}
 					/>
 					{fieldErrors.email && (
-						<p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
+						<p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>
 					)}
 				</div>
 
@@ -121,13 +118,13 @@ export function LoginForm() {
 						className={fieldErrClass("password")}
 					/>
 					{fieldErrors.password && (
-						<p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>
+						<p className="text-xs text-destructive mt-1">{fieldErrors.password}</p>
 					)}
 				</div>
 
 				{error && (
 					<p
-						className="text-sm text-red-600 bg-red-50 border border-red-200
+						className="text-sm text-destructive bg-red-50 border border-red-200
             rounded-md px-3 py-2"
 					>
 						{error}
@@ -149,7 +146,7 @@ export function LoginForm() {
 					<div className="w-full border-t border-gray-200" />
 				</div>
 				<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-					<span className="bg-background px-3 text-gray-400">OR</span>
+					<span className="bg-neutral-surface px-3 text-gray-400">OR</span>
 				</div>
 			</div>
 
@@ -169,6 +166,6 @@ export function LoginForm() {
 					Client
 				</Link>
 			</p>
-		</>
+		</div>
 	);
 }

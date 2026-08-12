@@ -17,7 +17,7 @@ export function useCreateTicket() {
 		mutationFn: createTicket,
 		onSuccess: (data, variables) => {
 			queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
-			if ((variables as any).performed_by) {
+			if (variables.performed_by) {
 				queryClient.invalidateQueries({
 					queryKey: historyKeys.list(data.ticket_id),
 				});

@@ -9,37 +9,11 @@ import {
 	type ProjectUpdateInput,
 } from "@/shared/schemas";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-async function requireProjectMember(projectId: string, userId: string): Promise<boolean> {
-	const assignment = await prisma.roleAssignments.findFirst({
-		where: { project_id: projectId, user_id: userId },
-	});
-	return !!assignment;
-}
-
-async function requireProjectOwner(projectId: string, userId: string): Promise<boolean> {
-	const ownerRole = await prisma.roles.findUnique({
-		where: { name: "Project Owner" },
-		select: { role_id: true },
-	});
-	if (!ownerRole) return false;
-	const assignment = await prisma.roleAssignments.findFirst({
-		where: { project_id: projectId, user_id: userId, role_id: ownerRole.role_id },
-	});
-	return !!assignment;
-}
-
-async function getCurrentUserId(): Promise<string | null> {
-	try {
-		const supabase = await createClient();
-		const { data: { user } } = await supabase.auth.getUser();
-		if (!user) return null;
-		return user.id;
-	} catch {
-		return null;
-	}
-}
+import {
+	getCurrentUserId,
+	requireProjectMember,
+	requireProjectOwner,
+} from "@/lib/auth/projectAccess";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,6 +45,7 @@ export async function selectProjects() {
 		return await prisma.projects.findMany({
 			where: { is_deleted: false },
 			orderBy: { name: "asc" },
+			take: 200, // bound the list; paginate when callers need more
 		});
 	} catch (error) {
 		console.error("Failed to fetch projects:", error);
@@ -120,6 +95,7 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 		// Fetch all owned projects (includes existing status column)
 		const projects = await prisma.projects.findMany({
 			where: { project_id: { in: projectIds }, is_deleted: false },
+			take: 200, // bound the list; paginate when callers need more
 		});
 
 		// Fetch contracts for these projects
@@ -138,17 +114,26 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 		const stageCounts = await prisma.stages.groupBy({
 			by: ["project_id"],
 			where: { project_id: { in: projectIds }, is_deleted: false },
-			_count: { finish_date: true, stage_id: true },
+			_count: { _all: true },
+		});
+		const finishedStageCounts = await prisma.stages.groupBy({
+			by: ["project_id"],
+			where: {
+				project_id: { in: projectIds },
+				is_deleted: false,
+				actual_end_at: { not: null },
+			},
+			_count: { _all: true },
 		});
 
-		const stageStats = new Map<
-			string,
-			{ finished: number; total: number }
-		>();
+		const stageStats = new Map<string, { finished: number; total: number }>();
+		const finishedMap = new Map(
+			finishedStageCounts.map((s) => [s.project_id, s._count?._all ?? 0]),
+		);
 		for (const s of stageCounts) {
 			stageStats.set(s.project_id, {
-				finished: s._count.finish_date,
-				total: s._count.stage_id,
+				finished: finishedMap.get(s.project_id) ?? 0,
+				total: s._count?._all ?? 0,
 			});
 		}
 
@@ -161,8 +146,7 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 			const stagesOfProject = stageStats.get(p.project_id);
 
 			const contractSigned =
-				!!contract?.client_signature &&
-				!!contract?.project_owner_signature;
+				!!contract?.client_signature && !!contract?.project_owner_signature;
 
 			const totalStages = stagesOfProject?.total ?? 0;
 			const finishedStages = stagesOfProject?.finished ?? 0;
@@ -193,9 +177,9 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 				project_id: p.project_id,
 				name: p.name,
 				description: p.description,
-				start_date: p.start_date,
-				finish_date: p.finish_date,
-				deadline_date: p.deadline_date,
+				start_date: p.plan_start_at,
+				finish_date: p.actual_end_at,
+				deadline_date: p.plan_end_at,
 				is_deleted: p.is_deleted,
 				deleted_at: p.deleted_at,
 				status: computedStatus,
@@ -234,16 +218,19 @@ export async function getProjectById(projectId: string) {
  * The user ID is obtained from the server-side Supabase session.
  */
 export async function createProject(data: ProjectCreateInput) {
-	projectCreateSchema.parse(data);
-
 	try {
+		projectCreateSchema.parse(data);
+
 		// Get the current user from the server session
 		const supabase = await createClient();
 		const {
 			data: { user },
 		} = await supabase.auth.getUser();
 		if (!user) {
-			return { success: false, error: "You must be logged in to create a project." };
+			return {
+				success: false,
+				error: "You must be logged in to create a project.",
+			};
 		}
 
 		// Look up the Profile ID for this auth user
@@ -274,8 +261,8 @@ export async function createProject(data: ProjectCreateInput) {
 				data: {
 					name: data.name,
 					description: data.description ?? null,
-					start_date: data.start_date ?? null,
-					deadline_date: data.deadline_date ?? null,
+					plan_start_at: data.start_date ?? new Date(),
+					plan_end_at: data.deadline_date ?? new Date(),
 				},
 			});
 
@@ -303,20 +290,16 @@ export async function createProject(data: ProjectCreateInput) {
 					select: { profile_id: true },
 				});
 
-				// Assign each client profile the "Client Viewer" role
-				for (const cp of clientProfiles) {
-					await tx.roleAssignments.create({
-						data: {
+				// Assign each client profile the "Client Viewer" role — one
+				// batched insert, duplicates silently skipped.
+				if (clientProfiles.length > 0) {
+					await tx.roleAssignments.createMany({
+						data: clientProfiles.map((cp) => ({
 							role_id: clientViewerRole.role_id,
 							user_id: cp.profile_id,
 							project_id: project.project_id,
-						},
-					}).catch((err) => {
-						// Ignore unique constraint violations (duplicate assignments); log others
-						if ((err as { code?: string })?.code !== "P2002") {
-							console.warn("Failed to assign client profile to project:", err);
-						}
-						// Ignore unique constraint errors (duplicate assignments)
+						})),
+						skipDuplicates: true,
 					});
 				}
 			}
@@ -343,13 +326,17 @@ export async function updateProject(data: ProjectUpdateInput) {
 		if (!userId) return { success: false, error: "Authentication required." };
 
 		const isMember = await requireProjectMember(data.project_id, userId);
-		if (!isMember) return { success: false, error: "You are not a member of this project." };
+		if (!isMember)
+			return { success: false, error: "You are not a member of this project." };
 
 		const updateData: Record<string, unknown> = {};
 		if (data.name !== undefined) updateData.name = data.name;
-		if (data.description !== undefined) updateData.description = data.description;
-		if (data.start_date !== undefined) updateData.start_date = data.start_date;
-		if (data.deadline_date !== undefined) updateData.deadline_date = data.deadline_date;
+		if (data.description !== undefined)
+			updateData.description = data.description;
+		if (data.start_date !== undefined)
+			updateData.plan_start_at = data.start_date;
+		if (data.deadline_date !== undefined)
+			updateData.plan_end_at = data.deadline_date;
 
 		const updated = await prisma.projects.update({
 			where: { project_id: data.project_id },
@@ -367,13 +354,20 @@ export async function updateProject(data: ProjectUpdateInput) {
  * Soft-deletes a project after verifying the confirmation name matches
  * the project's current name.
  */
-export async function softDeleteProject(projectId: string, confirmationName: string) {
+export async function softDeleteProject(
+	projectId: string,
+	confirmationName: string,
+) {
 	try {
 		const userId = await getCurrentUserId();
 		if (!userId) return { success: false, error: "Authentication required." };
 
 		const isOwner = await requireProjectOwner(projectId, userId);
-		if (!isOwner) return { success: false, error: "Only the Project Owner can delete this project." };
+		if (!isOwner)
+			return {
+				success: false,
+				error: "Only the Project Owner can delete this project.",
+			};
 
 		const project = await prisma.projects.findUnique({
 			where: { project_id: projectId },
@@ -417,7 +411,7 @@ export async function getProjectMembers(projectId: string) {
 		return await prisma.roleAssignments.findMany({
 			where: { project_id: projectId },
 			include: {
-				Users: {
+				Profile: {
 					select: {
 						profile_id: true,
 						first_name: true,
@@ -481,13 +475,21 @@ export async function searchProfilesForProject(query: string) {
  * Adds a profile to a project with the given role name.
  * Throws if the assignment already exists (unique constraint).
  */
-export async function addProjectMember(projectId: string, profileId: string, roleName: string) {
+export async function addProjectMember(
+	projectId: string,
+	profileId: string,
+	roleName: string,
+) {
 	try {
 		const userId = await getCurrentUserId();
 		if (!userId) return { success: false, error: "Authentication required." };
 
 		const isOwner = await requireProjectOwner(projectId, userId);
-		if (!isOwner) return { success: false, error: "Only the Project Owner can add members." };
+		if (!isOwner)
+			return {
+				success: false,
+				error: "Only the Project Owner can add members.",
+			};
 
 		// Look up the role
 		const role = await prisma.roles.findUnique({
@@ -511,7 +513,10 @@ export async function addProjectMember(projectId: string, profileId: string, rol
 		});
 
 		if (existing) {
-			return { success: false, error: "This user is already a member of the project." };
+			return {
+				success: false,
+				error: "This user is already a member of the project.",
+			};
 		}
 
 		await prisma.roleAssignments.create({
@@ -533,13 +538,20 @@ export async function addProjectMember(projectId: string, profileId: string, rol
  * Removes a profile from a project by deleting the RoleAssignments row.
  * Prevents removing the last remaining Project Owner.
  */
-export async function removeProjectMember(projectId: string, profileId: string) {
+export async function removeProjectMember(
+	projectId: string,
+	profileId: string,
+) {
 	try {
 		const userId = await getCurrentUserId();
 		if (!userId) return { success: false, error: "Authentication required." };
 
 		const isOwner = await requireProjectOwner(projectId, userId);
-		if (!isOwner) return { success: false, error: "Only the Project Owner can remove members." };
+		if (!isOwner)
+			return {
+				success: false,
+				error: "Only the Project Owner can remove members.",
+			};
 
 		// Check if this user is a Project Owner
 		const ownerRole = await prisma.roles.findUnique({

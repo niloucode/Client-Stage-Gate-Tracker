@@ -20,16 +20,16 @@ async function fetchTicketHistory(
 		ticketHistoryEntrySchema.parse({
 			history_event_id: row.history_event_id,
 			action: row.action,
-			date_performed: row.date_performed,
+			date_performed: row.performed_at,
 			ticket_id: row.ticket_id,
 			target_profile_id: row.target_profile_id,
 			performed_by: row.performed_by,
 			details: row.details,
-			performerName: row.Profiles_HistoryEvent_performed_byToProfiles
-				? `${row.Profiles_HistoryEvent_performed_byToProfiles.first_name} ${row.Profiles_HistoryEvent_performed_byToProfiles.last_name}`
+			performerName: row.Performer
+				? `${row.Performer.first_name} ${row.Performer.last_name}`
 				: "Unknown",
-			targetName: row.Profiles
-				? `${row.Profiles.first_name} ${row.Profiles.last_name}`
+			targetName: row.TargetProfile
+				? `${row.TargetProfile.first_name} ${row.TargetProfile.last_name}`
 				: null,
 		}),
 	);
