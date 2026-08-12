@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PhoneInput } from "@/components/phone-input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
 import { getFieldErrors } from "@/shared/lib/zod";
@@ -156,7 +156,9 @@ export function StaffSignupForm() {
 						className={fieldErrClass("firstName")}
 					/>
 					{fieldErrors.firstName && (
-						<p className="text-xs text-destructive mt-1">{fieldErrors.firstName}</p>
+						<p className="text-xs text-destructive mt-1">
+							{fieldErrors.firstName}
+						</p>
 					)}
 				</div>
 				<div className="flex-1">
@@ -177,7 +179,9 @@ export function StaffSignupForm() {
 						className={fieldErrClass("lastName")}
 					/>
 					{fieldErrors.lastName && (
-						<p className="text-xs text-destructive mt-1">{fieldErrors.lastName}</p>
+						<p className="text-xs text-destructive mt-1">
+							{fieldErrors.lastName}
+						</p>
 					)}
 				</div>
 			</div>
@@ -217,7 +221,7 @@ export function StaffSignupForm() {
 				</Label>
 				<PhoneInput
 					value={phone}
-					onChange={setPhone}
+					onChange={(value) => setPhone(value ?? "")}
 					placeholder="+1 (555) 000-0000"
 				/>
 				{fieldErrors.phone && (
@@ -245,7 +249,9 @@ export function StaffSignupForm() {
 						className={fieldErrClass("jobTitle")}
 					/>
 					{fieldErrors.jobTitle && (
-						<p className="text-xs text-destructive mt-1">{fieldErrors.jobTitle}</p>
+						<p className="text-xs text-destructive mt-1">
+							{fieldErrors.jobTitle}
+						</p>
 					)}
 				</div>
 				<div className="flex-1">
@@ -296,7 +302,9 @@ export function StaffSignupForm() {
 					className={fieldErrClass("password")}
 				/>
 				{fieldErrors.password && (
-					<p className="text-xs text-destructive mt-1">{fieldErrors.password}</p>
+					<p className="text-xs text-destructive mt-1">
+						{fieldErrors.password}
+					</p>
 				)}
 			</div>
 

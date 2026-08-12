@@ -97,24 +97,27 @@
 
 ## 7. Shared layer — shadcn UI primitives (src/components/ui)
 
-- [ ] src/components/ui/alert-dialog.tsx
-- [ ] src/components/ui/avatar.tsx
-- [ ] src/components/ui/badge.tsx
-- [ ] src/components/ui/button.tsx
-- [ ] src/components/ui/card.tsx
-- [ ] src/components/ui/command.tsx
-- [ ] src/components/ui/dialog.tsx
-- [ ] src/components/ui/dropdown-menu.tsx
-- [ ] src/components/ui/input.tsx
-- [ ] src/components/ui/input-group.tsx
-- [ ] src/components/ui/label.tsx
-- [ ] src/components/ui/phone-input.tsx
-- [ ] src/components/ui/popover.tsx
-- [ ] src/components/ui/select.tsx
-- [ ] src/components/ui/separator.tsx
-- [ ] src/components/ui/textarea.tsx
-- [ ] src/components/ui/toast.tsx
-- [ ] src/components/ui/tooltip.tsx
+- [x] src/components/ui/alert-dialog.tsx
+- [x] src/components/ui/avatar.tsx
+- [x] src/components/ui/badge.tsx
+- [x] src/components/ui/back.tsx
+- [x] src/components/ui/button.tsx
+- [x] src/components/ui/card.tsx
+- [x] src/components/ui/command.tsx
+- [x] src/components/ui/dialog.tsx
+- [x] src/components/ui/dropdown-menu.tsx
+- [x] src/components/ui/input.tsx
+- [x] src/components/ui/input-group.tsx
+- [x] src/components/ui/label.tsx
+- [x] src/components/ui/phone-input.tsx
+- [x] src/components/ui/combobox.tsx
+- [x] src/components/ui/scroll-area.tsx
+- [x] src/components/ui/popover.tsx
+- [x] src/components/ui/select.tsx
+- [x] src/components/ui/separator.tsx
+- [x] src/components/ui/textarea.tsx
+- [x] src/components/ui/toast.tsx
+- [x] src/components/ui/tooltip.tsx
 
 ## 8. Shared layer — hooks & test setup
 

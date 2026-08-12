@@ -2,7 +2,7 @@
 
 import { useFieldContext } from "../contexts";
 import { Label } from "@/components/ui/label";
-import { PhoneInput } from "@/components/phone-input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { cn } from "@/lib/utils";
 import { firstFieldError } from "./TextField";
 
@@ -34,11 +34,11 @@ export function PhoneField({
 				id={field.name}
 				name={field.name}
 				value={field.state.value}
-				onChange={(value) => field.handleChange(value)}
-				error={error}
-				ariaInvalid={!!error}
+				onChange={(value) => field.handleChange(value ?? "")}
+				aria-invalid={error ? true : undefined}
 				placeholder={placeholder}
 			/>
+			{error && <p className="text-xs text-destructive">{error}</p>}
 		</div>
 	);
 }
