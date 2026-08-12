@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/lib/generated/prisma";
 import {
 	projectCreateSchema,
 	projectUpdateSchema,
@@ -254,33 +255,32 @@ export async function createProject(data: ProjectCreateInput) {
 				},
 			});
 
-			// If a client was selected, create a contract and assign client profiles
-			if (data.client_id && clientViewerRole) {
-				await tx.contracts.create({
-					data: {
+			// A project always has a client (Contracts.client_id NOT NULL —
+			// REASONIX invariant): create the contract unconditionally.
+			await tx.contracts.create({
+				data: {
+					project_id: project.project_id,
+					client_id: data.client_id,
+				},
+			});
+
+			// Find all profiles connected to this client
+			const clientProfiles = await tx.profiles.findMany({
+				where: { client_id: data.client_id, is_deleted: false },
+				select: { profile_id: true },
+			});
+
+			// Assign each client profile the "Client Viewer" role — one
+			// batched insert, duplicates silently skipped.
+			if (clientProfiles.length > 0 && clientViewerRole) {
+				await tx.roleAssignments.createMany({
+					data: clientProfiles.map((cp) => ({
+						role_id: clientViewerRole.role_id,
+						user_id: cp.profile_id,
 						project_id: project.project_id,
-						client_id: data.client_id,
-					},
+					})),
+					skipDuplicates: true,
 				});
-
-				// Find all profiles connected to this client
-				const clientProfiles = await tx.profiles.findMany({
-					where: { client_id: data.client_id, is_deleted: false },
-					select: { profile_id: true },
-				});
-
-				// Assign each client profile the "Client Viewer" role — one
-				// batched insert, duplicates silently skipped.
-				if (clientProfiles.length > 0) {
-					await tx.roleAssignments.createMany({
-						data: clientProfiles.map((cp) => ({
-							role_id: clientViewerRole.role_id,
-							user_id: cp.profile_id,
-							project_id: project.project_id,
-						})),
-						skipDuplicates: true,
-					});
-				}
 			}
 
 			return project;
@@ -308,18 +308,33 @@ export async function updateProject(data: ProjectUpdateInput) {
 		if (!isMember)
 			return { success: false, error: "You are not a member of this project." };
 
-		const updateData: Record<string, unknown> = {};
+		const updateData: Prisma.ProjectsUpdateInput = {};
 		if (data.name !== undefined) updateData.name = data.name;
 		if (data.description !== undefined)
 			updateData.description = data.description;
+		// plan_start_at/plan_end_at are NOT NULL: a cleared form date (null)
+		// means "leave unchanged" — never send null to the DB.
 		if (data.start_date !== undefined)
-			updateData.plan_start_at = data.start_date;
+			updateData.plan_start_at = data.start_date ?? undefined;
 		if (data.deadline_date !== undefined)
-			updateData.plan_end_at = data.deadline_date;
+			updateData.plan_end_at = data.deadline_date ?? undefined;
 
-		const updated = await prisma.projects.update({
-			where: { project_id: data.project_id },
-			data: updateData,
+		// The client linkage lives on the Contracts row (NOT NULL invariant);
+		// update it atomically with the project fields.
+		const updated = await prisma.$transaction(async (tx) => {
+			const project = await tx.projects.update({
+				where: { project_id: data.project_id },
+				data: updateData,
+			});
+
+			if (data.client_id !== undefined) {
+				await tx.contracts.update({
+					where: { project_id: data.project_id },
+					data: { client_id: data.client_id },
+				});
+			}
+
+			return project;
 		});
 
 		return { success: true, data: updated };

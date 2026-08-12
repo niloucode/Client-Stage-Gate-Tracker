@@ -6,15 +6,12 @@ import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-	LayoutDashboard,
 	Folder,
-	FileText,
-	Key,
 	Settings,
 	ChevronLeft,
 	ChevronRight,
 	Boxes,
-	ContactRound
+	ContactRound,
 } from "lucide-react";
 
 // Font configurations
@@ -28,7 +25,7 @@ const jetbrains = JetBrains_Mono({
 	subsets: ["latin"],
 });
 
-export interface NavItem {
+interface NavItem {
 	label: string;
 	icon: ComponentType<{ className?: string }>;
 	href: string;

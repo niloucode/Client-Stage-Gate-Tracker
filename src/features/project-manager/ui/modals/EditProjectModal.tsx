@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
-import { projectCreateSchema } from "@/shared/schemas"
-import { getFieldErrors } from "@/shared/lib/zod"
-import { toDateTimeLocalInput } from "@/shared/lib/scheduling"
-import { clientSelectAll } from "@/entities/client/clientActions"
-import { FormInput } from "@/components/ui/forminput"
+import { useState, useEffect, useRef } from "react";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
+import { projectCreateSchema } from "@/shared/schemas";
+import { getFieldErrors } from "@/shared/lib/zod";
+import { toDateTimeLocalInput } from "@/shared/lib/scheduling";
+import { clientSelectAll } from "@/entities/client/clientActions";
+import { FormInput } from "@/components/ui/forminput";
 import {
 	Dialog,
 	DialogContent,
@@ -14,51 +14,51 @@ import {
 	DialogTitle,
 	DialogDescription,
 	DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 interface EditProjectFormData {
-	name: string
-	description: string
-	client_id: string | null
-	start_date: Date | null
-	deadline_date: Date | null
+	name: string;
+	description: string;
+	client_id: string;
+	start_date: Date | null;
+	deadline_date: Date | null;
 }
 
 interface EditProjectModalProps {
-	isOpen: boolean
+	isOpen: boolean;
 	project: {
-		project_id: string
-		name: string
-		description?: string | null
-		client_id?: string | null
-		start_date?: Date | null
-		deadline_date?: Date | null
-	} | null // null = "Add" mode
-	onClose: () => void
-	onSubmit: (data: EditProjectFormData) => void
+		project_id: string;
+		name: string;
+		description?: string | null;
+		client_id?: string | null;
+		start_date?: Date | null;
+		deadline_date?: Date | null;
+	} | null; // null = "Add" mode
+	onClose: () => void;
+	onSubmit: (data: EditProjectFormData) => void;
 }
 
 const emptyFormData: EditProjectFormData = {
 	name: "",
 	description: "",
-	client_id: null,
+	client_id: "",
 	start_date: null,
 	deadline_date: null,
-}
+};
 
-type FieldErrors = Partial<Record<keyof EditProjectFormData, string>>
+type FieldErrors = Partial<Record<keyof EditProjectFormData, string>>;
 
 function toDateInput(date: Date | null): string {
-	return toDateTimeLocalInput(date)
+	return toDateTimeLocalInput(date);
 }
 
 export function EditProjectModal({
@@ -67,105 +67,102 @@ export function EditProjectModal({
 	onClose,
 	onSubmit,
 }: EditProjectModalProps) {
-	const [displayProject, setDisplayProject] = useState(project)
-	useEffect(() => {
-		if (isOpen) setDisplayProject(project)
-	}, [isOpen, project])
-
-	const isEditMode = displayProject !== null
+	const isEditMode = project !== null;
 
 	const getInitialFormData = (): EditProjectFormData => {
 		if (project) {
 			return {
 				name: project.name,
 				description: project.description ?? "",
-				client_id: project.client_id ?? null,
+				client_id: project.client_id ?? "",
 				start_date: project.start_date ?? null,
 				deadline_date: project.deadline_date ?? null,
-			}
+			};
 		}
-		return emptyFormData
-	}
+		return emptyFormData;
+	};
 
-	const [formData, setFormData] = useState<EditProjectFormData>(getInitialFormData)
-	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
-	const [clients, setClients] = useState<Awaited<ReturnType<typeof clientSelectAll>>>([])
-	const mountedRef = useRef(true)
+	const [formData, setFormData] =
+		useState<EditProjectFormData>(getInitialFormData);
+	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+	const [clients, setClients] = useState<
+		Awaited<ReturnType<typeof clientSelectAll>>
+	>([]);
+	const mountedRef = useRef(true);
 
 	useEffect(() => {
-		mountedRef.current = true
+		mountedRef.current = true;
 		return () => {
-			mountedRef.current = false
-		}
-	}, [])
+			mountedRef.current = false;
+		};
+	}, []);
 
 	useEffect(() => {
 		clientSelectAll()
 			.then((data) => {
-				if (mountedRef.current) setClients(data)
+				if (mountedRef.current) setClients(data);
 			})
-			.catch((err) => console.error("Failed to load clients", err))
-	}, [])
+			.catch((err) => console.error("Failed to load clients", err));
+	}, []);
 
-	useEffect(() => {
-		if (isOpen) {
-			setFormData(
-				project
-					? {
-							name: project.name,
-							description: project.description ?? "",
-							client_id: project.client_id ?? null,
-							start_date: project.start_date ?? null,
-							deadline_date: project.deadline_date ?? null,
-					  }
-					: emptyFormData
-			)
-			setFieldErrors({})
-		}
-	}, [isOpen, project])
+	// Reset the form whenever the modal opens (deferred a frame so the
+	// dialog can finish mounting before controlled inputs are reset).
+	useResetOnOpen(isOpen, () => {
+		setFormData(
+			project
+				? {
+						name: project.name,
+						description: project.description ?? "",
+						client_id: project.client_id ?? "",
+						start_date: project.start_date ?? null,
+						deadline_date: project.deadline_date ?? null,
+					}
+				: emptyFormData,
+		);
+		setFieldErrors({});
+	});
 
-	useResetOnOpen(isOpen && !project, () => {
-		setFormData(emptyFormData)
-		setFieldErrors({})
-	})
-
-	const formKey = isEditMode ? displayProject!.name : "new"
+	const formKey = isEditMode ? project!.name : "new";
 
 	const handleClose = () => {
-		setFormData(emptyFormData)
-		setFieldErrors({})
-		onClose()
-	}
+		setFormData(emptyFormData);
+		setFieldErrors({});
+		onClose();
+	};
 
 	const clearFieldError = (field: keyof EditProjectFormData) => {
 		if (fieldErrors[field]) {
-			setFieldErrors((prev) => ({ ...prev, [field]: undefined }))
+			setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
 		}
-	}
+	};
 
 	const handleSubmit = () => {
-		const result = projectCreateSchema.safeParse(formData)
+		const result = projectCreateSchema.safeParse(formData);
 		if (!result.success) {
-			const mapped = getFieldErrors(result)
-			setFieldErrors(mapped)
-			return
+			const mapped = getFieldErrors(result);
+			setFieldErrors(mapped);
+			return;
 		}
 
-		setFieldErrors({})
-		onSubmit(formData)
-	}
+		setFieldErrors({});
+		onSubmit(formData);
+	};
 
 	return (
 		<Dialog
 			open={isOpen}
 			onOpenChange={(open) => {
-				if (!open) onClose()
+				if (!open) onClose();
 			}}
 		>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{isEditMode ? "Edit Project" : "Create New Project"}</DialogTitle>
-					<DialogDescription>Fill in the details for this project.</DialogDescription>
+					<DialogTitle>
+						{isEditMode ? "Edit Project" : "Create New Project"}
+					</DialogTitle>
+					<DialogDescription>
+						Fill in the details for this project.
+					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-4" key={formKey}>
 					{/* Project Name */}
@@ -190,51 +187,56 @@ export function EditProjectModal({
 						value={formData.description}
 						placeholder="Project Description"
 						error={fieldErrors.description}
-						onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+						onChange={(e) =>
+							setFormData({ ...formData, description: e.target.value })
+						}
 						onClearError={() => clearFieldError("description")}
 					/>
 
 					{/* Client Selection (Create Mode Only) */}
 					{/* Client Selection (Create Mode Only) */}
 					{!isEditMode && (
-							<div>
-									<div className="flex">
-											<Label required>Client</Label>
-											{typeof fieldErrors.client_id === "string" && (
-													<div className="ml-auto text-xs text-destructive">
-															{fieldErrors.client_id}
-													</div>
-											)}
+						<div>
+							<div className="flex">
+								<Label required>Client</Label>
+								{typeof fieldErrors.client_id === "string" && (
+									<div className="ml-auto text-xs text-destructive">
+										{fieldErrors.client_id}
 									</div>
-									<Select
-											value={formData.client_id ?? ""}
-											onValueChange={(val) => {
-													setFormData({ ...formData, client_id: val })
-													clearFieldError("client_id")
-											}}
-									>
-											<SelectTrigger
-													className={`mt-1 w-full ${
-															fieldErrors.client_id
-																	? "border-destructive text-destructive focus:ring-destructive"
-																	: ""
-													}`}
-													aria-label="Client"
-													aria-invalid={!!fieldErrors.client_id}
-											>
-													<SelectValue placeholder="Select client...">
-															{clients.find((c) => c.client_id === formData.client_id)?.client_name}
-													</SelectValue>
-											</SelectTrigger>
-											<SelectContent>
-													{clients.map((client) => (
-															<SelectItem key={client.client_id} value={client.client_id}>
-																	{client.client_name}
-															</SelectItem>
-													))}
-											</SelectContent>
-									</Select>
+								)}
 							</div>
+							<Select
+								value={formData.client_id}
+								onValueChange={(val) => {
+									setFormData({ ...formData, client_id: val ?? "" });
+									clearFieldError("client_id");
+								}}
+							>
+								<SelectTrigger
+									className={`mt-1 w-full ${
+										fieldErrors.client_id
+											? "border-destructive text-destructive focus:ring-destructive"
+											: ""
+									}`}
+									aria-label="Client"
+									aria-invalid={!!fieldErrors.client_id}
+								>
+									<SelectValue placeholder="Select client...">
+										{
+											clients.find((c) => c.client_id === formData.client_id)
+												?.client_name
+										}
+									</SelectValue>
+								</SelectTrigger>
+								<SelectContent>
+									{clients.map((client) => (
+										<SelectItem key={client.client_id} value={client.client_id}>
+											{client.client_name}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
 					)}
 
 					{/* Dates Section */}
@@ -265,7 +267,9 @@ export function EditProjectModal({
 							onChange={(e) =>
 								setFormData({
 									...formData,
-									deadline_date: e.target.value ? new Date(e.target.value) : null,
+									deadline_date: e.target.value
+										? new Date(e.target.value)
+										: null,
 								})
 							}
 							onClearError={() => clearFieldError("deadline_date")}
@@ -282,5 +286,5 @@ export function EditProjectModal({
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
-	)
+	);
 }
