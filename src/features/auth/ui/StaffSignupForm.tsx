@@ -137,7 +137,7 @@ export function StaffSignupForm() {
 	return (
 		<form onSubmit={handleSignUp} className="space-y-4">
 			{/* First Name + Last Name */}
-			<div className="flex gap-3">
+			<div className="flex gap-3 ">
 				<div className="flex-1">
 					<Label
 						htmlFor="firstname"

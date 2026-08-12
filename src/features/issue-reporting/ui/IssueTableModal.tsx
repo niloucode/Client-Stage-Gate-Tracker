@@ -17,7 +17,7 @@ export interface IssueTableModalProps {
   onOpenChange: (open: boolean) => void;
   /** List of issues to display (defaults to mock issues if omitted) */
   issues?: IssueItem[];
-  /** Set to false to hide the top-right "New Issue" button */
+  /** Set to false to hide the "New Issue" button */
   showNewIssueButton?: boolean;
   /** Callback fired when an issue is selected/linked by clicking its row "Link" button */
   onSelectIssue?: (issue: IssueItem) => void;
@@ -29,7 +29,7 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
   open,
   onOpenChange,
   issues: initialIssues = MOCK_ISSUES,
-  showNewIssueButton = false, // Default to false when opening from a ticket
+  showNewIssueButton = false,
   onSelectIssue,
   onIssueCreated,
 }) => {
@@ -37,7 +37,6 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
   const [selectedIssue, setSelectedIssue] = useState<IssueItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Handle adding a new issue from the form
   const handleCreateSuccess = (formData: IssueFormState) => {
     const now = new Date();
     const newIssue: IssueItem = {
@@ -70,7 +69,7 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
 
   const handleLinkIssue = (issue: IssueItem) => {
     onSelectIssue?.(issue);
-    onOpenChange(false); // Closes modal after linking
+    onOpenChange(false);
   };
 
   return (
@@ -78,13 +77,12 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
       {/* Main Table Modal */}
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl p-0 gap-0 border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
-          {/* Compartmentalized Issue Table / List */}
           <IssueBox
             title="Project Issues"
             issues={issues}
             itemsPerPage={5}
             showNewIssueButton={showNewIssueButton}
-            onLinkIssue={handleLinkIssue} // 👈 Links row to ticket
+            onLinkIssue={handleLinkIssue}
             onIssueClick={(issue) => setSelectedIssue(issue)}
             onNewIssueClick={() => setIsCreateModalOpen(true)}
             className="border-none shadow-none rounded-none bg-transparent"
@@ -92,14 +90,14 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Popup 1: Issue Details View */}
+      {/* Child Modal 1: Issue Details View */}
       <IssueDetailsModal
         issue={selectedIssue}
         open={Boolean(selectedIssue)}
         onClose={() => setSelectedIssue(null)}
       />
 
-      {/* Popup 2: New Issue Reporting Form */}
+      {/* Child Modal 2: New Issue Reporting Form */}
       <IssueReportingModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}

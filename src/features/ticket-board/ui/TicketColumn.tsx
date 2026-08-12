@@ -38,7 +38,7 @@ export default function TicketColumn({
 
 			{/* Container + cards drop zone */}
 			{/* min-h-0 allows overflow-auto to trigger internal scrolling when cards overflow */}
-			<div className="flex items-center w-full justify-center flex-1 border border-dashed border-gray-300 rounded-xl bg-neutral-surface/40">
+			<div className="flex items-center w-full justify-center flex-1 rounded-xl bg-neutral-surface/40">
 					<div
 				ref={setNodeRef}
 				className={`flex flex-col items-center gap-2 flex-1 min-h-[69vh] rounded-xl max-h-[69vh] overflow-y-auto transition-colors duration-150 ${

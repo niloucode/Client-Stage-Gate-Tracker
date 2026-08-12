@@ -331,6 +331,12 @@ export interface IssueDetailsModalProps {
   onClose: () => void;
 }
 
+export interface IssueDetailsModalProps {
+  issue: IssueItem | null;
+  open: boolean;
+  onClose: () => void;
+}
+
 export const IssueDetailsModal: React.FC<IssueDetailsModalProps> = ({
   issue,
   open,
@@ -340,7 +346,7 @@ export const IssueDetailsModal: React.FC<IssueDetailsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className="max-w-2xl bg-card border-border rounded-2xl">
+      <DialogContent className="max-w-2xl bg-card border-border rounded-2xl shadow-2xl">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <DialogTitle className="text-foreground font-bold">Issue Details</DialogTitle>
