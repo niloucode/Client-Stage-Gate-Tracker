@@ -15,7 +15,6 @@ import { useClients } from "@/entities/client";
 import ClientFormModal from "@/features/client-manager/ui/ClientFormModal";
 import ViewTeamMembersModal from "@/features/client-manager/ui/ViewTeamMembersModal";
 
-
 interface Client {
 	id: string;
 	name: string;
@@ -28,26 +27,28 @@ interface Client {
 }
 
 export default function ClientPage() {
-	const { data: clientsData, refetch } = useClients()
-		// Live data only (Task 5.8) — no hardcoded placeholder rows; show an
-		// empty state until the query returns real clients.
-		const clients: Client[] = (clientsData ?? []).map((c) => ({
-			id: c.client_id,
-			name: c.client_name,
-			email: c.email ?? "",
-			contactNumber: c.phone ?? "",
-			billingAddress: c.billing_address,
-			companyCode: "",
-			tin: c.tin,
-			profiles: c.Profiles,
-		}));
+	const { data: clientsData, refetch } = useClients();
+
+	const clients: Client[] = (clientsData ?? []).map((c) => ({
+		id: c.client_id,
+		name: c.client_name,
+		email: c.email ?? "",
+		contactNumber: c.phone ?? "",
+		billingAddress: c.billing_address,
+		companyCode: "",
+		tin: c.tin,
+		profiles: c.Profiles,
+	}));
+
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [viewMembersClient, setViewMembersClient] = useState<Client | null>(null);
 	const [editClient, setEditClient] = useState<Client | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [visibleCodes, setVisibleCodes] = useState<Record<string, boolean>>({});
+
 	const toggleCode = (id: string) =>
 		setVisibleCodes((prev) => ({ ...prev, [id]: !prev[id] }));
+
 	const filteredClients = clients.filter((c) =>
 		c.name.toLowerCase().includes(searchQuery.toLowerCase())
 	);
@@ -82,104 +83,110 @@ export default function ClientPage() {
 				</div>
 
 				{/* Table */}
-				<div className="flex flex-col overflow-hidden rounded-2xl border border-brand-100 bg-neutral-surface overflow-auto">
+				<div className="flex flex-col overflow-hidden rounded-2xl border border-brand-100 bg-neutral-surface">
 					<div className="max-h-[calc(60vh)] overflow-auto">
-						<div className="flex w-full min-w-[960px] flex-col">
-							{/* Table header (sticky top) */}
-							<div className="border-b border-brand-100 sticky top-0 z-10 grid grid-cols-23 items-center gap-6 border-b border-border bg-neutral-subtle px-6 py-3 text-[11px] font-bold text-muted-foreground">
-								<span className="col-span-5">CLIENT NAME</span>
-								<span className="col-span-3">TIN</span>
-								<span className="col-span-4">EMAIL</span>
-								<span className="col-span-3">CONTACT</span>
-								<span className="col-span-3">BILLING ADDRESS</span>
-								<span className="col-span-3">COMPANY CODE</span>
-								<span className="col-span-2">ACTIONS</span>
-							</div>
+						<table className="w-full min-w-[960px] border-collapse text-left">
+							{/* Sticky Header */}
+							<thead className="sticky top-0 z-10 border-b border-border bg-neutral-subtle text-[11px] font-bold text-muted-foreground uppercase">
+								<tr>
+									<th className="w-[22%] px-6 py-3">CLIENT NAME</th>
+									<th className="w-[14%] px-6 py-3">TIN</th>
+									<th className="w-[18%] px-6 py-3">EMAIL</th>
+									<th className="w-[15%] px-6 py-3">CONTACT</th>
+									<th className="w-[12%] px-6 py-3">BILLING ADDRESS</th>
+									<th className="w-[10%] px-6 py-3">COMPANY CODE</th>
+									<th className="w-[8%] px-6 py-3">ACTIONS</th>
+								</tr>
+							</thead>
 
 							{/* Rows */}
-{/* Rows */}
-<div className="flex flex-col">
-	{filteredClients.map((client) => {
-		const isCodeVisible = visibleCodes[client.id];
+							<tbody className="divide-y divide-border">
+								{filteredClients.map((client) => {
+									const isCodeVisible = visibleCodes[client.id];
 
-		return (
-			<div
-				key={client.id}
-				className="grid grid-cols-23 items-center gap-6 border-b border-border px-6 py-5 transition-colors hover:bg-muted/50 last:border-b-0"
-			>
-				{/* Client Name (2/12) */}
-				<span className="col-span-5 whitespace-pre-line text-base font-bold text-foreground text-wrap">
-					{client.name}
-				</span>
+									return (
+										<tr
+											key={client.id}
+											className="transition-colors hover:bg-muted/50"
+										>
+											{/* Client Name */}
+											<td className="px-6 py-5 align-middle text-base font-bold text-foreground whitespace-pre-line">
+												{client.name}
+											</td>
 
-				{/* TIN (2/12) */}
-				<span className="col-span-3 text-base text-foreground text-wrap break-all">
-					{client.tin}
-				</span>
+											{/* TIN */}
+											<td className="px-6 py-5 align-middle text-base text-foreground break-all">
+												{client.tin}
+											</td>
 
-				{/* Email (2/12) */}
-				<span className="col-span-4 min-w-0 text-base text-muted-foreground text-wrap break-all">
-					{client.email}
-				</span>
+											{/* Email */}
+											<td className="px-6 py-5 align-middle text-base text-muted-foreground break-all">
+												{client.email}
+											</td>
 
-				{/* Contact (2/12) */}
-				<span className="col-span-3 text-base text-muted-foreground text-wrap break-all">
-					{client.contactNumber}
-				</span>
+											{/* Contact */}
+											<td className="px-6 py-5 align-middle text-base text-muted-foreground break-all">
+												{client.contactNumber}
+											</td>
 
-				{/* Billing Address (2/12) */}
-				<span className="col-span-3 min-w-0 whitespace-pre-line text-base text-muted-foreground text-wrap">
-					{client.billingAddress}
-				</span>
+											{/* Billing Address */}
+											<td className="px-6 py-5 align-middle text-base text-muted-foreground whitespace-pre-line">
+												{client.billingAddress}
+											</td>
 
-				{/* Company Code (1/12) */}
-				<div className="col-span-3 flex items-center justify-around mr-auto gap-1">
-					<span className="font-mono text-base text-muted-foreground">
-						{isCodeVisible ? client.companyCode : "••••••"}
-					</span>
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						onClick={() => toggleCode(client.id)}
-						aria-label={isCodeVisible ? "Hide code" : "Show code"}
-					>
-						{isCodeVisible ? (
-							<EyeOff className="h-4 w-4" />
-						) : (
-							<Eye className="h-4 w-4" />
-						)}
-					</Button>
-				</div>
+											{/* Company Code */}
+											<td className="px-6 py-5 align-middle">
+												<div className="flex items-center gap-1">
+													<span className="font-mono text-base text-muted-foreground">
+														{isCodeVisible ? client.companyCode : "••••••"}
+													</span>
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => toggleCode(client.id)}
+														aria-label={isCodeVisible ? "Hide code" : "Show code"}
+													>
+														{isCodeVisible ? (
+															<EyeOff className="h-4 w-4" />
+														) : (
+															<Eye className="h-4 w-4" />
+														)}
+													</Button>
+												</div>
+											</td>
 
-				{/* Actions (1/12) */}
-				<div className="col-span-2 flex items-center gap-1">
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						onClick={() => setViewMembersClient(client)}
-						aria-label="View team members"
-						className="rounded-full"
-					>
-						<User className="h-4 w-4" />
-					</Button>
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						onClick={() => setEditClient(client)}
-						aria-label="Edit client"
-						className="rounded-full"
-					>
-						<Pencil className="h-4 w-4" />
-					</Button>
-				</div>
-			</div>
-		);
-	})}
-</div>
-						</div>
+											{/* Actions */}
+											<td className="px-6 py-5 align-middle">
+												<div className="flex items-center gap-1">
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => setViewMembersClient(client)}
+														aria-label="View team members"
+														className="rounded-full"
+													>
+														<User className="h-3 w-3" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => setEditClient(client)}
+														aria-label="Edit client"
+														className="rounded-full"
+													>
+														<Pencil className="h-3 w-3" />
+													</Button>
+												</div>
+											</td>
+										</tr>
+									);
+								})}
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</main>
+
 			<ClientFormModal
 				isOpen={showAddModal}
 				onClose={() => {
