@@ -232,7 +232,6 @@ export default function TicketModalCreate({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="h-px bg-gray-100 shrink-0" />
 
 				{/* Form */}
 				<form
@@ -432,32 +431,30 @@ export default function TicketModalCreate({
 					{/* Start Date + Deadline row */}
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-1.5">
-							<Label className="text-xs text-neutral-border/75">
-								PLANNED START
+							<Label>
+								Planned Start
 							</Label>
 							<DateTimePicker
 								value={startDate}
 								onChange={setStartDate}
 								placeholder="Pick planned start date"
-								className="h-9 text-xs"
 							/>
 						</div>
 						<div className="space-y-1.5">
-							<Label className="text-xs text-neutral-border/75">
-								DEADLINE
+							<Label>
+								Deadline
 							</Label>
 							<DateTimePicker
 								value={deadline}
 								onChange={setDeadline}
 								placeholder="Pick deadline"
-								className="h-9 text-xs"
 							/>
 						</div>
 					</div>
 
 					{/* Linked Issue Box */}
 					<div>
-						<Label className="text-xs text-neutral-border/75">LINKED ISSUE</Label>
+						<Label >Linked Issue</Label>
 						{(() => {
 							const style = getIssueUrgencyStyle(linkedIssue);
 							return (
@@ -491,7 +488,7 @@ export default function TicketModalCreate({
 					</div>
 
 					{/* Image Attachment */}
-					<div className="space-y-2">
+					<div>
 						<div className="flex items-center justify-between">
 							<Label>Attachment</Label>
 							<span className="text-xs text-gray-400 font-normal">

@@ -62,7 +62,7 @@ export function ProjectSection({
             <button
                 type="button"
                 onClick={onToggle}
-                className="rounded-md cursor-pointer select-none border border-brand-100 w-full flex items-center justify-between px-5 py-3 bg-brand-25 transition-colors hover:bg-brand-50"
+                className="rounded-md cursor-pointer select-none border border-brand-100 w-full flex items-center justify-between px-5 py-3 bg-neutral-surface-subtle transition-colors hover:bg-neutral-subtle"
             >
                 <div className="flex items-center gap-2">
                     <IconComponent size={18} className={config.icolor} />

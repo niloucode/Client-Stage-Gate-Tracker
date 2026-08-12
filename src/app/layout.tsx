@@ -2,9 +2,16 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/features/auth";
 import { QueryProvider } from "@/shared/query/client";
 import { Toaster } from "@/components/ui/toast";
-import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Inter, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
+});
 
 const hankenGrotesk = Hanken_Grotesk({
 	variable: "--font-hanken",
@@ -31,7 +38,11 @@ export default function RootLayout({
 	return (
 		<html
 			lang="en"
-			className={cn(hankenGrotesk.variable, jetbrainsMono.variable)}
+			className={cn(
+        inter.variable,
+        hankenGrotesk.variable,
+        jetbrainsMono.variable
+      )}
 		>
 			<body className="min-h-full flex flex-col">
 				<QueryProvider>

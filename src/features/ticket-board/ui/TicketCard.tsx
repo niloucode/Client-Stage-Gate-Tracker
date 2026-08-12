@@ -73,37 +73,44 @@ export function TicketCardContent({
 			<div
 				onClick={() => onSelect(ticket)}
 				className={
-					"bg-neutral-surface flex overflow-clip rounded-xl h-40 border border-neutral-subtle cursor-pointer relative " +
-					"hover:bg-brand-50 hover:border-brand-300 transition-colors duration-150 select-none"
+					"bg-neutral-surface flex overflow-clip rounded-md h-40 border border-brand-100 cursor-pointer relative " +
+					"hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 select-none group"
 				}
 			>
 				{isOverdue ? (
-					<div className="w-[3px] h-full bg-red-500 shrink-0" />
+					<div className="w-0.5 h-full bg-red-500 shrink-0 group-hover:opacity-50 transition-opacity duration-150" />
 				) : isLate ? (
-					<div className="w-[3px] h-full bg-orange-500 shrink-0" />
+					<div className="w-0.5 h-full bg-orange-500 shrink-0 group-hover:opacity-50 transition-opacity duration-150" />
 				) : ticket.status === status.IN_PROGRESS ? (
-					<div className="w-[3px] h-full bg-brand-500 shrink-0" />
+					<div className="w-0.5 h-full bg-brand-500 shrink-0 group-hover:opacity-50 transition-opacity duration-150" />
 				) : null}
 
 				<div className="w-full flex flex-col p-4 min-w-0">
-					<div className="flex gap-1 items-start justify-between">
-						<span className="w-4/5 text-lg font-semibold text-gray-900 line-clamp-2 leading-snug break-words pr-2">
-							{ticket.name}
-						</span>
+					{/* Header: Code + Delete Button */}
+					<div className="flex gap-2 items-start justify-between min-w-0">
+						<div className="font-mono text-brand-500 text-sm mb-1 truncate min-w-0 pr-2">
+							LRN-BNN
+						</div>
 						<Button
 							variant="ghost"
 							size="icon"
 							className="h-6 w-6 shrink-0"
 							onClick={(e) => {
-								e.stopPropagation()
-								setIsDeleteModalOpen(true)
+								e.stopPropagation();
+								setIsDeleteModalOpen(true);
 							}}
 						>
 							<X size={14} strokeWidth={2} />
 						</Button>
 					</div>
 
-					<div className="max-w-4/5 text-xs text-neutral-border line-clamp-2 w-full mt-1">
+					{/* Title */}
+					<span className="w-3/4 text-lg font-semibold text-gray-900 leading-snug break-words min-w-0 mt-0.5">
+						{ticket.name}
+					</span>
+
+					{/* Description */}
+					<div className="w-3/4 text-xs text-neutral-border line-clamp-2 min-w-0 mt-1 break-words">
 						{ticket.description}
 					</div>
 

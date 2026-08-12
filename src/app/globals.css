@@ -37,6 +37,7 @@
 	--color-brand-900: #0B1C30;
 
 	--color-neutral-surface: #FFFFFF;
+	--color-neutral-surface-subtle: #FCFCFB;
 	--color-neutral-subtle: #EEEEEC;
 	--color-neutral-border: #7E7384;
 	--color-neutral-muted: #343434;
@@ -55,6 +56,7 @@
 
 	--font-sans: var(--font-hanken), "Hanken Grotesk", system-ui, -apple-system, sans-serif;
 	--font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+	--font-inter-var: var(--font-inter), "Inter", sans-serif;
 	--font-display: "Plus Jakarta Sans", sans-serif;
 
 	--drop-shadow-b-xl: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -144,7 +146,7 @@ body {
 }
 
 :root {
-	--background: #F2F2F0;
+	--background: #F2F0EA;
 	--foreground: #141528;
 	--card: #FFFFFF;
 	--card-foreground: #141528;

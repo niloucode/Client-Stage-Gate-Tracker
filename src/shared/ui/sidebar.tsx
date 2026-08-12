@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
 	LayoutDashboard,
 	Folder,
@@ -12,6 +14,7 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	Boxes,
+	ContactRound
 } from "lucide-react";
 
 // Font configurations
@@ -25,12 +28,19 @@ const jetbrains = JetBrains_Mono({
 	subsets: ["latin"],
 });
 
-// Nav items array using Lucide components directly
-export const navItems = [
-	{ label: "Dashboard", icon: LayoutDashboard },
-	{ label: "Projects", icon: Folder },
-	{ label: "Contracts", icon: FileText },
-	{ label: "Credentials Repo", icon: Key },
+export interface NavItem {
+	label: string;
+	icon: ComponentType<{ className?: string }>;
+	href: string;
+}
+
+// Nav items array with Next.js route paths
+export const navItems: NavItem[] = [
+	// { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+	{ label: "Projects", icon: Folder, href: "/projects" },
+	// { label: "Contracts", icon: FileText, href: "/contracts" },
+	{ label: "Clients", icon: ContactRound, href: "/clients" },
+	// { label: "Credentials Repo", icon: Key, href: "/credentials" },
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
@@ -62,18 +72,16 @@ export const SidebarNavItem = ({
 	collapsed,
 	onClick,
 }: {
-	item: { label: string; icon: ComponentType<{ className?: string }> };
-	active: string;
+	item: NavItem;
+	active?: boolean;
 	collapsed?: boolean;
-	onClick: (label: string) => void;
+	onClick?: (label: string) => void;
 }) => {
 	const Icon = item.icon;
-	const isActive = active === item.label;
+	const isActive = active;
 
-	return (
-		<button
-			onClick={() => onClick(item.label)}
-			title={collapsed ? item.label : undefined}
+	const content = (
+		<div
 			className={`
         w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left
         transition-colors duration-150 group font-sans
@@ -100,6 +108,30 @@ export const SidebarNavItem = ({
 			>
 				{item.label}
 			</span>
+		</div>
+	);
+
+	if (item.href) {
+		return (
+			<Link
+				href={item.href}
+				title={collapsed ? item.label : undefined}
+				onClick={() => onClick?.(item.label)}
+				className="block w-full"
+			>
+				{content}
+			</Link>
+		);
+	}
+
+	return (
+		<button
+			type="button"
+			onClick={() => onClick?.(item.label)}
+			title={collapsed ? item.label : undefined}
+			className="w-full text-left"
+		>
+			{content}
 		</button>
 	);
 };
@@ -113,6 +145,7 @@ export const SidebarFooter = ({
 }) => (
 	<div className="px-2 py-3 border-t border-gray-100 space-y-0.5 shrink-0">
 		<button
+			type="button"
 			title={collapsed ? "Settings" : undefined}
 			className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150 font-sans"
 		>
@@ -129,6 +162,7 @@ export const SidebarFooter = ({
 		</button>
 
 		<button
+			type="button"
 			onClick={onToggle}
 			title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
 			className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150 font-sans"
@@ -152,7 +186,7 @@ export const SidebarFooter = ({
 );
 
 export default function SidebarLayout({ children }: { children?: ReactNode }) {
-	const [active, setActive] = useState("Projects");
+	const pathname = usePathname();
 	const [collapsed, setCollapsed] = useState(false);
 
 	return (
@@ -170,15 +204,17 @@ export default function SidebarLayout({ children }: { children?: ReactNode }) {
 				<SidebarLogo collapsed={collapsed} />
 
 				<nav className="flex-1 px-2 py-4 space-y-0.5 overflow-hidden">
-					{navItems.map((item) => (
-						<SidebarNavItem
-							key={item.label}
-							item={item}
-							active={active}
-							collapsed={collapsed}
-							onClick={setActive}
-						/>
-					))}
+					{navItems.map((item) => {
+						const isActive = pathname.startsWith(item.href);
+						return (
+							<SidebarNavItem
+								key={item.label}
+								item={item}
+								active={isActive}
+								collapsed={collapsed}
+							/>
+						);
+					})}
 				</nav>
 
 				<SidebarFooter
@@ -191,7 +227,6 @@ export default function SidebarLayout({ children }: { children?: ReactNode }) {
 			<div className="flex-1 h-full overflow-y-auto">
 				{children ?? (
 					<div className="p-6">
-						<h1 className="text-xl font-semibold text-gray-800">{active}</h1>
 						<p className="text-sm text-gray-400 mt-1">
 							Page content goes here.
 						</p>

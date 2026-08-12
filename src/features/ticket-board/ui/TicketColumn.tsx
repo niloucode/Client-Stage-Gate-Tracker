@@ -25,7 +25,7 @@ export default function TicketColumn({
 	const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
 	return (
-		<div className="flex flex-col h-full w-full select-none rounded-xl min-h-0">
+		<div className="flex flex-col h-full w-full select-none rounded-md min-h-0">
     		{/* Column header - shrink-0 keeps header fixed size */}
 			<div className="flex mb-2 shrink-0 items-center gap-2">
 				<span className="text-2xl font-semibold text-brand-900">{column.title}</span>
@@ -38,10 +38,10 @@ export default function TicketColumn({
 
 			{/* Container + cards drop zone */}
 			{/* min-h-0 allows overflow-auto to trigger internal scrolling when cards overflow */}
-			<div className="flex items-center w-full justify-center flex-1 rounded-xl bg-neutral-surface/40">
+			<div className="flex items-center w-full justify-center flex-1 rounded-md bg-neutral-surface/40">
 					<div
 				ref={setNodeRef}
-				className={`flex flex-col items-center gap-2 flex-1 min-h-[69vh] rounded-xl max-h-[69vh] overflow-y-auto transition-colors duration-150 ${
+				className={`pt-[2px] flex flex-col items-center gap-2 flex-1 min-h-[69vh] rounded-md max-h-[69vh] overflow-y-auto transition-colors duration-150 ${
 					isOver ? "border bg-indigo-50 border-indigo-200" :
 					""
 				}`}
