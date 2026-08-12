@@ -19,10 +19,10 @@ export const tagCreateSchema = z.object({
 	name: z
 		.string()
 		.min(1, "Tag name is required")
-		.max(10, "Tag name must be 10 characters or less"),
+		.max(12, "Tag name must be 12 characters or less"),
 	description: z
 		.string()
-		.max(35, "Description must be 35 characters or less")
+		.max(40, "Description must be 40 characters or less")
 		.optional()
 		.nullable(),
 	color: z.string().optional().nullable(),
