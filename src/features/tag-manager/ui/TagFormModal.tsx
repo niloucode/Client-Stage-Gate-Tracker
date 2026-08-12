@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Tag } from "@/entities/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { FormInput } from "@/components/ui/forminput";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -63,34 +62,27 @@ export default function TagFormModal({
 				</DialogHeader>
 
 				{/* Body */}
-				<div className="space-y-5 px-6">
-					<div>
-						<div className="flex justify-between items-center">
-							<Label required>Tag Name</Label>
-							<span className="text-[10px] text-muted-foreground">{name.length}/10</span>
-						</div>
-						<Input
-							type="text"
-							value={name}
-							onChange={(e) => setName(e.target.value)}
-							placeholder="e.g. Production"
-							maxLength={10}
-						/>
-					</div>
+				<div className="space-y-5">
+					{/* Tag Name Input */}
+					<FormInput
+						label="Tag Name"
+						required
+						maxLength={12}
+						value={name}
+						placeholder="e.g. Production"
+						onChange={(e) => setName(e.target.value)}
+					/>
 
-					<div>
-						<div className="flex justify-between items-center">
-							<Label>Description</Label>
-							<span className="text-[10px] text-muted-foreground">{description.length}/35</span>
-						</div>
-						<Textarea
-							value={description}
-							onChange={(e) => setDescription(e.target.value)}
-							placeholder="Used for critical infrastructure."
-							rows={3}
-							maxLength={35}
-						/>
-					</div>
+					{/* Description Textarea */}
+					<FormInput
+						variant="textarea"
+						label="Description"
+						maxLength={40}
+						rows={3}
+						value={description}
+						placeholder="Used for critical infrastructure."
+						onChange={(e) => setDescription(e.target.value)}
+					/>
 
 					<Label>
 						Tag Color
