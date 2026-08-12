@@ -217,7 +217,7 @@ export function ManageMembersModal({
 
 						{/* Search Results Dropdown with Enhanced Shadow & Ring Elevation */}
 						{isDropdownOpen && searchQuery.trim().length > 0 && (
-							<div className="absolute top-full left-0 right-0 z-30 bg-neutral-surface mt-1 overflow-y-auto max-h-60 rounded-xl border border-brand-100 shadow-2xl ring-1 ring-black/5 origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 ease-out">
+							<div className="absolute top-full left-0 right-0 z-30 bg-neutral-surface mt-1 overflow-y-auto max-h-60 rounded border border-brand-100 shadow-2xl ring-1 ring-black/5 origin-top animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200 ease-out">
 								{isSearching ? (
 									<Searching />
 								) : searchQuery.trim().length > 0 &&
@@ -304,7 +304,7 @@ export function ManageMembersModal({
 					) : nonClientMembers.length === 0 ? (
 						<Lacking />
 					) : (
-						<div className="w-full bg-neutral-surface overflow-x-auto rounded-xl h-80 overflow-y-scroll border-1 border-brand-100">
+						<div className="w-full bg-neutral-surface overflow-x-auto rounded h-80 overflow-y-scroll border-1 border-brand-100">
 							<table className="w-full border-collapse text-left">
 								<thead className="sticky top-0 z-10 bg-brand-50 border-b border-brand-100 text-xs font-semibold text-neutral-border">
 									<tr>
