@@ -18,7 +18,7 @@ const baseProject = z.object({
 		.max(160, "Description must be 160 characters or less")
 		.optional()
 		.default(""),
-	client_id: z.uuid({ message: "Invalid client ID" }).optional().nullable(),
+	client_id: z.uuid({ message: "Client ID is required" }),
 	start_date: z.date().optional().nullable(),
 	deadline_date: z.date().optional().nullable(),
 });
