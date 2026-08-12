@@ -6,32 +6,32 @@ import {
 	uploadContract,
 	deleteContract,
 	signContract,
-	changeContractName
+	changeContractName,
 } from "./contractActions";
 
 export function useUploadContract() {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (params: {
-      clientId: string;
-      projectId: string;
-      file: File;
-      contractName: string;
-    }) => {
-      const formData = new FormData();
-      formData.append("clientId", params.clientId);
-      formData.append("projectId", params.projectId);
-      formData.append("file", params.file);
-      formData.append("contractName", params.contractName);
-      return uploadContract(formData);
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: contractKeys.detail(variables.projectId),
-      });
-    },
-  });
+	return useMutation({
+		mutationFn: (params: {
+			clientId: string;
+			projectId: string;
+			file: File;
+			contractName: string;
+		}) => {
+			const formData = new FormData();
+			formData.append("clientId", params.clientId);
+			formData.append("projectId", params.projectId);
+			formData.append("file", params.file);
+			formData.append("contractName", params.contractName);
+			return uploadContract(formData);
+		},
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
+				queryKey: contractKeys.detail(variables.projectId),
+			});
+		},
+	});
 }
 
 export function useDeleteContract() {
@@ -40,8 +40,8 @@ export function useDeleteContract() {
 	return useMutation({
 		mutationFn: (params: { projectId: string; filePath: string }) =>
 			deleteContract(params.projectId, params.filePath),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: contractKeys.detail(variables.projectId),
 			});
 		},
@@ -64,8 +64,8 @@ export function useSignContract() {
 				params.fullName,
 				params.initials,
 			),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: contractKeys.detail(variables.projectId),
 			});
 		},
@@ -78,8 +78,8 @@ export function useChangeContractName() {
 	return useMutation({
 		mutationFn: (params: { projectId: string; contractName: string }) =>
 			changeContractName(params.projectId, params.contractName),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: contractKeys.detail(variables.projectId),
 			});
 		},

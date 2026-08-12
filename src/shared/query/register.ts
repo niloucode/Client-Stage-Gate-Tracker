@@ -11,7 +11,7 @@
  */
 
 /** The error payload every server action returns on failure. */
-export interface ActionResultError {
+interface ActionResultError {
 	success: false;
 	error: string;
 }

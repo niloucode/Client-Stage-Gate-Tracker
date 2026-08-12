@@ -59,8 +59,7 @@ export async function requireProjectOwner(
 	return !!assignment;
 }
 
-export type AuthResult =
-	{ ok: true; userId: string } | { ok: false; error: string };
+type AuthResult = { ok: true; userId: string } | { ok: false; error: string };
 
 /**
  * Verifies the current session user is a member of the project.

@@ -13,6 +13,8 @@
 ## 1. Configuration & schema (foundational leaves)
 
 - [x] next.config.ts
+- [x] eslint.config.mjs
+- [x] postcss.config.mjs
 - [x] prisma.config.ts
 - [x] vitest.config.ts
 - [x] prisma/schema.prisma
@@ -72,6 +74,7 @@
 - [x] src/shared/form/index.ts
 - [x] src/shared/form/contexts.ts
 - [x] src/shared/form/errors.ts
+- [x] src/shared/form/errors.test.ts
 - [x] src/shared/form/useAppForm.ts
 - [x] src/shared/form/SubmitButton.tsx
 - [x] src/shared/form/SchedulingFields.tsx
@@ -102,9 +105,11 @@
 - [x] src/components/ui/badge.tsx
 - [x] src/components/ui/back.tsx
 - [x] src/components/ui/button.tsx
+- [x] src/components/ui/calendar.tsx
 - [x] src/components/ui/card.tsx
 - [x] src/components/ui/command.tsx
 - [x] src/components/ui/dialog.tsx
+- [x] src/components/ui/datetime-picker.tsx
 - [x] src/components/ui/dropdown-menu.tsx
 - [x] src/components/ui/input.tsx
 - [x] src/components/ui/input-group.tsx
@@ -121,75 +126,76 @@
 
 ## 8. Shared layer — hooks & test setup
 
-- [ ] src/shared/hooks/useResetOnOpen.ts
-- [ ] src/shared/testing/setup.ts
-- [ ] src/shared/testing/server-only-stub.ts
+- [x] src/shared/hooks/useResetOnOpen.ts
+- [x] src/shared/testing/setup.ts
+- [x] src/shared/testing/server-only-stub.ts
 
 ## 9. Entities layer
 
-- [ ] src/entities/types.ts
-- [ ] src/entities/profile/index.ts
-- [ ] src/entities/profile/profileActions.ts
-- [ ] src/entities/profile/queries.ts
-- [ ] src/entities/role/index.ts
-- [ ] src/entities/role/roleActions.ts
-- [ ] src/entities/roleAssignment/index.ts
-- [ ] src/entities/roleAssignment/roleAssignmentActions.ts
-- [ ] src/entities/department/index.ts
-- [ ] src/entities/department/departmentActions.ts
-- [ ] src/entities/tag/index.ts
-- [ ] src/entities/tag/tagActions.ts
-- [ ] src/entities/tag/mutations.ts
-- [ ] src/entities/tag/queries.ts
-- [ ] src/entities/tag/ui/index.ts
-- [ ] src/entities/tag/ui/TagBadge.tsx
-- [ ] src/entities/client/index.ts
-- [ ] src/entities/client/clientActions.ts
-- [ ] src/entities/client/queries.ts
-- [ ] src/entities/comment/index.ts
-- [ ] src/entities/comment/types.ts
-- [ ] src/entities/comment/commentActions.ts
-- [ ] src/entities/comment/mutations.ts
-- [ ] src/entities/comment/queries.ts
-- [ ] src/entities/contract/index.ts
-- [ ] src/entities/contract/contractActions.ts
-- [ ] src/entities/contract/contractActions.test.ts
-- [ ] src/entities/contract/mutations.ts
-- [ ] src/entities/contract/queries.ts
-- [ ] src/entities/gate/gateActions.ts
-- [ ] src/entities/module/index.ts
-- [ ] src/entities/module/types.ts
-- [ ] src/entities/module/moduleActions.ts
-- [ ] src/entities/module/mutations.ts
-- [ ] src/entities/module/queries.ts
-- [ ] src/entities/phase/index.ts
-- [ ] src/entities/phase/types.ts
-- [ ] src/entities/phase/phaseActions.ts
-- [ ] src/entities/phase/mutations.ts
-- [ ] src/entities/phase/queries.ts
-- [ ] src/entities/phase/safeActions.ts
-- [ ] src/entities/phase/safeActions.test.ts
-- [ ] src/entities/project/index.ts
-- [ ] src/entities/project/projectActions.ts
-- [ ] src/entities/project/mutations.ts
-- [ ] src/entities/project/queries.ts
-- [ ] src/entities/stage/index.ts
-- [ ] src/entities/stage/stageActions.ts
-- [ ] src/entities/stage/queries.ts
-- [ ] src/entities/stage/ordering.test.ts
-- [ ] src/entities/ticket/index.ts
-- [ ] src/entities/ticket/types.ts
-- [ ] src/entities/ticket/ticketActions.ts
-- [ ] src/entities/ticket/mutations.ts
-- [ ] src/entities/ticket/queries.ts
-- [ ] src/entities/ticket/lib/dateRollup.ts
-- [ ] src/entities/ticket/lib/dateRollup.test.ts
-- [ ] src/entities/ticket/lib/logHistoryEvent.ts
-- [ ] src/entities/workflow/index.ts
-- [ ] src/entities/workflow/types.ts
-- [ ] src/entities/workflow/workflowActions.ts
-- [ ] src/entities/workflow/mutations.ts
-- [ ] src/entities/workflow/queries.ts
+- [x] src/entities/types.ts
+- [x] src/entities/profile/index.ts
+- [x] src/entities/profile/profileActions.ts
+- [x] src/entities/profile/queries.ts
+- [x] src/entities/role/index.ts (deleted — slice had zero consumers)
+- [x] src/entities/role/roleActions.ts (deleted — only export was dead getRoleNameById)
+- [x] src/entities/roleAssignment/index.ts
+- [x] src/entities/roleAssignment/roleAssignmentActions.ts
+- [x] src/entities/department/index.ts
+- [x] src/entities/department/departmentActions.ts
+- [x] src/entities/department/queries.ts
+- [x] src/entities/tag/index.ts
+- [x] src/entities/tag/tagActions.ts
+- [x] src/entities/tag/mutations.ts
+- [x] src/entities/tag/queries.ts
+- [x] src/entities/tag/ui/index.ts
+- [x] src/entities/tag/ui/TagBadge.tsx
+- [x] src/entities/client/index.ts
+- [x] src/entities/client/clientActions.ts
+- [x] src/entities/client/queries.ts
+- [x] src/entities/comment/index.ts
+- [x] src/entities/comment/types.ts
+- [x] src/entities/comment/commentActions.ts
+- [x] src/entities/comment/mutations.ts
+- [x] src/entities/comment/queries.ts
+- [x] src/entities/contract/index.ts
+- [x] src/entities/contract/contractActions.ts
+- [x] src/entities/contract/contractActions.test.ts
+- [x] src/entities/contract/mutations.ts
+- [x] src/entities/contract/queries.ts
+- [x] src/entities/gate/gateActions.ts (deleted — slice had zero live consumers)
+- [x] src/entities/module/index.ts
+- [x] src/entities/module/types.ts
+- [x] src/entities/module/moduleActions.ts
+- [x] src/entities/module/mutations.ts
+- [x] src/entities/module/queries.ts
+- [x] src/entities/phase/index.ts
+- [x] src/entities/phase/types.ts
+- [x] src/entities/phase/phaseActions.ts
+- [x] src/entities/phase/mutations.ts
+- [x] src/entities/phase/queries.ts
+- [x] src/entities/phase/safeActions.ts
+- [x] src/entities/phase/safeActions.test.ts
+- [x] src/entities/project/index.ts
+- [x] src/entities/project/projectActions.ts
+- [x] src/entities/project/mutations.ts
+- [x] src/entities/project/queries.ts
+- [x] src/entities/stage/index.ts
+- [x] src/entities/stage/stageActions.ts
+- [x] src/entities/stage/queries.ts
+- [x] src/entities/stage/ordering.test.ts
+- [x] src/entities/ticket/index.ts
+- [x] src/entities/ticket/types.ts
+- [x] src/entities/ticket/ticketActions.ts
+- [x] src/entities/ticket/mutations.ts
+- [x] src/entities/ticket/queries.ts
+- [x] src/entities/ticket/lib/dateRollup.ts
+- [x] src/entities/ticket/lib/dateRollup.test.ts
+- [x] src/entities/ticket/lib/logHistoryEvent.ts
+- [x] src/entities/workflow/index.ts
+- [x] src/entities/workflow/types.ts
+- [x] src/entities/workflow/workflowActions.ts
+- [x] src/entities/workflow/mutations.ts
+- [x] src/entities/workflow/queries.ts
 
 ## 10. Features layer
 

@@ -1,4 +1,5 @@
 "use server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { prisma } from "@/lib/prisma";
@@ -29,10 +30,10 @@ export async function isPdfFile(file: File): Promise<boolean> {
 }
 
 export async function uploadContract(formData: FormData) {
-  const clientId = formData.get("clientId") as string;
-  const projectId = formData.get("projectId") as string;
-  const file = formData.get("file") as File;
-  const contractName = formData.get("contractName") as string;
+	const clientId = formData.get("clientId") as string;
+	const projectId = formData.get("projectId") as string;
+	const file = formData.get("file") as File;
+	const contractName = formData.get("contractName") as string;
 	try {
 		// Authorization: caller must be a member of the project
 		const auth = await assertProjectMember(projectId);
@@ -46,7 +47,7 @@ export async function uploadContract(formData: FormData) {
 		if (!parsed.success) {
 			return {
 				success: false,
-				error: parsed.error.flatten().fieldErrors,
+				error: z.flattenError(parsed.error).fieldErrors,
 			};
 		}
 
@@ -82,7 +83,9 @@ export async function uploadContract(formData: FormData) {
 		});
 
 		const rawName =
-			contractName.trim() === "" ? updatedContract.contract_id : contractName.trim();
+			contractName.trim() === ""
+				? updatedContract.contract_id
+				: contractName.trim();
 		// Storage paths must stay flat under <projectId>/ — strip slashes and
 		// backslashes so every uploaded path matches the deleteContract guard.
 		const fileName = rawName.replace(/[\\/]+/g, "-");
@@ -126,7 +129,6 @@ export async function uploadContract(formData: FormData) {
 	}
 }
 
-
 // ── GET SIGNED URL ────────────────────────────────────────────────────────────
 
 export async function getContractUrl(filePath: string) {
@@ -136,9 +138,8 @@ export async function getContractUrl(filePath: string) {
 		}
 
 		const supabase = await createClient();
-		const { data } = await supabase.storage
-			.from("contracts")
-			.getPublicUrl(filePath);
+		// getPublicUrl is synchronous in supabase-js v2 — no await (TS80007).
+		const { data } = supabase.storage.from("contracts").getPublicUrl(filePath);
 
 		if (!data?.publicUrl) {
 			return { success: false, error: "Failed to generate public URL." };
@@ -157,47 +158,54 @@ export async function getContractUrl(filePath: string) {
 
 // ── SOFT DELETE ───────────────────────────────────────────────────────────────
 export async function deleteContract(projectId: string, filePath: string) {
-  try {
-    // Authorization: caller must be a member of the project
-    const auth = await assertProjectMember(projectId);
-    if (!auth.ok) return { success: false, error: auth.error };
+	try {
+		// Authorization: caller must be a member of the project
+		const auth = await assertProjectMember(projectId);
+		if (!auth.ok) return { success: false, error: auth.error };
 
-    // Bind the storage path to this project — never delete a path supplied
-    // for a different project, and no `../` traversal. Escape projectId so
-    // the interpolated regex stays anchored even for non-UUID ids.
-    const escapedProjectId = projectId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (!new RegExp(`^${escapedProjectId}/[^/]+\\.pdf$`).test(filePath)) {
-      return { success: false, error: "Invalid file path for this project." };
-    }
+		// Bind the storage path to this project — never delete a path supplied
+		// for a different project, and no `../` traversal. Escape projectId so
+		// the interpolated regex stays anchored even for non-UUID ids.
+		const escapedProjectId = projectId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		if (!new RegExp(`^${escapedProjectId}/[^/]+\\.pdf$`).test(filePath)) {
+			return { success: false, error: "Invalid file path for this project." };
+		}
 
-    const adminSupabase = createAdminClient();
+		const adminSupabase = createAdminClient();
 
-    const { error: storageError } = await adminSupabase.storage
-      .from("contracts")
-      .remove([filePath]);
+		const { error: storageError } = await adminSupabase.storage
+			.from("contracts")
+			.remove([filePath]);
 
-    if (storageError) {
-      return { success: false, error: storageError.message };
-    }
+		if (storageError) {
+			return { success: false, error: storageError.message };
+		}
 
-    await prisma.contracts.update({
-      where: { project_id: projectId },
-      data: { 
-		deleted_at: new Date(), is_deleted: true , file_path: null, contract_name: null,
-        client_signature: null, client_initials: null, client_signed_at: null,
-        project_owner_signature: null, project_owner_initials: null, project_owner_signed_at: null
-	},
-    });
+		await prisma.contracts.update({
+			where: { project_id: projectId },
+			data: {
+				deleted_at: new Date(),
+				is_deleted: true,
+				file_path: null,
+				contract_name: null,
+				client_signature: null,
+				client_initials: null,
+				client_signed_at: null,
+				project_owner_signature: null,
+				project_owner_initials: null,
+				project_owner_signed_at: null,
+			},
+		});
 
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to delete contract:", error);
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to delete contract:", error);
 		return {
 			success: false,
 			error:
 				error instanceof Error ? error.message : "Failed to delete contract.",
 		};
-  }
+	}
 }
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
@@ -240,7 +248,7 @@ export async function changeContractName(
 		if (!parsed.success) {
 			return {
 				success: false,
-				error: parsed.error.flatten().fieldErrors,
+				error: z.flattenError(parsed.error).fieldErrors,
 			};
 		}
 
@@ -282,9 +290,14 @@ export async function signContract(
 		if (!parsed.success) {
 			return {
 				success: false,
-				error: parsed.error.flatten().fieldErrors,
+				error: z.flattenError(parsed.error).fieldErrors,
 			};
 		}
+
+		// Authorization: only a member of the project may sign — a
+		// non-member must not be able to forge either signature.
+		const auth = await assertProjectMember(projectId);
+		if (!auth.ok) return { success: false, error: auth.error };
 
 		const isClient = role === "Client Viewer";
 

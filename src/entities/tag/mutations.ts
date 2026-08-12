@@ -9,8 +9,8 @@ export function useCreateTag() {
 
 	return useMutation({
 		mutationFn: createTag,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: tagKeys.all });
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: tagKeys.all });
 		},
 	});
 }
@@ -20,8 +20,8 @@ export function useUpdateTag() {
 
 	return useMutation({
 		mutationFn: updateTag,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: tagKeys.all });
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: tagKeys.all });
 		},
 	});
 }
@@ -31,8 +31,8 @@ export function useDeleteTag() {
 
 	return useMutation({
 		mutationFn: (tagId: string) => softDeleteTag(tagId),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: tagKeys.all });
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: tagKeys.all });
 		},
 	});
 }

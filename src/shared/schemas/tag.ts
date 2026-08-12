@@ -33,7 +33,7 @@ export type TagCreateInput = z.infer<typeof tagCreateSchema>;
 
 // ── Update tag ───────────────────────────────────────────────────────────────
 
-export const tagUpdateSchema = tagCreateSchema.extend({
+export const tagUpdateSchema = tagCreateSchema.partial().extend({
 	tag_id: z.uuid({ message: "Tag ID is required" }),
 });
 

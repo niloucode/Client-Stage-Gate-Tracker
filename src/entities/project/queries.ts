@@ -10,7 +10,7 @@ import {
 	selectProjectsByOwner,
 } from "./projectActions";
 
-export const projectQueryOptions = {
+const projectQueryOptions = {
 	list: () =>
 		queryOptions({
 			queryKey: projectKeys.lists(),

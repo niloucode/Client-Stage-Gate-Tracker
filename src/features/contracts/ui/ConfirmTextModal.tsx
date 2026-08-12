@@ -28,7 +28,10 @@ interface ConfirmTextModalProps {
 	open: boolean;
 	onClose: () => void;
 	noParamFunc?: () => Promise<void>;
-	twoParamFunc?: (profileId: string, projectId: string) => Promise<void>;
+	twoParamFunc?: (
+		profileId: string,
+		projectId: string,
+	) => Promise<void | { success: boolean; error?: string }>;
 	client?: ClientOption | null;
 	contractDetails: ContractDetails;
 	displayText: string;

@@ -17,9 +17,11 @@ import type { PhaseCreateInput, PhaseUpdateInput } from "@/shared/schemas";
  * so TanStack Query's error machinery (and form `errorMap.onSubmit`)
  * works. Exported for unit testing.
  */
-export function throwIfActionFailed<T>(
-	result: { data?: T; serverError?: string; validationErrors?: unknown },
-): T {
+export function throwIfActionFailed<T>(result: {
+	data?: T;
+	serverError?: string;
+	validationErrors?: unknown;
+}): T {
 	if (result.data) return result.data;
 	if (result.validationErrors) {
 		throw new Error("Please fix the highlighted fields.");
@@ -33,8 +35,8 @@ export function useCreatePhase() {
 	return useMutation({
 		mutationFn: async (params: { stageId: string } & PhaseCreateInput) =>
 			throwIfActionFailed(await createPhaseAction(params)),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},
@@ -48,8 +50,8 @@ export function useUpdatePhase() {
 		mutationFn: async (
 			params: { phaseId: string; stageId: string } & PhaseUpdateInput,
 		) => throwIfActionFailed(await updatePhaseAction(params)),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},
@@ -61,11 +63,9 @@ export function useDeletePhase() {
 
 	return useMutation({
 		mutationFn: async (params: { phaseId: string; stageId: string }) =>
-			throwIfActionFailed(
-				await deletePhaseAction({ phaseId: params.phaseId }),
-			),
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+			throwIfActionFailed(await deletePhaseAction({ phaseId: params.phaseId })),
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},
@@ -86,8 +86,8 @@ export function useReorderPhase() {
 			// create/update/delete (Task 1.7).
 			return reorderPhase(params.phaseId, params.targetNumber);
 		},
-		onSuccess: (_data, variables) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, variables) => {
+			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
 			});
 		},

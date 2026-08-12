@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -15,7 +15,8 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { FormInput } from "@/components/ui/forminput"; // Adjust path as needed
 import { clientCreate, clientUpdate } from "@/entities/client";
 import { getFieldErrors } from "@/shared/lib/zod";
-import { clientSchema } from "@/shared/schemas";
+import { clientSchema, clientCreateSchema } from "@/shared/schemas";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 
 export interface ClientFormData {
 	clientName: string;
@@ -56,46 +57,49 @@ export default function ClientFormModal({
 		});
 	};
 
-	// Reset form when modal opens or client changes
-	useEffect(() => {
-		if (!isOpen) return;
+	// Reset form when the modal opens (deferred a frame so the dialog can
+	// finish mounting before controlled inputs are reset).
+	useResetOnOpen(isOpen, () => {
 		setClientName(initialData?.clientName ?? "");
 		setTin(initialData?.tin ?? "");
 		setEmail(initialData?.email ?? "");
 		setContactNumber(initialData?.contactNumber ?? "");
 		setBillingAddress(initialData?.billingAddress ?? "");
 		setFieldErrors({});
-	}, [
-		isOpen,
-		clientId,
-		initialData?.clientName,
-		initialData?.tin,
-		initialData?.email,
-		initialData?.contactNumber,
-		initialData?.billingAddress,
-	]);
+	});
 
 	const handleSubmit = async (): Promise<void> => {
-		const parsed = clientSchema.safeParse({
-			client_id: clientId || crypto.randomUUID(),
-			client_name: clientName,
-			tin,
-			email,
-			phone: contactNumber,
-			billing_address: billingAddress,
-			is_deleted: false,
-		});
-
-		if (!parsed.success) {
-			const mapped = getFieldErrors(parsed);
-			setFieldErrors(mapped);
-			return;
-		}
-
 		setFieldErrors({});
+		// Create uses clientCreateSchema (no client_id — UUIDs come from the
+		// DB, project rule #2); edit validates the full schema with the
+		// server-issued id.
 		if (isEdit) {
+			const parsed = clientSchema.safeParse({
+				client_id: clientId,
+				client_name: clientName,
+				tin,
+				email,
+				phone: contactNumber,
+				billing_address: billingAddress,
+				is_deleted: false,
+			});
+			if (!parsed.success) {
+				setFieldErrors(getFieldErrors(parsed));
+				return;
+			}
 			await clientUpdate(parsed.data);
 		} else {
+			const parsed = clientCreateSchema.safeParse({
+				client_name: clientName,
+				tin,
+				email,
+				phone: contactNumber,
+				billing_address: billingAddress,
+			});
+			if (!parsed.success) {
+				setFieldErrors(getFieldErrors(parsed));
+				return;
+			}
 			await clientCreate(parsed.data);
 		}
 		onClose();

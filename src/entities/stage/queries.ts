@@ -4,7 +4,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { stageKeys } from "@/shared/query/keys";
 import { getStageTree } from "./stageActions";
 
-export const stageQueryOptions = {
+const stageQueryOptions = {
 	tree: (stageId: string | undefined) =>
 		queryOptions({
 			queryKey: stageKeys.tree(stageId!),

@@ -16,7 +16,7 @@ import type { Prisma } from "@/lib/generated/prisma";
  * status and date changes.
  */
 
-export interface TicketDateInput {
+interface TicketDateInput {
 	plan_start_at: Date;
 	plan_end_at: Date;
 	actual_start_at: Date | null;
@@ -24,7 +24,7 @@ export interface TicketDateInput {
 	status: string;
 }
 
-export interface RolledUpDates {
+interface RolledUpDates {
 	plan_start_at: Date | null;
 	plan_end_at: Date | null;
 	actual_start_at: Date | null;
@@ -32,9 +32,7 @@ export interface RolledUpDates {
 }
 
 /** Roll a list of child tickets up into one Workflow boundary. */
-export function rollupWorkflowDates(
-	tickets: TicketDateInput[],
-): RolledUpDates {
+export function rollupWorkflowDates(tickets: TicketDateInput[]): RolledUpDates {
 	if (tickets.length === 0) {
 		return {
 			plan_start_at: null,
@@ -48,7 +46,7 @@ export function rollupWorkflowDates(
 	let planEnd: Date = tickets[0].plan_end_at;
 	let actualStart: Date | null = null;
 	let actualEnd: Date | null = null;
-	let allFinished = tickets.every((t) => t.status === "FINISHED");
+	const allFinished = tickets.every((t) => t.status === "FINISHED");
 
 	for (const t of tickets) {
 		if (t.plan_start_at < planStart) planStart = t.plan_start_at;
@@ -110,10 +108,7 @@ export function rollupModuleDates(
 		.filter((v): v is Date => v !== null);
 
 	const allWorkflowsFinished =
-		workflows.length > 0 &&
-		workflows.every(
-			(w) => w.actual_end_at !== null,
-		);
+		workflows.length > 0 && workflows.every((w) => w.actual_end_at !== null);
 
 	return {
 		plan_start_at: planStart,

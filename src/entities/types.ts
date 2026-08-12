@@ -10,11 +10,6 @@ export interface Profile {
 	email?: string | null;
 }
 
-export interface TicketTag {
-	tag_id: string;
-	ticket_id: string;
-}
-
 export type { Tag } from "@/shared/schemas";
 
 export interface TicketAssigned {
@@ -22,18 +17,4 @@ export interface TicketAssigned {
 	profile_id: string;
 	assigned_date: Date;
 	Profiles?: Profile | null;
-}
-
-export interface Contract {
-	contract_id: string;
-	contract_name: string | null;
-	project_id: string;
-	client_id: string;
-	file_path: string | null;
-	client_signature: string | null;
-	is_deleted: boolean;
-	deleted_at: Date | null;
-	project_owner_signature: string | null;
-	client_signed_at: Date | null;
-	project_owner_signed_at: Date | null;
 }

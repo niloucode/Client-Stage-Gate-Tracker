@@ -11,10 +11,7 @@ import {
 	resolvePhaseProject,
 	resolveStageProject,
 } from "@/lib/auth/projectAccess";
-import {
-	phaseCreateSchema,
-	phaseUpdateSchema,
-} from "@/shared/schemas";
+import { phaseCreateSchema, phaseUpdateSchema } from "@/shared/schemas";
 import { cascadeSoftDeletePhase } from "./phaseActions";
 import { prisma } from "@/lib/prisma";
 import { generateKeyBetween } from "fractional-indexing";
@@ -32,21 +29,44 @@ import { generateKeyBetween } from "fractional-indexing";
  * exceptions.
  */
 
+/**
+ * Resolves the parent project of a phase/ stage and asserts the caller is
+ * a member — the same check for every phase action. Throws stable
+ * ActionError codes (NOT_FOUND / FORBIDDEN) so the client never sees a
+ * raw exception.
+ */
+async function requirePhaseMemberOrThrow(phaseId: string): Promise<string> {
+	const projectId = await resolvePhaseProject(phaseId);
+	if (!projectId) {
+		throw new ActionError(ACTION_ERROR_CODES.NOT_FOUND, "Phase not found.");
+	}
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) {
+		throw new ActionError(ACTION_ERROR_CODES.FORBIDDEN, auth.error);
+	}
+	return projectId;
+}
+
+async function requireStageMemberOrThrow(stageId: string): Promise<string> {
+	const projectId = await resolveStageProject(stageId);
+	if (!projectId) {
+		throw new ActionError(ACTION_ERROR_CODES.NOT_FOUND, "Stage not found.");
+	}
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) {
+		throw new ActionError(ACTION_ERROR_CODES.FORBIDDEN, auth.error);
+	}
+	return projectId;
+}
+
 const createPhaseInputSchema = phaseCreateSchema.extend({
-	stageId: z.string().min(1),
+	stageId: z.uuid(),
 });
 
 export const createPhaseAction = authActionClient
 	.inputSchema(createPhaseInputSchema)
 	.useValidated(async ({ parsedInput, ctx, next }) => {
-		const projectId = await resolveStageProject(parsedInput.stageId);
-		if (!projectId) {
-			throw new ActionError(ACTION_ERROR_CODES.NOT_FOUND, "Stage not found.");
-		}
-		const auth = await assertProjectMember(projectId);
-		if (!auth.ok) {
-			throw new ActionError(ACTION_ERROR_CODES.FORBIDDEN, auth.error);
-		}
+		const projectId = await requireStageMemberOrThrow(parsedInput.stageId);
 		return next({ ctx: { ...ctx, projectId } });
 	})
 	.action(async ({ parsedInput }) => {
@@ -72,20 +92,13 @@ export const createPhaseAction = authActionClient
 	});
 
 const updatePhaseInputSchema = phaseUpdateSchema.extend({
-	phaseId: z.string().min(1),
+	phaseId: z.uuid(),
 });
 
 export const updatePhaseAction = authActionClient
 	.inputSchema(updatePhaseInputSchema)
 	.useValidated(async ({ parsedInput, ctx, next }) => {
-		const projectId = await resolvePhaseProject(parsedInput.phaseId);
-		if (!projectId) {
-			throw new ActionError(ACTION_ERROR_CODES.NOT_FOUND, "Phase not found.");
-		}
-		const auth = await assertProjectMember(projectId);
-		if (!auth.ok) {
-			throw new ActionError(ACTION_ERROR_CODES.FORBIDDEN, auth.error);
-		}
+		const projectId = await requirePhaseMemberOrThrow(parsedInput.phaseId);
 		return next({ ctx: { ...ctx, projectId } });
 	})
 	.action(async ({ parsedInput }) =>
@@ -103,20 +116,13 @@ export const updatePhaseAction = authActionClient
 	);
 
 const deletePhaseInputSchema = z.object({
-	phaseId: z.string().min(1),
+	phaseId: z.uuid(),
 });
 
 export const deletePhaseAction = authActionClient
 	.inputSchema(deletePhaseInputSchema)
 	.useValidated(async ({ parsedInput, ctx, next }) => {
-		const projectId = await resolvePhaseProject(parsedInput.phaseId);
-		if (!projectId) {
-			throw new ActionError(ACTION_ERROR_CODES.NOT_FOUND, "Phase not found.");
-		}
-		const auth = await assertProjectMember(projectId);
-		if (!auth.ok) {
-			throw new ActionError(ACTION_ERROR_CODES.FORBIDDEN, auth.error);
-		}
+		const projectId = await requirePhaseMemberOrThrow(parsedInput.phaseId);
 		return next({ ctx: { ...ctx, projectId } });
 	})
 	.action(async ({ parsedInput }) => {

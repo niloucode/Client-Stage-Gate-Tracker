@@ -17,20 +17,6 @@ import {
 	resolveTicketProject,
 	resolveWorkflowProject,
 } from "@/lib/auth/projectAccess";
-import type { EntityFilterStatus } from "@/entities/types";
-
-export async function selectTicket() {
-	try {
-		return await prisma.tickets.findMany({
-			where: { is_deleted: false },
-			include: ticketInclude,
-			take: 200, // bound the list; paginate when callers need more
-		});
-	} catch (error) {
-		console.error("Error fetching tickets:", error);
-		return [];
-	}
-}
 
 export async function createTicket(
 	data: CreateTicketParams & { performed_by?: string },
@@ -44,7 +30,7 @@ export async function createTicket(
 	const auth = await assertProjectMember(projectId);
 	if (!auth.ok) throw new Error(auth.error);
 
-	const ticket = await prisma.$transaction(async (tx) => {
+	return await prisma.$transaction(async (tx) => {
 		const created = await tx.tickets.create({
 			data: {
 				name: data.name,
@@ -99,8 +85,6 @@ export async function createTicket(
 
 		return created;
 	});
-
-	return ticket;
 }
 
 export async function updateTicket(
@@ -283,7 +267,7 @@ export async function updateTicketStatus(
 	status: status,
 	performed_by?: string,
 ) {
-	z.string().uuid().parse(ticketId);
+	z.uuid().parse(ticketId);
 	z.enum(["PENDING", "IN_PROGRESS", "FINISHED"]).parse(status);
 
 	// Authorization: caller must be a member of the parent project
@@ -334,15 +318,18 @@ export async function updateTicketStatus(
  * Performs a "soft delete" on a ticket by flagging it as deleted.
  * This removes it from active board views while preserving historical audit data.
  *
- * @param {string} ticketId - The UUID of the ticket to soft delete.
- * @param {string} [performed_by] - The UUID of the profile performing the deletion.
- * @returns {Promise<{success: boolean, error?: string}>}
+ * @param ticketId - The UUID of the ticket to softly delete.
+ * @param performed_by - The UUID of the profile performing the deletion.
+ * @param _txClient - Optional Prisma transaction client when invoked inside an existing transaction.
+ * @returns `{ success: boolean, error?: string }`.
  */
 export async function cascadeSoftDeleteTicket(
 	ticketId: string,
 	performed_by?: string,
 	_txClient?: Prisma.TransactionClient,
 ) {
+	z.uuid().parse(ticketId);
+
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveTicketProject(ticketId);
 	if (!projectId) return { success: false, error: "Ticket not found." };
@@ -390,16 +377,12 @@ export async function cascadeSoftDeleteTicket(
 }
 
 export async function selectTicketsByWorkflow(workflow_id: string) {
-	z.string().uuid().parse(workflow_id);
-	try {
-		return await prisma.tickets.findMany({
-			where: { is_deleted: false, workflow_id },
-			include: ticketInclude,
-		});
-	} catch (error) {
-		console.error("Error fetching tickets by workflow:", error);
-		return [];
-	}
+	// No catch: a thrown error lets React Query retry and surface isError.
+	z.uuid().parse(workflow_id);
+	return prisma.tickets.findMany({
+		where: { is_deleted: false, workflow_id },
+		include: ticketInclude,
+	});
 }
 
 /**
@@ -407,22 +390,18 @@ export async function selectTicketsByWorkflow(workflow_id: string) {
  * performer (who did the action) and the target profile (who was assigned/unassigned).
  */
 export async function selectTicketHistory(ticketId: string) {
-	z.string().uuid().parse(ticketId);
-	try {
-		return await prisma.historyEvent.findMany({
-			where: { ticket_id: ticketId },
-			orderBy: { performed_at: "desc" },
-			include: {
-				Performer: {
-					select: { first_name: true, last_name: true },
-				},
-				TargetProfile: {
-					select: { first_name: true, last_name: true },
-				},
+	// No catch: a thrown error lets React Query retry and surface isError.
+	z.uuid().parse(ticketId);
+	return prisma.historyEvent.findMany({
+		where: { ticket_id: ticketId },
+		orderBy: { performed_at: "desc" },
+		include: {
+			Performer: {
+				select: { first_name: true, last_name: true },
 			},
-		});
-	} catch (error) {
-		console.error("Error fetching ticket history:", error);
-		return [];
-	}
+			TargetProfile: {
+				select: { first_name: true, last_name: true },
+			},
+		},
+	});
 }

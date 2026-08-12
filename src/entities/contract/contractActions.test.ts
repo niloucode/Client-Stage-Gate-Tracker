@@ -3,11 +3,15 @@ import { isPdfFile } from "./contractActions";
 
 /**
  * Server-side PDF magic-byte sniffing (Task 2.7): a file is accepted only
- * when its first five bytes are "%PDF-" — regardless of the browser-
- * reported `file.type`, which is client-controlled metadata.
+ * when its first five bytes are "%PDF-" — regardless of the browser-reported
+ * `file.type`, which is client-controlled metadata.
  */
 
-function makeFile(bytes: number[], name = "doc.pdf", type = "application/pdf"): File {
+function makeFile(
+	bytes: number[],
+	name = "doc.pdf",
+	type = "application/pdf",
+): File {
 	return new File([new Uint8Array(bytes)], name, { type });
 }
 

@@ -35,18 +35,9 @@ export const clientKeys = {
 	detail: (id: string) => [...clientKeys.details(), id] as const,
 };
 
-export const phaseKeys = {
-	all: ["phases"] as const,
-	detail: (id: string) => [...phaseKeys.all, "detail", id] as const,
-	modules: (phaseId: string) =>
-		[...phaseKeys.detail(phaseId), "modules"] as const,
-};
-
-export const moduleKeys = {
-	all: ["modules"] as const,
-	detail: (id: string) => [...moduleKeys.all, "detail", id] as const,
-	workflows: (moduleId: string) =>
-		[...moduleKeys.detail(moduleId), "workflows"] as const,
+export const departmentKeys = {
+	all: ["departments"] as const,
+	detail: (id: string) => [...departmentKeys.all, "detail", id] as const,
 };
 
 export const stageKeys = {
@@ -56,13 +47,6 @@ export const stageKeys = {
 	phases: (stageId: string) =>
 		[...stageKeys.detail(stageId), "phases"] as const,
 	tree: (stageId: string) => [...stageKeys.detail(stageId), "tree"] as const,
-};
-
-export const workflowKeys = {
-	all: ["workflows"] as const,
-	detail: (id: string) => [...workflowKeys.all, "detail", id] as const,
-	tickets: (workflowId: string) =>
-		[...workflowKeys.detail(workflowId), "tickets"] as const,
 };
 
 export const historyKeys = {

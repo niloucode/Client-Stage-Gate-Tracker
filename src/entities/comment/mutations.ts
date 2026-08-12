@@ -2,35 +2,26 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { commentKeys, historyKeys } from "@/shared/query/keys";
-import { createCommentWithImages, selectComment } from "./commentActions";
-
-/** Cache shape for a comment list — typed, never `any` (Task 4.3 #63). */
-type CommentListData = Awaited<ReturnType<typeof selectComment>>;
+import { createCommentWithImages } from "./commentActions";
 
 export function useCreateComment() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
 		mutationFn: createCommentWithImages,
-		onSuccess: (_data, vars) => {
-			queryClient.invalidateQueries({
+		onSuccess: async (_data, vars) => {
+			// Refetch the affected list so the server row (with its images)
+			// is canonical — no manual cache insert.
+			await queryClient.invalidateQueries({
 				queryKey: commentKeys.list(vars.parent_type, vars.parent_id),
 			});
-			queryClient.invalidateQueries({ queryKey: commentKeys.lists() });
 
+			// Ticket comments also append to the ticket's history log.
 			if (vars.parent_type === "TICKET_COMMENT") {
-				queryClient.invalidateQueries({
+				await queryClient.invalidateQueries({
 					queryKey: historyKeys.list(vars.parent_id),
 				});
 			}
-
-			queryClient.setQueryData(
-				commentKeys.list(vars.parent_type, vars.parent_id),
-				(oldData: CommentListData | undefined) => {
-					if (!oldData) return [_data];
-					return [_data, ...oldData];
-				},
-			);
 		},
 	});
 }

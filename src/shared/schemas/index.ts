@@ -50,8 +50,8 @@ export type { Tag, TagCreateInput, TagUpdateInput } from "./tag";
 export { profileSchema, profileDisplaySchema } from "./profile";
 export type { ProfileType, ProfileDisplay } from "./profile";
 
-export { clientSchema } from "./client";
-export type { ClientType } from "./client";
+export { clientSchema, clientCreateSchema } from "./client";
+export type { ClientType, ClientCreateType } from "./client";
 
 export {
 	contractUploadSchema,
