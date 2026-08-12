@@ -90,9 +90,9 @@ const UrgencySelector = ({
   onChange: (level: UrgencyLevel) => void;
 }) => {
   const options: { level: UrgencyLevel; label: string; dot: string }[] = [
-    { level: "low", label: "Low", dot: "bg-green-600" },
-    { level: "medium", label: "Medium", dot: "bg-yellow-500" },
-    { level: "high", label: "High", dot: "bg-destructive" },
+    { level: "low", label: "Low", dot: "bg-yellow-500" },
+    { level: "medium", label: "Medium", dot: "bg-orange-500" },
+    { level: "high", label: "High", dot: "bg-red-500" },
   ];
 
   return (
