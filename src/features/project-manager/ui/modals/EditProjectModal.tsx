@@ -6,7 +6,6 @@ import { projectCreateSchema } from "@/shared/schemas"
 import { getFieldErrors } from "@/shared/lib/zod"
 import { toDateTimeLocalInput } from "@/shared/lib/scheduling"
 import { clientSelectAll } from "@/entities/client/clientActions"
-import { SelectOption } from "@/shared/ui/"
 import { FormInput } from "@/components/ui/forminput"
 import {
 	Dialog,
@@ -156,11 +155,6 @@ export function EditProjectModal({
 		onSubmit(formData)
 	}
 
-	const clientOptions: SelectOption[] = clients.map((c) => ({
-		label: c.client_name,
-		value: c.client_id,
-	}))
-
 	return (
 		<Dialog
 			open={isOpen}
@@ -201,47 +195,46 @@ export function EditProjectModal({
 					/>
 
 					{/* Client Selection (Create Mode Only) */}
+					{/* Client Selection (Create Mode Only) */}
 					{!isEditMode && (
-						<div>
-							<div className="flex">
-								<Label required>Client</Label>
-								{typeof fieldErrors.client_id === "string" && (
-									<div className="ml-auto text-xs text-destructive">
-										{fieldErrors.client_id}
+							<div>
+									<div className="flex">
+											<Label required>Client</Label>
+											{typeof fieldErrors.client_id === "string" && (
+													<div className="ml-auto text-xs text-destructive">
+															{fieldErrors.client_id}
+													</div>
+											)}
 									</div>
-								)}
+									<Select
+											value={formData.client_id ?? ""}
+											onValueChange={(val) => {
+													setFormData({ ...formData, client_id: val })
+													clearFieldError("client_id")
+											}}
+									>
+											<SelectTrigger
+													className={`mt-1 w-full ${
+															fieldErrors.client_id
+																	? "border-destructive text-destructive focus:ring-destructive"
+																	: ""
+													}`}
+													aria-label="Client"
+													aria-invalid={!!fieldErrors.client_id}
+											>
+													<SelectValue placeholder="Select client...">
+															{clients.find((c) => c.client_id === formData.client_id)?.client_name}
+													</SelectValue>
+											</SelectTrigger>
+											<SelectContent>
+													{clients.map((client) => (
+															<SelectItem key={client.client_id} value={client.client_id}>
+																	{client.client_name}
+															</SelectItem>
+													))}
+											</SelectContent>
+									</Select>
 							</div>
-							<Select
-								value={formData.client_id ?? undefined}
-								onValueChange={(val) => {
-									setFormData({ ...formData, client_id: val })
-									clearFieldError("client_id")
-								}}
-							>
-								<SelectTrigger
-									className={`mt-1 w-full ${
-										fieldErrors.client_id
-											? "border-destructive text-destructive focus:ring-destructive"
-											: ""
-									}`}
-									aria-label="Client"
-									aria-invalid={!!fieldErrors.client_id}
-								>
-									<SelectValue placeholder="Select client..." />
-								</SelectTrigger>
-								<SelectContent>
-									{clientOptions.map((opt) => {
-										if (opt.value === null) return null
-										const val = String(opt.value)
-										return (
-											<SelectItem key={val} value={val}>
-												{opt.label}
-											</SelectItem>
-										)
-									})}
-								</SelectContent>
-							</Select>
-						</div>
 					)}
 
 					{/* Dates Section */}
