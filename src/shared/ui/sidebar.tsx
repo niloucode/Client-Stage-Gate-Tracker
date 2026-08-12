@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import {
 	LayoutDashboard,
@@ -33,15 +34,15 @@ export const navItems = [
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
-	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-[65px]">
+	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25">
 		<div className="flex items-center gap-3 min-w-0">
-			<div className="w-8 h-8 flex-shrink-0 bg-gray-900 rounded-lg flex items-center justify-center text-neutral-surface">
+			<div className="w-8 h-8 shrink-0 bg-gray-900 rounded-lg flex items-center justify-center text-neutral-surface">
 				<Boxes className="w-5 h-5" />
 			</div>
 
 			<div
 				className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${
-					collapsed ? "max-w-0 opacity-0" : "max-w-[160px] opacity-100"
+					collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100"
 				}`}
 			>
 				<p className="font-sans text-sm font-semibold text-gray-900 leading-tight">
@@ -61,7 +62,7 @@ export const SidebarNavItem = ({
 	collapsed,
 	onClick,
 }: {
-	item: { label: string; icon: React.ComponentType<{ className?: string }> };
+	item: { label: string; icon: ComponentType<{ className?: string }> };
 	active: string;
 	collapsed?: boolean;
 	onClick: (label: string) => void;
@@ -83,16 +84,18 @@ export const SidebarNavItem = ({
 				}
       `}
 		>
-			<span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+			<span className="w-4 h-4 flex items-center justify-center shrink-0">
 				<Icon
 					className={`w-4 h-4 transition-colors ${
-						isActive ? "text-gray-900" : "text-gray-400 group-hover:text-gray-600"
+						isActive
+							? "text-gray-900"
+							: "text-gray-400 group-hover:text-gray-600"
 					}`}
 				/>
 			</span>
 			<span
 				className={`text-sm font-medium truncate leading-4 overflow-hidden transition-all duration-300 ease-in-out ${
-					collapsed ? "max-w-0 opacity-0" : "max-w-[140px] opacity-100"
+					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				{item.label}
@@ -108,17 +111,17 @@ export const SidebarFooter = ({
 	collapsed?: boolean;
 	onToggle: () => void;
 }) => (
-	<div className="px-2 py-3 border-t border-gray-100 space-y-0.5 flex-shrink-0">
+	<div className="px-2 py-3 border-t border-gray-100 space-y-0.5 shrink-0">
 		<button
 			title={collapsed ? "Settings" : undefined}
 			className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150 font-sans"
 		>
-			<span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+			<span className="w-4 h-4 flex items-center justify-center shrink-0">
 				<Settings className="w-4 h-4" />
 			</span>
 			<span
 				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
-					collapsed ? "max-w-0 opacity-0" : "max-w-[140px] opacity-100"
+					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				Settings
@@ -130,7 +133,7 @@ export const SidebarFooter = ({
 			title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
 			className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150 font-sans"
 		>
-			<span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+			<span className="w-4 h-4 flex items-center justify-center shrink-0">
 				{collapsed ? (
 					<ChevronRight className="w-4 h-4" />
 				) : (
@@ -139,7 +142,7 @@ export const SidebarFooter = ({
 			</span>
 			<span
 				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
-					collapsed ? "max-w-0 opacity-0" : "max-w-[140px] opacity-100"
+					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				Collapse
@@ -148,11 +151,7 @@ export const SidebarFooter = ({
 	</div>
 );
 
-export default function SidebarLayout({
-	children,
-}: {
-	children?: React.ReactNode;
-}) {
+export default function SidebarLayout({ children }: { children?: ReactNode }) {
 	const [active, setActive] = useState("Projects");
 	const [collapsed, setCollapsed] = useState(false);
 

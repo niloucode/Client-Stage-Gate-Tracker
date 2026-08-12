@@ -75,9 +75,9 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
     props.placeholder ?? (isTin ? "123-456-789-123" : undefined);
 
   // Helper to trigger clear error callback on change
-  const handleValueChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    originalOnChange?: (e: any) => void
+  const handleValueChange = <T extends HTMLInputElement | HTMLTextAreaElement>(
+    e: React.ChangeEvent<T>,
+    originalOnChange?: (e: React.ChangeEvent<T>) => void
   ) => {
     // If TIN type, format target value before passing event up
     if (isTin) {

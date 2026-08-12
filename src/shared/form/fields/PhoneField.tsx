@@ -31,9 +31,12 @@ export function PhoneField({
 				</Label>
 			)}
 			<PhoneInput
+				id={field.name}
+				name={field.name}
 				value={field.state.value}
 				onChange={(value) => field.handleChange(value)}
 				error={error}
+				ariaInvalid={!!error}
 				placeholder={placeholder}
 			/>
 		</div>

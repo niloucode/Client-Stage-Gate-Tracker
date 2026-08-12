@@ -3,43 +3,44 @@
 import { Check } from "lucide-react";
 import { TAG_COLORS, TAG_COLOR_NAMES } from "@/shared/lib/colors";
 
-
 // ── Color picker ──────────────────────────────────────────────────────────────
 
 export function ColorPicker({
 	value,
 	onChange,
 }: {
-	value: string
-	onChange: (c: string) => void
+	value: string;
+	onChange: (c: string) => void;
 }) {
 	return (
-		<div className="grid grid-cols-9 gap-1.5 w-full h-[5rem] mt-2">
+		<div className="grid grid-cols-9 gap-1.5 w-full h-20 mt-2">
 			{TAG_COLORS.map((color) => {
-				const isSelected = value === color
+				const isSelected = value === color;
 				return (
 					<button
 						key={color}
 						onClick={() => onChange(color)}
-						className="rounded-md transition-all border-2 min-h-[2rem] flex justify-center items-center"
+						className="rounded-md transition-all border-2 min-h-8 flex justify-center items-center"
 						style={{
 							backgroundColor: color,
-							boxShadow: isSelected ? `0 0 0 2px neutral-surface, 0 0 0 4px ${color}` : "none",
+							boxShadow: isSelected
+								? `0 0 0 2px var(--color-neutral-surface), 0 0 0 4px ${color}`
+								: "none",
 						}}
 						aria-label={TAG_COLOR_NAMES[color] ?? color}
 					>
-						{isSelected && (
-							<Check color={"background"}></Check>
-						)}
+						{isSelected && <Check color="var(--color-neutral-surface)" />}
 					</button>
-				)
+				);
 			})}
 		</div>
-	)
+	);
 }
 
 // ── Modal backdrop ────────────────────────────────────────────────────────────
 
 export function Backdrop({ onClick }: { onClick: () => void }) {
-	return <div className="fixed inset-0 bg-foreground/40 z-40" onClick={onClick} />
+	return (
+		<div className="fixed inset-0 bg-foreground/40 z-40" onClick={onClick} />
+	);
 }

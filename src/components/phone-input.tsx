@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
 	Select,
 	SelectContent,
@@ -24,6 +23,9 @@ interface PhoneInputProps {
 	error?: string
 	placeholder?: string
 	className?: string
+	id?: string
+	name?: string
+	ariaInvalid?: boolean
 }
 
 export function PhoneInput({
@@ -32,6 +34,9 @@ export function PhoneInput({
 	error,
 	placeholder = "Phone number",
 	className,
+	id,
+	name,
+	ariaInvalid,
 }: PhoneInputProps) {
 	const [country, setCountry] = useState<CountryCode>("US")
 
@@ -56,12 +61,12 @@ export function PhoneInput({
 		<div className={className}>
 			<div className="flex gap-2">
 				<Select value={country} onValueChange={handleCountryChange}>
-					<SelectTrigger className="w-[130px] shrink-0">
+					<SelectTrigger className="w-32.5 shrink-0">
 						<SelectValue>
 							{COUNTRIES.find((c) => c.code === country)?.callingCode || `+1`}
 						</SelectValue>
 					</SelectTrigger>
-					<SelectContent className="max-h-[250px]">
+					<SelectContent className="max-h-62.5">
 						{COUNTRIES.map((c) => (
 							<SelectItem key={c.code} value={c.code}>
 								{c.callingCode} — {c.code}
@@ -70,10 +75,13 @@ export function PhoneInput({
 					</SelectContent>
 				</Select>
 				<Input
+					id={id}
+					name={name}
 					type="tel"
 					value={value}
 					onChange={(e) => onChange?.(e.target.value)}
 					placeholder={placeholder}
+					aria-invalid={ariaInvalid || undefined}
 					className={error || (value && validation?.valid === false) ? "border-destructive" : ""}
 				/>
 			</div>

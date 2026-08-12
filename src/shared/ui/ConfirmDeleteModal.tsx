@@ -10,6 +10,7 @@ import {
 	AlertDialogCancel,
 	AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { useRef } from "react";
 import type { ReactNode } from "react";
 
 interface ConfirmDeleteModalProps {
@@ -39,11 +40,17 @@ export function ConfirmDeleteModal({
 	onConfirm,
 	onCancel,
 }: ConfirmDeleteModalProps) {
+	// Radix closes the dialog on both Cancel and Action clicks, which also
+	// fires onOpenChange(false). Track a confirmed click so onCancel is not
+	// invoked when the dialog closes because the user confirmed.
+	const confirmedRef = useRef(false);
+
 	return (
 		<AlertDialog
 			open={isOpen}
 			onOpenChange={(open) => {
-				if (!open) onCancel();
+				if (!open && !confirmedRef.current) onCancel();
+				confirmedRef.current = false;
 			}}
 		>
 			<AlertDialogContent>
@@ -55,10 +62,13 @@ export function ConfirmDeleteModal({
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					<AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+					{/* Cancel: no onClick — Radix closes the dialog, onOpenChange handles onCancel once. */}
+					<AlertDialogCancel>Cancel</AlertDialogCancel>
 					<AlertDialogAction
-						onClick={onConfirm}
-
+						onClick={() => {
+							confirmedRef.current = true;
+							onConfirm();
+						}}
 						className="bg-destructive hover:bg-destructive/90"
 					>
 						{confirmLabel ?? `Delete ${noun}`}

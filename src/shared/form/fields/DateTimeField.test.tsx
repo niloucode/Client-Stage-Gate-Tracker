@@ -37,12 +37,9 @@ function DateTimeTestForm({
 				void form.handleSubmit();
 			}}
 		>
-			<form.AppField
-				name="planStart"
-				children={(field) => (
-					<field.DateTimeField label="Plan Start" />
-				)}
-			/>
+			<form.AppField name="planStart">
+				{(field) => <field.DateTimeField label="Plan Start" />}
+			</form.AppField>
 			<form.AppForm>
 				<form.SubmitButton>Save</form.SubmitButton>
 			</form.AppForm>
@@ -69,12 +66,26 @@ describe("DateTimeField (shared form kit)", () => {
 		await user.click(screen.getByRole("button", { name: "Save" }));
 
 		expect(onSubmit).toHaveBeenCalledTimes(1);
-		const value = onSubmit.mock.calls[0][0].planStart as Date;		expect(value).toBeInstanceOf(Date);
+		const value = onSubmit.mock.calls[0][0].planStart as Date;
+		expect(value).toBeInstanceOf(Date);
 		// Local-time interpretation (no UTC shift).
 		expect(value.getFullYear()).toBe(2024);
 		expect(value.getMonth()).toBe(5); // June
 		expect(value.getDate()).toBe(1);
 		expect(value.getHours()).toBe(9);
 		expect(value.getMinutes()).toBe(30);
+	});
+
+	it("submits null when the input is cleared (adapter round-trip)", async () => {
+		const user = userEvent.setup();
+		const onSubmit = vi.fn();
+		render(<DateTimeTestForm onSubmit={onSubmit} />);
+
+		await user.type(screen.getByLabelText("Plan Start"), "2024-06-01T09:30");
+		await user.clear(screen.getByLabelText("Plan Start"));
+		await user.click(screen.getByRole("button", { name: "Save" }));
+
+		expect(onSubmit).toHaveBeenCalledTimes(1);
+		expect(onSubmit.mock.calls[0][0].planStart).toBeNull();
 	});
 });

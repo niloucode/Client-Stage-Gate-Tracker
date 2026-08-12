@@ -53,6 +53,7 @@ export function SelectField({
 				<SelectTrigger
 					className={cn("w-full", error && "border-destructive")}
 					aria-invalid={error ? true : undefined}
+					aria-labelledby={label ? `${field.name}-label` : undefined}
 				>
 					<SelectValue placeholder={placeholder} />
 				</SelectTrigger>

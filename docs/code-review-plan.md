@@ -73,27 +73,27 @@
 - [x] src/shared/form/contexts.ts
 - [x] src/shared/form/errors.ts
 - [x] src/shared/form/useAppForm.ts
-- [ ] src/shared/form/SubmitButton.tsx
+- [x] src/shared/form/SubmitButton.tsx
 - [x] src/shared/form/SchedulingFields.tsx
 - [x] src/shared/form/fields/TextField.tsx
 - [x] src/shared/form/fields/TextField.test.tsx
-- [ ] src/shared/form/fields/DateTimeField.tsx
-- [ ] src/shared/form/fields/DateTimeField.test.tsx
-- [ ] src/shared/form/fields/PhoneField.tsx
-- [ ] src/shared/form/fields/SelectField.tsx
-- [ ] src/shared/form/fields/TextAreaField.tsx
+- [x] src/shared/form/fields/DateTimeField.tsx
+- [x] src/shared/form/fields/DateTimeField.test.tsx
+- [x] src/shared/form/fields/PhoneField.tsx
+- [x] src/shared/form/fields/SelectField.tsx
+- [x] src/shared/form/fields/TextAreaField.tsx
 
 ## 6. Shared layer — UI kit (custom)
 
-- [ ] src/shared/ui/index.ts
-- [ ] src/shared/ui/ConfirmDeleteModal.tsx
-- [ ] src/shared/ui/forminput.tsx
-- [ ] src/shared/ui/ImageLightbox.tsx
-- [ ] src/shared/ui/PasswordInput.tsx
+- [x] src/shared/ui/index.ts
+- [x] src/shared/ui/ConfirmDeleteModal.tsx
+- [x] src/components/ui/forminput.tsx (legacy FormInput; plan listed it under shared/ui — actual path)
+- [x] src/shared/ui/ImageLightbox.tsx
+- [x] src/shared/ui/PasswordInput.tsx
 - [x] src/shared/ui/PlannedViewPlaceholder.tsx (deleted)
-- [ ] src/shared/ui/search-status.tsx
-- [ ] src/shared/ui/sidebar.tsx
-- [ ] src/shared/ui/tagPrimitives.tsx
+- [x] src/shared/ui/search-status.tsx
+- [x] src/shared/ui/sidebar.tsx
+- [x] src/shared/ui/tagPrimitives.tsx
 
 ## 7. Shared layer — shadcn UI primitives (src/components/ui)
 
