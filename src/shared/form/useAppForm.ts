@@ -21,29 +21,46 @@ import { SubmitButton } from "./SubmitButton";
  *     <form.AppForm><form.SubmitButton /></form.AppForm>
  *   </form>
  */
-export const { useAppForm, withForm } = createFormHook({
-	fieldComponents: {
-		TextField,
-		TextAreaField,
-		SelectField,
-		DateTimeField,
-		PhoneField,
-	},
-	formComponents: {
-		SubmitButton,
-	},
+export const fieldComponents = {
+	TextField,
+	TextAreaField,
+	SelectField,
+	DateTimeField,
+	PhoneField,
+};
+
+export const formComponents = {
+	SubmitButton,
+};
+
+export const { useAppForm } = createFormHook({
+	fieldComponents,
+	formComponents,
 	fieldContext,
 	formContext,
 });
 
 /**
  * Loose form instance type for reusable composites (e.g. `SchedulingFields`)
- * that need `form.AppField` but must accept any concrete form.
+ * that need `form.AppField` but must accept any concrete form created by
+ * `useAppForm`.
+ *
+ * The `any` type parameters are INTENTIONAL. A concrete form's
+ * `AppFieldExtendedReactFormApi<Concrete, ...>` is not assignable to the
+ * same type with `unknown`/`object` data params (contravariant positions
+ * like `name: DeepKeysOfType<TFormData>` reject a wider target), and
+ * composites address fields by runtime string names, so only `any` —
+ * bivariant by definition — keeps the boundary assignable. This mirrors
+ * TanStack Form's own `AnyFormApi` / `AnyFieldApi` escape hatches.
+ *
+ * The last two params keep the registered component maps concrete so
+ * `field.DateTimeField` / `form.SubmitButton` stay typed on the instance.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type AppForm = AppFieldExtendedReactFormApi<
 	// TFormData
 	any,
-	// Validators + submit meta
+	// Validators + submit meta (loosest valid values)
 	any,
 	any,
 	any,
@@ -55,6 +72,8 @@ export type AppForm = AppFieldExtendedReactFormApi<
 	any,
 	any,
 	any,
-	any,
-	any
+	// Field/form component maps
+	typeof fieldComponents,
+	typeof formComponents
 >;
+/* eslint-enable @typescript-eslint/no-explicit-any */

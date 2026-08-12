@@ -52,8 +52,8 @@ ALTER TABLE "Tickets" ADD CONSTRAINT "Tickets_parent_id_fkey" FOREIGN KEY ("pare
 CREATE INDEX "Tickets_parent_id_idx" ON "Tickets"("parent_id");
 
 ALTER TABLE "Tickets" ADD COLUMN "issue_id" uuid;
-ALTER TABLE "Tickets" ADD CONSTRAINT "Tickets_issue_id_fkey" FOREIGN KEY ("issue_id") REFERENCES "Issues"("issue_id") ON DELETE NO ACTION ON UPDATE NO ACTION;
-CREATE INDEX "Tickets_issue_id_idx" ON "Tickets"("issue_id");
+-- FK + index for issue_id are added AFTER the Issues table is created below:
+-- PostgreSQL rejects a FK referencing a table that does not exist yet.
 
 CREATE INDEX "Tickets_workflow_id_status_idx" ON "Tickets"("workflow_id", "status");
 CREATE INDEX "Tickets_status_is_deleted_idx" ON "Tickets"("status", "is_deleted");
@@ -79,6 +79,10 @@ CREATE TABLE "IssueSteps" (
 );
 
 ALTER TABLE "IssueSteps" ADD CONSTRAINT "IssueSteps_issue_id_fkey" FOREIGN KEY ("issue_id") REFERENCES "Issues"("issue_id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- Tickets.issue_id link (moved here: Issues must exist before the FK is added)
+ALTER TABLE "Tickets" ADD CONSTRAINT "Tickets_issue_id_fkey" FOREIGN KEY ("issue_id") REFERENCES "Issues"("issue_id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+CREATE INDEX "Tickets_issue_id_idx" ON "Tickets"("issue_id");
 
 -- ── 7. ImageParentType gains ISSUE_STEP ─────────────────────────────────────
 ALTER TYPE "ImageParentType" ADD VALUE 'ISSUE_STEP';

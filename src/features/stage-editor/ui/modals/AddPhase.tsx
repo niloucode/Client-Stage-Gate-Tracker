@@ -1,7 +1,7 @@
 "use client";
 
 import type { z } from "zod";
-import { useAppForm, SchedulingFields } from "@/shared/form";
+import { useAppForm, SchedulingFields, formErrorToMessage } from "@/shared/form";
 import { phaseCreateSchema } from "@/shared/schemas";
 import {
 	Dialog,
@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCreatePhase } from "@/entities/phase/mutations";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
-import { formErrorToMessage } from "@/shared/form/errors";
 import { Plus } from "lucide-react";
 
 interface AddPhaseProps {

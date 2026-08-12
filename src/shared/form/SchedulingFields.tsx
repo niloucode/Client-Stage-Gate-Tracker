@@ -1,7 +1,6 @@
 "use client";
 
 import type { AppForm } from "./useAppForm";
-import { DateTimeField } from "./fields/DateTimeField";
 import { cn } from "@/lib/utils";
 
 export interface SchedulingFieldNames {
@@ -43,32 +42,20 @@ export function SchedulingFields({
 
 	return (
 		<div className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", className)}>
-			<form.AppField
-				name={planStart}
-				children={(field: any) => (
-					<field.DateTimeField label="Plan Start" />
-				)}
-			/>
-			<form.AppField
-				name={planEnd}
-				children={(field: any) => (
-					<field.DateTimeField label="Plan End" />
-				)}
-			/>
+			<form.AppField name={planStart}>
+				{(field) => <field.DateTimeField label="Plan Start" />}
+			</form.AppField>
+			<form.AppField name={planEnd}>
+				{(field) => <field.DateTimeField label="Plan End" />}
+			</form.AppField>
 			{showActuals && (
 				<>
-					<form.AppField
-						name={actualStart}
-						children={(field: any) => (
-							<field.DateTimeField label="Actual Start" />
-						)}
-					/>
-					<form.AppField
-						name={actualEnd}
-						children={(field: any) => (
-							<field.DateTimeField label="Actual End" />
-						)}
-					/>
+					<form.AppField name={actualStart}>
+						{(field) => <field.DateTimeField label="Actual Start" />}
+					</form.AppField>
+					<form.AppField name={actualEnd}>
+						{(field) => <field.DateTimeField label="Actual End" />}
+					</form.AppField>
 				</>
 			)}
 		</div>

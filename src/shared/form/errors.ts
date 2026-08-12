@@ -19,11 +19,15 @@ export function formErrorToMessage(err: unknown): string | null {
 			const formErr = record.form;
 			if (typeof formErr === "string") return formErr;
 			if (formErr && typeof formErr === "object" && "message" in formErr) {
-				return String((formErr as { message: unknown }).message);
+				const msg = (formErr as { message: unknown }).message;
+				return msg == null ? null : String(msg);
 			}
 			return null;
 		}
-		if ("message" in record) return String(record.message);
+		if ("message" in record) {
+			const msg = record.message;
+			return msg == null ? null : String(msg);
+		}
 	}
 	return String(err);
 }

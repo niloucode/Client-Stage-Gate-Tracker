@@ -4,14 +4,17 @@ import { useFieldContext } from "../contexts";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { formErrorToMessage } from "../errors";
 
-/** First error message from a TanStack Form field (string or issue object). */
+/**
+ * First error message from a TanStack Form field (string, issue object,
+ * Error, ...). Delegates to `formErrorToMessage` so all field modules share
+ * one normalization path.
+ */
 export function firstFieldError(
 	errors: readonly (string | { message?: string } | undefined)[],
 ): string | undefined {
-	const err = errors[0];
-	if (typeof err === "string") return err;
-	return err?.message;
+	return formErrorToMessage(errors[0]) ?? undefined;
 }
 
 interface TextFieldProps {

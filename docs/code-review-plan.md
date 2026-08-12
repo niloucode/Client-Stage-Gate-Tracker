@@ -69,14 +69,14 @@
 
 ## 5. Shared layer — form kit
 
-- [ ] src/shared/form/index.ts
-- [ ] src/shared/form/contexts.ts
-- [ ] src/shared/form/errors.ts
-- [ ] src/shared/form/useAppForm.ts
+- [x] src/shared/form/index.ts
+- [x] src/shared/form/contexts.ts
+- [x] src/shared/form/errors.ts
+- [x] src/shared/form/useAppForm.ts
 - [ ] src/shared/form/SubmitButton.tsx
-- [ ] src/shared/form/SchedulingFields.tsx
-- [ ] src/shared/form/fields/TextField.tsx
-- [ ] src/shared/form/fields/TextField.test.tsx
+- [x] src/shared/form/SchedulingFields.tsx
+- [x] src/shared/form/fields/TextField.tsx
+- [x] src/shared/form/fields/TextField.test.tsx
 - [ ] src/shared/form/fields/DateTimeField.tsx
 - [ ] src/shared/form/fields/DateTimeField.test.tsx
 - [ ] src/shared/form/fields/PhoneField.tsx

@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useAppForm } from "@/shared/form";
+import { useAppForm, formErrorToMessage } from "@/shared/form";
 import { z } from "zod";
 
 /**
@@ -29,18 +29,16 @@ function TestForm({ onSubmit }: { onSubmit: (value: { name: string }) => void })
 				void form.handleSubmit();
 			}}
 		>
-			<form.AppField
-				name="name"
-				children={(field) => (
+			<form.AppField name="name">
+				{(field) => (
 					<field.TextField label="Name" required placeholder="Your name" />
 				)}
-			/>
-			<form.Subscribe
-				selector={(state) => state.errorMap.onSubmit}
-				children={(err) =>
-					err ? <p role="alert">{String(err)}</p> : null
+			</form.AppField>
+			<form.Subscribe selector={(state) => state.errorMap.onSubmit}>
+				{(err) =>
+					err ? <p role="alert">{formErrorToMessage(err)}</p> : null
 				}
-			/>
+			</form.Subscribe>
 			<form.AppForm>
 				<form.SubmitButton>Save</form.SubmitButton>
 			</form.AppForm>
