@@ -34,7 +34,7 @@ export default function SignupPage() {
 
 				{/* Form — vertically centred */}
 				<div className="flex flex-col justify-center flex-1">
-					<div className="w-full max-w-[340px] mx-auto">
+					<div className="w-full bg-neutral-surface rounded-xl p-6 border border-brand-100 max-w-[380px] mx-auto">
 						<div className="mb-7">
 							<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
 								Create your account
