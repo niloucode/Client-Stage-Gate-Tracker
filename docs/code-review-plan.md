@@ -396,9 +396,13 @@
       (keep `actualStart`/`actualEnd` optional nullable). Update
       `src/shared/schemas/project.test.ts` (the "accepts missing dates
       entirely" case must flip to a rejection case).
-- [ ] `src/entities/stage/stageActions.ts` — `createStage`/`updateStage`:
-      `startDate`/`endDate` required (drop the `?? new Date()` fallbacks —
-      marked with `TODO(date-rules)` in code); StageModal form requires them.
+- [ ] Entity actions — remove EVERY `?? new Date()` plan-date fallback
+      (rule 3) and make the date params required:
+      `src/entities/stage/stageActions.ts:53-54` (`TODO(date-rules)` comment
+      already present), `src/entities/module/moduleActions.ts:40,43`,
+      `src/entities/phase/safeActions.ts:85,88`,
+      `src/entities/workflow/workflowActions.ts:58,63`; the StageModal form
+      (`src/features/project-structure/ui/StageModal.tsx`) requires them.
 - [ ] `src/shared/schemas/ticket.ts` — `plan_end_at` (currently
       `z.date({ message: "Deadline is required" })`) → `z.date().optional()
       .nullable()`; `plan_start_at` already optional nullable.
@@ -414,3 +418,45 @@
 - [ ] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
       keep the pure-helper pattern (`projectStatus.ts` style — pure helpers
       must NOT live in `"use server"` files).
+
+---
+
+## Other follow-ups (TODO — future session)
+
+Accumulated during the 2026-08-14 project-dashboard / landing-dashboard work.
+All pre-existing unless noted — none block the running app except the first.
+
+- [ ] **Unblock `next build`** — `src/features/ticket-board/ui/TicketCard.tsx`
+      lines 29-30 use `parentTicket.subTickets` but the ticket type has no
+      `subTickets` field (TS2339; 3 errors). Fix the ticket include/type or
+      remove the `getDummySubtasks` helper. This is the only thing stopping a
+      green build.
+- [ ] **`src/features/landing-dashboard/ui/ActivitySparklines.tsx`** — dead
+      `import { Http2ServerRequest } from "http2"` (line 5, lint warning).
+      Remove when the component comes off hold (integration TODO lives in
+      `src/app/(app)/dashboard/page.tsx`).
+- [ ] **Server-side client guard on `createProject`**
+      (`src/entities/project/projectActions.ts`) — the UI hides "+ Add
+      Project" for client profiles, but the action itself has no
+      client-profile check (any authenticated user may create; the creator
+      becomes Project Owner). Add a `Profiles.client_id` check returning a
+      permission error.
+- [ ] **`EditProjectModal` edit-mode `client_id` edge case**
+      (`src/features/project-dashboard/ui/modals/EditProjectModal.tsx`) —
+      edit submit validates via `projectCreateSchema`, which requires
+      `client_id`; if a project's contract row were missing or deleted the
+      edit could never save. Unreachable today (contracts are created
+      atomically with `client_id` NOT NULL), but the edit path should
+      validate with `projectUpdateSchema` instead.
+- [ ] **A11y: nested interactive in `ProjectCard`** — the ellipsis
+      `DropdownMenuTrigger` button sits inside the card's `<Link>`. It works
+      via stopPropagation but is invalid interactive nesting; restructure
+      (e.g. place the menu outside the link, or use the Link as the trigger's
+      render target).
+- [ ] **Project date-field naming consistency** — `src/shared/schemas/
+      project.ts` uses `start_date`/`deadline_date` while Phase/Module/
+      Workflow use the canonical `planStart`/`planEnd` (Task 1.5
+      vocabulary). Align the project schema/UI/actions in a dedicated pass.
+- [ ] **knip cleanup** — `npx knip` reports ~313 findings (unused default
+      exports, dead exports across features), all pre-existing. Triage and
+      remove; then gate `knip` in CI.
