@@ -18,9 +18,7 @@ export default function RootLayout({
 	return (
 		<Sidebar>
 			<TopNav />
-			<div className="min-h-[80vh] max-w-[75vw] mx-auto p-8">
-				<>{children}</>
-			</div>
+			<>{children}</>
 		</Sidebar>
 	);
 }

@@ -36,9 +36,9 @@ export default function SignupPage() {
 				<div className="flex flex-col justify-center flex-1">
 					<div className="w-full bg-neutral-surface rounded-md p-6 border border-brand-100 max-w-[380px] mx-auto">
 						<div className="mb-7">
-							<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
+							<h2>
 								Create your account
-							</h1>
+							</h2>
 						</div>
 						<StaffSignupForm />
 					</div>
