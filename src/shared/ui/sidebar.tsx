@@ -41,31 +41,38 @@ export const navItems: NavItem[] = [
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
-	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25 overflow-hidden">
-		<div className="flex flex-col min-w-0 transition-all duration-300 ease-in-out">
-			{/* Logo container: crops to emblem mark when collapsed, expands to full logo when open */}
-			<div
-				className="relative overflow-hidden h-5 transition-all duration-300 ease-in-out"
-				style={{ width: collapsed ? "28px" : "91px" }}
-			>
-				<Image
-					src="/assets/logo/asceoft-logo-black.svg"
-					alt="Asceoft"
-					width={91}
-					height={18}
-					className="max-w-none"
-					unoptimized
-				/>
-			</div>
-			<p
-				className={`font-mono text-[9px] font-semibold tracking-[0.18em] text-gray-400 uppercase mt-1 whitespace-nowrap transition-all duration-300 ease-in-out ${
-					collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100"
-				}`}
-			>
-				Studio Portal
-			</p>
-		</div>
-	</div>
+  <div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-[65px] overflow-hidden">
+    <div className={`flex flex-col min-w-0 transition-all duration-300 ease-in-out`}> {/* ${collapsed ? "mx-auto" : ""} */}
+      {/* Logo container: switches between icon and full logo based on collapsed state */}
+      <div className="relative overflow-hidden h-5 transition-all duration-300 ease-in-out">
+        {collapsed ? (
+          <Image
+            src="/assets/logo/asceoft-icon-black.svg"
+            alt="Asceoft"
+            width={18}
+            height={18}
+            unoptimized
+          />
+        ) : (
+          <Image
+            src="/assets/logo/asceoft-logo-black.svg"
+            alt="Asceoft"
+            width={91}
+            height={18}
+            className="max-w-none"
+            unoptimized
+          />
+        )}
+      </div>
+      <p
+        className={`font-mono text-[9px] font-semibold tracking-[0.18em] text-gray-400 uppercase mt-1 whitespace-nowrap transition-all duration-300 ease-in-out ${
+          collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100"
+        }`}
+      >
+        Studio Portal
+      </p>
+    </div>
+  </div>
 );
 
 export const SidebarNavItem = ({
@@ -103,13 +110,13 @@ export const SidebarNavItem = ({
 					}`}
 				/>
 			</span>
-			<span
+			<h4
 				className={`text-sm font-medium truncate leading-4 overflow-hidden transition-all duration-300 ease-in-out ${
 					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				{item.label}
-			</span>
+			</h4>
 		</div>
 	);
 
@@ -154,13 +161,13 @@ export const SidebarFooter = ({
 			<span className="w-4 h-4 flex items-center justify-center shrink-0">
 				<Settings className="w-4 h-4" />
 			</span>
-			<span
+			<h4
 				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
 					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				Settings
-			</span>
+			</h4>
 		</button>
 
 		<button
@@ -176,13 +183,13 @@ export const SidebarFooter = ({
 					<ChevronLeft className="w-4 h-4" />
 				)}
 			</span>
-			<span
+			<h4
 				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
 					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				Collapse
-			</span>
+			</h4>
 		</button>
 	</div>
 );
