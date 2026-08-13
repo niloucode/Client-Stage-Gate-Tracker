@@ -7,6 +7,7 @@ import flags from "react-phone-number-input/flags";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
 	Combobox,
 	ComboboxContent,
@@ -41,6 +42,10 @@ type PhoneInputProps = Omit<
 		BasePhoneInput.Props<typeof BasePhoneInput.default>,
 		"onChange" | "variant" | "popupClassName" | "scrollAreaClassName"
 	> & {
+		label?: string;
+		required?: boolean;
+		error?: string | boolean;
+		containerClassName?: string;
 		onChange?: (value: BasePhoneInput.Value) => void;
 		variant?: PhoneInputSize;
 		popupClassName?: string;
@@ -48,6 +53,10 @@ type PhoneInputProps = Omit<
 	};
 
 function PhoneInput({
+	label,
+	required,
+	error = false,
+	containerClassName,
 	className,
 	variant = "default",
 	popupClassName,
@@ -57,22 +66,27 @@ function PhoneInput({
 	defaultCountry = "US",
 	...props
 }: PhoneInputProps) {
-	return (
+	const errorMessage = typeof error === "string" ? error : undefined;
+	const isError =
+		!!error || props["aria-invalid"] === true || props["aria-invalid"] === "true";
+
+	const content = (
 		<PhoneInputContext.Provider
 			value={{ variant, popupClassName, scrollAreaClassName }}
 		>
 			<BasePhoneInput.default
-					className={cn(
-						"flex [&_button]:border-gray-300 [&_input]:border-gray-300 [&_button]:bg-neutral-surface [&_input]:bg-neutral-surface",
-						props["aria-invalid"] &&
-							"[&_*[data-slot=combobox-trigger]]:border-destructive [&_*[data-slot=combobox-trigger]]:ring-destructive/50",
-						className,
-					)}
+				aria-invalid={isError ? true : undefined}
+				className={cn(
+					"flex rounded-sm transition-all [&_button]:border-gray-300 [&_input]:border-gray-300 [&_button]:bg-neutral-surface [&_input]:bg-neutral-surface",
+					isError &&
+						"[&_button]:border-destructive [&_input]:border-destructive ring-3 ring-destructive/20 rounded-sm",
+					className,
+				)}
 				flagComponent={FlagComponent}
 				countrySelectComponent={CountrySelect}
 				inputComponent={InputComponent}
-				smartCaret={false} // 👈 Disabling smartCaret restores native Ctrl+Delete / Ctrl+Backspace / Cmd+Delete shortcuts
-				limitMaxLength={true} // 👈 Automatically caps input length according to the selected country's phone standard
+				smartCaret={false}
+				limitMaxLength={true}
 				defaultCountry={defaultCountry}
 				value={value || undefined}
 				onChange={(val) => onChange?.(val || ("" as BasePhoneInput.Value))}
@@ -80,16 +94,36 @@ function PhoneInput({
 			/>
 		</PhoneInputContext.Provider>
 	);
+
+	if (!label) {
+		return content;
+	}
+
+	return (
+		<div className={cn("flex flex-col gap-1 w-full", containerClassName)}>
+			<div className="flex items-center justify-between">
+				<Label required={required} error={isError}>
+					{label}
+				</Label>
+				{errorMessage && (
+					<span className="text-xs font-normal text-destructive">
+						{errorMessage}
+					</span>
+				)}
+			</div>
+			{content}
+		</div>
+	);
 }
 
 function InputComponent({ className, ...props }: ComponentProps<typeof Input>) {
 	const { variant } = useContext(PhoneInputContext);
 
 	return (
-		// Inside InputComponent:
 		<Input
 			className={cn(
-				"ring-none! rounded-s-none rounded-e-sm outline-none! focus:z-1",
+				"ring-0! focus:ring-0! focus-visible:ring-0 focus-visible:ring-offset-0", // Add these
+				"rounded-s-none rounded-e-sm outline-none! focus:z-1",
 				variant === "sm" && "h-7 text-xs",
 				variant === "lg" && "h-9 text-base",
 				className,
@@ -120,7 +154,6 @@ function CountrySelect({
 	const { variant, popupClassName } = useContext(PhoneInputContext);
 	const [searchValue, setSearchValue] = useState("");
 
-	// Search by Country Name ("Philippines"), ISO Code ("PH"), or Dial Code ("63", "+63")
 	const filteredCountries = useMemo(() => {
 		if (!searchValue) return countryList;
 		const search = searchValue.toLowerCase().trim().replace(/^\+/, "");

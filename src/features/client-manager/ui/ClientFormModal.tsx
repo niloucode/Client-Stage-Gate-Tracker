@@ -219,27 +219,17 @@ export default function ClientFormModal({
 						/>
 					</div>
 
-					{/* Contact Number (Custom PhoneInput) */}
-					<div className="flex flex-col gap-2">
-						<div className="flex">
-							<Label required error={!!fieldErrors.phone}>
-								Contact Number
-							</Label>
-							{fieldErrors.phone && (
-								<div className="ml-auto text-xs text-destructive">
-									{fieldErrors.phone}
-								</div>
-							)}
-						</div>
-						<PhoneInput
-							value={contactNumber}
-							onChange={(val: string) => {
-								setContactNumber(val);
-								handleClearError("phone");
-							}}
-							placeholder="+1 (555) 000-0000"
-						/>
-					</div>
+					<PhoneInput
+						label="Contact Number"
+						required
+						value={contactNumber}
+						onChange={(val: string) => {
+							setContactNumber(val);
+							handleClearError("phone");
+						}}
+						placeholder="+1 (555) 000-0000"
+						error={fieldErrors.phone}
+					/>
 
 					{/* Billing Address */}
 					<FormInput
