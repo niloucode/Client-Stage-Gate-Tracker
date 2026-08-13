@@ -136,14 +136,11 @@ export function PendingContracts({ contracts = [] }: PendingContractsProps) {
 					</div>
 
 					<DialogTrigger>
-						<button
-							type="button"
-							className="text-xs font-normal underline-offset-2 hover:underline"
-						>
-							<h4 className="hover:text-brand-600! font-normal underline decoration-inherit">
+						<span className="cursor-pointer text-xs font-normal underline-offset-2 hover:underline">
+							<span className="hover:text-brand-600! font-normal underline decoration-inherit">
 								View All
-							</h4>
-						</button>
+							</span>
+						</span>
 					</DialogTrigger>
 				</div>
 
