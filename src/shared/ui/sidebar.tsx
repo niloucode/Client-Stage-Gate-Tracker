@@ -41,7 +41,7 @@ export const navItems: NavItem[] = [
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
-	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-[65px] overflow-hidden">
+	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25 overflow-hidden">
 		<div className="flex flex-col min-w-0 transition-all duration-300 ease-in-out">
 			{/* Logo container: crops to emblem mark when collapsed, expands to full logo when open */}
 			<div
