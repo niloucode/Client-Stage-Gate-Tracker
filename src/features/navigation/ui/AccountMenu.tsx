@@ -47,7 +47,7 @@ export function AccountMenu() {
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-72">
 				{/* No profile page yet — this header IS the profile summary. */}
-				<div className="flex flex-col items-center text-center pb-4 border-b border-gray-100 px-4 pt-4">
+				<div className="flex flex-col items-center text-center p-4">
 					<Avatar className="w-16 h-16 text-lg mb-3">
 						<AvatarFallback className="bg-brand-600 text-neutral-surface text-lg font-bold">
 							{userInitials}
