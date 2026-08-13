@@ -42,9 +42,9 @@ export default function DashboardPage() {
 				</div>
 			</div>
 			<div>
-				
 			</div>
 			<div className="flex flex-col items-center justify-center gap-10 w-full">
+			<ActivitySparklines/>
 			<TicketsBoard />
 			<TicketsBoard variant="watched" />
 			<div className="flex w-full justify-between gap-5">
