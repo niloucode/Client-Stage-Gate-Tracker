@@ -1,356 +1,268 @@
 /**
  * @fileoverview Staff / internal team signup form.
- * Creates an auth user via Supabase and stores profile metadata
- * (first_name, last_name, job_title, department_id, phone).
- * Department is selected from a dropdown restricted to the three
- * valid internal departments (Project Team, Project Owner, Finance).
+ * Creates an auth user via Supabase, stores profile metadata
+ * (first_name, last_name, job_title, department_id, phone), then creates
+ * the Profiles row explicitly via `createProfileForCurrentUser` so the
+ * signup is reproducible without an external DB trigger.
+ * Department is selected from the active departments in the DB
+ * (department_id is the option value — display name is the label).
  * All 8 fields are required — validated by `signupSchema`.
  */
 
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/shared/ui/PasswordInput";
-import { getFieldErrors } from "@/shared/lib/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { ProfileType } from "@/shared/types";
+import { useAppForm } from "@/shared/form";
+import { useDepartments } from "@/entities/department";
+import { getProfileByEmail, createProfileForCurrentUser } from "@/entities/profile";
 import { createClient } from "@/lib/supabase/client";
 import { signupSchema } from "@/shared/schemas";
 import { env } from "@/env";
 import { profileKeys } from "@/shared/query/keys";
-import { getProfileByEmail } from "@/entities/profile/profileActions";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select"; // Adjust path as needed
 
 export function StaffSignupForm() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const supabase = createClient();
-
-	const [firstName, setFirstName] = useState("");
-	const [lastName, setLastName] = useState("");
-	const [email, setEmail] = useState("");
-	const [phone, setPhone] = useState("");
-	const [jobTitle, setJobTitle] = useState("");
-	const [department, setDepartment] = useState("");
-	const [password, setPassword] = useState("");
-	const [confirmPassword, setConfirmPassword] = useState("");
+	const { data: departments } = useDepartments();
 	const [error, setError] = useState<string | null>(null);
-	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-	const [loading, setLoading] = useState(false);
+	const [success, setSuccess] = useState<string | null>(null);
+	// Auth user id from a successful signUp — kept across submit attempts so
+	// a retry after a failed profile-create can recover ("already registered").
+	const lastUserIdRef = useRef<string | null>(null);
 
-	function fieldErrClass(key: string) {
-		return fieldErrors[key] ? "border-red-400 focus:ring-red-400" : "";
-	}
+	const form = useAppForm({
+		defaultValues: {
+			firstName: "",
+			lastName: "",
+			email: "",
+			phone: "",
+			jobTitle: "",
+			department: "",
+			password: "",
+			confirmPassword: "",
+		},
+		validators: { onSubmit: signupSchema },
+		onSubmit: async ({ value }) => {
+			setError(null);
+			setSuccess(null);
 
-	async function userSignUp(user: ProfileType, password: string) {
-		return await supabase.auth.signUp({
-			email: user.email,
-			password: password,
-			options: {
-				data: {
-					first_name: user.first_name,
-					last_name: user.last_name,
-					job_title: user.job_title,
-					department_id: user.department_id,
-					phone: user.phone,
-					is_deleted: user.is_deleted,
-					deleted_at: user.deleted_at,
-				},
-				emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
-			},
-		});
-	}
-
-	const handleSignUp = async (e: React.BaseSyntheticEvent) => {
-		setError(null);
-		setFieldErrors({});
-		setLoading(false);
-		e.preventDefault();
-
-		const result = signupSchema.safeParse({
-			firstName,
-			lastName,
-			email,
-			phone,
-			jobTitle,
-			department,
-			password,
-			confirmPassword,
-		});
-
-		if (!result.success) {
-			const mapped = getFieldErrors(result);
-			setFieldErrors(mapped);
-			return;
-		}
-
-		setLoading(true);
-
-		// ── Duplicate email check ──────────────────────────────────────
-		const { success, data: existingProfile } = await getProfileByEmail(email);
-		if (success && existingProfile) {
-			setError("An account with this email already exists.");
-			setLoading(false);
-			return;
-		}
-
-		const user: ProfileType = {
-			profile_id: "",
-			first_name: firstName,
-			last_name: lastName,
-			phone: phone,
-			image_id: null,
-			client_id: null,
-			department_id: department,
-			email: email,
-			job_title: jobTitle.trim().length == 0 ? null : jobTitle,
-			is_deleted: false,
-			deleted_at: null,
-		};
-
-		const { data, error: signUpError } = await userSignUp(user, password);
-
-		//catch the sign in error
-		if (signUpError) {
-			setError(signUpError.message);
-			setLoading(false);
-			return;
-		}
-
-		//only triggers if CONFIRM EMAIL option in Supabase is off (shud be on by default tho)
-		if (data.session) {
-			router.push("/login");
-			queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
-		} else {
-			setError(
-				"Account created! Check your email to confirm your account before logging in.",
+			// ── Duplicate email check ──────────────────────────────────────
+			const { success, data: existingProfile } = await getProfileByEmail(
+				value.email,
 			);
-			setLoading(false);
-		}
-	};
+			if (success && existingProfile) {
+				setError("An account with this email already exists.");
+				return;
+			}
+
+			const { data, error: signUpError } = await supabase.auth.signUp({
+				email: value.email,
+				password: value.password,
+				options: {
+					data: {
+						first_name: value.firstName,
+						last_name: value.lastName,
+						job_title: value.jobTitle,
+						department_id: value.department,
+						phone: value.phone,
+					},
+					emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
+				},
+			});
+
+			if (signUpError) {
+				// Retry after a failed profile-create: the auth user already
+				// exists — recover by creating the profile now (idempotent,
+				// freshness-gated server-side) instead of failing.
+				const alreadyRegistered =
+					signUpError.code === "user_already_exists" ||
+					/already registered/i.test(signUpError.message);
+				if (alreadyRegistered && lastUserIdRef.current) {
+					const recovered = await createProfileForCurrentUser({
+						first_name: value.firstName,
+						last_name: value.lastName,
+						email: value.email,
+						phone: value.phone,
+						job_title: value.jobTitle,
+						department_id: value.department,
+						userId: lastUserIdRef.current,
+					});
+					if (recovered.success) {
+						setSuccess(
+							"Account created! Check your email to confirm your account before logging in.",
+						);
+						return;
+					}
+				}
+				setError(signUpError.message);
+				return;
+			}
+			lastUserIdRef.current = data.user?.id ?? null;
+
+			// Create the Profiles row explicitly (idempotent; verified
+			// server-side against auth.users when no session exists yet).
+			const profileResult = await createProfileForCurrentUser({
+				first_name: value.firstName,
+				last_name: value.lastName,
+				email: value.email,
+				phone: value.phone,
+				job_title: value.jobTitle,
+				department_id: value.department,
+				userId: data.user?.id,
+			});
+			if (!profileResult.success) {
+				setError(profileResult.error);
+				return;
+			}
+
+			// Only triggers if CONFIRM EMAIL option in Supabase is off (should
+			// be on by default).
+			if (data.session) {
+				router.push("/login");
+				await queryClient.invalidateQueries({
+					queryKey: profileKeys.currentUser(),
+				});
+			} else {
+				setSuccess(
+					"Account created! Check your email to confirm your account before logging in.",
+				);
+			}
+		},
+	});
+
+	const departmentOptions = (departments ?? []).map((d) => ({
+		value: d.department_id,
+		label: d.name,
+	}));
 
 	return (
-		<form onSubmit={handleSignUp} className="space-y-4">
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				void form.handleSubmit();
+			}}
+			className="space-y-4"
+		>
 			{/* First Name + Last Name */}
-			<div className="flex gap-3 ">
+			<div className="flex gap-3">
 				<div className="flex-1">
-					<Label
-						htmlFor="firstname"
-						className="mb-1.5"
-						required
-						error={!!fieldErrors.firstName}
-					>
-						First Name
-					</Label>
-					<Input
-						id="firstname"
-						type="text"
-						placeholder="John"
-						value={firstName}
-						onChange={(e) => setFirstName(e.target.value)}
-						className={fieldErrClass("firstName")}
-					/>
-					{fieldErrors.firstName && (
-						<p className="text-xs text-destructive mt-1">
-							{fieldErrors.firstName}
-						</p>
-					)}
+					<form.AppField name="firstName">
+						{(field) => (
+							<field.TextField
+								label="First Name"
+								required
+								placeholder="John"
+								autoComplete="given-name"
+							/>
+						)}
+					</form.AppField>
 				</div>
 				<div className="flex-1">
-					<Label
-						htmlFor="lastname"
-						className="mb-1.5"
-						required
-						error={!!fieldErrors.lastName}
-					>
-						Last Name
-					</Label>
-					<Input
-						id="lastname"
-						type="text"
-						placeholder="Cecil"
-						value={lastName}
-						onChange={(e) => setLastName(e.target.value)}
-						className={fieldErrClass("lastName")}
-					/>
-					{fieldErrors.lastName && (
-						<p className="text-xs text-destructive mt-1">
-							{fieldErrors.lastName}
-						</p>
-					)}
+					<form.AppField name="lastName">
+						{(field) => (
+							<field.TextField
+								label="Last Name"
+								required
+								placeholder="Cecil"
+								autoComplete="family-name"
+							/>
+						)}
+					</form.AppField>
 				</div>
 			</div>
 
 			{/* Work Email */}
-			<div>
-				<Label
-					htmlFor="email"
-					className="mb-1.5"
-					required
-					error={!!fieldErrors.email}
-				>
-					Work Email
-				</Label>
-				<Input
-					id="email"
-					type="email"
-					placeholder="name@company.com"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					className={fieldErrClass("email")}
-				/>
-				{fieldErrors.email && (
-					<p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>
+			<form.AppField name="email">
+				{(field) => (
+					<field.TextField
+						label="Work Email"
+						required
+						type="email"
+						autoComplete="email"
+						placeholder="name@company.com"
+					/>
 				)}
-			</div>
+			</form.AppField>
 
 			{/* Phone Number */}
-			<div>
-				<Label
-					htmlFor="phone"
-					className="mb-1.5"
-					required
-					error={!!fieldErrors.phone}
-				>
-					Phone Number
-				</Label>
-				<PhoneInput
-					value={phone}
-					onChange={(value) => setPhone(value ?? "")}
-					placeholder="+1 (555) 000-0000"
-				/>
-				{fieldErrors.phone && (
-					<p className="text-xs text-destructive mt-1">{fieldErrors.phone}</p>
+			<form.AppField name="phone">
+				{(field) => (
+					<field.PhoneField
+						label="Phone Number"
+						required
+						placeholder="+1 (555) 000-0000"
+					/>
 				)}
-			</div>
+			</form.AppField>
 
 			{/* Job Title + Department */}
 			<div className="flex gap-3">
 				<div className="flex-1">
-					<Label
-						htmlFor="jobtitle"
-						className="mb-1.5"
-						required
-						error={!!fieldErrors.jobTitle}
-					>
-						Job Title
-					</Label>
-					<Input
-						id="jobtitle"
-						type="text"
-						placeholder="e.g. Product Director"
-						value={jobTitle}
-						onChange={(e) => setJobTitle(e.target.value)}
-						className={fieldErrClass("jobTitle")}
-					/>
-					{fieldErrors.jobTitle && (
-						<p className="text-xs text-destructive mt-1">
-							{fieldErrors.jobTitle}
-						</p>
-					)}
+					<form.AppField name="jobTitle">
+						{(field) => (
+							<field.TextField
+								label="Job Title"
+								required
+								placeholder="e.g. Product Director"
+							/>
+						)}
+					</form.AppField>
 				</div>
 				<div className="flex-1">
-					<Label
-						htmlFor="department"
-						className="mb-1.5"
-						required
-						error={!!fieldErrors.department}
-					>
-						Department
-					</Label>
-					<Select
-						value={department}
-						onValueChange={(val) => setDepartment(val ?? "")}
-					>
-						<SelectTrigger
-							id="department"
-							className={`w-full ${
-								fieldErrors.department
-									? "border-red-400 focus-visible:ring-red-400"
-									: ""
-							}`}
-							aria-invalid={!!fieldErrors.department}
-						>
-							<SelectValue/>
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="Project Team">Project Team</SelectItem>
-							<SelectItem value="Project Owner">Project Owner</SelectItem>
-							{/* <SelectItem value="Finance Team">Finance Team</SelectItem> */}
-						</SelectContent>
-					</Select>
-					{fieldErrors.department && (
-						<p className="text-xs text-destructive mt-1">
-							{fieldErrors.department}
-						</p>
-					)}
+					<form.AppField name="department">
+						{(field) => (
+							<field.SelectField
+								label="Department"
+								required
+								placeholder="Select…"
+								options={departmentOptions}
+							/>
+						)}
+					</form.AppField>
 				</div>
 			</div>
 
 			{/* Password */}
-			<div>
-				<Label
-					htmlFor="password"
-					className="mb-1.5"
-					required
-					error={!!fieldErrors.password}
-				>
-					Password
-				</Label>
-				<PasswordInput
-					id="password"
-					placeholder="Create a password"
-					value={password}
-					onChange={(e) => setPassword(e.target.value)}
-					className={fieldErrClass("password")}
-				/>
-				{fieldErrors.password && (
-					<p className="text-xs text-destructive mt-1">
-						{fieldErrors.password}
-					</p>
+			<form.AppField name="password">
+				{(field) => (
+					<field.PasswordField
+						label="Password"
+						required
+						autoComplete="new-password"
+						placeholder="Create a password"
+					/>
 				)}
-			</div>
+			</form.AppField>
 
 			{/* Confirm Password */}
-			<div>
-				<Label
-					htmlFor="confirm-password"
-					className="mb-1.5"
-					required
-					error={!!fieldErrors.confirmPassword}
-				>
-					Confirm Password
-				</Label>
-				<PasswordInput
-					id="confirm-password"
-					placeholder="Confirm your password"
-					value={confirmPassword}
-					onChange={(e) => setConfirmPassword(e.target.value)}
-					className={fieldErrClass("confirmPassword")}
-				/>
-				{fieldErrors.confirmPassword && (
-					<p className="text-xs text-destructive mt-1">
-						{fieldErrors.confirmPassword}
-					</p>
+			<form.AppField name="confirmPassword">
+				{(field) => (
+					<field.PasswordField
+						label="Confirm Password"
+						required
+						autoComplete="new-password"
+						placeholder="Confirm your password"
+					/>
 				)}
-			</div>
+			</form.AppField>
 
 			{/* Error message */}
 			{error && (
 				<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
 					{error}
+				</p>
+			)}
+			{/* Success message */}
+			{success && (
+				<p
+					role="status"
+					className="text-sm text-green-800 bg-green-50 border border-green-200 rounded-md px-3 py-2"
+				>
+					{success}
 				</p>
 			)}
 			<div>
@@ -372,11 +284,15 @@ export function StaffSignupForm() {
 						</Link>
 					</p>
 				</div>
-				<Button type="submit" className="mt-2 w-full" disabled={loading}>
-					{loading ? "Creating account..." : "Join Workspace"}
-				</Button>
+				<form.AppForm>
+					<form.SubmitButton
+						className="mt-2 w-full"
+						pendingLabel="Creating account…"
+					>
+						Join Workspace
+					</form.SubmitButton>
+				</form.AppForm>
 			</div>
-
 
 			{/* OR divider */}
 			<div className="relative my-6">

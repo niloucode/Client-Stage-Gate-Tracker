@@ -82,6 +82,8 @@
 - [x] src/shared/form/fields/TextField.test.tsx
 - [x] src/shared/form/fields/DateTimeField.tsx
 - [x] src/shared/form/fields/DateTimeField.test.tsx
+- [ ] src/shared/form/fields/PasswordField.tsx
+- [ ] src/shared/form/fields/PasswordField.test.tsx
 - [x] src/shared/form/fields/PhoneField.tsx
 - [x] src/shared/form/fields/SelectField.tsx
 - [x] src/shared/form/fields/TextAreaField.tsx
@@ -151,6 +153,9 @@
 - [x] src/entities/tag/ui/TagBadge.tsx
 - [x] src/entities/client/index.ts
 - [x] src/entities/client/clientActions.ts
+- [ ] src/entities/client/clientActions.test.ts
+- [ ] src/shared/lib/inviteCode.ts
+- [ ] src/shared/lib/inviteCode.test.ts
 - [x] src/entities/client/queries.ts
 - [x] src/entities/comment/index.ts
 - [x] src/entities/comment/types.ts
@@ -164,15 +169,15 @@
 - [x] src/entities/contract/queries.ts
 - [x] src/entities/gate/gateActions.ts (deleted — slice had zero live consumers)
 - [x] src/entities/module/index.ts
-- [x] src/entities/module/types.ts
+- [x] src/entities/module/types.ts (deleted — merged into slice files)
 - [x] src/entities/module/moduleActions.ts
 - [x] src/entities/module/mutations.ts
-- [x] src/entities/module/queries.ts
+- [x] src/entities/module/queries.ts (deleted — merged into slice files)
 - [x] src/entities/phase/index.ts
-- [x] src/entities/phase/types.ts
+- [x] src/entities/phase/types.ts (deleted — merged into slice files)
 - [x] src/entities/phase/phaseActions.ts
 - [x] src/entities/phase/mutations.ts
-- [x] src/entities/phase/queries.ts
+- [x] src/entities/phase/queries.ts (deleted — merged into slice files)
 - [x] src/entities/phase/safeActions.ts
 - [x] src/entities/phase/safeActions.test.ts
 - [x] src/entities/project/index.ts
@@ -192,23 +197,24 @@
 - [x] src/entities/ticket/lib/dateRollup.test.ts
 - [x] src/entities/ticket/lib/logHistoryEvent.ts
 - [x] src/entities/workflow/index.ts
-- [x] src/entities/workflow/types.ts
+- [x] src/entities/workflow/types.ts (deleted — merged into slice files)
 - [x] src/entities/workflow/workflowActions.ts
 - [x] src/entities/workflow/mutations.ts
-- [x] src/entities/workflow/queries.ts
+- [x] src/entities/workflow/queries.ts (deleted — merged into slice files)
 
 ## 10. Features layer
 
-- [ ] src/features/auth/index.ts
-- [ ] src/features/auth/context/auth_provider.tsx
-- [ ] src/features/auth/ui/LoginForm.tsx
-- [ ] src/features/auth/ui/ClientSignupForm.tsx
-- [ ] src/features/auth/ui/StaffSignupForm.tsx
-- [ ] src/features/navigation/ui/index.ts
-- [ ] src/features/navigation/ui/TopNav.tsx
-- [ ] src/features/navigation/ui/AccountMenu.tsx
-- [ ] src/features/navigation/ui/Breadcrumbs.tsx
-- [ ] src/features/client-manager/ui/AddClientModal.tsx
+- [x] src/features/auth/index.ts
+- [x] src/features/auth/context/auth_provider.tsx
+- [x] src/features/auth/ui/LoginForm.tsx
+- [x] src/features/auth/ui/ClientSignupForm.tsx
+- [x] src/features/auth/ui/StaffSignupForm.tsx
+- [x] src/features/auth/auth-forms.interaction.test.tsx
+- [x] src/features/navigation/ui/index.ts
+- [x] src/features/navigation/ui/TopNav.tsx
+- [x] src/features/navigation/ui/AccountMenu.tsx
+- [x] src/features/navigation/ui/Breadcrumbs.tsx
+- [x] src/features/client-manager/ui/AddClientModal.tsx (deleted — superseded by ClientFormModal)
 - [ ] src/features/client-manager/ui/ClientFormModal.tsx
 - [ ] src/features/client-manager/ui/EditClientModal.tsx
 - [ ] src/features/client-manager/ui/ViewTeamMembersModal.tsx
@@ -223,8 +229,14 @@
 - [ ] src/features/contracts/ui/ExecuteAgreementCard.tsx
 - [ ] src/features/contracts/ui/ExecutedBanner.tsx
 - [ ] src/features/gate-overview/GateOverview.tsx
+- [ ] src/features/issue-reporting/model/issues.ts
 - [ ] src/features/issue-reporting/ui/IssueDashboard.tsx
 - [ ] src/features/issue-reporting/ui/IssueReportingModal.tsx
+- [ ] src/features/issue-reporting/ui/IssueTableModal.tsx
+- [ ] src/features/landing-dashboard/index.ts
+- [ ] src/features/landing-dashboard/ui/ActivitySparklines.tsx
+- [ ] src/features/landing-dashboard/ui/PendingContracts.tsx
+- [ ] src/features/landing-dashboard/ui/TicketsBoard.tsx
 - [ ] src/features/project-dashboard/index.ts
 - [ ] src/features/project-dashboard/ui/ProjectCard.tsx
 - [ ] src/features/project-dashboard/ui/ProjectDashboard.tsx
@@ -245,11 +257,12 @@
 - [ ] src/features/stage-editor/ui/PhaseStepper.tsx
 - [ ] src/features/stage-editor/ui/WorkflowsList.tsx
 - [ ] src/features/stage-editor/ui/modals/AddModule.tsx
-- [ ] src/features/stage-editor/ui/modals/AddPhase.tsx
+- [x] src/features/stage-editor/ui/modals/AddPhase.tsx (deleted — consolidated into PhaseModal.tsx)
 - [ ] src/features/stage-editor/ui/modals/AddWorkflow.tsx
 - [ ] src/features/stage-editor/ui/modals/EditModule.tsx
-- [ ] src/features/stage-editor/ui/modals/EditPhase.tsx
+- [x] src/features/stage-editor/ui/modals/EditPhase.tsx (deleted — consolidated into PhaseModal.tsx)
 - [ ] src/features/stage-editor/ui/modals/EditWorkflow.tsx
+- [ ] src/features/stage-editor/ui/modals/PhaseModal.tsx
 - [ ] src/features/tag-manager/index.ts
 - [ ] src/features/tag-manager/ui/TagFormModal.tsx
 - [ ] src/features/tag-manager/ui/TagListModal.tsx
@@ -287,17 +300,18 @@
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx
 - [ ] src/app/api/notifications/route.ts
 - [ ] src/app/api/webhooks/route.ts
-- [ ] src/app/dev/ui/page.tsx
+- [x] src/app/dev/ui/page.tsx (deleted)
 - [x] src/app/dev/views/page.tsx (deleted)
 
 ## 12. Tooling (independent scripts)
 
 - [ ] scripts/add-pg-trgm.mjs
+- [ ] scripts/prune-auth-models.mjs
 - [ ] scripts/seed-sort-keys.mjs
 - [ ] scripts/tokenize-colors.mjs
 - [ ] scripts/verify-sort-keys.mjs

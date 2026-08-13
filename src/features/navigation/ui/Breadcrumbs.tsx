@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 
 export interface BreadcrumbItem {
@@ -20,20 +21,20 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
 							</span>
 						)}
 						{item.href && !isLast ? (
-							<a
+							<Link
 								href={item.href}
 								className="text-gray-700 hover:text-brand-500 transition-colors"
 							>
 								{item.label}
-							</a>
+							</Link>
 						) : (
-							<span
+							<h4
 								className={
-									isLast ? "text-brand-500" : "text-gray-700"
+									isLast ? "text-brand-500!" : "text-gray-700!"
 								}
 							>
 								{item.label}
-							</span>
+							</h4>
 						)}
 					</span>
 				)

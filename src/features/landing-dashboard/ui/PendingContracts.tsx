@@ -58,7 +58,7 @@ const MOCK_EXTENDED_CONTRACTS: PendingContract[] = Array.from(
 function StatusBadge({ status }: { status: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+      <span className="h-2 w-2 shrink-0 rounded-sm bg-amber-500" />
       <span className="truncate text-xs font-normal text-amber-800 dark:text-amber-400">
         {status}
       </span>
@@ -87,7 +87,7 @@ export function PendingContracts({
     items.map((contract) => (
       <div
         key={contract.id}
-        className="grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-lg border border-brand-100 bg-muted/30 p-4 transition-colors"
+        className="grid grid-cols-[auto_1fr_auto] items-center gap-4 rounded-md border border-brand-100 bg-muted/30 p-4 transition-colors"
       >
         {/* Left: Document Icon */}
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border bg-background">
@@ -95,22 +95,22 @@ export function PendingContracts({
         </div>
 
         {/* Center: Fixed 3-Column Grid for consistent alignment */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.75fr_1fr_1fr] sm:items-center">
           {/* Document Name Column */}
-          <div className="flex flex-col min-w-0 pr-2">
+          <div className="flex flex-col min-w-0">
             <span className="text-[11px] font-normal uppercase text-muted-foreground">
               Document
             </span>
-            <h3
+            <h4
               className="truncate text-sm font-normal text-foreground"
               title={contract.documentName}
             >
               {contract.documentName}
-            </h3>
+            </h4>
           </div>
 
           {/* Project Name Column */}
-          <div className="flex flex-col min-w-0 pr-2">
+          <div className="flex flex-col min-w-0">
             <span className="text-[11px] font-normal uppercase text-muted-foreground">
               Project
             </span>
@@ -134,7 +134,7 @@ export function PendingContracts({
         {/* Right: Review & Sign Button */}
         <div className="flex items-center justify-end shrink-0 pl-2">
           <Button size="sm" onClick={contract.onReview}>
-            <span>Review and sign</span>
+            <span>Review and Sign</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -142,7 +142,7 @@ export function PendingContracts({
     ));
 
   return (
-    <Card className="m-0 flex w-full flex-col gap-0 overflow-hidden rounded-xl border border-brand-100 p-0 shadow-none">
+    <Card className="m-0 flex w-full flex-col gap-0 overflow-hidden rounded-md border border-brand-100 p-0 shadow-none">
       <Dialog>
         {/* Card Header */}
         <div className="flex items-center justify-between gap-3 border-b border-brand-100 bg-muted/30 px-6 py-4">
@@ -159,16 +159,16 @@ export function PendingContracts({
               type="button"
               className="text-xs font-normal underline-offset-2 hover:underline"
             >
-              <h4 className="text-brand-600 font-normal underline decoration-inherit">
+              <h4 className="hover:text-brand-600! font-normal underline decoration-inherit">
                 View All
               </h4>
             </button>
           </DialogTrigger>
         </div>
 
-        {/* Dashboard Preview List (First 3 items) */}
+        {/* Dashboard Preview List (First 5 items) */}
         <div className="flex flex-col gap-3 p-4">
-          {renderContractRows(contracts.slice(0, 3))}
+          {renderContractRows(contracts.slice(0, 5))}
         </div>
 
         {/* POPUP MODAL DIALOG WITH 10 ROWS & PAGINATION */}

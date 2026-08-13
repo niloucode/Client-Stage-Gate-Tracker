@@ -2,44 +2,29 @@
 
 import { useFieldContext } from "../contexts";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/shared/ui/PasswordInput";
 import { cn } from "@/lib/utils";
-import { formErrorToMessage } from "../errors";
+import { firstFieldError } from "./TextField";
 
-/**
- * First error message from a TanStack Form field (string, issue object,
- * Error, ...). Delegates to `formErrorToMessage` so all field modules share
- * one normalization path.
- */
-export function firstFieldError(
-	errors: readonly (string | { message?: string } | undefined)[],
-): string | undefined {
-	return formErrorToMessage(errors[0]) ?? undefined;
-}
-
-interface TextFieldProps {
+interface PasswordFieldProps {
 	label?: string;
 	required?: boolean;
 	placeholder?: string;
-	maxLength?: number;
 	autoComplete?: string;
 	className?: string;
-	type?: string;
 }
 
 /**
- * Shadcn-bound text input wired to a TanStack Form field via
- * `useFieldContext`. Render inside `form.AppField` children.
+ * PasswordInput (eye-toggle) bound to a TanStack Form string field.
+ * Render inside `form.AppField` children.
  */
-export function TextField({
+export function PasswordField({
 	label,
 	required,
 	placeholder,
-	maxLength,
 	autoComplete,
 	className,
-	type = "text",
-}: TextFieldProps) {
+}: PasswordFieldProps) {
 	const field = useFieldContext<string>();
 	const error = firstFieldError(field.state.meta.errors);
 
@@ -50,16 +35,14 @@ export function TextField({
 					{label}
 				</Label>
 			)}
-			<Input
+			<PasswordInput
 				id={field.name}
 				name={field.name}
-				type={type}
 				value={field.state.value}
 				onChange={(e) => field.handleChange(e.target.value)}
 				onBlur={field.handleBlur}
 				autoComplete={autoComplete}
 				placeholder={placeholder}
-				maxLength={maxLength}
 				aria-invalid={error ? true : undefined}
 			/>
 			{error && <p className="text-xs text-destructive">{error}</p>}

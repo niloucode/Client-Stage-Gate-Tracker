@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from "react"
 import { z } from "zod"
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen"
 import { getFieldErrors } from "@/shared/lib/zod"
-import { toDateTimeLocalInput } from "@/shared/lib/scheduling"
 import { FormInput } from "@/components/ui/forminput"
+import { DateTimePicker } from "@/components/ui/datetime-picker"
+import { Label } from "@/components/ui/label"
 import { createStage, updateStage } from "@/entities/stage/stageActions"
 import {
 	Dialog,
@@ -74,10 +75,6 @@ const emptyFormData: StageFormData = {
 
 type FieldErrors = Partial<Record<keyof StageFormData, string>>
 
-function toDateInput(date: Date | null): string {
-	return toDateTimeLocalInput(date)
-}
-
 export function StageModal({
 	isOpen,
 	stage,
@@ -100,10 +97,10 @@ export function StageModal({
 			return {
 				name: stage.name,
 				description: stage.description ?? "",
-				planStart: stage.planStart ?? null,
-				planEnd: stage.planEnd ?? null,
-				actualStart: stage.actualStart ?? null,
-				actualEnd: stage.actualEnd ?? null,
+				planStart: stage.planStart ? new Date(stage.planStart) : null,
+				planEnd: stage.planEnd ? new Date(stage.planEnd) : null,
+				actualStart: stage.actualStart ? new Date(stage.actualStart) : null,
+				actualEnd: stage.actualEnd ? new Date(stage.actualEnd) : null,
 			}
 		}
 		return emptyFormData
@@ -130,10 +127,10 @@ export function StageModal({
 					? {
 							name: stage.name,
 							description: stage.description ?? "",
-							planStart: stage.planStart ?? null,
-							planEnd: stage.planEnd ?? null,
-							actualStart: stage.actualStart ?? null,
-							actualEnd: stage.actualEnd ?? null,
+							planStart: stage.planStart ? new Date(stage.planStart) : null,
+							planEnd: stage.planEnd ? new Date(stage.planEnd) : null,
+							actualStart: stage.actualStart ? new Date(stage.actualStart) : null,
+							actualEnd: stage.actualEnd ? new Date(stage.actualEnd) : null,
 						}
 					: emptyFormData
 			)
@@ -265,37 +262,47 @@ export function StageModal({
 
 					{/* Planned Dates Section */}
 					<div className="flex gap-4">
-						<FormInput
-							variant="datetime-local"
-							label="Start Date"
-							type="datetime-local"
-							value={toDateInput(formData.planStart)}
-							error={fieldErrors.planStart}
-							containerClassName="flex-1"
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									planStart: e.target.value ? new Date(e.target.value) : null,
-								})
-							}
-							onClearError={() => clearFieldError("planStart")}
-						/>
+						<div className="flex flex-1 flex-col gap-1 min-w-0">
+							<Label error={!!fieldErrors.planStart}>Start Date</Label>
+							<DateTimePicker
+								value={formData.planStart ? new Date(formData.planStart) : undefined}
+								onChange={(date) => {
+									setFormData({
+										...formData,
+										planStart: date ?? null,
+									});
+									clearFieldError("planStart");
+								}}
+								placeholder="Pick start date"
+								className="h-9 text-xs"
+							/>
+							{fieldErrors.planStart && (
+								<p className="text-xs text-destructive">
+									{fieldErrors.planStart}
+								</p>
+							)}
+						</div>
 
-						<FormInput
-							variant="datetime-local"
-							label="Deadline Date"
-							type="datetime-local"
-							value={toDateInput(formData.planEnd)}
-							error={fieldErrors.planEnd}
-							containerClassName="flex-1"
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									planEnd: e.target.value ? new Date(e.target.value) : null,
-								})
-							}
-							onClearError={() => clearFieldError("planEnd")}
-						/>
+						<div className="flex flex-1 flex-col gap-1 min-w-0">
+							<Label error={!!fieldErrors.planEnd}>Deadline Date</Label>
+							<DateTimePicker
+								value={formData.planEnd ? new Date(formData.planEnd) : undefined}
+								onChange={(date) => {
+									setFormData({
+										...formData,
+										planEnd: date ?? null,
+									});
+									clearFieldError("planEnd");
+								}}
+								placeholder="Pick deadline date"
+								className="h-9 text-xs"
+							/>
+							{fieldErrors.planEnd && (
+								<p className="text-xs text-destructive">
+									{fieldErrors.planEnd}
+								</p>
+							)}
+						</div>
 					</div>
 
 					{serverError && (

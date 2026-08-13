@@ -458,17 +458,17 @@ export function TicketsBoard({
               type="button"
               className="text-xs font-normal underline-offset-2 hover:underline"
             >
-              <h4 className="text-brand-600 font-normal underline decoration-inherit">
+              <h4 className="hover:text-brand-600! font-normal underline decoration-inherit">
                 View All
               </h4>
             </button>
           </DialogTrigger>
         </div>
 
-        {/* Dashboard Preview Table (First 3 sorted items) */}
+        {/* Dashboard Preview Table (First 5 sorted items) */}
         <div className="m-0 p-0">
           {renderTableHeader(false)}
-          {renderTableRows(sortedTickets.slice(0, 3))}
+          {renderTableRows(sortedTickets.slice(0, 5))}
         </div>
 
         {/* POPUP MODAL DIALOG WITH 10 ROWS & PAGINATION */}

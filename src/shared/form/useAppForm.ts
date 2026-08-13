@@ -8,6 +8,7 @@ import { TextAreaField } from "./fields/TextAreaField";
 import { SelectField } from "./fields/SelectField";
 import { DateTimeField } from "./fields/DateTimeField";
 import { PhoneField } from "./fields/PhoneField";
+import { PasswordField } from "./fields/PasswordField";
 import { SubmitButton } from "./SubmitButton";
 
 /**
@@ -27,6 +28,7 @@ const fieldComponents = {
 	SelectField,
 	DateTimeField,
 	PhoneField,
+	PasswordField,
 };
 
 const formComponents = {

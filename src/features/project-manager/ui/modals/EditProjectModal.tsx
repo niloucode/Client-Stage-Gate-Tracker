@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { projectCreateSchema } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
-import { toDateTimeLocalInput } from "@/shared/lib/scheduling";
 import { clientSelectAll } from "@/entities/client/clientActions";
 import { FormInput } from "@/components/ui/forminput";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
 	Dialog,
 	DialogContent,
@@ -57,10 +57,6 @@ const emptyFormData: EditProjectFormData = {
 
 type FieldErrors = Partial<Record<keyof EditProjectFormData, string>>;
 
-function toDateInput(date: Date | null): string {
-	return toDateTimeLocalInput(date);
-}
-
 export function EditProjectModal({
 	isOpen,
 	project,
@@ -75,8 +71,8 @@ export function EditProjectModal({
 				name: project.name,
 				description: project.description ?? "",
 				client_id: project.client_id ?? "",
-				start_date: project.start_date ?? null,
-				deadline_date: project.deadline_date ?? null,
+				start_date: project.start_date ? new Date(project.start_date) : null,
+				deadline_date: project.deadline_date ? new Date(project.deadline_date) : null,
 			};
 		}
 		return emptyFormData;
@@ -114,8 +110,8 @@ export function EditProjectModal({
 						name: project.name,
 						description: project.description ?? "",
 						client_id: project.client_id ?? "",
-						start_date: project.start_date ?? null,
-						deadline_date: project.deadline_date ?? null,
+						start_date: project.start_date ? new Date(project.start_date) : null,
+						deadline_date: project.deadline_date ? new Date(project.deadline_date) : null,
 					}
 				: emptyFormData,
 		);
@@ -194,7 +190,6 @@ export function EditProjectModal({
 					/>
 
 					{/* Client Selection (Create Mode Only) */}
-					{/* Client Selection (Create Mode Only) */}
 					{!isEditMode && (
 						<div>
 							<div className="flex">
@@ -241,39 +236,45 @@ export function EditProjectModal({
 
 					{/* Dates Section */}
 					<div className="flex gap-4">
-						<FormInput
-							variant="datetime-local"
-							label="Start Date"
-							type="datetime-local"
-							value={toDateInput(formData.start_date)}
-							error={fieldErrors.start_date}
-							containerClassName="flex-1"
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									start_date: e.target.value ? new Date(e.target.value) : null,
-								})
-							}
-							onClearError={() => clearFieldError("start_date")}
-						/>
+						<div className="flex flex-1 flex-col gap-1">
+							<Label error={!!fieldErrors.start_date}>Start Date</Label>
+							<DateTimePicker
+								value={formData.start_date ?? undefined}
+								onChange={(date) => {
+									setFormData({
+										...formData,
+										start_date: date ?? null,
+									});
+									clearFieldError("start_date");
+								}}
+								placeholder="Pick start date"
+							/>
+							{fieldErrors.start_date && (
+								<p className="text-xs text-destructive">
+									{fieldErrors.start_date}
+								</p>
+							)}
+						</div>
 
-						<FormInput
-							variant="datetime-local"
-							label="Deadline Date"
-							type="datetime-local"
-							value={toDateInput(formData.deadline_date)}
-							error={fieldErrors.deadline_date}
-							containerClassName="flex-1"
-							onChange={(e) =>
-								setFormData({
-									...formData,
-									deadline_date: e.target.value
-										? new Date(e.target.value)
-										: null,
-								})
-							}
-							onClearError={() => clearFieldError("deadline_date")}
-						/>
+						<div className="flex flex-1 flex-col gap-1">
+							<Label error={!!fieldErrors.deadline_date}>Deadline Date</Label>
+							<DateTimePicker
+								value={formData.deadline_date ?? undefined}
+								onChange={(date) => {
+									setFormData({
+										...formData,
+										deadline_date: date ?? null,
+									});
+									clearFieldError("deadline_date");
+								}}
+								placeholder="Pick deadline date"
+							/>
+							{fieldErrors.deadline_date && (
+								<p className="text-xs text-destructive">
+									{fieldErrors.deadline_date}
+								</p>
+							)}
+						</div>
 					</div>
 				</div>
 				<DialogFooter>
