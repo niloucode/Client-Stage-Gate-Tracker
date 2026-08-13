@@ -7,7 +7,7 @@ import {
 	getProjectById,
 	getProjectMembers,
 	searchProfilesForProject,
-	selectProjectsByOwner,
+	selectProjectsForMember,
 } from "./projectActions";
 
 const projectQueryOptions = {
@@ -19,7 +19,7 @@ const projectQueryOptions = {
 	owned: () =>
 		queryOptions({
 			queryKey: [...projectKeys.lists(), "owned"],
-			queryFn: selectProjectsByOwner,
+			queryFn: selectProjectsForMember,
 		}),
 	detail: (projectId: string | null) =>
 		queryOptions({
@@ -63,6 +63,6 @@ export function useProfileSearch() {
 	return useQuery(projectQueryOptions.profileSearch());
 }
 
-export function useOwnedProjects() {
+export function useProjectsForMember() {
 	return useQuery(projectQueryOptions.owned());
 }

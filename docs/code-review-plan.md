@@ -205,6 +205,7 @@
 - [x] src/entities/project/projectActions.ts
 - [x] src/entities/project/mutations.ts
 - [x] src/entities/project/queries.ts
+- [x] src/entities/project/projectStatus.test.ts
 - [x] src/entities/stage/index.ts
 - [x] src/entities/stage/stageActions.ts
 - [x] src/entities/stage/queries.ts
@@ -285,14 +286,16 @@
 - [x] src/features/landing-dashboard/ui/PendingContracts.test.tsx
 - [x] src/features/landing-dashboard/ui/TicketsBoard.tsx
 - [x] src/features/landing-dashboard/ui/TicketsBoard.test.tsx
-- [ ] src/features/project-dashboard/index.ts
-- [ ] src/features/project-dashboard/ui/ProjectCard.tsx
-- [ ] src/features/project-dashboard/ui/ProjectDashboard.tsx
-- [ ] src/features/project-dashboard/ui/ProjectSection.tsx
-- [ ] src/features/project-manager/ui/modals/index.ts
-- [ ] src/features/project-manager/ui/modals/DeleteProjectModal.tsx
-- [ ] src/features/project-manager/ui/modals/EditProjectModal.tsx
-- [ ] src/features/project-manager/ui/modals/ManageMembersModal.tsx
+- [x] src/features/project-dashboard/index.ts
+- [x] src/features/project-dashboard/ui/ProjectCard.tsx
+- [x] src/features/project-dashboard/ui/ProjectCard.test.tsx
+- [x] src/features/project-dashboard/ui/ProjectDashboard.tsx
+- [x] src/features/project-dashboard/ui/ProjectSection.tsx
+- [x] src/features/project-dashboard/ui/modals/index.ts (moved from features/project-manager — merged 2026-08-14)
+- [x] src/features/project-dashboard/ui/modals/DeleteProjectModal.tsx (moved from features/project-manager — merged 2026-08-14)
+- [x] src/features/project-dashboard/ui/modals/EditProjectModal.tsx (moved from features/project-manager — merged 2026-08-14)
+- [x] src/features/project-dashboard/ui/modals/ManageMembersModal.tsx (moved from features/project-manager — merged 2026-08-14)
+- [x] src/features/project-manager/ (deleted — merged into features/project-dashboard)
 - [ ] src/features/project-structure/index.ts
 - [ ] src/features/project-structure/ui/ProjectStructure.tsx
 - [ ] src/features/project-structure/ui/StageModal.tsx

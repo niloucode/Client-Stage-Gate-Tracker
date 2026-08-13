@@ -19,8 +19,11 @@ const baseProject = z.object({
 		.optional()
 		.default(""),
 	client_id: z.uuid({ message: "Client ID is required" }),
-	start_date: z.date().optional().nullable(),
-	deadline_date: z.date().optional().nullable(),
+	// Project plan dates are REQUIRED (non-nullable): the DB columns
+	// plan_start_at/plan_end_at are NOT NULL and the user must always pick
+	// them — never fill them with new Date() fallbacks (Input Rules).
+	start_date: z.date({ message: "Start date is required" }),
+	deadline_date: z.date({ message: "Deadline date is required" }),
 });
 
 export const projectCreateSchema = baseProject.refine(

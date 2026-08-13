@@ -8,16 +8,17 @@ export {
 	searchProfilesForProject,
 	addProjectMember,
 	removeProjectMember,
-	selectProjectsByOwner,
+	selectProjectsForMember,
 } from "./projectActions";
 export type { ProjectStatus, ProjectWithStatus } from "./projectActions";
+export { computeProjectStatus, isProjectOwnerRole } from "./projectActions";
 
 export {
 	useProjects,
 	useProject,
 	useProjectMembers,
 	useProfileSearch,
-	useOwnedProjects,
+	useProjectsForMember,
 } from "./queries";
 
 export {

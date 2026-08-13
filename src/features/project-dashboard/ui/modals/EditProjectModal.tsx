@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
-import { projectCreateSchema } from "@/shared/schemas";
+import { projectCreateSchema, type ProjectCreateInput } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
-import { clientSelectAll } from "@/entities/client/clientActions";
+import { useClients } from "@/entities/client";
 import { FormInput } from "@/components/ui/forminput";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
@@ -25,7 +25,9 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 
-interface EditProjectFormData {
+// Internal form state: dates stay nullable while picking; the submit payload
+// (ProjectCreateInput) is the schema-validated, non-nullable shape.
+interface EditProjectFormState {
 	name: string;
 	description: string;
 	client_id: string;
@@ -44,10 +46,10 @@ interface EditProjectModalProps {
 		deadline_date?: Date | null;
 	} | null; // null = "Add" mode
 	onClose: () => void;
-	onSubmit: (data: EditProjectFormData) => void;
+	onSubmit: (data: ProjectCreateInput) => void;
 }
 
-const emptyFormData: EditProjectFormData = {
+const emptyFormData: EditProjectFormState = {
 	name: "",
 	description: "",
 	client_id: "",
@@ -55,7 +57,7 @@ const emptyFormData: EditProjectFormData = {
 	deadline_date: null,
 };
 
-type FieldErrors = Partial<Record<keyof EditProjectFormData, string>>;
+type FieldErrors = Partial<Record<keyof EditProjectFormState, string>>;
 
 export function EditProjectModal({
 	isOpen,
@@ -65,41 +67,25 @@ export function EditProjectModal({
 }: EditProjectModalProps) {
 	const isEditMode = project !== null;
 
-	const getInitialFormData = (): EditProjectFormData => {
+	const getInitialFormData = (): EditProjectFormState => {
 		if (project) {
 			return {
 				name: project.name,
 				description: project.description ?? "",
 				client_id: project.client_id ?? "",
 				start_date: project.start_date ? new Date(project.start_date) : null,
-				deadline_date: project.deadline_date ? new Date(project.deadline_date) : null,
+				deadline_date: project.deadline_date
+					? new Date(project.deadline_date)
+					: null,
 			};
 		}
 		return emptyFormData;
 	};
 
 	const [formData, setFormData] =
-		useState<EditProjectFormData>(getInitialFormData);
+		useState<EditProjectFormState>(getInitialFormData);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-	const [clients, setClients] = useState<
-		Awaited<ReturnType<typeof clientSelectAll>>
-	>([]);
-	const mountedRef = useRef(true);
-
-	useEffect(() => {
-		mountedRef.current = true;
-		return () => {
-			mountedRef.current = false;
-		};
-	}, []);
-
-	useEffect(() => {
-		clientSelectAll()
-			.then((data) => {
-				if (mountedRef.current) setClients(data);
-			})
-			.catch((err) => console.error("Failed to load clients", err));
-	}, []);
+	const { data: clients } = useClients();
 
 	// Reset the form whenever the modal opens (deferred a frame so the
 	// dialog can finish mounting before controlled inputs are reset).
@@ -110,8 +96,12 @@ export function EditProjectModal({
 						name: project.name,
 						description: project.description ?? "",
 						client_id: project.client_id ?? "",
-						start_date: project.start_date ? new Date(project.start_date) : null,
-						deadline_date: project.deadline_date ? new Date(project.deadline_date) : null,
+						start_date: project.start_date
+							? new Date(project.start_date)
+							: null,
+						deadline_date: project.deadline_date
+							? new Date(project.deadline_date)
+							: null,
 					}
 				: emptyFormData,
 		);
@@ -126,7 +116,7 @@ export function EditProjectModal({
 		onClose();
 	};
 
-	const clearFieldError = (field: keyof EditProjectFormData) => {
+	const clearFieldError = (field: keyof EditProjectFormState) => {
 		if (fieldErrors[field]) {
 			setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
 		}
@@ -141,7 +131,8 @@ export function EditProjectModal({
 		}
 
 		setFieldErrors({});
-		onSubmit(formData);
+		// result.data is the schema-validated, non-nullable input shape.
+		onSubmit(result.data);
 	};
 
 	return (
@@ -218,13 +209,14 @@ export function EditProjectModal({
 								>
 									<SelectValue placeholder="Select client...">
 										{
-											clients.find((c) => c.client_id === formData.client_id)
-												?.client_name
+											(clients ?? []).find(
+												(c) => c.client_id === formData.client_id,
+											)?.client_name
 										}
 									</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
-									{clients.map((client) => (
+									{(clients ?? []).map((client) => (
 										<SelectItem key={client.client_id} value={client.client_id}>
 											{client.client_name}
 										</SelectItem>

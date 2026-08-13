@@ -2,10 +2,71 @@ import { describe, expect, it } from "vitest";
 import {
 	moduleCreateSchema,
 	phaseCreateSchema,
+	projectCreateSchema,
 	workflowCreateSchema,
 } from "./project";
 
 const d = (iso: string) => new Date(iso);
+
+describe("projectCreateSchema (required plan dates, Input Rules)", () => {
+	it("accepts valid start_date and deadline_date", () => {
+		const result = projectCreateSchema.safeParse({
+			name: "Portal",
+			description: "",
+			client_id: "123e4567-e89b-12d3-a456-426614174000",
+			start_date: d("2024-01-01T00:00:00Z"),
+			deadline_date: d("2024-06-30T00:00:00Z"),
+		});
+		if (!result.success) {
+			expect(result.error.issues).toEqual([]);
+		}
+		expect(result.success).toBe(true);
+	});
+
+	it("rejects a missing start_date (undefined)", () => {
+		const result = projectCreateSchema.safeParse({
+			name: "Portal",
+			client_id: "123e4567-e89b-12d3-a456-426614174000",
+			deadline_date: d("2024-06-30T00:00:00Z"),
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(
+				result.error.issues.some((i) => i.path.includes("start_date")),
+			).toBe(true);
+		}
+	});
+
+	it("rejects a null deadline_date", () => {
+		const result = projectCreateSchema.safeParse({
+			name: "Portal",
+			client_id: "123e4567-e89b-12d3-a456-426614174000",
+			start_date: d("2024-01-01T00:00:00Z"),
+			deadline_date: null,
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(
+				result.error.issues.some((i) => i.path.includes("deadline_date")),
+			).toBe(true);
+		}
+	});
+
+	it("rejects start_date after deadline_date", () => {
+		const result = projectCreateSchema.safeParse({
+			name: "Portal",
+			client_id: "123e4567-e89b-12d3-a456-426614174000",
+			start_date: d("2024-06-30T00:00:00Z"),
+			deadline_date: d("2024-01-01T00:00:00Z"),
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(
+				result.error.issues.some((i) => i.path.includes("start_date")),
+			).toBe(true);
+		}
+	});
+});
 
 describe("moduleCreateSchema (canonical 4-date vocabulary, Task 3.1)", () => {
 	it("accepts planStart before planEnd", () => {

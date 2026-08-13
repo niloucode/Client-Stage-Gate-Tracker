@@ -3,7 +3,13 @@
 import Link from "next/link";
 import type { ProjectWithStatus } from "@/entities/project";
 import { format } from "date-fns";
-import { Calendar, EllipsisVertical, Pencil, Users, Trash2 } from "lucide-react";
+import {
+	Calendar,
+	EllipsisVertical,
+	Pencil,
+	Users,
+	Trash2,
+} from "lucide-react";
 
 import {
 	DropdownMenu,
@@ -16,6 +22,8 @@ import {
 interface ProjectCardProps {
 	project: ProjectWithStatus;
 	href?: string;
+	/** Renders the edit/members/delete ellipsis menu — Project Owners only. */
+	isOwner?: boolean;
 	onEdit: () => void;
 	onManageMembers: () => void;
 	onDelete: () => void;
@@ -31,6 +39,7 @@ function formatProjectDate(date: Date | null | undefined): string {
 export function ProjectCard({
 	project,
 	href,
+	isOwner = false,
 	onEdit,
 	onManageMembers,
 	onDelete,
@@ -52,8 +61,7 @@ export function ProjectCard({
 	const targetHref = href ?? `/projects/${project.project_id}`;
 
 	const endDate =
-		project.project_status === "PENDING" ||
-		project.project_status === "ACTIVE"
+		project.project_status === "PENDING" || project.project_status === "ACTIVE"
 			? project.deadline_date
 				? new Date(project.deadline_date)
 				: undefined
@@ -111,57 +119,57 @@ export function ProjectCard({
 					{/* Date 2 */}
 					<div className="flex items-center gap-1.5 min-w-0">
 						<Calendar size={13} className="text-slate-400 shrink-0" />
-						<span className="truncate">
-							{formatProjectDate(endDate)}
-						</span>
+						<span className="truncate">{formatProjectDate(endDate)}</span>
 					</div>
 				</div>
 
-				{/* Menu Ellipsis — bottom right */}
-				<div
-					className="shrink-0 ml-2"
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-					}}
-				>
-					<DropdownMenu>
-						<DropdownMenuTrigger className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-[popup-open]:bg-slate-100">
-							<EllipsisVertical size={16} />
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-56">
-							<DropdownMenuItem
-								onClick={(e) => {
-									e.stopPropagation();
-									onEdit();
-								}}
-							>
-								<Pencil size={16} />
-								Edit project details
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={(e) => {
-									e.stopPropagation();
-									onManageMembers();
-								}}
-							>
-								<Users size={16} />
-								Manage project members
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								onClick={(e) => {
-									e.stopPropagation();
-									onDelete();
-								}}
-								className="text-destructive focus:text-destructive"
-							>
-								<Trash2 size={16} />
-								Delete Project
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-				</div>
+				{/* Menu Ellipsis — bottom right, Project Owners only */}
+				{isOwner && (
+					<div
+						className="shrink-0 ml-2"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+					>
+						<DropdownMenu>
+							<DropdownMenuTrigger className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-[popup-open]:bg-slate-100">
+								<EllipsisVertical size={16} />
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-56">
+								<DropdownMenuItem
+									onClick={(e) => {
+										e.stopPropagation();
+										onEdit();
+									}}
+								>
+									<Pencil size={16} />
+									Edit project details
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={(e) => {
+										e.stopPropagation();
+										onManageMembers();
+									}}
+								>
+									<Users size={16} />
+									Manage project members
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									onClick={(e) => {
+										e.stopPropagation();
+										onDelete();
+									}}
+									className="text-destructive focus:text-destructive"
+								>
+									<Trash2 size={16} />
+									Delete Project
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+				)}
 			</div>
 		</Link>
 	);

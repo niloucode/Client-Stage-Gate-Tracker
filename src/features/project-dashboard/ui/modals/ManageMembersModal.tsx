@@ -7,8 +7,8 @@ import {
 	useProjectMembers,
 	useAddProjectMember,
 	useRemoveProjectMember,
+	searchProfilesForProject,
 } from "@/entities/project";
-import { searchProfilesForProject } from "@/entities/project/projectActions";
 import { departmentBadgeStyle } from "@/shared/lib/colors";
 import { LucideSearch, X, UserPlus, Check } from "lucide-react";
 import { toast } from "@/components/ui/toast";
@@ -83,16 +83,8 @@ export function ManageMembersModal({
 		};
 	}, []);
 
-	// Automatically open dropdown when searchQuery is non-empty
-	useEffect(() => {
-		if (searchQuery.trim().length > 0) {
-			setIsDropdownOpen(true);
-		} else {
-			setIsDropdownOpen(false);
-		}
-	}, [searchQuery]);
-
-	// Close search results when clicking outside
+	// Dropdown visibility follows the query, except when the user clicks
+	// outside (handleClickOutside closes it while the query stays).
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
 			if (
@@ -143,7 +135,11 @@ export function ManageMembersModal({
 			roleName,
 		});
 		if (!result.success) {
-			alert(result.error ?? "Failed to add member");
+			toast.add({
+				title: "Failed to add member",
+				description: result.error ?? "Failed to add member",
+				type: "error",
+			});
 			return;
 		}
 		// Retain search input, results list, and open state.
@@ -208,6 +204,7 @@ export function ManageMembersModal({
 								}}
 								onChange={(e) => {
 									setSearchQuery(e.target.value);
+									setIsDropdownOpen(e.target.value.trim().length > 0);
 									debouncedSearch(e.target.value);
 								}}
 								placeholder="Search for people to add"
