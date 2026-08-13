@@ -29,9 +29,9 @@ export default function ClientSignupPage() {
 				{/* Form */}
 				<div className="w-full bg-neutral-surface rounded-md p-6 border border-brand-100 max-w-[380px] mx-auto my-auto">
 					<div className="mb-7">
-						<h1 className="text-[22px] font-semibold text-gray-900 leading-snug">
+						<h2>
 							Register your company
-						</h1>
+						</h2>
 					</div>
 					<ClientSignupForm />
 				</div>
