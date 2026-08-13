@@ -1,11 +1,6 @@
 "use client";
 
-import {
-	createContext,
-	useContext,
-	useEffect,
-	type ReactNode,
-} from "react";
+import { createContext, useContext, useEffect, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrentUser } from "@/entities/profile";
@@ -23,7 +18,7 @@ const DEPARTMENT_IDS = {
 // TEMPORARY redirect target: project owners/team land on the existing
 // ProjectDashboard feature (/projects) until the Landing Dashboard
 // (/dashboard) is built — then flip this to "/dashboard".
-const DEFAULT_PROJECT_REDIRECT = "/projects";
+const DEFAULT_PROJECT_REDIRECT = "/dashboard";
 
 const AUTH_PAGES = ["/login", "/signup/staff", "/signup/client", "/"] as const;
 
@@ -34,15 +29,15 @@ interface prop {
 }
 
 interface AuthContextValue {
-  user: ProfileType | null;
-  logout: () => Promise<void>; // or () => void if synchronous
-  isLoading: boolean;
+	user: ProfileType | null;
+	logout: () => Promise<void>; // or () => void if synchronous
+	isLoading: boolean;
 }
 
 const auth_context = createContext<AuthContextValue>({
-  user: null,
-  logout: async () => {}, // dummy function so consumer hooks never run into null checks
-  isLoading: true,
+	user: null,
+	logout: async () => {}, // dummy function so consumer hooks never run into null checks
+	isLoading: true,
 });
 
 export function AuthProvider({ children }: prop) {
@@ -53,20 +48,20 @@ export function AuthProvider({ children }: prop) {
 	const pathname = usePathname();
 
 	const logout = async () => {
-        try {
-            // 1. Sign out from Supabase (clears local auth tokens)
-            await supabase.auth.signOut();
-            
-            // 2. Clear TanStack Query cache so stale user/profile data is wiped immediately
-            queryClient.clear();
+		try {
+			// 1. Sign out from Supabase (clears local auth tokens)
+			await supabase.auth.signOut();
 
-            // 3. Redirect user to login page
-            router.push("/login");
-            router.refresh();
-        } catch (error) {
-            console.error("Error during logout:", error);
-        }
-    };
+			// 2. Clear TanStack Query cache so stale user/profile data is wiped immediately
+			queryClient.clear();
+
+			// 3. Redirect user to login page
+			router.push("/login");
+			router.refresh();
+		} catch (error) {
+			console.error("Error during logout:", error);
+		}
+	};
 
 	// Keep the subscription for cache invalidation only. The actual
 	// post-login redirect is a state-driven effect below, so the profile is
