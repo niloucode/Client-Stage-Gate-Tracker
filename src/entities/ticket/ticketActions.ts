@@ -405,3 +405,33 @@ export async function selectTicketHistory(ticketId: string) {
 		},
 	});
 }
+
+export async function updateTicketParent(
+	ticketId: string,
+	parentId: string | null,
+	performed_by?: string,
+) {
+	z.uuid().parse(ticketId);
+	if (parentId !== null) z.uuid().parse(parentId);
+
+	const projectId = await resolveTicketProject(ticketId);
+	if (!projectId) return { success: false, error: "Ticket not found." };
+	
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) throw new Error(auth.error);
+
+	return await prisma.$transaction(async (tx) => {
+		const updated = await tx.tickets.update({
+			where: { ticket_id: ticketId },
+			data: { parent_id: parentId },
+			include: ticketInclude,
+		});
+
+		// Timeline rollup: changing a subtask might affect workflow boundaries
+		if (updated.workflow_id) {
+			await rollupTicketAncestors(tx, updated.workflow_id);
+		}
+
+		return updated;
+	});
+}
