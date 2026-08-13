@@ -166,9 +166,9 @@ export function PendingContracts({
           </DialogTrigger>
         </div>
 
-        {/* Dashboard Preview List (First 3 items) */}
+        {/* Dashboard Preview List (First 5 items) */}
         <div className="flex flex-col gap-3 p-4">
-          {renderContractRows(contracts.slice(0, 3))}
+          {renderContractRows(contracts.slice(0, 5))}
         </div>
 
         {/* POPUP MODAL DIALOG WITH 10 ROWS & PAGINATION */}

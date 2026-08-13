@@ -465,10 +465,10 @@ export function TicketsBoard({
           </DialogTrigger>
         </div>
 
-        {/* Dashboard Preview Table (First 3 sorted items) */}
+        {/* Dashboard Preview Table (First 5 sorted items) */}
         <div className="m-0 p-0">
           {renderTableHeader(false)}
-          {renderTableRows(sortedTickets.slice(0, 3))}
+          {renderTableRows(sortedTickets.slice(0, 5))}
         </div>
 
         {/* POPUP MODAL DIALOG WITH 10 ROWS & PAGINATION */}

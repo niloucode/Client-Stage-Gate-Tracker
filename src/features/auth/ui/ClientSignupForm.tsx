@@ -132,7 +132,7 @@ export function ClientSignupForm() {
 				label="Billing Address"
 				required
 				rows={4}
-				maxLength={40}
+				maxLength={50}
 				placeholder="8960 Evernight Terrace, Mondstadt, Oregon, USA"
 				value={billingAddress}
 				error={fieldErrors.billing_address}
