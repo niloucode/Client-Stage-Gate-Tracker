@@ -52,7 +52,7 @@ export default function TagListModal({
 				) : (
 					<table className="w-full border-collapse text-left">
 						{/* Sticky Header */}
-						<thead className="sticky top-0 z-10 bg-brand-50 border-b-2 border-brand-100 text-xs font-semibold text-neutral-border">
+						<thead className="sticky top-0 z-10 bg-neutral-subtle border-b-2 border-brand-100 text-xs font-semibold text-neutral-border">
 							<tr>
 								<th scope="col" className="px-4 py-2.5 w-[30%]">
 									NAME
