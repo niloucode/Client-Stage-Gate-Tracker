@@ -56,6 +56,7 @@ export default function TicketModalEdit({
       >
         {activeTicket && (
           <TicketEditor
+            key={activeTicket.ticket_id}
             initialTicket={activeTicket}
             onClose={onClose}
             {...rest}

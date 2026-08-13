@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { TagBadge } from "@/entities/tag/ui/TagBadge";
+import { Badge } from "@/components/ui/badge";
 
 import {
   DropdownMenu,
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Pencil, ChevronDown, Plus, Search, Bug } from "lucide-react";
+import { Pencil, ChevronDown, Plus, Search, Bug, AlertCircle } from "lucide-react";
 
 // eslint-disable-next-line boundaries/dependencies
 import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
@@ -64,44 +65,83 @@ export function SubtaskSelectionModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base font-normal">
-            <span>Add Subtask</span>
-            <span className="ml-2 rounded-full text-md bg-brand-50 px-2.5 py-0.5 text-[10px] font-normal text-brand-600">
-              {availableTickets?.length ?? 0}
-            </span>
-          </DialogTitle>
+      {/* Added flex flex-col to ensure the scrollable list doesn't collapse */}
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0 border-none bg-card rounded-md overflow-hidden shadow-2xl">
+        
+        {/* Hidden DialogHeader for accessibility (Radix UI expectation) */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>Add Subtask</DialogTitle>
         </DialogHeader>
-        <div className="relative flex items-center w-full px-6 pb-3 border-b border-brand-100/50">
-          <Search className="absolute left-9 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <Input
-            type="text"
-            placeholder="Search tickets..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9 text-sm border-brand-100 focus-visible:ring-brand-500"
-          />
+
+        {/* Box Header - Tight padding level with the search bar */}
+        <div className="px-5 py-3 pr-12 border-b border-border flex items-center justify-between flex-wrap gap-3 bg-card shrink-0">
+          {/* Left side: Title and Badge */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h3 className="text-base font-bold capitalize text-foreground">
+              Add Subtask
+            </h3>
+            <Badge
+              variant="secondary"
+              className="bg-brand-50 text-brand-500 dark:bg-brand-900 dark:text-brand-100 font-semibold rounded-full px-2.5 py-0.5 text-xs border-none"
+            >
+              {filteredTickets.length} / {availableTickets?.length ?? 0}
+            </Badge>
+          </div>
+
+          {/* Right side: Search Bar */}
+          <div className="flex-1 min-w-[200px] max-w-sm flex items-center gap-1.5 border border-border bg-card rounded-md px-2.5 h-8 text-xs font-medium text-foreground hover:bg-neutral-subtle transition-colors focus-within:ring-1 focus-within:ring-brand-500">
+            <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <input
+              type="text"
+              placeholder="Search tickets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent text-xs font-medium text-foreground focus:outline-none w-full placeholder:text-muted-foreground/70"
+            />
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+
+        {/* List Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2.5 bg-card">
           {filteredTickets.length === 0 ? (
-            <div className="py-10 text-center text-muted-foreground">
-              <p className="text-sm">No available tickets.</p>
-              <p className="text-xs mt-1">All tickets are either already subtasks or finished.</p>
+            <div className="py-10 text-center text-muted-foreground flex flex-col items-center justify-center space-y-2">
+              <AlertCircle className="w-8 h-8 text-muted-foreground/40" />
+              <p className="text-sm">No available tickets match your search.</p>
+              <p className="text-xs mt-1">All other tickets are either subtasks already or finished.</p>
             </div>
           ) : (
             filteredTickets.map((ticket) => (
-              <div key={ticket.ticket_id} className="flex items-center justify-between p-3 border border-brand-100 rounded-md hover:bg-brand-50/30 transition-colors">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">{ticket.name}</p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-xs text-muted-foreground">
-                      {ticket.plan_start_at ? new Date(ticket.plan_start_at).toLocaleDateString() : "No start"}
-                    </span>
-                    <StatusBadge status={ticket.status} />
+              <div
+                key={ticket.ticket_id}
+                className="flex items-center justify-between p-3.5 bg-card border border-border rounded-md hover:border-brand-200 hover:bg-brand-10/50 cursor-pointer transition-all group"
+                onClick={() => { onSelectSubtask(ticket); onOpenChange(false); }}
+              >
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="space-y-0.5 min-w-0">
+                    <h4 className="text-sm font-bold text-foreground truncate group-hover:text-brand-500 transition-colors">
+                      {ticket.name}
+                    </h4>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground truncate mt-1">
+                      <span>
+                        {ticket.plan_start_at ? new Date(ticket.plan_start_at).toLocaleDateString() : "No start date"}
+                      </span>
+                      <span>•</span>
+                      <StatusBadge status={ticket.status} />
+                    </div>
                   </div>
                 </div>
-                <Button size="sm" onClick={() => { onSelectSubtask(ticket); onOpenChange(false); }} className="ml-3 shrink-0">Add</Button>
+
+                <div className="flex items-center gap-2 shrink-0 ml-4">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 text-xs font-semibold text-brand-600 border-brand-200 hover:bg-brand-50 hover:text-brand-700 rounded-md pointer-events-none"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </Button>
+                </div>
               </div>
             ))
           )}
