@@ -405,9 +405,9 @@
 - [ ] **DB migration** — `Tickets.plan_start_at` / `Tickets.plan_end_at` are
       currently NOT NULL; make them nullable so optional ticket dates can be
       stored. Rollback = revert the migration.
-- [ ] Stage-editor modals (`features/stage-editor/ui/PhaseModals.tsx`,
+- [ ] Stage-editor modals (`src/features/stage-editor/ui/modals/PhaseModals.tsx`,
       `ModuleModals.tsx`, `WorkflowModals.tsx`; stage form at
-      `features/project-structure/ui/StageModal.tsx`) — required date UI
+      `src/features/project-structure/ui/StageModal.tsx`) — required date UI
       (labels, validation) for the now-required plan dates.
 - [ ] Tickets form/editor (`features/ticket-board`) — dates must be
       omitable; remove any client-side "deadline required" enforcement.
