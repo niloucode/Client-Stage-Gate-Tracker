@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { Phase } from "../types";
 import { ConfirmDeleteModal } from "@/shared/ui";
-import { PhaseModal } from "@/features/stage-editor/ui/modals/PhaseModal";
+import { AddPhase, EditPhase } from "@/features/stage-editor/ui/modals/PhaseModals";
 import {
 	useDeletePhase,
 	useReorderPhase,
@@ -24,16 +24,16 @@ import {
 	ChevronRight,
 } from "lucide-react";
 
-interface PhaseStepperProps {
+interface PhaseCardProps {
 	phases: Phase[];
 	stageId: string;
 	activePhase: number | null;
 	setActivePhase: (phase: number | null) => void;
 }
 
-export const PhaseStepper = forwardRef<
+export const PhaseCard = forwardRef<
 	{ openCreateModal: () => void },
-	PhaseStepperProps
+	PhaseCardProps
 >(({ phases, stageId, activePhase, setActivePhase }, ref) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [phaseToEdit, setPhaseToEdit] = useState<Phase | null>(null);
@@ -288,15 +288,15 @@ export const PhaseStepper = forwardRef<
 														{/* Node Circle matching Sequence design */}
 														<div
 															className={`
-                                                                relative flex h-13 w-13 items-center justify-center rounded-full text-sm font-bold border-2 transition-all shadow-xs
-                                                                ${
-																																	isActive
-																																		? "border-brand-600 bg-brand-600 text-white ring-4 ring-brand-100"
-																																		: isCompleted
-																																			? "border-brand-500 bg-brand-500 text-white group-hover:border-brand-600 group-hover:bg-brand-600"
-																																			: "border-warm-gray-200 bg-neutral-subtle text-neutral-border group-hover:border-brand-500 group-hover:bg-brand-50 group-hover:text-brand-600"
-																																}
-                                                            `}
+																	relative flex h-13 w-13 items-center justify-center rounded-full text-sm font-bold border-2 transition-all shadow-xs
+																	${
+																		isActive
+																			? "border-brand-600 bg-brand-600 text-white ring-4 ring-brand-100"
+																			: isCompleted
+																				? "border-brand-500 bg-brand-500 text-white group-hover:border-brand-600 group-hover:bg-brand-600"
+																				: "border-warm-gray-200 bg-neutral-subtle text-neutral-border group-hover:border-brand-500 group-hover:bg-brand-50 group-hover:text-brand-600"
+																	}
+															`}
 														>
 															<span>{phase.number ?? ""}</span>
 														</div>
@@ -403,7 +403,7 @@ export const PhaseStepper = forwardRef<
 						</div>
 
 						{/* Right: 2x2 Date Picker Grid */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full lg:max-w-md shrink-0">
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-1/2 shrink-0">
 							{/* Planned Start */}
 							<div className="space-y-1.5">
 								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
@@ -413,7 +413,6 @@ export const PhaseStepper = forwardRef<
 									value={currentPhase.planStart ? new Date(currentPhase.planStart) : undefined}
 									onChange={(date) => handleUpdatePlannedDate("planStart", date)}
 									placeholder="Pick planned start"
-									className="h-9 text-xs"
 								/>
 							</div>
 
@@ -426,7 +425,6 @@ export const PhaseStepper = forwardRef<
 									value={currentPhase.planEnd ? new Date(currentPhase.planEnd) : undefined}
 									onChange={(date) => handleUpdatePlannedDate("planEnd", date)}
 									placeholder="Pick planned end"
-									className="h-9 text-xs"
 								/>
 							</div>
 
@@ -439,7 +437,6 @@ export const PhaseStepper = forwardRef<
 									value={currentPhase.actualStart ? new Date(currentPhase.actualStart) : undefined}
 									disabled
 									placeholder="Not started yet"
-									className="h-9 text-xs opacity-75"
 								/>
 							</div>
 
@@ -452,7 +449,6 @@ export const PhaseStepper = forwardRef<
 									value={currentPhase.actualEnd ? new Date(currentPhase.actualEnd) : undefined}
 									disabled
 									placeholder="Not finished yet"
-									className="h-9 text-xs opacity-75"
 								/>
 							</div>
 						</div>
@@ -460,16 +456,27 @@ export const PhaseStepper = forwardRef<
 				)}
 			</div>
 
-			{/* Phase Modal (Handles both Add & Edit modes) */}
-			<PhaseModal
-				isOpen={isModalOpen}
-				phase={phaseToEdit}
-				stageId={stageId}
-				onClose={() => {
-					setIsModalOpen(false);
-					setPhaseToEdit(null);
-				}}
-			/>
+			{/* Phase Modals using AddPhase and EditPhase aliases */}
+			{phaseToEdit ? (
+				<EditPhase
+					isOpen={isModalOpen}
+					phase={phaseToEdit}
+					stageId={stageId}
+					onClose={() => {
+						setIsModalOpen(false);
+						setPhaseToEdit(null);
+					}}
+				/>
+			) : (
+				<AddPhase
+					isOpen={isModalOpen}
+					stageId={stageId}
+					onClose={() => {
+						setIsModalOpen(false);
+						setPhaseToEdit(null);
+					}}
+				/>
+			)}
 
 			{/* Delete Confirmation Modal */}
 			<ConfirmDeleteModal
@@ -485,4 +492,4 @@ export const PhaseStepper = forwardRef<
 	);
 });
 
-PhaseStepper.displayName = "PhaseStepper";
+PhaseCard.displayName = "PhaseCard";

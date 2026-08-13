@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	type ReactNode,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrentUser } from "@/entities/profile";
@@ -10,58 +18,64 @@ import { useRouter, usePathname } from "next/navigation";
 
 // ── Route constants ──────────────────────────────────────────────────────────
 
-const DEPARTMENT_IDS = {
-	PROJECT_TEAM: "22e9bc4d-394d-4ed5-abff-9e3a06a385aa",
-	PROJECT_OWNER: "527ac29d-a48c-4b03-a3b9-71f7a66d425f",
-} as const;
-
-// TEMPORARY redirect target: project owners/team land on the existing
-// ProjectDashboard feature (/projects) until the Landing Dashboard
-// (/dashboard) is built — then flip this to "/dashboard".
 const DEFAULT_PROJECT_REDIRECT = "/dashboard";
 
 const AUTH_PAGES = ["/login", "/signup/staff", "/signup/client", "/"] as const;
 
 // ── Context ──────────────────────────────────────────────────────────────────
 
-interface prop {
+interface AuthProviderProps {
 	children: ReactNode;
 }
 
 interface AuthContextValue {
 	user: ProfileType | null;
-	logout: () => Promise<void>; // or () => void if synchronous
+	logout: () => Promise<void>;
 	isLoading: boolean;
 }
 
 const auth_context = createContext<AuthContextValue>({
 	user: null,
-	logout: async () => {}, // dummy function so consumer hooks never run into null checks
+	logout: async () => {},
 	isLoading: true,
 });
 
-export function AuthProvider({ children }: prop) {
+export function AuthProvider({ children }: AuthProviderProps) {
 	const { data: user, isLoading } = useCurrentUser();
 	const queryClient = useQueryClient();
 	const supabase = createClient();
 	const router = useRouter();
 	const pathname = usePathname();
+	// Guards logout against re-entry while sign-out is still in flight.
+	const loggingOutRef = useRef(false);
 
-	const logout = async () => {
+	const logout = useCallback(async () => {
+		// Re-entrancy guard: a double press while logout is in flight is a
+		// no-op (the menu can fire the handler twice on fast clicks).
+		if (loggingOutRef.current) return;
+		loggingOutRef.current = true;
 		try {
-			// 1. Sign out from Supabase (clears local auth tokens)
-			await supabase.auth.signOut();
-
-			// 2. Clear TanStack Query cache so stale user/profile data is wiped immediately
-			queryClient.clear();
-
-			// 3. Redirect user to login page
-			router.push("/login");
-			router.refresh();
+			// 1. Sign out from Supabase — LOCAL scope clears the current
+			// browser session without a server round-trip, so logout always
+			// works even offline (global scope can hang on network failures).
+			await supabase.auth.signOut({ scope: "local" });
 		} catch (error) {
 			console.error("Error during logout:", error);
+		} finally {
+			// 2. Clear TanStack Query cache so stale user/profile data is
+			// wiped immediately, then navigate to the login page.
+			// NOTE: no router.refresh() here — refresh re-renders the CURRENT
+			// route and can supersede the in-flight push, leaving the user on
+			// the (logged-out) app page until a second press. replace() also
+			// keeps the app shell out of the history stack.
+			queryClient.clear();
+			router.replace("/login");
+			loggingOutRef.current = false;
 		}
-	};
+		// createClient() returns the same browser client per URL+key, so the
+		// closure is stable — excluding it keeps the callback identity stable.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryClient, router]);
 
 	// Keep the subscription for cache invalidation only. The actual
 	// post-login redirect is a state-driven effect below, so the profile is
@@ -70,9 +84,13 @@ export function AuthProvider({ children }: prop) {
 	useEffect(() => {
 		const {
 			data: { subscription },
-		} = supabase.auth.onAuthStateChange((_event, session) => {
-			if (session?.user?.id) {
-				queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
+		} = supabase.auth.onAuthStateChange((event, session) => {
+			// Invalidate on sign-in AND sign-out so a session ended elsewhere
+			// never leaves stale profile data behind.
+			if (event === "SIGNED_OUT" || session?.user?.id) {
+				void queryClient.invalidateQueries({
+					queryKey: profileKeys.currentUser(),
+				});
 			}
 		});
 
@@ -80,35 +98,27 @@ export function AuthProvider({ children }: prop) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// Redirect signed-in users off auth pages, by role. Runs whenever the
-	// resolved profile changes, so there is no race with the profile query.
+	// Redirect signed-in users off auth pages. Runs whenever the resolved
+	// profile changes, so there is no race with the profile query.
 	useEffect(() => {
 		if (isLoading || !user) return;
 		if (!(AUTH_PAGES as readonly string[]).includes(pathname)) return;
 
-		if (user.client_id) {
-			// TEMPORARY: clients land on /contracts until the Client Portal
-			// (/client) is built.
-			router.replace("/contracts");
-			return;
-		}
-
-		const deptId = user.department_id;
-		if (
-			deptId === DEPARTMENT_IDS.PROJECT_TEAM ||
-			deptId === DEPARTMENT_IDS.PROJECT_OWNER
-		) {
-			router.replace(DEFAULT_PROJECT_REDIRECT);
-			return;
-		}
-
-		// Fallback for signed-in profiles with no recognized role: never leave
-		// a logged-in user stranded on an auth page.
+		// TODO(client-portal): route client profiles (user.client_id set) to
+		// their own landing dashboard once it exists (planned in
+		// features/landing-dashboard). Until then clients land on the staff
+		// dashboard — server-side authz still guards workspace data, and the
+		// (app) shell provides the logout affordance.
 		router.replace(DEFAULT_PROJECT_REDIRECT);
 	}, [user, pathname, isLoading, router]);
 
+	const value = useMemo(
+		() => ({ user: user ?? null, isLoading, logout }),
+		[user, isLoading, logout],
+	);
+
 	return (
-		<auth_context.Provider value={{ user: user ?? null, isLoading, logout }}>
+		<auth_context.Provider value={value}>
 			{children}
 		</auth_context.Provider>
 	);

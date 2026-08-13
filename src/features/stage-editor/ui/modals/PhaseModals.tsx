@@ -1,8 +1,12 @@
 "use client";
 
-import type { z } from "zod";
+import { z } from "zod";
 import { useAppForm, formErrorToMessage } from "@/shared/form";
-import { phaseCreateSchema } from "@/shared/schemas";
+import {
+	hasValidActualRange,
+	hasValidPlannedRange,
+	toSchedulingDates,
+} from "@/shared/lib/scheduling";
 import {
 	Dialog,
 	DialogContent,
@@ -30,7 +34,39 @@ export interface PhaseModalProps {
 	phase?: Phase | null;
 }
 
-type PhaseFormValues = z.input<typeof phaseCreateSchema>;
+const basePhaseModalSchema = z.object({
+	name: z
+		.string()
+		.min(1, "Phase name cannot be empty")
+		.max(20, "Phase name must be 20 characters or less"),
+	description: z.string().optional().default(""),
+	planStart: z
+		.date()
+		.nullable()
+		.refine((val): val is Date => val !== null, {
+			message: "Plan start date is required",
+		}),
+	planEnd: z
+		.date()
+		.nullable()
+		.refine((val): val is Date => val !== null, {
+			message: "Plan end date is required",
+		}),
+	actualStart: z.date().optional().nullable(),
+	actualEnd: z.date().optional().nullable(),
+});
+
+const phaseModalSchema = basePhaseModalSchema
+	.refine((data) => hasValidPlannedRange(toSchedulingDates(data)), {
+		message: "Plan Start must be before or equal to Plan End",
+		path: ["planStart"],
+	})
+	.refine((data) => hasValidActualRange(toSchedulingDates(data)), {
+		message: "Actual Start must be before or equal to Actual End",
+		path: ["actualStart"],
+	});
+
+type PhaseFormValues = z.input<typeof phaseModalSchema>;
 
 export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps) {
 	const isEditMode = Boolean(phase);
@@ -41,16 +77,16 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 	const defaultValues: PhaseFormValues = {
 		name: phase?.name ?? "",
 		description: phase?.description ?? "",
-		planStart: phase?.planStart ?? null,
-		planEnd: phase?.planEnd ?? null,
-		actualStart: phase?.actualStart ?? null,
-		actualEnd: phase?.actualEnd ?? null,
+		planStart: phase?.planStart ? new Date(phase.planStart) : null,
+		planEnd: phase?.planEnd ? new Date(phase.planEnd) : null,
+		actualStart: phase?.actualStart ? new Date(phase.actualStart) : null,
+		actualEnd: phase?.actualEnd ? new Date(phase.actualEnd) : null,
 	};
 
 	const form = useAppForm({
 		defaultValues,
 		validators: {
-			onSubmit: phaseCreateSchema,
+			onSubmit: phaseModalSchema,
 		},
 		onSubmit: async ({ value }) => {
 			if (isEditMode && phase) {
@@ -141,51 +177,40 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 								)}
 							</form.AppField>
 
-							{/* Date selection using DateTimePicker */}
+														{/* Date selection using DateTimePicker */}
 							<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
 								<form.AppField name="planStart">
-									{(field) => (
-										<div className="space-y-1.5">
-											<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-												PLANNED START
-											</Label>
+									{(field) => {
+										const error = formErrorToMessage(field.state.meta.errors[0]);
+										return (
 											<DateTimePicker
+												label="Plan Start"
+												required
 												value={field.state.value ? new Date(field.state.value) : undefined}
 												onChange={(date) => field.handleChange(date ?? null)}
 												placeholder="Pick planned start"
-												className="h-9 text-xs"
+												error={error ?? undefined}
 											/>
-										</div>
-									)}
+										);
+									}}
 								</form.AppField>
 
 								<form.AppField name="planEnd">
-									{(field) => (
-										<div className="space-y-1.5">
-											<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-												PLANNED END
-											</Label>
+									{(field) => {
+										const error = formErrorToMessage(field.state.meta.errors[0]);
+										return (
 											<DateTimePicker
+												label="Plan End"
+												required
 												value={field.state.value ? new Date(field.state.value) : undefined}
 												onChange={(date) => field.handleChange(date ?? null)}
 												placeholder="Pick planned end"
-												className="h-9 text-xs"
+												error={error ?? undefined}
 											/>
-										</div>
-									)}
+										);
+									}}
 								</form.AppField>
 							</div>
-
-							<form.Subscribe selector={(state) => state.errorMap.onSubmit}>
-								{(onSubmitError) => {
-									const message = formErrorToMessage(onSubmitError);
-									return message ? (
-										<p className="text-xs text-destructive" role="alert">
-											{message}
-										</p>
-									) : null;
-								}}
-							</form.Subscribe>
 						</div>
 
 						<DialogFooter className="mt-6" showCloseButton={false}>

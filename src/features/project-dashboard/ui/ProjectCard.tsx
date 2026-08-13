@@ -1,8 +1,9 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import type { ProjectWithStatus } from "@/entities/project"
-import { Calendar, EllipsisVertical, Pencil, Users, Trash2 } from "lucide-react"
+import Link from "next/link";
+import type { ProjectWithStatus } from "@/entities/project";
+import { format } from "date-fns";
+import { Calendar, EllipsisVertical, Pencil, Users, Trash2 } from "lucide-react";
 
 import {
 	DropdownMenu,
@@ -10,25 +11,21 @@ import {
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
 interface ProjectCardProps {
-	project: ProjectWithStatus
-	href?: string
-	onEdit: () => void
-	onManageMembers: () => void
-	onDelete: () => void
+	project: ProjectWithStatus;
+	href?: string;
+	onEdit: () => void;
+	onManageMembers: () => void;
+	onDelete: () => void;
 }
 
-function formatDateTime(date: Date | null): string {
-	if (!date) return "—"
-	return date.toLocaleString("en-US", {
-		month: "numeric",
-		day: "numeric",
-		year: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-	})
+function formatProjectDate(date: Date | null | undefined): string {
+	if (!date) return "N/A";
+	const d = new Date(date);
+	if (isNaN(d.getTime())) return "N/A";
+	return format(d, "MMM d, yyyy");
 }
 
 export function ProjectCard({
@@ -43,38 +40,51 @@ export function ProjectCard({
 			? "ACTIVE"
 			: project.project_status === "PENDING"
 				? "PENDING"
-				: "COMPLETED"
+				: "COMPLETED";
 
 	const statusClass =
 		project.project_status === "ACTIVE"
 			? "bg-brand-500 text-[#DAD7FF]"
 			: project.project_status === "PENDING"
 				? "bg-[#FFDAD7] text-[#6d0007]"
-				: "bg-[#BAE9D4] text-[#00714D]"
+				: "bg-[#BAE9D4] text-[#00714D]";
 
-	const targetHref = href ?? `/projects/${project.project_id}`
+	const targetHref = href ?? `/projects/${project.project_id}`;
+
+	const endDate =
+		project.project_status === "PENDING" ||
+		project.project_status === "ACTIVE"
+			? project.deadline_date
+				? new Date(project.deadline_date)
+				: undefined
+			: project.finish_date
+				? new Date(project.deadline_date ?? project.finish_date)
+				: undefined;
 
 	return (
 		<Link
 			href={targetHref}
-			className="bg-neutral-surface-subtle cursor-pointer rounded-md border border-[#C7C4D8] p-5 hover:shadow-md transition-shadow flex flex-col h-full select-none block"
+			className="hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 @container bg-neutral-surface-subtle cursor-pointer rounded-md border border-[#C7C4D8] gap-4 p-5 flex flex-col justify-between h-full select-none"
 		>
-			{/* Project Head: Name left, Status badge top-right */}
-			<div className="flex items-start justify-between gap-2 mb-3">
-				<h3 className="text-m font-semibold text-slate-900 max-w-[80%] break-all line-clamp-2">
-					{project.name}
-				</h3>
+			{/* Client Name — always shown */}
+			<div className="flex justify-between items-center w-full">
+				<p className="text-xs text-brand-500 truncate">
+					{project.client_name ?? "—"}
+				</p>
 				<span
-					className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${statusClass}`}
+					className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full shrink-0 ${statusClass}`}
 				>
 					{statusLabel}
 				</span>
 			</div>
 
-			{/* Description — always shown, clamped to 3 lines */}
-			<div className="mb-3 h-[2.8rem]">
+			<div>
+				<h3 className="w-3/4 text-m text-slate-900 max-w-[80%] break-all line-clamp-2">
+					{project.name}
+				</h3>
+				{/* Description — always shown, clamped to 3 lines */}
 				<p
-					className={`text-xs break-words ${project.description ? "text-slate-600" : "text-slate-400"}`}
+					className={`w-3/4 text-xs break-words ${project.description ? "text-slate-600" : "text-slate-400"}`}
 					style={{
 						display: "-webkit-box",
 						WebkitLineClamp: 3,
@@ -86,50 +96,33 @@ export function ProjectCard({
 				</p>
 			</div>
 
-			{/* Client Name — always shown */}
-			<div className="mb-2 mt-auto">
-				<p className="text-xs text-brand-500">
-					{project.client_name ?? "—"}
-				</p>
-			</div>
+			{/* Bottom Row: Responsive Timeline + Menu */}
+			<div className="flex items-end justify-between gap-2 pt-3 border-t border-brand-100">
+				<div className="flex flex-col @[300px]:flex-row @[300px]:items-center gap-1 text-xs text-slate-600 min-w-0">
+					{/* Date 1 + dash */}
+					<div className="flex items-center gap-1.5 min-w-0">
+						<Calendar size={13} className="text-slate-400 shrink-0" />
+						<span className="truncate">
+							{formatProjectDate(project.start_date)}
+						</span>
+						<span className="text-slate-300 shrink-0 mx-0.5">—</span>
+					</div>
 
-			{/* Divider */}
-			<div className="border-t border-brand-200 mb-5" />
-
-			{/* Bottom Row: Timeline + Menu */}
-			<div className="flex h-[.4rem] items-center justify-between">
-				<div className="font-weight-100 flex items-center gap-1.5 text-xs text-[#334155] min-w-0">
-					<Calendar size={12} />
-					<span className="truncate">
-						{project.start_date ? formatDateTime(project.start_date) : "N/A"}
-					</span>
-
-					<span className="font-weight-100 text-slate-400 flex-shrink-0">
-						—
-					</span>
-
-					<Calendar size={12} />
-
-					<span className="truncate">
-						{project.project_status === "PENDING" ||
-						project.project_status === "ACTIVE"
-							? project.deadline_date
-								? formatDateTime(project.deadline_date)
-								: "N/A"
-							: project.finish_date
-								? formatDateTime(
-										project.deadline_date ?? project.finish_date,
-									)
-								: "N/A"}
-					</span>
+					{/* Date 2 */}
+					<div className="flex items-center gap-1.5 min-w-0">
+						<Calendar size={13} className="text-slate-400 shrink-0" />
+						<span className="truncate">
+							{formatProjectDate(endDate)}
+						</span>
+					</div>
 				</div>
 
 				{/* Menu Ellipsis — bottom right */}
 				<div
-					className="flex-shrink-0 ml-2"
+					className="shrink-0 ml-2"
 					onClick={(e) => {
-						e.preventDefault()
-						e.stopPropagation()
+						e.preventDefault();
+						e.stopPropagation();
 					}}
 				>
 					<DropdownMenu>
@@ -139,8 +132,8 @@ export function ProjectCard({
 						<DropdownMenuContent align="end" className="w-56">
 							<DropdownMenuItem
 								onClick={(e) => {
-									e.stopPropagation()
-									onEdit()
+									e.stopPropagation();
+									onEdit();
 								}}
 							>
 								<Pencil size={16} />
@@ -148,8 +141,8 @@ export function ProjectCard({
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={(e) => {
-									e.stopPropagation()
-									onManageMembers()
+									e.stopPropagation();
+									onManageMembers();
 								}}
 							>
 								<Users size={16} />
@@ -158,8 +151,8 @@ export function ProjectCard({
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
 								onClick={(e) => {
-									e.stopPropagation()
-									onDelete()
+									e.stopPropagation();
+									onDelete();
 								}}
 								className="text-destructive focus:text-destructive"
 							>
@@ -171,5 +164,5 @@ export function ProjectCard({
 				</div>
 			</div>
 		</Link>
-	)
+	);
 }

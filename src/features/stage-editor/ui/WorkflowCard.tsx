@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Workflow } from "../types";
-import { AddWorkflow } from "@/features/stage-editor/ui/modals/AddWorkflow";
-import { EditWorkflow } from "@/features/stage-editor/ui/modals/EditWorkflow";
+import { AddWorkflow, EditWorkflow } from "@/features/stage-editor/ui/modals/WorkflowModals";
 import { ConfirmDeleteModal } from "@/shared/ui";
 import {
 	useCreateWorkflow,
@@ -15,7 +14,7 @@ import {
 
 import { Pencil, X, Plus, Clock, GripVertical,EllipsisVertical } from "lucide-react";
 
-interface WorkflowsListProps {
+interface WorkflowCardProps {
 	workflows: Workflow[];
 	moduleId: string;
 	projectId: string;
@@ -97,17 +96,17 @@ function getDeadlineState(
 const DEADLINE_STYLES: Record<DeadlineState, string> = {
 	upcoming: "text-[#8392a6]",
 	approaching: "text-amber-600",
-	overdue: "text-red-600 font-medium",
+	overdue: "text-red-600",
 	on_time_done: "text-emerald-600",
 	late_done: "text-red-600",
 };
 
-export function WorkflowsList({
+export function WorkflowCard({
 	workflows,
 	moduleId,
 	projectId,
 	stageId,
-}: WorkflowsListProps) {
+}: WorkflowCardProps) {
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);

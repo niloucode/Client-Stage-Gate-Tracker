@@ -225,26 +225,26 @@ function ProjectAccessCard({
       <Button
         size="sm"
         onClick={onViewContract}
-        className="w-full justify-start gap-2 truncate border border-brand-500/30 bg-brand-100/70 text-xs font-semibold text-brand-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-brand-100 active:bg-brand-100 active:shadow-inner active:translate-y-px"
+        className="w-full h-8 justify-start gap-2 px-2 py-3 text-wrap border border-brand-500/30 bg-brand-100/70 text-xs text-brand-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-brand-100 active:bg-brand-100 active:shadow-inner active:translate-y-px"
       >
         <Eye className="h-3.5 w-3.5 shrink-0" />
-        <span>View Contract</span>
+        <span className="text-wrap">View Contract</span>
       </Button>
       <Button
         size="sm"
         onClick={onCredentialsRepo}
-        className="w-full justify-start gap-2 truncate border border-green-500/30 bg-green-100/70 text-xs font-semibold text-green-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-green-100 active:bg-green-100 active:shadow-inner active:translate-y-px"
+        className="w-full h-8 justify-start gap-2 px-2 py-3 text-wrap border border-green-500/30 bg-green-100/70 text-xs text-green-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-green-100 active:bg-green-100 active:shadow-inner active:translate-y-px"
       >
         <Key className="h-3.5 w-3.5 shrink-0" />
-        <span>Credentials Repository</span>
+        <span className="text-wrap">Credentials Repository</span>
       </Button>
       <Button
         size="sm"
         onClick={onIssueReport}
-        className="w-full justify-start gap-2 truncate border border-red-500/30 bg-red-100/70 text-xs font-semibold text-red-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-red-100 active:bg-red-100 active:shadow-inner active:translate-y-px"
+        className="w-full h-8 justify-start gap-2 px-2 py-3 border border-red-500/30 bg-red-100/70 text-xs text-red-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-red-100 active:bg-red-100 active:shadow-inner active:translate-y-px"
       >
         <Bug className="h-3.5 w-3.5 shrink-0" />
-        <span>Issue Reporting</span>
+        <span className="text-wrap">Issue Reporting</span>
       </Button>
     </CardContent>
   </Card>
@@ -542,7 +542,7 @@ export function ProjectStructure({
                 description="Review mandatory compliance milestones"
                 icon={LayoutGrid}
                 onClick={() =>
-                  projectId && router.push(`/projects/${projectId}`)
+                  projectId && router.push(`/projects/${projectId}/stages/${selectedStageId}/gate`)
                 }
               />
             </div>

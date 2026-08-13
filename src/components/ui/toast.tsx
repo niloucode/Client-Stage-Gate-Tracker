@@ -81,7 +81,7 @@ function ToastTitle({ className, ...props }: ToastPrimitive.Title.Props) {
 	return (
 		<ToastPrimitive.Title
 			data-slot="toast-title"
-			className={cn("text-sm font-medium", className)}
+			className={cn("text-xl!", className)}
 			{...props}
 		/>
 	);
@@ -94,7 +94,7 @@ function ToastDescription({
 	return (
 		<ToastPrimitive.Description
 			data-slot="toast-description"
-			className={cn("text-sm text-muted-foreground", className)}
+			className={cn("text-sm! font-light! text-muted-foreground", className)}
 			{...props}
 		/>
 	);
@@ -140,41 +140,30 @@ function ToastClose({
 function ToastIcon({ type }: { type: string | undefined }) {
 	let icon: React.ReactNode = null;
 
-	if (type === "success") {
+	// Default to green "success" checkmark icon when type is omitted or "success"
+	if (!type || type === "success") {
 		icon = (
 			<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100">
 				<CircleCheckIcon className="text-emerald-600" aria-hidden="true" />
 			</span>
 		);
-	}
-
-	if (type === "info") {
+	} else if (type === "info") {
 		icon = <InfoIcon aria-hidden="true" />;
-	}
-
-	if (type === "warning") {
+	} else if (type === "warning") {
 		icon = (
 			<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100">
 				<TriangleAlertIcon className="text-amber-600" aria-hidden="true" />
 			</span>
 		);
-	}
-
-	if (type === "error") {
+	} else if (type === "error") {
 		icon = <OctagonXIcon className="text-destructive" aria-hidden="true" />;
-	}
-
-	// Distinct red/orange treatment for destructive delete confirmations
-	// (Task 5.3 #40) — not the generic error icon.
-	if (type === "delete") {
+	} else if (type === "delete") {
 		icon = (
 			<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100">
 				<OctagonXIcon className="text-red-600" aria-hidden="true" />
 			</span>
 		);
-	}
-
-	if (type === "loading") {
+	} else if (type === "loading") {
 		icon = <Loader2Icon className="animate-spin" aria-hidden="true" />;
 	}
 

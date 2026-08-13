@@ -19,6 +19,9 @@ export const env = createEnv({
 		// back to DATABASE_URL when it's unset.
 		DIRECT_URL: z.string().min(1).optional(),
 		SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+		// Optional HMAC pepper for client invite codes (Clients.invite_code_hash).
+		// Falls back to an in-code dev pepper with a warning when unset.
+		CLIENT_INVITE_PEPPER: z.string().optional(),
 		// Optional comma-separated Prisma log levels (query,info,warn,error).
 		// Parsed in src/lib/prisma.ts; defaults to ["error","warn"].
 		PRISMA_LOG_LEVEL: z.string().optional(),
@@ -37,6 +40,7 @@ export const env = createEnv({
 		DATABASE_URL: process.env.DATABASE_URL,
 		DIRECT_URL: process.env.DIRECT_URL,
 		SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+		CLIENT_INVITE_PEPPER: process.env.CLIENT_INVITE_PEPPER,
 		PRISMA_LOG_LEVEL: process.env.PRISMA_LOG_LEVEL,
 		NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
 		NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

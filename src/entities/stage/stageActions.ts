@@ -322,7 +322,7 @@ export async function getStageTree(stageId: string) {
 			const list = workflowsByModule.get(wf.module_id) ?? [];
 			list.push({
 				...wf,
-				number: list.length + 1, // display number derived from sort order (WorkflowsList reorder uses it)
+				number: list.length + 1, // display number derived from sort order (WorkflowCard reorder uses it)
 				ticketCount: stats.ticketCount,
 				progress: stats.progress,
 				planStart: wf.plan_start_at,

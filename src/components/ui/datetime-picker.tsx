@@ -1,6 +1,7 @@
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { CalendarProps } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Popover,
 	PopoverContent,
@@ -677,9 +678,12 @@ TimePicker.displayName = "TimePicker";
 type Granularity = "day" | "hour" | "minute" | "second";
 
 type DateTimePickerProps = {
+	label?: string;
+	required?: boolean;
 	value?: Date;
 	onChange?: (date: Date | undefined) => void;
 	disabled?: boolean;
+	error?: string | boolean;
 	/** showing `AM/PM` or not. */
 	hourCycle?: 12 | 24;
 	placeholder?: string;
@@ -701,6 +705,8 @@ type DateTimePickerProps = {
 	 **/
 	granularity?: Granularity;
 	className?: string;
+	containerClassName?: string;
+	"aria-invalid"?: boolean | "true" | "false";
 } & Pick<
 	CalendarProps,
 	"locale" | "weekStartsOn" | "showWeekNumber" | "showOutsideDays"
@@ -716,20 +722,28 @@ const DateTimePicker = React.forwardRef<
 >(
 	(
 		{
+			label,
+			required,
 			locale = enUS,
 			value,
 			onChange,
 			hourCycle = 24,
 			yearRange = 50,
 			disabled = false,
+			error = false,
 			displayFormat,
 			granularity = "second",
 			placeholder = "Pick a date",
 			className,
+			containerClassName,
 			...props
 		},
 		ref,
 	) => {
+		const errorMessage = typeof error === "string" ? error : undefined;
+		const isError =
+			!!error || props["aria-invalid"] === true || props["aria-invalid"] === "true";
+
 		const [month, setMonth] = React.useState<Date>(value ?? new Date());
 		const buttonRef = useRef<HTMLButtonElement>(null);
 		/**
@@ -780,57 +794,74 @@ const DateTimePicker = React.forwardRef<
 		}
 
 		return (
-			<Popover>
-				<PopoverTrigger
-					disabled={disabled}
-					render={
-						<Button
-							variant="secondary"
-							className={cn(
-								"w-full justify-start text-left font-normal",
-								!value && "text-muted-foreground",
-								className,
-							)}
-							ref={buttonRef}
-						/>
-					}
-				>
-					<CalendarIcon className="mr-2 h-4 w-4" />
-					{value ? (
-						format(
-							value,
-							hourCycle === 24 ? initHourFormat.hour24 : initHourFormat.hour12,
-							{
-								locale: loc,
-							},
-						)
-					) : (
-						<span>{placeholder}</span>
-					)}
-				</PopoverTrigger>
-				<PopoverContent className="w-auto p-0">
-					<Calendar
-						mode="single"
-						selected={value}
-						month={month}
-						onSelect={(d) => handleSelect(d)}
-						onMonthChange={handleSelect}
-						yearRange={yearRange}
-						locale={locale}
-						{...props}
-					/>
-					{granularity !== "day" && (
-						<div className="border-t border-border p-2">
-							<TimePicker
-								onChange={onChange}
-								date={value}
-								hourCycle={hourCycle}
-								granularity={granularity}
+			<div className={cn("flex flex-col gap-1 w-full", containerClassName)}>
+				{label && (
+					<div className="flex items-center justify-between">
+						<Label required={required} error={isError}>
+							{label}
+						</Label>
+						{errorMessage && (
+							<span className="text-xs font-normal text-destructive">
+								{errorMessage}
+							</span>
+						)}
+					</div>
+				)}
+
+				<Popover>
+					<PopoverTrigger
+						disabled={disabled}
+						render={
+							<Button
+								variant="secondary"
+								aria-invalid={isError ? true : undefined}
+								className={cn(
+									"w-full justify-start text-left font-normal",
+									!value && "text-gray-400",
+									isError && "border-destructive ring-1 ring-destructive/20",
+									className,
+								)}
+								ref={buttonRef}
 							/>
-						</div>
-					)}
-				</PopoverContent>
-			</Popover>
+						}
+					>
+						<CalendarIcon className="mr-2 h-4 w-4" />
+						{value ? (
+							format(
+								value,
+								hourCycle === 24 ? initHourFormat.hour24 : initHourFormat.hour12,
+								{
+									locale: loc,
+								},
+							)
+						) : (
+							<span>{placeholder}</span>
+						)}
+					</PopoverTrigger>
+					<PopoverContent className="w-auto p-0">
+						<Calendar
+							mode="single"
+							selected={value}
+							month={month}
+							onSelect={(d) => handleSelect(d)}
+							onMonthChange={handleSelect}
+							yearRange={yearRange}
+							locale={locale}
+							{...props}
+						/>
+						{granularity !== "day" && (
+							<div className="border-t border-border p-2">
+								<TimePicker
+									onChange={onChange}
+									date={value}
+									hourCycle={hourCycle}
+									granularity={granularity}
+								/>
+							</div>
+						)}
+					</PopoverContent>
+				</Popover>
+			</div>
 		);
 	},
 );

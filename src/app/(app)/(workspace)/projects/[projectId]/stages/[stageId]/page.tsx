@@ -2,10 +2,8 @@
 
 import { use, useState, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import {
-	PhaseStepper,
-	ModulesCard,
-} from "@/features/stage-editor"
+import { ModuleCard } from "@/features/stage-editor/ui/ModuleCard"
+import { PhaseCard } from "@/features/stage-editor/ui/PhaseCard"
 import type { Phase } from "@/features/stage-editor/types"
 import { useStageTree } from "@/entities/stage/queries"
 import { Plus, ChevronLeft } from "lucide-react"
@@ -102,7 +100,7 @@ function EditorContent({
 				<Button onClick={() => stepperRef.current?.openCreateModal()}><Plus />Add Phase</Button>
 			</div>
 
-			<PhaseStepper
+			<PhaseCard
 				ref={stepperRef}
 				phases={phases}
 				stageId={stageId}
@@ -110,7 +108,7 @@ function EditorContent({
 				setActivePhase={setActivePhase}
 			/>
 
-			<ModulesCard
+			<ModuleCard
 				activePhase={activePhase}
 				phases={phases}
 				projectId={projectId}

@@ -1,148 +1,257 @@
+/**
+ * @fileoverview Client employee registration form.
+ * Employees join an EXISTING client via an invitation code issued by the
+ * project owner (client-manager). The form never creates a Clients row and
+ * never lists clients: the code resolves the client server-side, then the
+ * auth user + profile (linked via client_id) are created — mirroring the
+ * StaffSignupForm flow. Validated by `clientSignupSchema`.
+ */
+
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { FormInput } from "@/components/ui/forminput";
-import { clientCreate } from "@/entities/client";
-import { getFieldErrors } from "@/shared/lib/zod";
-import { clientCreateSchema } from "@/shared/schemas";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAppForm } from "@/shared/form";
+import { resolveClientByInviteCode } from "@/entities/client";
+import { getProfileByEmail, createProfileForCurrentUser } from "@/entities/profile";
+import { createClient } from "@/lib/supabase/client";
+import { clientSignupSchema } from "@/shared/schemas";
+import { env } from "@/env";
+import { profileKeys } from "@/shared/query/keys";
 
 export function ClientSignupForm() {
-	const [clientName, setClientName] = useState<string>("");
-	const [tin, setTin] = useState<string>("");
-	const [email, setEmail] = useState<string>("");
-	const [contactNumber, setContactNumber] = useState<string>("");
-	const [billingAddress, setBillingAddress] = useState<string>("");
-	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const router = useRouter();
+	const queryClient = useQueryClient();
+	const supabase = createClient();
+	const [error, setError] = useState<string | null>(null);
+	const [success, setSuccess] = useState<string | null>(null);
+	// Auth user id from a successful signUp — kept across submit attempts so
+	// a retry after a failed profile-create can recover ("already registered").
+	const lastUserIdRef = useRef<string | null>(null);
 
-	// Helper to clear individual field errors on change
-	const handleClearError = (key: string): void => {
-		setFieldErrors((prev: Record<string, string>) => {
-			if (!prev[key]) return prev;
-			const newErrors = { ...prev };
-			delete newErrors[key];
-			return newErrors;
-		});
-	};
+	const form = useAppForm({
+		defaultValues: {
+			firstName: "",
+			lastName: "",
+			email: "",
+			phone: "",
+			password: "",
+			confirmPassword: "",
+			inviteCode: "",
+		},
+		validators: { onSubmit: clientSignupSchema },
+		onSubmit: async ({ value }) => {
+			setError(null);
+			setSuccess(null);
 
-	const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-		e.preventDefault();
-		setFieldErrors({});
+			// ── Duplicate email check ──────────────────────────────────────
+			const { success, data: existingProfile } = await getProfileByEmail(
+				value.email,
+			);
+			if (success && existingProfile) {
+				setError("An account with this email already exists.");
+				return;
+			}
 
-		const parsed = clientCreateSchema.safeParse({
-			client_name: clientName,
-			tin,
-			email,
-			phone: contactNumber,
-			billing_address: billingAddress,
-		});
+			// ── 1. Resolve the invite code → client (never lists clients) ──
+			const resolution = await resolveClientByInviteCode(value.inviteCode);
+			if (!resolution.success) {
+				setError(resolution.error);
+				return;
+			}
+			const clientId = resolution.client_id;
 
-		if (!parsed.success) {
-			setFieldErrors(getFieldErrors(parsed));
-			return;
-		}
+			// ── 2. Create the auth user ────────────────────────────────────
+			const { data, error: signUpError } = await supabase.auth.signUp({
+				email: value.email,
+				password: value.password,
+				options: {
+					data: {
+						first_name: value.firstName,
+						last_name: value.lastName,
+						client_id: clientId,
+						phone: value.phone,
+					},
+					emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
+				},
+			});
 
-		setIsLoading(true);
+			if (signUpError) {
+				// Retry after a failed profile-create: the auth user already
+				// exists — recover by creating the profile now (idempotent,
+				// freshness-gated server-side) instead of failing.
+				const alreadyRegistered =
+					signUpError.code === "user_already_exists" ||
+					/already registered/i.test(signUpError.message);
+				if (alreadyRegistered && lastUserIdRef.current) {
+					const recovered = await createProfileForCurrentUser({
+						first_name: value.firstName,
+						last_name: value.lastName,
+						email: value.email,
+						phone: value.phone,
+						job_title: null,
+						department_id: null,
+						inviteCode: value.inviteCode,
+						userId: lastUserIdRef.current,
+					});
+					if (recovered.success) {
+						setSuccess(
+							"Account created! Check your email to confirm your account before logging in.",
+						);
+						return;
+					}
+				}
+				setError(signUpError.message);
+				return;
+			}
+			lastUserIdRef.current = data.user?.id ?? null;
 
-		try {
-			await clientCreate(parsed.data);
-			// Redirect or post-signup logic here
-		} catch (error) {
-			console.error("Registration failed:", error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+			// ── 3. Create the Profiles row (idempotent; verified) ─────────
+			const profileResult = await createProfileForCurrentUser({
+				first_name: value.firstName,
+				last_name: value.lastName,
+				email: value.email,
+				phone: value.phone,
+				job_title: null,
+				department_id: null,
+				inviteCode: value.inviteCode,
+				userId: data.user?.id,
+			});
+			if (!profileResult.success) {
+				setError(profileResult.error);
+				return;
+			}
+
+			// Only triggers if CONFIRM EMAIL option in Supabase is off
+			// (should be on by default).
+			if (data.session) {
+				router.push("/login");
+				await queryClient.invalidateQueries({
+					queryKey: profileKeys.currentUser(),
+				});
+			} else {
+				setSuccess(
+					"Account created! Check your email to confirm your account before logging in.",
+				);
+			}
+		},
+	});
 
 	return (
-		<form onSubmit={handleSubmit} className="flex flex-col gap-5">
-			{/* Client Name */}
-			<FormInput
-				label="Client Name"
-				required
-				maxLength={40}
-				placeholder="Teyvat Incorporated"
-				value={clientName}
-				error={fieldErrors.client_name}
-				onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-					setClientName(e.target.value)
-				}
-				onClearError={() => handleClearError("client_name")}
-			/>
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				void form.handleSubmit();
+			}}
+			className="flex flex-col gap-5"
+		>
+			{/* Invite code */}
+			<form.AppField name="inviteCode">
+				{(field) => (
+					<field.TextField
+						label="Invite Code"
+						required
+						autoComplete="off"
+						placeholder="e.g. K7Q2M9XWAB" // 12-char code from the project owner
+						className="[&_input]:font-mono [&_input]:uppercase"
+					/>
+				)}
+			</form.AppField>
 
-			{/* TIN + Email */}
+			{/* Contact person */}
 			<div className="flex gap-4">
-				<FormInput
-					containerClassName="flex-1"
-					label="TIN"
-					type="tin"
-					required
-					value={tin}
-					error={fieldErrors.tin}
-					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-						setTin(e.target.value)
-					}
-					onClearError={() => handleClearError("tin")}
-				/>
-
-				<FormInput
-					containerClassName="flex-1"
-					label="Email"
-					type="email"
-					required
-					placeholder="contact@client.com"
-					value={email}
-					error={fieldErrors.email}
-					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-						setEmail(e.target.value)
-					}
-					onClearError={() => handleClearError("email")}
-				/>
-			</div>
-
-			{/* Contact Number (Custom PhoneInput) */}
-			<div className="flex flex-col gap-2">
-				<div className="flex">
-					<Label required error={!!fieldErrors.phone}>
-						Contact Number
-					</Label>
-					{fieldErrors.phone && (
-						<div className="ml-auto text-xs text-destructive">
-							{fieldErrors.phone}
-						</div>
-					)}
+				<div className="flex-1">
+					<form.AppField name="firstName">
+						{(field) => (
+							<field.TextField
+								label="First Name"
+								required
+								autoComplete="given-name"
+								placeholder="Jean"
+							/>
+						)}
+					</form.AppField>
 				</div>
-				<PhoneInput
-					value={contactNumber}
-					onChange={(val: string) => {
-						setContactNumber(val);
-						handleClearError("phone");
-					}}
-					placeholder="+1 (555) 000-0000"
-				/>
+				<div className="flex-1">
+					<form.AppField name="lastName">
+						{(field) => (
+							<field.TextField
+								label="Last Name"
+								required
+								autoComplete="family-name"
+								placeholder="Gunnhildr"
+							/>
+						)}
+					</form.AppField>
+				</div>
 			</div>
 
-			{/* Billing Address */}
-			<FormInput
-				variant="textarea"
-				label="Billing Address"
-				required
-				rows={4}
-				maxLength={50}
-				placeholder="8960 Evernight Terrace, Mondstadt, Oregon, USA"
-				value={billingAddress}
-				error={fieldErrors.billing_address}
-				onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-					setBillingAddress(e.target.value)
-				}
-				onClearError={() => handleClearError("billing_address")}
-			/>
+			{/* Email + Phone */}
+			<form.AppField name="email">
+				{(field) => (
+					<field.TextField
+						label="Email"
+						required
+						type="email"
+						autoComplete="email"
+						placeholder="employee@client.com"
+					/>
+				)}
+			</form.AppField>
 
-				<div className="flex flex-col gap-2">
+			<form.AppField name="phone">
+				{(field) => (
+					<field.PhoneField
+						label="Contact Number"
+						required
+						placeholder="+1 (555) 000-0000"
+					/>
+				)}
+			</form.AppField>
+
+			{/* Password */}
+			<form.AppField name="password">
+				{(field) => (
+					<field.PasswordField
+						label="Password"
+						required
+						autoComplete="new-password"
+						placeholder="Create a password"
+					/>
+				)}
+			</form.AppField>
+
+			{/* Confirm Password */}
+			<form.AppField name="confirmPassword">
+				{(field) => (
+					<field.PasswordField
+						label="Confirm Password"
+						required
+						autoComplete="new-password"
+						placeholder="Confirm your password"
+					/>
+				)}
+			</form.AppField>
+
+			{/* Error message */}
+			{error && (
+				<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
+					{error}
+				</p>
+			)}
+			{/* Success message */}
+			{success && (
+				<p
+					role="status"
+					className="text-sm text-green-800 bg-green-50 border border-green-200 rounded-md px-3 py-2"
+				>
+					{success}
+				</p>
+			)}
+
+			<div className="flex flex-col gap-2">
 				{/* Footer */}
 				<div className="text-center mt-auto mb-2">
 					<p className="text-[11px] text-gray-400 leading-relaxed">
@@ -163,29 +272,34 @@ export function ClientSignupForm() {
 					</p>
 				</div>
 				{/* Submit Button */}
-				<Button type="submit" className="w-full" disabled={isLoading}>
-					{isLoading ? "Registering..." : "Register Company"}
-				</Button>
+				<form.AppForm>
+					<form.SubmitButton
+						className="w-full"
+						pendingLabel="Registering…"
+					>
+						Create Account
+					</form.SubmitButton>
+				</form.AppForm>
 				{/* OR divider */}
-			<div className="relative my-4">
-				<div className="absolute inset-0 flex items-center">
-					<div className="w-full border-t border-gray-200" />
+				<div className="relative my-4">
+					<div className="absolute inset-0 flex items-center">
+						<div className="w-full border-t border-gray-200" />
+					</div>
+					<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
+						<span className="bg-neutral-surface px-3 text-gray-400">OR</span>
+					</div>
 				</div>
-				<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-					<span className="bg-neutral-surface px-3 text-gray-400">OR</span>
-				</div>
-			</div>
 
-			{/* Sign in link */}
-			<p className="text-center text-sm text-gray-500">
-				Already have an account?{" "}
-				<Link
-					href="/login"
-					className="text-brand-600 hover:text-brand-500 transition-colors"
-				>
-					Sign in
-				</Link>
-			</p>
+				{/* Sign in link */}
+				<p className="text-center text-sm text-gray-500">
+					Already have an account?{" "}
+					<Link
+						href="/login"
+						className="text-brand-600 hover:text-brand-500 transition-colors"
+					>
+						Sign in
+					</Link>
+				</p>
 			</div>
 		</form>
 	);

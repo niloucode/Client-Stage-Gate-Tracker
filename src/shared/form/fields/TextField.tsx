@@ -22,6 +22,7 @@ interface TextFieldProps {
 	required?: boolean;
 	placeholder?: string;
 	maxLength?: number;
+	autoComplete?: string;
 	className?: string;
 	type?: string;
 }
@@ -35,6 +36,7 @@ export function TextField({
 	required,
 	placeholder,
 	maxLength,
+	autoComplete,
 	className,
 	type = "text",
 }: TextFieldProps) {
@@ -55,6 +57,7 @@ export function TextField({
 				value={field.state.value}
 				onChange={(e) => field.handleChange(e.target.value)}
 				onBlur={field.handleBlur}
+				autoComplete={autoComplete}
 				placeholder={placeholder}
 				maxLength={maxLength}
 				aria-invalid={error ? true : undefined}

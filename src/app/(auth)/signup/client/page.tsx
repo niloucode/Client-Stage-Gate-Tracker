@@ -1,11 +1,5 @@
 import Image from "next/image";
-import { Hanken_Grotesk } from "next/font/google";
 import { ClientSignupForm } from "@/features/auth";
-
-const hanken = Hanken_Grotesk({
-	subsets: ["latin"],
-	weight: ["400", "500", "600", "700"],
-});
 
 export default function ClientSignupPage() {
 	return (
@@ -30,8 +24,11 @@ export default function ClientSignupPage() {
 				<div className="w-full bg-neutral-surface rounded-md p-6 border border-brand-100 max-w-[380px] mx-auto my-auto">
 					<div className="mb-7">
 						<h2>
-							Register your company
+							Create your account
 						</h2>
+						<p className="text-sm text-gray-400 mt-1">
+							Use the invite code from your project owner
+						</p>
 					</div>
 					<ClientSignupForm />
 				</div>

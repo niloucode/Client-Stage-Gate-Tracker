@@ -1,2 +1,2 @@
 export * from "./clientActions";
-export { useClients } from "./queries";
+export { useClients, useClientOwn } from "./queries";

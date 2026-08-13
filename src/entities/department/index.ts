@@ -1,2 +1,2 @@
 export * from "./departmentActions";
-export { useDepartment } from "./queries";
+export { useDepartment, useDepartments } from "./queries";

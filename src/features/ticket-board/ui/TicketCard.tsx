@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 
-import { type Ticket } from "@/entities/types"
-import { X } from "lucide-react"
-import { status } from "@/lib/generated/prisma"
-import { getInitials } from "@/shared/lib/strings"
+import { type Ticket } from "@/entities/types";
+import { Calendar, X } from "lucide-react";
+import { status } from "@/lib/generated/prisma";
+import { getInitials } from "@/shared/lib/strings";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
 	AlertDialog,
 	AlertDialogContent,
@@ -36,44 +35,44 @@ export function TicketCardContent({
 	onEdit: (ticket: Ticket) => void;
 	onDelete: (ticketId: string) => void;
 }) {
-	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-	const today = new Date()
-	today.setHours(0, 0, 0, 0)
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
 
-	const startDate = ticket.plan_start_at ? new Date(ticket.plan_start_at) : null
-	const endDate = ticket.plan_end_at ? new Date(ticket.plan_end_at) : null
-	const actualEndDate = ticket.actual_end_at ? new Date(ticket.actual_end_at) : null
+	const startDate = ticket.plan_start_at ? new Date(ticket.plan_start_at) : null;
+	const endDate = ticket.plan_end_at ? new Date(ticket.plan_end_at) : null;
+	const actualEndDate = ticket.actual_end_at ? new Date(ticket.actual_end_at) : null;
 
 	const isCompleted =
 		ticket.status === status.FINISHED ||
-		ticket.actual_end_at != null
+		ticket.actual_end_at != null;
 
 	// In-progress or unfinished tickets whose deadline has passed are overdue
-	const isOverdue = endDate && !isCompleted ? endDate < today : false
+	const isOverdue = endDate && !isCompleted ? endDate < today : false;
 
 	// Completed tickets finished after the deadline date are late
-	const isLate = endDate && actualEndDate ? actualEndDate > endDate : false
+	const isLate = endDate && actualEndDate ? actualEndDate > endDate : false;
 
 	const formatDate = (date: Date) =>
 		date.toLocaleDateString("en-US", {
 			month: "short",
-			day: "2-digit",
+			day: "numeric",
 			year: "numeric",
-		})
+		});
 
 	const getDateTextColor = () => {
-		if (isOverdue) return "text-red-500"
-		if (isLate) return "text-orange-500"
-		return "text-gray-400"
-	}
+		if (isOverdue) return "text-red-500 font-medium";
+		if (isLate) return "text-orange-500 font-medium";
+		return "text-slate-600";
+	};
 
 	return (
 		<>
 			<div
 				onClick={() => onSelect(ticket)}
 				className={
-					"bg-neutral-surface flex overflow-clip rounded-md h-40 border border-brand-100 cursor-pointer relative " +
+					"bg-neutral-surface flex overflow-clip rounded-md h-45 border border-brand-100 cursor-pointer relative " +
 					"hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 select-none group"
 				}
 			>
@@ -86,26 +85,39 @@ export function TicketCardContent({
 				) : null}
 
 				<div className="w-full flex flex-col p-4 min-w-0">
-					{/* Header: Code + Delete Button */}
-					<div className="flex gap-2 items-start justify-between min-w-0">
-						<div className="font-mono text-brand-500 text-sm mb-1 truncate min-w-0 pr-2">
+					{/* Header: Code + OVERDUE/LATE Badge + Delete Button */}
+					<div className="flex items-center justify-between gap-2 min-w-0 mb-1">
+						<div className="font-mono text-brand-500 text-xs font-semibold truncate min-w-0 pr-1">
 							LRN-BNN
 						</div>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-6 w-6 shrink-0"
-							onClick={(e) => {
-								e.stopPropagation();
-								setIsDeleteModalOpen(true);
-							}}
-						>
-							<X size={14} strokeWidth={2} />
-						</Button>
+
+						<div className="flex items-center gap-1.5 shrink-0">
+							{isOverdue && (
+								<span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FFDAD7] text-[#6d0007]">
+									OVERDUE
+								</span>
+							)}
+							{isLate && !isOverdue && (
+								<span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+									LATE
+								</span>
+							)}
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-6 w-6 shrink-0 text-slate-400 hover:text-slate-600"
+								onClick={(e) => {
+									e.stopPropagation();
+									setIsDeleteModalOpen(true);
+								}}
+							>
+								<X size={14} strokeWidth={2} />
+							</Button>
+						</div>
 					</div>
 
 					{/* Title */}
-					<h3 className="line-clamp-1">
+					<h3 className="line-clamp-1 text-sm font-semibold text-slate-900">
 						{ticket.name}
 					</h3>
 
@@ -114,34 +126,29 @@ export function TicketCardContent({
 						{ticket.description}
 					</div>
 
-					{/* Bottom row: deadline + assignee avatar */}
-					<div className="mt-auto pt-2 flex items-center justify-between">
-						<div className="flex items-center text-xs font-medium">
-							{startDate && endDate ? (
-								<span className={getDateTextColor()}>
-									{formatDate(startDate)} - {formatDate(endDate)}
-								</span>
-							) : endDate ? (
-								<span className={getDateTextColor()}>
-									{formatDate(endDate)}
-								</span>
-							) : null}
-
-							{isOverdue && (
-								<Badge
-									variant="destructive"
-									className="text-[10px] px-1.5 py-0 font-normal ml-1.5"
-								>
-									Overdue
-								</Badge>
+					{/* Bottom row: timeline + assignee avatar */}
+					<div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-brand-100/60">
+						<div className="flex items-center gap-1.5 text-xs min-w-0 font-medium">
+							{startDate && (
+								<>
+									<Calendar size={13} className="text-slate-400 shrink-0" />
+									<span className={`truncate ${getDateTextColor()}`}>
+										{formatDate(startDate)}
+									</span>
+								</>
 							)}
 
-							{isLate && (
-								<Badge
-									className="text-[10px] px-1.5 py-0 font-normal ml-1.5 bg-orange-500 text-white hover:bg-orange-600 border-transparent"
-								>
-									Late
-								</Badge>
+							{startDate && endDate && (
+								<span className="text-slate-300 shrink-0 mx-0.5">—</span>
+							)}
+
+							{endDate && (
+								<>
+									<Calendar size={13} className="text-slate-400 shrink-0" />
+									<span className={`truncate ${getDateTextColor()}`}>
+										{formatDate(endDate)}
+									</span>
+								</>
 							)}
 						</div>
 
@@ -165,7 +172,7 @@ export function TicketCardContent({
 			<AlertDialog
 				open={isDeleteModalOpen}
 				onOpenChange={(open) => {
-					if (!open) setIsDeleteModalOpen(false)
+					if (!open) setIsDeleteModalOpen(false);
 				}}
 			>
 				<AlertDialogContent>
@@ -183,8 +190,8 @@ export function TicketCardContent({
 						</AlertDialogCancel>
 						<AlertDialogAction
 							onClick={() => {
-								setIsDeleteModalOpen(false)
-								onDelete(ticket.ticket_id)
+								setIsDeleteModalOpen(false);
+								onDelete(ticket.ticket_id);
 							}}
 						>
 							Delete
@@ -242,5 +249,5 @@ export default function TicketCard({
 				onDelete={onDelete}
 			/>
 		</div>
-	)
+	);
 }

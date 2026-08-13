@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { FormInput } from "@/components/ui/forminput"; // Adjust path as needed
+import { Copy } from "lucide-react";
 import { clientCreate, clientUpdate } from "@/entities/client";
 import { getFieldErrors } from "@/shared/lib/zod";
 import { clientSchema, clientCreateSchema } from "@/shared/schemas";
@@ -46,6 +47,9 @@ export default function ClientFormModal({
 	const [contactNumber, setContactNumber] = useState<string>("");
 	const [billingAddress, setBillingAddress] = useState<string>("");
 	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+	// Plain invite code returned exactly once by clientCreate.
+	const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+	const [createError, setCreateError] = useState<string | null>(null);
 
 	// Helper to clear individual field errors on change
 	const handleClearError = (key: string): void => {
@@ -66,10 +70,13 @@ export default function ClientFormModal({
 		setContactNumber(initialData?.contactNumber ?? "");
 		setBillingAddress(initialData?.billingAddress ?? "");
 		setFieldErrors({});
+		setGeneratedCode(null);
+		setCreateError(null);
 	});
 
 	const handleSubmit = async (): Promise<void> => {
 		setFieldErrors({});
+		setCreateError(null);
 		// Create uses clientCreateSchema (no client_id — UUIDs come from the
 		// DB, project rule #2); edit validates the full schema with the
 		// server-issued id.
@@ -87,7 +94,12 @@ export default function ClientFormModal({
 				setFieldErrors(getFieldErrors(parsed));
 				return;
 			}
-			await clientUpdate(parsed.data);
+			const result = await clientUpdate(parsed.data);
+			if (!result.success) {
+				setCreateError(result.error);
+				return;
+			}
+			onClose();
 		} else {
 			const parsed = clientCreateSchema.safeParse({
 				client_name: clientName,
@@ -100,9 +112,15 @@ export default function ClientFormModal({
 				setFieldErrors(getFieldErrors(parsed));
 				return;
 			}
-			await clientCreate(parsed.data);
+			const result = await clientCreate(parsed.data);
+			if (!result.success) {
+				setCreateError(result.error);
+				return;
+			}
+			// The invite code is returned exactly once — show it before
+			// closing so the owner can share it with the client's employees.
+			setGeneratedCode(result.inviteCode ?? null);
 		}
-		onClose();
 	};
 
 	return (
@@ -124,6 +142,40 @@ export default function ClientFormModal({
 					</DialogDescription>
 				</DialogHeader>
 
+				{generatedCode ? (
+					<div className="flex flex-col gap-4">
+						<p className="text-sm text-muted-foreground">
+							Client created. Share this invite code with the client&apos;s
+							employees so they can create their accounts —{" "}
+							<span className="font-semibold text-foreground">
+								it is shown only once
+							</span>
+							.
+						</p>
+						<div className="flex items-center justify-between gap-2 rounded-md border border-brand-100 bg-neutral-subtle px-4 py-3">
+							<span className="font-mono text-lg tracking-[0.3em] text-foreground">
+								{generatedCode}
+							</span>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								aria-label="Copy invite code"
+								onClick={() => navigator.clipboard?.writeText(generatedCode)}
+							>
+								<Copy className="h-4 w-4" />
+							</Button>
+						</div>
+						{createError && (
+							<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
+								{createError}
+							</p>
+						)}
+						<DialogFooter className="border-t pt-4">
+							<Button onClick={onClose}>Done</Button>
+						</DialogFooter>
+					</div>
+				) : (
+				<>
 				<div className="flex flex-col gap-5">
 					{/* Client Name */}
 					<FormInput
@@ -167,27 +219,17 @@ export default function ClientFormModal({
 						/>
 					</div>
 
-					{/* Contact Number (Custom PhoneInput) */}
-					<div className="flex flex-col gap-2">
-						<div className="flex">
-							<Label required error={!!fieldErrors.phone}>
-								Contact Number
-							</Label>
-							{fieldErrors.phone && (
-								<div className="ml-auto text-xs text-destructive">
-									{fieldErrors.phone}
-								</div>
-							)}
-						</div>
-						<PhoneInput
-							value={contactNumber}
-							onChange={(val: string) => {
-								setContactNumber(val);
-								handleClearError("phone");
-							}}
-							placeholder="+1 (555) 000-0000"
-						/>
-					</div>
+					<PhoneInput
+						label="Contact Number"
+						required
+						value={contactNumber}
+						onChange={(val: string) => {
+							setContactNumber(val);
+							handleClearError("phone");
+						}}
+						placeholder="+1 (555) 000-0000"
+						error={fieldErrors.phone}
+					/>
 
 					{/* Billing Address */}
 					<FormInput
@@ -204,6 +246,15 @@ export default function ClientFormModal({
 						}
 						onClearError={() => handleClearError("billing_address")}
 					/>
+
+					{/* Create/edit failures (e.g. duplicate TIN, owner-only
+						rejection) are visible here — not only in the
+						invite-code success view. */}
+					{createError && (
+						<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
+							{createError}
+						</p>
+					)}
 				</div>
 
 				<DialogFooter className="bg-muted/50 border-t p-6">
@@ -216,6 +267,8 @@ export default function ClientFormModal({
 						</Button>
 					</div>
 				</DialogFooter>
+				</>
+				)}
 			</DialogContent>
 		</Dialog>
 	);

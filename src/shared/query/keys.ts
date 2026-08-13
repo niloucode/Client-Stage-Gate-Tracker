@@ -33,10 +33,12 @@ export const clientKeys = {
 	lists: () => [...clientKeys.all, "list"] as const,
 	details: () => [...clientKeys.all, "detail"] as const,
 	detail: (id: string) => [...clientKeys.details(), id] as const,
+	own: () => [...clientKeys.all, "own"] as const,
 };
 
 export const departmentKeys = {
 	all: ["departments"] as const,
+	lists: () => [...departmentKeys.all, "list"] as const,
 	detail: (id: string) => [...departmentKeys.all, "detail", id] as const,
 };
 
@@ -68,4 +70,14 @@ export const projectKeys = {
 	detail: (id: string) => [...projectKeys.details(), id] as const,
 	members: (projectId: string) =>
 		[...projectKeys.detail(projectId), "members"] as const,
+};
+
+export const dashboardAnalyticsKeys = {
+	all: ["dashboardAnalytics"] as const,
+	phases: (projectId: string) =>
+		[...dashboardAnalyticsKeys.all, "phases", projectId] as const,
+	modules: (projectId: string) =>
+		[...dashboardAnalyticsKeys.all, "modules", projectId] as const,
+	workflows: (projectId: string) =>
+		[...dashboardAnalyticsKeys.all, "workflows", projectId] as const,
 };

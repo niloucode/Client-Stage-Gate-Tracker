@@ -2,6 +2,7 @@ import React from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 // 1. Shared Layout Props
 interface BaseFormFieldProps {
@@ -103,7 +104,7 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
 	}
 
 	return (
-		<div className={`relative ${containerClassName}`}>
+		<div className={cn("relative", containerClassName)}>
 			{/* Label Row */}
 			<div className="flex">
 				<Label required={required} error={hasError}>
@@ -121,38 +122,42 @@ export const FormInput: React.FC<FormInputProps> = (props) => {
 				</div>
 			</div>
 
-						{props.variant === "textarea" && (
-							<Textarea
-								value={displayValue}
-								maxLength={maxLength}
-								rows={props.rows ?? 4}
-								placeholder={props.placeholder}
-								onChange={(e) => handleValueChange(e, props.onChange)}
-								className={`placeholder-gray-400 rounded-sm mt-1 bg-neutral-surface resize-none ${
-									hasError
-										? "border-red-400 focus:ring-red-400"
-										: "border-gray-300 focus:ring-brand-500"
-								}`}
-							/>
-						)}
+			{props.variant === "textarea" && (
+				<Textarea
+					value={displayValue}
+					maxLength={maxLength}
+					rows={props.rows ?? 4}
+					placeholder={props.placeholder}
+					aria-invalid={hasError}
+					onChange={(e) => handleValueChange(e, props.onChange)}
+					className={cn(
+						"placeholder-gray-400 rounded-sm mt-1 bg-neutral-surface resize-none",
+						hasError
+							? "border-destructive ring-1 ring-destructive/20"
+							: "border-gray-200 focus:ring-brand-500"
+					)}
+				/>
+			)}
 
-						{/* Variant 2: Base Input / Datepicker (Default) */}
-						{(!props.variant ||
-							props.variant === "input" ||
-							props.variant === "datetime-local") && (
-							<Input
-								type={isTin ? "text" : (props.type ?? "text")}
-								value={displayValue}
-								maxLength={effectiveMaxLength}
-								placeholder={effectivePlaceholder}
-								onChange={(e) => handleValueChange(e, props.onChange)}
-								className={`rounded-sm mt-1 bg-neutral-surface ${
-									hasError
-										? "border-red-400 focus:ring-red-400"
-										: "border-gray-300 focus:ring-brand-500"
-								}`}
-							/>
-						)}
+			{/* Variant 2: Base Input / Datepicker (Default) */}
+			{(!props.variant ||
+				props.variant === "input" ||
+				props.variant === "datetime-local") && (
+				<Input
+					type={isTin ? "text" : (props.type ?? "text")}
+					value={displayValue}
+					maxLength={effectiveMaxLength}
+					placeholder={effectivePlaceholder}
+					aria-invalid={hasError}
+					onChange={(e) => handleValueChange(e, props.onChange)}
+					className={cn(
+						"rounded-sm mt-1 bg-neutral-surface",
+						hasError
+							? "border-destructive ring-1 ring-destructive/20"
+							: "border-gray-200 focus:ring-brand-500"
+					)}
+				/>
+			)}
 		</div>
 	)
 }

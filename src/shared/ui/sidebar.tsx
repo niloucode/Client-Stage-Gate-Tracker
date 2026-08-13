@@ -35,13 +35,13 @@ interface NavItem {
 export const navItems: NavItem[] = [
 	// { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
 	{ label: "Projects", icon: Folder, href: "/projects" },
-	// { label: "Contracts", icon: FileText, href: "/contracts" },
+	// { label: "Contracts", icon: FileText, href: "/contracts" }, // TODO(contracts): route not built yet
 	{ label: "Clients", icon: ContactRound, href: "/clients" },
 	// { label: "Credentials Repo", icon: Key, href: "/credentials" },
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
-  <div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-[65px] overflow-hidden">
+  <div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25 overflow-hidden">
     <div className={`flex flex-col min-w-0 transition-all duration-300 ease-in-out`}> {/* ${collapsed ? "mx-auto" : ""} */}
       {/* Logo container: switches between icon and full logo based on collapsed state */}
       <div className="relative overflow-hidden h-5 transition-all duration-300 ease-in-out">
@@ -194,9 +194,24 @@ export const SidebarFooter = ({
 	</div>
 );
 
-export default function SidebarLayout({ children }: { children?: ReactNode }) {
+export default function SidebarLayout({
+	children,
+	showClientsLink = true,
+}: {
+	children?: ReactNode;
+	/** Client profiles must not see the Clients registry entry. The (app)
+	 * server layout resolves the role and passes this flag — a boolean is
+	 * serializable across the RSC boundary, while navItems (with icon
+	 * components) stay client-side. */
+	showClientsLink?: boolean;
+}) {
 	const pathname = usePathname();
 	const [collapsed, setCollapsed] = useState(false);
+
+	// Role-filtered nav items (client-side — icons must not cross RSC).
+	const items = showClientsLink
+		? navItems
+		: navItems.filter((item) => item.href !== "/clients");
 
 	return (
 		<div
@@ -213,7 +228,7 @@ export default function SidebarLayout({ children }: { children?: ReactNode }) {
 				<SidebarLogo collapsed={collapsed} />
 
 				<nav className="flex-1 px-2 py-4 space-y-0.5 overflow-hidden">
-					{navItems.map((item) => {
+					{items.map((item) => {
 						const isActive = pathname.startsWith(item.href);
 						return (
 							<SidebarNavItem

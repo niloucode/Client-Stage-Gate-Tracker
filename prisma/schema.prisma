@@ -64,16 +64,17 @@ model users {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Clients {
-  client_id       String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  client_name     String
-  tin             String      @unique
-  billing_address String
-  is_deleted      Boolean     @default(false)
-  deleted_at      DateTime?   @db.Timestamptz(6)
-  email           String
-  phone           String
-  Contracts       Contracts[]
-  Profiles        Profiles[]
+  client_id        String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  client_name      String
+  tin              String      @unique
+  billing_address  String
+  is_deleted       Boolean     @default(false)
+  deleted_at       DateTime?   @db.Timestamptz(6)
+  email            String
+  phone            String
+  invite_code_hash String?     @unique @db.VarChar(64)
+  Contracts        Contracts[]
+  Profiles         Profiles[]
 
   @@schema("public")
 }

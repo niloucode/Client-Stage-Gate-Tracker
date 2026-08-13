@@ -36,7 +36,8 @@ export type CreateTicketParams = TicketCreateInput & {
 // ── Update ticket ────────────────────────────────────────────────────────────
 
 export const ticketUpdateSchema = ticketCreateSchema.partial().extend({
-	status: z.enum(["PENDING", "IN_PROGRESS", "FINISHED"]).optional(),
+  status: z.enum(["PENDING", "IN_PROGRESS", "FINISHED"]).optional(),
+  parent_id: z.uuid().optional().nullable(),
 });
 
 export type TicketUpdateInput = z.infer<typeof ticketUpdateSchema>;
@@ -56,9 +57,9 @@ export type CommentCreateInput = z.infer<typeof commentCreateSchema>;
 // ── Update ticket (full server-action params) ────────────────────────────────
 
 export type UpdateTicketParams = TicketUpdateInput & {
-	ticket_id: string;
-	// Every ticket must belong to a workflow (schema invariant: NOT NULL).
-	workflow_id: string;
-	TicketAssigned: string[];
-	tagIds: string[];
+  ticket_id: string;
+  workflow_id: string;
+  TicketAssigned: string[];
+  tagIds: string[];
+  parent_id?: string | null;
 };
