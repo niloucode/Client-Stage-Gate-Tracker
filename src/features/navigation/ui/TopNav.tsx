@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { useProject } from "@/entities/project/queries"
+import { useProject } from "@/entities/project"
 import { Breadcrumbs, type BreadcrumbItem } from "./Breadcrumbs"
 import { AccountMenu } from "./AccountMenu"
 
@@ -14,6 +14,7 @@ const SECTION_LABELS: Record<string, string> = {
 	contracts: "Contracts",
 	analytics: "Analytics",
 	credentials: "Credentials",
+	issues: "Issues",
 }
 
 /**
@@ -36,7 +37,11 @@ function useRealBreadcrumbs(): BreadcrumbItem[] {
 		}
 		const section = match[2]
 		if (section) {
-			crumbs.push({ label: SECTION_LABELS[section] ?? section })
+			crumbs.push({
+				label:
+					SECTION_LABELS[section] ??
+					section.charAt(0).toUpperCase() + section.slice(1),
+			})
 		}
 		return crumbs
 	}
@@ -52,7 +57,7 @@ export default function TopNav() {
 	const breadcrumbs = useRealBreadcrumbs()
 
 	return (
-		<header className="bg-neutral-surface relative flex items-center justify-between px-8 py-3 border-b-1 border-brand-100 shrink-0">
+		<header className="bg-neutral-surface relative flex items-center justify-between px-8 py-3 border-b border-brand-100 shrink-0">
 			<Breadcrumbs items={breadcrumbs} />
 
 			<div className="flex items-center gap-3">

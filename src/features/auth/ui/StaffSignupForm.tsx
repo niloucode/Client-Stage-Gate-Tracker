@@ -45,7 +45,7 @@ export function StaffSignupForm() {
 			password: "",
 			confirmPassword: "",
 		},
-		validators: { onBlur: signupSchema, onSubmit: signupSchema },
+		validators: { onSubmit: signupSchema },
 		onSubmit: async ({ value }) => {
 			setError(null);
 			setSuccess(null);

@@ -104,41 +104,17 @@ describe("LoginForm interactions", () => {
 		expect(screen.getByText("Password is required")).toBeInTheDocument();
 	});
 
-	it("blurring a field shows warnings without submitting", async () => {
-		const user = userEvent.setup();
-		renderWithQuery(<LoginForm />);
-
-		const email = screen.getByLabelText("Email Address *");
-		await user.click(email);
-		await user.tab(); // move focus to the password field
-
-		// Form-level onBlur validation: leaving the first field flags all
-		// empty/wrong fields immediately — no submit needed.
-		expect(
-			await screen.findByText("Enter a valid email address"),
-		).toBeInTheDocument();
-		expect(screen.getByText("Password is required")).toBeInTheDocument();
-	});
-
-	it("fixing a field clears its warning on the next blur", async () => {
+	it("blurring fields does NOT flag the form before a submit attempt", async () => {
 		const user = userEvent.setup();
 		renderWithQuery(<LoginForm />);
 
 		const email = screen.getByLabelText("Email Address *");
 		await user.click(email);
 		await user.tab();
-		expect(
-			await screen.findByText("Enter a valid email address"),
-		).toBeInTheDocument();
+		await user.tab();
 
-		await user.type(email, "user@asceoft.com");
-		await user.tab(); // re-validates on blur
-
-		await waitFor(() => {
-			expect(
-				screen.queryByText("Enter a valid email address"),
-			).not.toBeInTheDocument();
-		});
+		expect(screen.queryByText("Enter a valid email address")).not.toBeInTheDocument();
+		expect(screen.queryByText("Password is required")).not.toBeInTheDocument();
 	});
 });
 
@@ -195,19 +171,6 @@ describe("StaffSignupForm interactions", () => {
 		expect(screen.getByText("Last name is required")).toBeInTheDocument();
 		expect(screen.getByText("Department is required")).toBeInTheDocument();
 	});
-
-	it("blurring a field shows warnings without submitting", async () => {
-		const user = userEvent.setup();
-		renderWithQuery(<StaffSignupForm />);
-
-		await user.click(screen.getByLabelText("First Name *"));
-		await user.tab();
-
-		expect(
-			await screen.findByText("First name is required"),
-		).toBeInTheDocument();
-		expect(screen.getByText("Last name is required")).toBeInTheDocument();
-	});
 });
 
 describe("ClientSignupForm interactions", () => {
@@ -236,14 +199,14 @@ describe("ClientSignupForm interactions", () => {
 		expect(screen.getByText("Enter a valid email address")).toBeInTheDocument();
 	});
 
-	it("rejects a malformed invite code on blur", async () => {
+	it("rejects a malformed invite code on submit", async () => {
 		const user = userEvent.setup();
 		renderWithQuery(<ClientSignupForm />);
 
 		const code = screen.getByLabelText("Invite Code *");
-		await user.click(code);
 		await user.type(code, "short");
-		await user.tab();
+
+		await user.click(screen.getByRole("button", { name: "Create Account" }));
 
 		expect(
 			await screen.findByText("Enter a valid invite code"),

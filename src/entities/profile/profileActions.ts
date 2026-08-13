@@ -149,10 +149,8 @@ export async function createProfileForCurrentUser(
 		clientId = client.client_id;
 	}
 
-	const sessionUserId = await getCurrentUserId();
-	let userId = sessionUserId;
 	const normalizedEmail = input.email.toLowerCase();
-
+	let userId = await getCurrentUserId();
 	if (!userId) {
 		// No session yet — only accept a claimed id that provably belongs to
 		// the auth user with this email AND was created moments ago (the

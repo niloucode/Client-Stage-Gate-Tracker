@@ -48,17 +48,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 	const logout = useCallback(async () => {
 		try {
-			// 1. Sign out from Supabase (clears local auth tokens)
-			await supabase.auth.signOut();
-
-			// 2. Clear TanStack Query cache so stale user/profile data is wiped immediately
-			queryClient.clear();
-
-			// 3. Redirect user to login page
-			router.push("/login");
-			router.refresh();
+			// 1. Sign out from Supabase — LOCAL scope clears the current
+			// browser session without a server round-trip, so logout always
+			// works even offline (global scope can hang on network failures).
+			await supabase.auth.signOut({ scope: "local" });
 		} catch (error) {
 			console.error("Error during logout:", error);
+		} finally {
+			// 2. Clear TanStack Query cache so stale user/profile data is
+			// wiped immediately, then always route to the login page.
+			queryClient.clear();
+			router.push("/login");
+			router.refresh();
 		}
 		// createClient() returns the same browser client per URL+key, so the
 		// closure is stable — excluding it keeps the callback identity stable.

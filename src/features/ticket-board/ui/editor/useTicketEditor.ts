@@ -59,7 +59,6 @@ export function useTicketEditor({
       await updateTicketParentMutation.mutateAsync({
         ticketId: selectedTicket.ticket_id,
         parentId: ticket.ticket_id,
-        performed_by: user?.profile_id,
       });
       setIsSubtaskSelectionOpen(false);
     } catch (error) {
@@ -73,7 +72,6 @@ export function useTicketEditor({
       await updateTicketParentMutation.mutateAsync({
         ticketId: subtaskId,
         parentId: null, // Setting to null unlinks it
-        performed_by: user?.profile_id,
       });
     } catch (error) {
       console.error("Failed to remove subtask:", error);
@@ -110,6 +108,7 @@ export function useTicketEditor({
   return {
     ticket,
     setTicket,
+    onUpdate,
     selectedTags,
     setSelectedTags,
     apiMethod,

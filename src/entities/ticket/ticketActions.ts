@@ -409,7 +409,6 @@ export async function selectTicketHistory(ticketId: string) {
 export async function updateTicketParent(
 	ticketId: string,
 	parentId: string | null,
-	performed_by?: string,
 ) {
 	z.uuid().parse(ticketId);
 	if (parentId !== null) z.uuid().parse(parentId);
