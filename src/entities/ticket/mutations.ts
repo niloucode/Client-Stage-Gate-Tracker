@@ -88,3 +88,27 @@ export function useDeleteTicket() {
 		},
 	});
 }
+
+// Add this at the bottom of src/entities/ticket/mutations.ts
+import { updateTicketParent } from "./ticketActions";
+
+export function useUpdateTicketParent() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: ({
+			ticketId,
+			parentId,
+			performed_by,
+		}: {
+			ticketId: string;
+			parentId: string | null;
+			performed_by?: string;
+		}) => updateTicketParent(ticketId, parentId, performed_by),
+		onSuccess: async () => {
+			// This invalidation forces the board to refetch, which instantly 
+			// updates the subtask list in your TicketEditor!
+			await queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
+		},
+	});
+}

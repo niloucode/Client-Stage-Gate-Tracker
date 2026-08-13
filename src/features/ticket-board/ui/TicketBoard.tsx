@@ -341,6 +341,7 @@ export default function TicketBoard({
 				onClose={() => setSlideOverOpen(false)}
 				onUpdate={(updated) => setSelectedTicket(updated)}
 				tags={tags}
+				allTickets={tickets} 
 			/>
 
 			<TicketModalCreate
