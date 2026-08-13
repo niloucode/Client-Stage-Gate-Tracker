@@ -144,35 +144,43 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 							{/* Date selection using DateTimePicker */}
 							<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
 								<form.AppField name="planStart">
-									{(field) => (
-										<div className="space-y-1.5">
-											<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-												PLANNED START
-											</Label>
-											<DateTimePicker
-												value={field.state.value ? new Date(field.state.value) : undefined}
-												onChange={(date) => field.handleChange(date ?? null)}
-												placeholder="Pick planned start"
-												className="h-9 text-xs"
-											/>
-										</div>
-									)}
+									{(field) => {
+										const error = formErrorToMessage(field.state.meta.errors[0]);
+										return (
+											<div className="space-y-1.5">
+												<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+													PLANNED START
+												</Label>
+												<DateTimePicker
+													value={field.state.value ? new Date(field.state.value) : undefined}
+													onChange={(date) => field.handleChange(date ?? null)}
+													placeholder="Pick planned start"
+													className="h-9 text-xs"
+												/>
+												{error && <p className="text-xs text-destructive">{error}</p>}
+											</div>
+										);
+									}}
 								</form.AppField>
 
 								<form.AppField name="planEnd">
-									{(field) => (
-										<div className="space-y-1.5">
-											<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-												PLANNED END
-											</Label>
-											<DateTimePicker
-												value={field.state.value ? new Date(field.state.value) : undefined}
-												onChange={(date) => field.handleChange(date ?? null)}
-												placeholder="Pick planned end"
-												className="h-9 text-xs"
-											/>
-										</div>
-									)}
+									{(field) => {
+										const error = formErrorToMessage(field.state.meta.errors[0]);
+										return (
+											<div className="space-y-1.5">
+												<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+													PLANNED END
+												</Label>
+												<DateTimePicker
+													value={field.state.value ? new Date(field.state.value) : undefined}
+													onChange={(date) => field.handleChange(date ?? null)}
+													placeholder="Pick planned end"
+													className="h-9 text-xs"
+												/>
+												{error && <p className="text-xs text-destructive">{error}</p>}
+											</div>
+										);
+									}}
 								</form.AppField>
 							</div>
 

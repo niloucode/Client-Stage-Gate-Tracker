@@ -131,12 +131,11 @@ export function SubtaskSelectionModal({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 ml-4">
+                <div className="flex items-center rounded-sm gap-2 shrink-0 ml-4">
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
-                    className="h-8 gap-1.5 text-xs font-semibold text-brand-600 border-brand-200 hover:bg-brand-50 hover:text-brand-700 rounded-md pointer-events-none"
+                    variant="secondary"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add</span>

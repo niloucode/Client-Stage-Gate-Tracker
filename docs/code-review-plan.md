@@ -253,9 +253,9 @@
 - [ ] src/features/stage-editor/index.ts
 - [ ] src/features/stage-editor/types.ts
 - [ ] src/features/stage-editor/defaults.ts
-- [ ] src/features/stage-editor/ui/ModulesCard.tsx
-- [ ] src/features/stage-editor/ui/PhaseStepper.tsx
-- [ ] src/features/stage-editor/ui/WorkflowsList.tsx
+- [ ] src/features/stage-editor/ui/ModuleCard.tsx
+- [ ] src/features/stage-editor/ui/PhaseCard.tsx
+- [ ] src/features/stage-editor/ui/WorkflowCard.tsx
 - [ ] src/features/stage-editor/ui/modals/AddModule.tsx
 - [x] src/features/stage-editor/ui/modals/AddPhase.tsx (deleted — consolidated into PhaseModal.tsx)
 - [ ] src/features/stage-editor/ui/modals/AddWorkflow.tsx

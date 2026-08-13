@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import type { Module, Phase } from "../types";
-import { WorkflowsList } from "./WorkflowsList";
-import { AddModule } from "@/features/stage-editor/ui/modals/AddModule";
-import { EditModule } from "@/features/stage-editor/ui/modals/EditModule";
+import { WorkflowCard } from "./WorkflowCard";
+import { AddModule, EditModule } from "@/features/stage-editor/ui/modals/ModuleModals";
 import {
 	useCreateModule,
 	useUpdateModule,
@@ -75,19 +74,19 @@ function getDeadlineState(
 }
 // -----------------------------------
 
-interface ModulesCardProps {
+interface ModuleCardProps {
 	activePhase: number | null;
 	phases: Phase[];
 	projectId: string;
 	stageId: string;
 }
 
-export function ModulesCard({
+export function ModuleCard({
 	activePhase,
 	phases,
 	projectId,
 	stageId,
-}: ModulesCardProps) {
+}: ModuleCardProps) {
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [editingModule, setEditingModule] = useState<Module | null>(null);
 	const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
@@ -194,7 +193,7 @@ export function ModulesCard({
 		<div className="mx-auto mb-8">
 			{/* Header with Add Module button */}
 			<div className="flex justify-between items-center mb-4">
-				<h3 className="text-2xl font-semibold text-slate-900">
+				<h3 className="text-2xl text-slate-900">
 					Modules
 				</h3>
 				<Button onClick={openCreateModuleModal}>
@@ -203,7 +202,7 @@ export function ModulesCard({
 			</div>
 
 			{/* Module Cards */}
-			<div className="space-y-4">
+			<div className="select-none space-y-4">
 				{activePhase === null ? (
 					<div className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm p-8 text-center">
 						<p className="text-sm text-neutral-subtle">No phase selected</p>
@@ -245,10 +244,10 @@ export function ModulesCard({
 									>
 										<ChevronDown
 											size={12}
-											className={`flex-shrink-0 transform transition-transform text-slate-500 ${isExpanded ? "" : "-rotate-90"}`}
+											className={`flex-shrink-0 transform transition-transform text-slate-500 duration-200 ${isExpanded ? "" : "-rotate-90"}`}
 										/>
 										<div>
-											<h4 className="font-semibold text-sm text-slate-900">
+											<h4 className="text-sm text-slate-900">
 												{module.name}
 											</h4>
 											<div className="flex items-center gap-1 mt-0.5">
@@ -282,7 +281,7 @@ export function ModulesCard({
 											className="px-3 py-1.5 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md"
 											title={status !== 'not_started' && module.planStart ? `Planned Start: ${formatDateTime(module.planStart)}` : undefined}
 										>
-											<span className="font-medium text-xs text-slate-600 flex items-center gap-1">
+											<span className="text-xs text-slate-600 flex items-center gap-1">
 												{deadlineState === 'overdue' ? 'Overdue: ' : 'Deadline: '} 
 													{formatDateTime(module.planEnd)}
 													{status === 'ended' && (
@@ -309,15 +308,21 @@ export function ModulesCard({
 									</div>
 								</div>
 
-								{/* Workflows List */}
-								{isExpanded && (
-									<WorkflowsList
-										workflows={module.workflows}
-										moduleId={module.module_id}
-										projectId={projectId}
-										stageId={stageId}
-									/>
-								)}
+								{/* Workflows List with Collapsible Slide Down */}
+								<div
+									className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+										isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+									}`}
+								>
+									<div className="overflow-hidden">
+										<WorkflowCard
+											workflows={module.workflows}
+											moduleId={module.module_id}
+											projectId={projectId}
+											stageId={stageId}
+										/>
+									</div>
+								</div>
 							</div>
 						);
 					})

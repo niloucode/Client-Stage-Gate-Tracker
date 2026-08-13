@@ -42,7 +42,7 @@ export default function ViewTeamMembersModal({
 				<DialogHeader>
 					<DialogTitle>Team Members</DialogTitle>
 				</DialogHeader>
-				<div className="">
+				<div>
 					{/* Table header */}
 					<div
 						className="grid px-4 pb-2 border-b border-border"

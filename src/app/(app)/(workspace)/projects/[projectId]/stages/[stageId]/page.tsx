@@ -3,8 +3,8 @@
 import { use, useState, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
-	PhaseStepper,
-	ModulesCard,
+	PhaseCard,
+	ModuleCard,
 } from "@/features/stage-editor"
 import type { Phase } from "@/features/stage-editor/types"
 import { useStageTree } from "@/entities/stage/queries"
@@ -102,7 +102,7 @@ function EditorContent({
 				<Button onClick={() => stepperRef.current?.openCreateModal()}><Plus />Add Phase</Button>
 			</div>
 
-			<PhaseStepper
+			<PhaseCard
 				ref={stepperRef}
 				phases={phases}
 				stageId={stageId}
@@ -110,7 +110,7 @@ function EditorContent({
 				setActivePhase={setActivePhase}
 			/>
 
-			<ModulesCard
+			<ModuleCard
 				activePhase={activePhase}
 				phases={phases}
 				projectId={projectId}
