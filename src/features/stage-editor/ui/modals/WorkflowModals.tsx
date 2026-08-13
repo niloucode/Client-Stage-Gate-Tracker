@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { z } from "zod";
 import type { Workflow } from "../../types";
-import { workflowCreateSchema } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
+import {
+	hasValidPlannedRange,
+	toSchedulingDates,
+} from "@/shared/lib/scheduling";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { Label } from "@/components/ui/label";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
@@ -36,6 +40,35 @@ export interface WorkflowModalProps {
 	onSave: (data: WorkflowFormData) => void;
 	onDelete?: () => void;
 }
+
+const baseWorkflowModalSchema = z.object({
+	name: z
+		.string()
+		.min(1, "Workflow name is required")
+		.max(35, "Workflow name must be 35 characters or less"),
+	planStart: z
+		.date()
+		.nullable()
+		.refine((val): val is Date => val !== null, {
+			message: "Plan Start date is required",
+		}),
+	planEnd: z
+		.date()
+		.nullable()
+		.refine((val): val is Date => val !== null, {
+			message: "Deadline date is required",
+		}),
+	actualStart: z.date().optional().nullable(),
+	actualEnd: z.date().optional().nullable(),
+});
+
+const workflowModalSchema = baseWorkflowModalSchema.refine(
+	(data) => hasValidPlannedRange(toSchedulingDates(data)),
+	{
+		message: "Plan Start must be before or equal to Deadline Date",
+		path: ["planStart"],
+	},
+);
 
 const emptyFormData: WorkflowFormData = {
 	name: "",
@@ -95,7 +128,7 @@ export function WorkflowModal({
 	};
 
 	const handleSubmit = () => {
-		const result = workflowCreateSchema.safeParse(formData);
+		const result = workflowModalSchema.safeParse(formData);
 		if (!result.success) {
 			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
@@ -136,41 +169,41 @@ export function WorkflowModal({
 						error={fieldErrors.name}
 						onChange={(e) => {
 							setFormData({ ...formData, name: e.target.value });
-							setFieldErrors({});
+							setFieldErrors((prev) => ({ ...prev, name: undefined }));
 						}}
 					/>
 
-					<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-						<div>
-							<Label>Plan Start</Label>
+						<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
 							<DateTimePicker
+								label="Plan Start"
+								required
 								value={formData.planStart ? new Date(formData.planStart) : undefined}
-								onChange={(date) =>
+								onChange={(date) => {
 									setFormData({
 										...formData,
 										planStart: date ?? null,
-									})
-								}
+									});
+									setFieldErrors((prev) => ({ ...prev, planStart: undefined }));
+								}}
 								placeholder="Pick plan start date"
-								className="h-9 text-xs"
+								error={fieldErrors.planStart}
 							/>
-						</div>
 
-						<div>
-							<Label>Deadline Date</Label>
 							<DateTimePicker
+								label="Deadline Date"
+								required
 								value={formData.planEnd ? new Date(formData.planEnd) : undefined}
-								onChange={(date) =>
+								onChange={(date) => {
 									setFormData({
 										...formData,
 										planEnd: date ?? null,
-									})
-								}
+									});
+									setFieldErrors((prev) => ({ ...prev, planEnd: undefined }));
+								}}
 								placeholder="Pick deadline date"
-								className="h-9 text-xs"
+								error={fieldErrors.planEnd}
 							/>
 						</div>
-					</div>
 				</div>
 
 				<DialogFooter>

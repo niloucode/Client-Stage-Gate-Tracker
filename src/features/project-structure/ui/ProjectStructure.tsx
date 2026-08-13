@@ -542,7 +542,7 @@ export function ProjectStructure({
                 description="Review mandatory compliance milestones"
                 icon={LayoutGrid}
                 onClick={() =>
-                  projectId && router.push(`/projects/${projectId}`)
+                  projectId && router.push(`/projects/${projectId}/stages/${selectedStageId}/gate`)
                 }
               />
             </div>

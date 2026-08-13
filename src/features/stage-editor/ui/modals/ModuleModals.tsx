@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { z } from "zod";
 import type { Module } from "../../types";
-import { moduleCreateSchema } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
+import {
+	hasValidPlannedRange,
+	toSchedulingDates,
+} from "@/shared/lib/scheduling";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { Label } from "@/components/ui/label";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
@@ -37,6 +41,35 @@ export interface ModuleModalProps {
 	onSave: (data: ModuleFormData) => void;
 	onDelete?: () => void;
 }
+
+const baseModuleModalSchema = z.object({
+	name: z
+		.string()
+		.min(1, "Module name is required")
+		.max(35, "Module name must be 35 characters or less"),
+	planStart: z
+		.date()
+		.nullable()
+		.refine((val): val is Date => val !== null, {
+			message: "Plan Start date is required",
+		}),
+	planEnd: z
+		.date()
+		.nullable()
+		.refine((val): val is Date => val !== null, {
+			message: "Plan End date is required",
+		}),
+	actualStart: z.date().optional().nullable(),
+	actualEnd: z.date().optional().nullable(),
+});
+
+const moduleModalSchema = baseModuleModalSchema.refine(
+	(data) => hasValidPlannedRange(toSchedulingDates(data)),
+	{
+		message: "Plan Start must be before or equal to Plan End",
+		path: ["planStart"],
+	},
+);
 
 const emptyFormData: ModuleFormData = {
 	name: "",
@@ -97,7 +130,7 @@ export function ModuleModal({
 	};
 
 	const handleSubmit = () => {
-		const result = moduleCreateSchema.safeParse(formData);
+		const result = moduleModalSchema.safeParse(formData);
 		if (!result.success) {
 			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
@@ -138,40 +171,40 @@ export function ModuleModal({
 						error={fieldErrors.name}
 						onChange={(e) => {
 							setFormData({ ...formData, name: e.target.value });
-							setFieldErrors({});
+							setFieldErrors((prev) => ({ ...prev, name: undefined }));
 						}}
 					/>
 
 					<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-						<div>
-							<Label>Plan Start</Label>
-							<DateTimePicker
-								value={formData.planStart ? new Date(formData.planStart) : undefined}
-								onChange={(date) =>
-									setFormData({
-										...formData,
-										planStart: date ?? null,
-									})
-								}
-								placeholder="Pick plan start date"
-								className="h-9 text-xs"
-							/>
-						</div>
+						<DateTimePicker
+							label="Plan Start"
+							required
+							value={formData.planStart ? new Date(formData.planStart) : undefined}
+							onChange={(date) => {
+								setFormData({
+									...formData,
+									planStart: date ?? null,
+								});
+								setFieldErrors((prev) => ({ ...prev, planStart: undefined }));
+							}}
+							placeholder="Pick plan start date"
+							error={fieldErrors.planStart}
+						/>
 
-						<div>
-							<Label>Plan End</Label>
-							<DateTimePicker
-								value={formData.planEnd ? new Date(formData.planEnd) : undefined}
-								onChange={(date) =>
-									setFormData({
-										...formData,
-										planEnd: date ?? null,
-									})
-								}
-								placeholder="Pick plan end date"
-								className="h-9 text-xs"
-							/>
-						</div>
+						<DateTimePicker
+							label="Plan End"
+							required
+							value={formData.planEnd ? new Date(formData.planEnd) : undefined}
+							onChange={(date) => {
+								setFormData({
+									...formData,
+									planEnd: date ?? null,
+								});
+								setFieldErrors((prev) => ({ ...prev, planEnd: undefined }));
+							}}
+							placeholder="Pick plan end date"
+							error={fieldErrors.planEnd}
+						/>
 					</div>
 				</div>
 

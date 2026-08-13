@@ -18,7 +18,9 @@ type WorkflowStatus = "not_started" | "started" | "ended";
 
 const formatDateTime = (date: Date | null | undefined) => {
 	if (!date) return "——";
-	return new Date(date).toLocaleString("en-US", {
+	const d = new Date(date);
+	if (isNaN(d.getTime())) return "——";
+	return d.toLocaleString("en-US", {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
@@ -28,11 +30,11 @@ const formatDateTime = (date: Date | null | undefined) => {
 	});
 };
 
-function getActualStart(module: any): Date | null {
+function getActualStart(module: Module): Date | null {
 	return module.actualStart || module.planStart || null;
 }
 
-function getWorkflowStatus(module: any): WorkflowStatus {
+function getWorkflowStatus(module: Module): WorkflowStatus {
 	if (module.actualEnd) return "ended";
 	const actualStart = getActualStart(module);
 	const now = new Date();
@@ -40,34 +42,38 @@ function getWorkflowStatus(module: any): WorkflowStatus {
 	return "not_started";
 }
 
-function getStartDelayDays(plannedStart: Date | null | undefined, actualStart: Date | null | undefined): number {
+function getStartDelayDays(
+	plannedStart: Date | null | undefined,
+	actualStart: Date | null | undefined,
+): number {
 	if (!plannedStart || !actualStart) return 0;
-	const diffTime = new Date(actualStart).getTime() - new Date(plannedStart).getTime();
+	const diffTime =
+		new Date(actualStart).getTime() - new Date(plannedStart).getTime();
 	const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 	return diffDays > 0 ? diffDays : 0;
 }
 
 function getDeadlineState(
-	module: any,
-	status: WorkflowStatus
+	module: Module,
+	status: WorkflowStatus,
 ): "upcoming" | "approaching" | "overdue" | "on-time" | "late" {
 	if (!module.planEnd) return "upcoming";
-	
+
 	const dl = new Date(module.planEnd);
-	
+
 	if (status === "ended") {
 		if (!module.actualEnd) return "on-time";
 		return new Date(module.actualEnd) > dl ? "late" : "on-time";
 	}
-	
+
 	const now = new Date();
 	now.setHours(0, 0, 0, 0);
 	const dlDate = new Date(dl);
 	dlDate.setHours(0, 0, 0, 0);
-	
+
 	const diffTime = dlDate.getTime() - now.getTime();
 	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-	
+
 	if (diffDays < 0) return "overdue";
 	if (diffDays <= 3) return "approaching";
 	return "upcoming";
@@ -89,7 +95,9 @@ export function ModuleCard({
 }: ModuleCardProps) {
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [editingModule, setEditingModule] = useState<Module | null>(null);
-	const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+	const [expandedModules, setExpandedModules] = useState<Set<string>>(
+		new Set(),
+	);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 	const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
@@ -154,11 +162,29 @@ export function ModuleCard({
 
 	const toggleModule = (moduleId: string) => {
 		setExpandedModules((prev) => {
+			const isExpanding = !prev.has(moduleId);
 			const newSet = new Set(prev);
-			if (newSet.has(moduleId)) {
-				newSet.delete(moduleId);
-			} else {
+			if (isExpanding) {
 				newSet.add(moduleId);
+				// Wait for slide-down animation, then scroll bottom of workflows into view + 140px extra breathing room
+				setTimeout(() => {
+					const el = document.getElementById(`module-workflows-${moduleId}`);
+					if (el) {
+						el.scrollIntoView({
+							behavior: "smooth",
+							block: "end",
+						});
+						setTimeout(() => {
+							const scrollContainer = el.closest(".overflow-y-auto") || window;
+							scrollContainer.scrollBy({
+								top: 140,
+								behavior: "smooth",
+							});
+						}, 100);
+					}
+				}, 250);
+			} else {
+				newSet.delete(moduleId);
 			}
 			return newSet;
 		});
@@ -181,11 +207,16 @@ export function ModuleCard({
 
 	const getDeadlineColorClass = (state: string) => {
 		switch (state) {
-			case 'approaching': return 'text-amber-500 font-medium';
-			case 'overdue': return 'text-red-500 font-bold';
-			case 'late': return 'text-red-500 font-bold';
-			case 'on-time': return 'text-emerald-500 font-medium';
-			default: return 'text-[#8392a6]';
+			case "approaching":
+				return "text-amber-500 font-medium";
+			case "overdue":
+				return "text-red-500 font-bold";
+			case "late":
+				return "text-red-500 font-bold";
+			case "on-time":
+				return "text-emerald-500 font-medium";
+			default:
+				return "text-[#8392a6]";
 		}
 	};
 
@@ -193,16 +224,14 @@ export function ModuleCard({
 		<div className="mx-auto mb-8">
 			{/* Header with Add Module button */}
 			<div className="flex justify-between items-center mb-4">
-				<h3 className="text-2xl text-slate-900">
-					Modules
-				</h3>
+				<h3 className="text-2xl font-semibold text-slate-900">Modules</h3>
 				<Button onClick={openCreateModuleModal}>
 					<Plus className="mr-2 h-4 w-4" /> Add Module
 				</Button>
 			</div>
 
 			{/* Module Cards */}
-			<div className="select-none space-y-4">
+			<div className="space-y-4">
 				{activePhase === null ? (
 					<div className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm p-8 text-center">
 						<p className="text-sm text-neutral-subtle">No phase selected</p>
@@ -222,9 +251,8 @@ export function ModuleCard({
 				) : (
 					modules.map((module) => {
 						const isExpanded = expandedModules.has(module.module_id);
-						
-						// Contextual logic driven by inline helpers
-						const status = getWorkflowStatus(module); 
+
+						const status = getWorkflowStatus(module);
 						const actualStart = getActualStart(module);
 						const delayDays = getStartDelayDays(module.planStart, actualStart);
 						const deadlineState = getDeadlineState(module, status);
@@ -232,6 +260,7 @@ export function ModuleCard({
 
 						return (
 							<div
+								id={`module-${module.module_id}`}
 								key={module.module_id}
 								className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm overflow-hidden"
 							>
@@ -244,32 +273,38 @@ export function ModuleCard({
 									>
 										<ChevronDown
 											size={12}
-											className={`flex-shrink-0 transform transition-transform text-slate-500 duration-200 ${isExpanded ? "" : "-rotate-90"}`}
+											className={`shrink-0 transform transition-transform text-slate-500 duration-200 ${isExpanded ? "" : "-rotate-90"}`}
 										/>
 										<div>
-											<h4 className="text-sm text-slate-900">
+											<h4 className="font-semibold text-sm text-slate-900">
 												{module.name}
 											</h4>
 											<div className="flex items-center gap-1 mt-0.5">
-												{deadlineState === 'approaching' && <Clock className="w-3 h-3 text-amber-500" />}
+												{deadlineState === "approaching" && (
+													<Clock className="w-3 h-3 text-amber-500" />
+												)}
 												<p className={`text-xs ${deadlineColorClass}`}>
-												{status === 'not_started' && (
-													<>Starting: {formatDateTime(module.planStart)}</>
-												)}
-												
-												{status === 'started' && (
-													<>
-														Started: {formatDateTime(actualStart)} 
-														{delayDays > 0 && <span className="text-amber-600 ml-1">({delayDays} days late)</span>}
-													</>
-												)}
+													{status === "not_started" && (
+														<>Starting: {formatDateTime(module.planStart)}</>
+													)}
 
-												{status === 'ended' && (
-													<>
-														Started: {formatDateTime(actualStart)} – Ended: {formatDateTime(module.actualEnd)}
-													</>
-												)}
-													
+													{status === "started" && (
+														<>
+															Started: {formatDateTime(actualStart)}
+															{delayDays > 0 && (
+																<span className="text-amber-600 ml-1">
+																	({delayDays} days late)
+																</span>
+															)}
+														</>
+													)}
+
+													{status === "ended" && (
+														<>
+															Started: {formatDateTime(actualStart)} – Ended:{" "}
+															{formatDateTime(module.actualEnd)}
+														</>
+													)}
 												</p>
 											</div>
 										</div>
@@ -277,18 +312,24 @@ export function ModuleCard({
 
 									<div className="flex items-center gap-3">
 										{/* Contextual Date Badge */}
-										<div 
+										<div
 											className="px-3 py-1.5 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md"
-											title={status !== 'not_started' && module.planStart ? `Planned Start: ${formatDateTime(module.planStart)}` : undefined}
+											title={
+												status !== "not_started" && module.planStart
+													? `Planned Start: ${formatDateTime(module.planStart)}`
+													: undefined
+											}
 										>
-											<span className="text-xs text-slate-600 flex items-center gap-1">
-												{deadlineState === 'overdue' ? 'Overdue: ' : 'Deadline: '} 
-													{formatDateTime(module.planEnd)}
-													{status === 'ended' && (
-														<span className="ml-1 opacity-80">
-															({deadlineState === 'late' ? 'Late' : 'On-time'})
-														</span>
-													)}
+											<span className="font-medium text-xs text-slate-600 flex items-center gap-1">
+												{deadlineState === "overdue"
+													? "Overdue: "
+													: "Deadline: "}
+												{formatDateTime(module.planEnd)}
+												{status === "ended" && (
+													<span className="ml-1 opacity-80">
+														({deadlineState === "late" ? "Late" : "On-time"})
+													</span>
+												)}
 											</span>
 										</div>
 
@@ -310,8 +351,11 @@ export function ModuleCard({
 
 								{/* Workflows List with Collapsible Slide Down */}
 								<div
+									id={`module-workflows-${module.module_id}`}
 									className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-										isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+										isExpanded
+											? "grid-rows-[1fr] opacity-100"
+											: "grid-rows-[0fr] opacity-0"
 									}`}
 								>
 									<div className="overflow-hidden">
