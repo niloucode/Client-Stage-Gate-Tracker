@@ -285,3 +285,156 @@ body {
     @apply font-sans;
 	}
 }
+
+/*
+ * reui Gantt "today" marker: swap the library's solid fade line + dot for a
+ * dashed line and a "TODAY" badge, matching the Dashboard Analytics design.
+ * Scoped to the library's own data-slot attributes, so it can't leak.
+ */
+[data-slot="gantt-now-indicator"] {
+	background-image: repeating-linear-gradient(
+		to bottom,
+		var(--destructive) 0 6px,
+		transparent 6px 12px
+	);
+	background-color: transparent;
+}
+
+[data-slot="gantt-now-dot"] {
+	bottom: auto;
+	top: -1.15rem;
+	width: max-content;
+	height: auto;
+	padding: 1px 6px;
+	border-radius: calc(var(--radius) * 0.6);
+}
+
+[data-slot="gantt-now-dot"]::after {
+	content: "TODAY";
+	font-family: var(--font-mono), monospace;
+	font-size: 9px;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	color: var(--destructive-foreground);
+}
+
+/*
+ * The library also washes the whole "today" column and pills the header's
+ * today label — both read as visual noise on top of the dashed line/badge
+ * above, and the reference design shows only the thin dashed line. Drop
+ * both, scoped to the gantt root so nothing else is affected.
+ */
+[data-slot="gantt"] [data-slot="gantt-timeline-backdrop"] [data-today] {
+	background-color: transparent;
+}
+
+[data-slot="gantt"] [data-today] > span {
+	background-color: transparent;
+	border-radius: 0;
+	padding: 0;
+}
+
+/*
+ * Month-group divider lines in the header (the boundary between "June" and
+ * "July") use the same near-white --border token as the header's own
+ * background, so they're nearly invisible — reads as floating text with no
+ * grouping structure. Darken just these to --input, a step down from the
+ * app's other borders, so the months read as distinct sections.
+ */
+[data-slot="gantt-timeline-header"] span[aria-hidden]:not([data-slot]) {
+	background-color: var(--input);
+}
+
+/*
+ * Month group labels ("June", "July"): the library left-aligns them and pins
+ * each to the leading edge of its own band while scrolling (a sticky-nav
+ * touch this static page doesn't need). The reference design instead
+ * centers each month name within its band, in an uppercase mono style.
+ */
+[data-slot="gantt-axis-group"] {
+	justify-content: center;
+	padding-inline: 0;
+}
+
+[data-slot="gantt-axis-group-label"] {
+	position: static;
+	inset-inline-start: auto;
+	font-family: var(--font-mono), monospace;
+	font-size: 0.6875rem;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+/*
+ * Grid lines (row separators + week/day column lines) default to the very
+ * light --border token, same as the month dividers above — nearly invisible
+ * against the card's white. Darken both to --input so the grid reads
+ * clearly, matching the reference design.
+ */
+[data-slot="gantt"] [data-slot="gantt-grid-line"] {
+	background-color: var(--input);
+}
+
+[data-slot="gantt"] [data-slot="gantt-row-group"] {
+	border-bottom-color: var(--input);
+}
+
+/*
+ * The bar's outer wrapper (library-owned chrome — renderEvent only replaces
+ * its CONTENT) still ships its own rounded-sm + overflow-hidden, which
+ * clips our square inner content back into a rounded shape. Square it off
+ * to match the sharp-cornered reference design.
+ */
+[data-slot="gantt"] [data-slot="gantt-bar"] {
+	border-radius: 0;
+}
+
+/*
+ * "Phases" sits centered against the top (month) row by default; the
+ * reference design instead aligns it with the week row below. It's the
+ * tree header's only child, so push it down by one row-height (2rem).
+ */
+[data-slot="gantt-tree-header"] > div {
+	margin-top: 2rem;
+}
+
+/*
+ * A visible rule between the month row and the week row, on both the tree
+ * and timeline panes — both headers are already position:sticky, which is
+ * a valid containing block for this absolutely-positioned line.
+ */
+[data-slot="gantt-timeline-header"]::before,
+[data-slot="gantt-tree-header"]::before {
+	content: "";
+	position: absolute;
+	inset-inline: 0;
+	top: 2rem;
+	height: 1px;
+	background-color: var(--input);
+}
+
+[data-slot="gantt"] [data-gantt-row] {
+	border-bottom-color: var(--input);
+}
+
+/*
+ * The splitter between "Phases" and the timeline is invisible at rest (the
+ * same near-white --border token) and only reads as a line on hover/drag.
+ * Give it the same visible baseline as the other grid lines; hover/drag
+ * still intensify further via the library's own primary-tinted states.
+ */
+[data-slot="gantt"] [data-slot="gantt-splitter"] {
+	background-color: var(--input);
+}
+
+/*
+ * The bar's outer wrapper ships its own translucent tinted background
+ * (bg-(--gantt-event-color)/20) as its default fill; our solid inner
+ * content only covers the content box, so that 20%-opacity tint still
+ * shows through the wrapper's own padding as a soft halo around the bar.
+ * Our inner div is the only fill we want — drop the wrapper's.
+ */
+[data-slot="gantt"] [data-slot="gantt-bar"] {
+	background-color: transparent;
+}

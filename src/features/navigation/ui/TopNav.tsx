@@ -14,6 +14,7 @@ const SECTION_LABELS: Record<string, string> = {
 	contracts: "Contracts",
 	analytics: "Analytics",
 	credentials: "Credentials",
+	"dashboard-analytics": "Dashboard Analytics",
 	issues: "Issues",
 }
 
