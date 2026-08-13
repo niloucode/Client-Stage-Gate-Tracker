@@ -72,7 +72,7 @@ export default function TicketEditor({
            <div className="px-5 mt-3">
              <div className="flex justify-between items-center">
                <Label className="text-md text-neutral-border font-bold tracking-wider uppercase">SUBTASKS</Label>
-               <button onClick={() => state.setIsSubtaskSelectionOpen(true)} className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-md px-2.5 py-1 transition-colors bg-brand-50/50 hover:bg-brand-50">
+               <button onClick={() => state.setIsSubtaskSelectionOpen(true)} className="flex items-center text-xs text-brand-600 hover:text-indigo-700 font-medium px-2 py-1 rounded-sm border border-brand-100 hover:bg-indigo-50 transition-colors focus:outline-none shrink-0 ">
                  <Plus size={12} strokeWidth={2.5} /> Add Subtask
                </button>
              </div>
