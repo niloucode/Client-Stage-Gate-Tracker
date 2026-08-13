@@ -8,7 +8,10 @@ import {
 	contractSignSchema,
 	contractChangeNameSchema,
 } from "@/shared/schemas";
-import { assertProjectMember } from "@/lib/auth/projectAccess";
+import {
+	assertProjectMember,
+	getCurrentUserId,
+} from "@/lib/auth/projectAccess";
 
 // ── UPLOAD ────────────────────────────────────────────────────────────────────
 
@@ -325,4 +328,54 @@ export async function signContract(
 				error instanceof Error ? error.message : "Failed to sign contract.",
 		};
 	}
+}
+
+// ── DASHBOARD (MY CONTRACTS) ──────────────────────────────────────────────────
+
+const PROJECT_OWNER_ROLE = "Project Owner";
+
+export type ContractRow = Awaited<ReturnType<typeof getMyContracts>>[number];
+
+/**
+ * Contracts visible to the signed-in user on the landing dashboard,
+ * self-scoped: client profiles get their own client's contracts; Project
+ * Owners get contracts of projects they own; everyone else gets none.
+ * The caller's own role decides the scope — a caller can never request
+ * another client's or project's contracts.
+ */
+export async function getMyContracts() {
+	const userId = await getCurrentUserId();
+	if (!userId) return [];
+
+	const profile = await prisma.profiles.findUnique({
+		where: { profile_id: userId, is_deleted: false },
+		select: { client_id: true },
+	});
+	if (!profile) return [];
+
+	const where = profile.client_id
+		? { client_id: profile.client_id, is_deleted: false }
+		: {
+				is_deleted: false,
+				Projects: {
+					RoleAssignments: {
+						some: { user_id: userId, Roles: { name: PROJECT_OWNER_ROLE } },
+					},
+				},
+			};
+
+	return prisma.contracts.findMany({
+		where,
+		select: {
+			contract_id: true,
+			contract_name: true,
+			project_id: true,
+			client_signature: true,
+			project_owner_signature: true,
+			client_signed_at: true,
+			project_owner_signed_at: true,
+			Projects: { select: { name: true } },
+		},
+		orderBy: { Projects: { name: "asc" } },
+	});
 }
