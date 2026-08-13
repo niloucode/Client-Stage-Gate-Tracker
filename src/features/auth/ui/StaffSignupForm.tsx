@@ -134,8 +134,9 @@ export function StaffSignupForm() {
 		},
 	});
 
+	// Ensure value is strictly a string so Radix/Select matching doesn't fail
 	const departmentOptions = (departments ?? []).map((d) => ({
-		value: d.department_id,
+		value: String(d.department_id),
 		label: d.name,
 	}));
 
