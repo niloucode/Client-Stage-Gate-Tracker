@@ -458,7 +458,7 @@ export function TicketsBoard({
               type="button"
               className="text-xs font-normal underline-offset-2 hover:underline"
             >
-              <h4 className="text-brand-600 font-normal underline decoration-inherit">
+              <h4 className="hover:text-brand-600! font-normal underline decoration-inherit">
                 View All
               </h4>
             </button>
