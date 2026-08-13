@@ -6,6 +6,7 @@ import {
 	CheckCircle2,
 	ChevronDown,
 } from "lucide-react";
+import type { ComponentType, ReactNode } from "react";
 import type { ProjectWithStatus, ProjectStatus } from "@/entities/project";
 
 interface ProjectSectionProps {
@@ -14,7 +15,7 @@ interface ProjectSectionProps {
 	projects: ProjectWithStatus[];
 	isExpanded: boolean;
 	onToggle: () => void;
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
 const STATUS_CONFIG: Record<
@@ -24,7 +25,7 @@ const STATUS_CONFIG: Record<
 		color: string;
 		bg: string;
 		emptyText: string;
-		icon: React.ComponentType<{ size?: number; className?: string }>;
+		icon: ComponentType<{ size?: number; className?: string }>;
 	}
 > = {
 	PENDING: {

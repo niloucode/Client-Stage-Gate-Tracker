@@ -375,3 +375,41 @@
 - [ ] scripts/seed-sort-keys.mjs
 - [ ] scripts/tokenize-colors.mjs
 - [ ] scripts/verify-sort-keys.mjs
+
+---
+
+## Follow-up plan (TODO — future session): Date input rules
+
+> Deferred by decision on 2026-08-14 (project-dashboard integration shipped
+> without it). Do NOT let these rot — they are the canonical input rules.
+
+**Rules:**
+1. `plan_start_at` / `plan_end_at` are **REQUIRED (non-nullable)** for
+   Projects, Stages, Phases, Modules, Workflow.
+2. `plan_start_at` / `plan_end_at` are **OPTIONAL (nullable)** for Tickets.
+3. Never instantiate `new Date()` to satisfy a Zod requirement (no
+   `.default(() => new Date())`, no `?? new Date()` fallbacks).
+
+**Work items:**
+- [ ] `src/shared/schemas/project.ts` — Phases/Modules/Workflows: `planStart`/
+      `planEnd` from `z.date().optional().nullable()` → required `z.date()`
+      (keep `actualStart`/`actualEnd` optional nullable). Update
+      `src/shared/schemas/project.test.ts` (the "accepts missing dates
+      entirely" case must flip to a rejection case).
+- [ ] `src/entities/stage/stageActions.ts` — `createStage`/`updateStage`:
+      `startDate`/`endDate` required (drop the `?? new Date()` fallbacks —
+      marked with `TODO(date-rules)` in code); StageModal form requires them.
+- [ ] `src/shared/schemas/ticket.ts` — `plan_end_at` (currently
+      `z.date({ message: "Deadline is required" })`) → `z.date().optional()
+      .nullable()`; `plan_start_at` already optional nullable.
+- [ ] **DB migration** — `Tickets.plan_start_at` / `Tickets.plan_end_at` are
+      currently NOT NULL; make them nullable so optional ticket dates can be
+      stored. Rollback = revert the migration.
+- [ ] Stage-editor modals (`features/stage-editor/ui/StageModal.tsx`,
+      `PhaseModals.tsx`, `ModuleModals.tsx`, `WorkflowModals.tsx`) — required
+      date UI (labels, validation) for the now-required plan dates.
+- [ ] Tickets form/editor (`features/ticket-board`) — dates must be
+      omitable; remove any client-side "deadline required" enforcement.
+- [ ] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
+      keep the pure-helper pattern (`projectStatus.ts` style — pure helpers
+      must NOT live in `"use server"` files).
