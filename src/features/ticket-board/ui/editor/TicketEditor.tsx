@@ -82,12 +82,14 @@ export default function TicketEditor({
                     No subtasks yet. Create one from the board.
                   </div>
                 ) : (
+                  // SUBTASK CARD
                   state.subtasks.map((subtask) => (
                     <div 
                       key={subtask.ticket_id} 
                       onClick={() => state.handleSubtaskClick(subtask)} 
                       className="relative group drop-shadow-md rounded-md p-3 bg-neutral-surface flex flex-col border border-brand-100 cursor-pointer hover:border-brand-300 hover:bg-brand-50/30 transition-all"
                     >
+                      {/* Remove Subtask */}
                       <button
                         type="button"
                         onClick={(e) => {
@@ -100,8 +102,10 @@ export default function TicketEditor({
                         <X size={14} strokeWidth={2.5} />
                       </button>
 
-                      <span className="font-mono text-sm text-brand-500 pr-8">{subtask.name.substring(0, 20)}...</span>
-                      <span className="font-light text-sm truncate pr-8">{subtask.name}</span>
+                      <div className="flex justify-start items-center gap-2.5 pb-1 text-sm">
+                        <span className="font-mono text-brand-500">LRN-BNN</span>
+                        <span className="font-light truncate">{subtask.name}</span>
+                      </div>
                       <div className="flex items-center gap-2 text-sm font-light text-neutral-border mt-1">
                         <Calendar size={12} strokeWidth={3} />
                         <span>{subtask.plan_start_at ? new Date(subtask.plan_start_at).toLocaleDateString() : "No start"}</span>

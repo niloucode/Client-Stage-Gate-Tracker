@@ -68,8 +68,8 @@ export function SubtaskSelectionModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-normal">
             <span>Add Subtask</span>
-            <span className="ml-2 rounded-full bg-brand-50 px-2.5 py-0.5 text-[10px] font-normal text-brand-600">
-              {availableTickets?.length ?? 0} AVAILABLE
+            <span className="ml-2 rounded-full text-md bg-brand-50 px-2.5 py-0.5 text-[10px] font-normal text-brand-600">
+              {availableTickets?.length ?? 0}
             </span>
           </DialogTitle>
         </DialogHeader>
