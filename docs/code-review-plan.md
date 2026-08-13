@@ -460,3 +460,9 @@ All pre-existing unless noted — none block the running app except the first.
 - [ ] **knip cleanup** — `npx knip` reports ~313 findings (unused default
       exports, dead exports across features), all pre-existing. Triage and
       remove; then gate `knip` in CI.
+- [ ] **`ProjectSection` status-config cleanup**
+      (`src/features/project-dashboard/ui/ProjectSection.tsx`) — `icolor`
+      typo, the suspicious `ACTIVE.color: "text-brand-100"` badge value, and
+      the `<h2>` heading nested inside the collapsible toggle `<button>`
+      (flow content in a button) — verify colors against the design tokens
+      and use a non-heading element for the section label.
