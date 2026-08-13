@@ -14,6 +14,7 @@ import { logHistoryEvent } from "./lib/logHistoryEvent";
 import { z } from "zod";
 import {
 	assertProjectMember,
+	getCurrentUserId,
 	resolveTicketProject,
 	resolveWorkflowProject,
 } from "@/lib/auth/projectAccess";
@@ -432,5 +433,79 @@ export async function updateTicketParent(
 		}
 
 		return updated;
+	});
+}
+
+/**
+ * Dashboard table shape for a ticket: nested project/module/workflow names,
+ * first tag, and assignees. Shared by "my tickets" and "watched tickets".
+ */
+const ticketDashboardSelect = {
+	ticket_id: true,
+	name: true,
+	status: true,
+	plan_end_at: true,
+	Workflows: {
+		select: {
+			name: true,
+			Modules: {
+				select: {
+					name: true,
+					Phases: {
+						select: {
+							name: true,
+							Stages: {
+								select: {
+									name: true,
+									Projects: {
+										select: { project_id: true, name: true },
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	},
+	TicketTags: {
+		where: { Tags: { is_deleted: false } },
+		select: { Tags: { select: { name: true, color: true } } },
+	},
+	TicketAssigned: {
+		select: {
+			Profile: {
+				select: { profile_id: true, first_name: true, last_name: true },
+			},
+		},
+	},
+} satisfies Prisma.TicketsSelect;
+
+export type DashboardTicketRow = Prisma.TicketsGetPayload<{
+	select: typeof ticketDashboardSelect;
+}>;
+
+/** Tickets assigned to the signed-in user, soonest plan_end_at first. */
+export async function selectMyTickets() {
+	const userId = await getCurrentUserId();
+	if (!userId) return [];
+	return prisma.tickets.findMany({
+		where: {
+			is_deleted: false,
+			TicketAssigned: { some: { profile_id: userId } },
+		},
+		select: ticketDashboardSelect,
+		orderBy: { plan_end_at: "asc" },
+	});
+}
+
+/** Tickets the signed-in user is watching (Tickets.watcher_id), soonest first. */
+export async function selectWatchedTickets() {
+	const userId = await getCurrentUserId();
+	if (!userId) return [];
+	return prisma.tickets.findMany({
+		where: { is_deleted: false, watcher_id: userId },
+		select: ticketDashboardSelect,
+		orderBy: { plan_end_at: "asc" },
 	});
 }
