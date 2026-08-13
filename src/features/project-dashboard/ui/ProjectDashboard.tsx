@@ -9,6 +9,7 @@ import {
 	type ProjectStatus,
 	type ProjectWithStatus,
 } from "@/entities/project";
+import { useCurrentUser } from "@/entities/profile";
 
 import { EditProjectModal } from "./modals/EditProjectModal";
 import { ManageMembersModal } from "./modals/ManageMembersModal";
@@ -34,9 +35,16 @@ interface ModalState {
 
 export function ProjectDashboard() {
 	const { data: projects, isLoading, error } = useProjectsForMember();
-	// "+ Add Project" is owner-only: visible when the user owns at least one
-	// project (the creator is auto-assigned Project Owner on creation).
-	const canManage = (projects ?? []).some((p) => p.is_owner);
+	const { data: profile } = useCurrentUser();
+	// "+ Add Project" is owner-only, with one bootstrap exception: a staff
+	// user who owns no projects yet (no role assignments anywhere) must be
+	// able to create their first project — createProject auto-assigns the
+	// creator as Project Owner. Clients (Profiles.client_id set) never see
+	// it, and team members who are not owners never see it.
+	const isClientProfile = !!profile?.client_id;
+	const canManage =
+		!isClientProfile &&
+		((projects ?? []).length === 0 || (projects ?? []).some((p) => p.is_owner));
 	const createMutation = useCreateProject();
 	const updateMutation = useUpdateProject();
 	const deleteMutation = useDeleteProject();

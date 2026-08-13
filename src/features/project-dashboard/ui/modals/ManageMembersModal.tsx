@@ -149,8 +149,19 @@ export function ManageMembersModal({
 		});
 	};
 
-	const handleRemoveMember = (profileId: string, firstName: string) => {
-		removeMemberMutation.mutate({ projectId, profileId });
+	const handleRemoveMember = async (profileId: string, firstName: string) => {
+		const result = await removeMemberMutation.mutateAsync({
+			projectId,
+			profileId,
+		});
+		if (!result.success) {
+			toast.add({
+				title: "Failed to remove member",
+				description: result.error ?? "Failed to remove member",
+				type: "error",
+			});
+			return;
+		}
 		toast.add({
 			title: "Removed Access",
 			description: firstName + " successfully removed",
