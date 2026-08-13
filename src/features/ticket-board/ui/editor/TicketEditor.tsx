@@ -86,14 +86,12 @@ export default function TicketEditor({
                     <div 
                       key={subtask.ticket_id} 
                       onClick={() => state.handleSubtaskClick(subtask)} 
-                      // 1. Added "relative group" to the container
                       className="relative group drop-shadow-md rounded-md p-3 bg-neutral-surface flex flex-col border border-brand-100 cursor-pointer hover:border-brand-300 hover:bg-brand-50/30 transition-all"
                     >
-                      {/* 2. Added the X button right here */}
                       <button
                         type="button"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevents opening the modal!
+                          e.stopPropagation();
                           state.handleRemoveSubtask(subtask.ticket_id);
                         }}
                         className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md opacity-0 group-hover:opacity-100 transition-all z-10"
@@ -141,7 +139,19 @@ export default function TicketEditor({
       {state.lightboxSrc && <ImageLightbox src={state.lightboxSrc} onClose={() => state.setLightboxSrc(null)} />}
       
       {state.isSubtaskViewOpen && state.selectedSubtask && (
-        <TicketModalEdit ticket={state.selectedSubtask} isOpen={state.isSubtaskViewOpen} onClose={() => { state.setIsSubtaskViewOpen(false); state.setSelectedSubtask(null); }} onUpdate={(u) => { state.onUpdate(u); }} tags={tags} allTickets={allTickets} isSubtaskView={true} parentTicket={state.ticket} />
+        <TicketModalEdit 
+          ticket={state.selectedSubtask} 
+          isOpen={state.isSubtaskViewOpen} 
+          onClose={() => { 
+            state.setIsSubtaskViewOpen(false); 
+            state.setSelectedSubtask(null); 
+          }} 
+          onUpdate={onUpdate} 
+          tags={tags} 
+          allTickets={allTickets} 
+          isSubtaskView={true} 
+          parentTicket={state.ticket} 
+        />
       )}
       
       <SubtaskSelectionModal 

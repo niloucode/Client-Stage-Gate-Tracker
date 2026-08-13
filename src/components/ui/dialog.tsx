@@ -61,7 +61,7 @@ function DialogContent({
 			<DialogPrimitive.Popup
 				data-slot="dialog-content"
 				className={cn(
-					"fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-md bg-neutral-surface-subtle ",
+					"fixed top-1/2 left-1/2 z-50 grid w-full max-w-xl -translate-x-1/2 -translate-y-1/2 gap-4 rounded-md bg-neutral-surface-subtle ",
 					"p-5 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none ",
 					"max-h-[calc(100vh-2rem)] overflow-y-auto ",
 					"data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 ",
@@ -95,7 +95,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			data-slot="dialog-header"
 			className={cn(
-				"flex flex-col -mx-5 -mt-5 p-5 gap-2 rounded-t-xl border-b border-brand-100 bg-neutral-surface",
+				"select-none flex flex-col -mx-5 -mt-5 p-5 gap-2 rounded-t-xl border-b border-brand-100 bg-neutral-surface",
 				className,
 			)}
 			{...props}
