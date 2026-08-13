@@ -62,12 +62,12 @@ export function AccountMenu({
 							{userInitials}
 						</AvatarFallback>
 					</Avatar>
-					<div className="text-foreground font-semibold text-base">
+					<div className="text-foreground text-base">
 						{userName}
 					</div>
 					<Badge
 						variant="secondary"
-						className="mt-1.5 text-[11px] font-medium tracking-wide uppercase"
+						className="mt-1.5 text-[11px] tracking-wide uppercase"
 					>
 						{departmentName}
 					</Badge>
@@ -101,7 +101,7 @@ export function AccountMenu({
 					<button
 						type="button"
 						onClick={logout}
-						className="w-full py-2.5 rounded-md bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm font-medium tracking-wide transition-colors"
+						className="w-full py-2.5 rounded-sm bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm tracking-wide transition-colors"
 					>
 						LOG OUT
 					</button>

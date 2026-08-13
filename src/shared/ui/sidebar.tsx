@@ -103,13 +103,13 @@ export const SidebarNavItem = ({
 					}`}
 				/>
 			</span>
-			<span
+			<h4
 				className={`text-sm font-medium truncate leading-4 overflow-hidden transition-all duration-300 ease-in-out ${
 					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				{item.label}
-			</span>
+			</h4>
 		</div>
 	);
 
@@ -154,13 +154,13 @@ export const SidebarFooter = ({
 			<span className="w-4 h-4 flex items-center justify-center shrink-0">
 				<Settings className="w-4 h-4" />
 			</span>
-			<span
+			<h4
 				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
 					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				Settings
-			</span>
+			</h4>
 		</button>
 
 		<button
@@ -176,13 +176,13 @@ export const SidebarFooter = ({
 					<ChevronLeft className="w-4 h-4" />
 				)}
 			</span>
-			<span
+			<h4
 				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
 					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
 				}`}
 			>
 				Collapse
-			</span>
+			</h4>
 		</button>
 	</div>
 );
