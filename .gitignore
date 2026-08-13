@@ -82,3 +82,8 @@ repomix-output.xml
 /project-analysis-outdated.md
 /previous-prompt.md
 /.reasonix/
+
+# Editor swap files (kate/vim)
+*.swp
+*.swo
+*.kate-swp

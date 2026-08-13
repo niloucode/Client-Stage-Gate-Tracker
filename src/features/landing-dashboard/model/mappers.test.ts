@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	mapDashboardTicketRow,
-	mapContractRow,
-	tagToBadge,
-} from "./mappers";
+import { mapDashboardTicketRow, mapContractRow, tagToBadge } from "./mappers";
 import type { DashboardTicketRow } from "@/entities/ticket";
 import type { ContractRow } from "@/entities/contract";
 
@@ -16,7 +12,13 @@ const baseRow = {
 		name: "Auth Flow",
 		Modules: {
 			name: "Auth",
-			Phases: { name: "Build", Stages: { name: "S1", Projects: { project_id: "p1", name: "Portal 2.0" } } },
+			Phases: {
+				name: "Build",
+				Stages: {
+					name: "S1",
+					Projects: { project_id: "p1", name: "Portal 2.0" },
+				},
+			},
 		},
 	},
 	TicketTags: [{ Tags: { name: "Critical", color: "#93000a" } }],

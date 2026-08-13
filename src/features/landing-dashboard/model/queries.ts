@@ -3,10 +3,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { dashboardKeys } from "@/shared/query/keys";
 import { getMyDashboardRole } from "@/entities/roleAssignment";
-import {
-	selectMyTickets,
-	selectWatchedTickets,
-} from "@/entities/ticket";
+import { selectMyTickets, selectWatchedTickets } from "@/entities/ticket";
 import { getMyContracts } from "@/entities/contract";
 import { mapDashboardTicketRow, mapContractRow } from "./mappers";
 

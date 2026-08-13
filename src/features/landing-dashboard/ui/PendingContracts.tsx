@@ -62,8 +62,12 @@ export function PendingContracts({ contracts = [] }: PendingContractsProps) {
 		(currentPage - 1) * pageSize,
 		currentPage * pageSize,
 	);
-	const shownFrom = contracts.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-	const shownTo = contracts.length === 0 ? 0 : Math.min(currentPage * pageSize, contracts.length);
+	const shownFrom =
+		contracts.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+	const shownTo =
+		contracts.length === 0
+			? 0
+			: Math.min(currentPage * pageSize, contracts.length);
 
 	const renderContractRows = (items: PendingContract[]) =>
 		items.map((contract) => (
@@ -130,8 +134,7 @@ export function PendingContracts({ contracts = [] }: PendingContractsProps) {
 						<ScrollText className="h-5 w-5 text-muted-foreground" />
 						<h3 className="text-base font-normal text-foreground">Contracts</h3>
 						<span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-normal text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-							{contracts.filter((c) => c.status === "pending").length}{" "}
-							PENDING
+							{contracts.filter((c) => c.status === "pending").length} PENDING
 						</span>
 					</div>
 
@@ -176,41 +179,40 @@ export function PendingContracts({ contracts = [] }: PendingContractsProps) {
 					</div>
 
 					{contracts.length > 0 && (
-					<div className="flex items-center justify-between border-t border-brand-100 bg-muted/30 px-8 py-4">
-						<span className="text-xs text-muted-foreground">
-							Showing{" "}
-							<span className="text-foreground">{shownFrom}</span> to{" "}
-							<span className="text-foreground">{shownTo}</span> of{" "}
-							<span className="text-foreground">{contracts.length}</span>{" "}
-							contracts
-						</span>
-
-						<div className="flex items-center gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-								disabled={currentPage === 1}
-								className="h-8 w-8 p-0"
-							>
-								<ChevronLeft className="h-4 w-4" />
-							</Button>
-							<span className="text-xs font-normal text-foreground">
-								Page {currentPage} of {totalPages}
+						<div className="flex items-center justify-between border-t border-brand-100 bg-muted/30 px-8 py-4">
+							<span className="text-xs text-muted-foreground">
+								Showing <span className="text-foreground">{shownFrom}</span> to{" "}
+								<span className="text-foreground">{shownTo}</span> of{" "}
+								<span className="text-foreground">{contracts.length}</span>{" "}
+								contracts
 							</span>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() =>
-									setCurrentPage((p) => Math.min(p + 1, totalPages))
-								}
-								disabled={currentPage === totalPages}
-								className="h-8 w-8 p-0"
-							>
-								<ChevronRight className="h-4 w-4" />
-							</Button>
+
+							<div className="flex items-center gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+									disabled={currentPage === 1}
+									className="h-8 w-8 p-0"
+								>
+									<ChevronLeft className="h-4 w-4" />
+								</Button>
+								<span className="text-xs font-normal text-foreground">
+									Page {currentPage} of {totalPages}
+								</span>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() =>
+										setCurrentPage((p) => Math.min(p + 1, totalPages))
+									}
+									disabled={currentPage === totalPages}
+									className="h-8 w-8 p-0"
+								>
+									<ChevronRight className="h-4 w-4" />
+								</Button>
+							</div>
 						</div>
-					</div>
 					)}
 				</DialogContent>
 			</Dialog>

@@ -161,6 +161,8 @@
 - [x] src/entities/role/roleActions.ts (deleted — only export was dead getRoleNameById)
 - [x] src/entities/roleAssignment/index.ts
 - [x] src/entities/roleAssignment/roleAssignmentActions.ts
+- [x] src/entities/roleAssignment/dashboardRole.ts
+- [x] src/entities/roleAssignment/dashboardRole.test.ts
 - [x] src/entities/department/index.ts
 - [x] src/entities/department/departmentActions.ts
 - [x] src/entities/department/queries.ts
@@ -215,6 +217,7 @@
 - [x] src/entities/ticket/lib/dateRollup.ts
 - [x] src/entities/ticket/lib/dateRollup.test.ts
 - [x] src/entities/ticket/lib/logHistoryEvent.ts
+- [x] src/entities/ticket/lib/statusConfig.ts
 - [x] src/entities/workflow/index.ts
 - [x] src/entities/workflow/types.ts (deleted — merged into slice files)
 - [x] src/entities/workflow/workflowActions.ts
@@ -272,10 +275,16 @@
 - [ ] src/features/issue-reporting/ui/IssueDashboard.tsx
 - [ ] src/features/issue-reporting/ui/IssueReportingModal.tsx
 - [ ] src/features/issue-reporting/ui/IssueTableModal.tsx
-- [ ] src/features/landing-dashboard/index.ts
-- [ ] src/features/landing-dashboard/ui/ActivitySparklines.tsx
-- [ ] src/features/landing-dashboard/ui/PendingContracts.tsx
-- [ ] src/features/landing-dashboard/ui/TicketsBoard.tsx
+- [x] src/features/landing-dashboard/index.ts
+- [x] src/features/landing-dashboard/model/types.ts
+- [x] src/features/landing-dashboard/model/mappers.ts
+- [x] src/features/landing-dashboard/model/mappers.test.ts
+- [x] src/features/landing-dashboard/model/queries.ts
+- [ ] src/features/landing-dashboard/ui/ActivitySparklines.tsx (on hold — integration deferred by decision; TODO in the dashboard page)
+- [x] src/features/landing-dashboard/ui/PendingContracts.tsx
+- [x] src/features/landing-dashboard/ui/PendingContracts.test.tsx
+- [x] src/features/landing-dashboard/ui/TicketsBoard.tsx
+- [x] src/features/landing-dashboard/ui/TicketsBoard.test.tsx
 - [ ] src/features/project-dashboard/index.ts
 - [ ] src/features/project-dashboard/ui/ProjectCard.tsx
 - [ ] src/features/project-dashboard/ui/ProjectDashboard.tsx

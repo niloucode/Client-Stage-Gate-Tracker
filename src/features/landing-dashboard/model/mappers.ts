@@ -18,7 +18,8 @@ function hashString(value: string): number {
 }
 
 function toInitials(first: string, last: string): string {
-	const initials = `${first.charAt(0) ?? ""}${last.charAt(0) ?? ""}`.toUpperCase();
+	const initials =
+		`${first.charAt(0) ?? ""}${last.charAt(0) ?? ""}`.toUpperCase();
 	return initials || "?";
 }
 
@@ -43,9 +44,7 @@ export function mapDashboardTicketRow(row: DashboardTicketRow): TicketItem {
 	const assignees: AssigneeData[] = row.TicketAssigned.map((a) => ({
 		initials: toInitials(a.Profile.first_name, a.Profile.last_name),
 		avatarBg:
-			AVATAR_PALETTE[
-				hashString(a.Profile.profile_id) % AVATAR_PALETTE.length
-			],
+			AVATAR_PALETTE[hashString(a.Profile.profile_id) % AVATAR_PALETTE.length],
 		name: `${a.Profile.first_name} ${a.Profile.last_name}`,
 	}));
 
@@ -63,9 +62,7 @@ export function mapDashboardTicketRow(row: DashboardTicketRow): TicketItem {
 }
 
 export function mapContractRow(row: ContractRow): PendingContract {
-	const executed = Boolean(
-		row.client_signature && row.project_owner_signature,
-	);
+	const executed = Boolean(row.client_signature && row.project_owner_signature);
 	return {
 		id: row.contract_id,
 		projectId: row.project_id,
