@@ -41,7 +41,7 @@ export default function TicketColumn({
 			<div className="flex items-center w-full justify-center flex-1 rounded-md bg-neutral-surface/40">
 					<div
 				ref={setNodeRef}
-				className={`pt-[2px] flex flex-col items-center gap-2 flex-1 min-h-[69vh] rounded-md max-h-[69vh] overflow-y-auto transition-colors duration-150 ${
+				className={`p-0.5 flex flex-col items-center gap-2 flex-1 min-h-[69vh] rounded-md max-h-[69vh] overflow-y-auto transition-colors duration-150 ${
 					isOver ? "border bg-indigo-50 border-indigo-200" :
 					""
 				}`}

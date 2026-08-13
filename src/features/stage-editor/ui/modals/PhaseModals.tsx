@@ -21,6 +21,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Label } from "@/components/ui/label";
 import { useCreatePhase, useUpdatePhase } from "@/entities/phase/mutations";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
+import { toast } from "@/components/ui/toast";
 import { Plus, Save } from "lucide-react";
 import type { Phase } from "../../types";
 
@@ -100,6 +101,11 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 					actualStart: value.actualStart ?? undefined,
 					actualEnd: value.actualEnd ?? undefined,
 				});
+				toast.add({
+					title: "Phase Edited",
+					description: `"${value.name}" has been edited successfully.`,
+					type: "success",
+				});
 			} else {
 				await createPhaseMutation.mutateAsync({
 					stageId,
@@ -109,6 +115,11 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 					planEnd: value.planEnd ?? undefined,
 					actualStart: value.actualStart ?? undefined,
 					actualEnd: value.actualEnd ?? undefined,
+				});
+				toast.add({
+					title: "Phase Created",
+					description: `"${value.name}" has been created successfully.`,
+					type: "success",
 				});
 			}
 			handleClose();
@@ -177,7 +188,7 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 								)}
 							</form.AppField>
 
-														{/* Date selection using DateTimePicker */}
+							{/* Date selection using DateTimePicker */}
 							<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
 								<form.AppField name="planStart">
 									{(field) => {

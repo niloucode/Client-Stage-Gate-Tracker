@@ -89,7 +89,7 @@ export function SubtaskSelectionModal({
           </div>
 
           {/* Right side: Search Bar */}
-          <div className="flex-1 min-w-[200px] max-w-sm flex items-center gap-1.5 border border-border bg-card rounded-md px-2.5 h-8 text-xs font-medium text-foreground hover:bg-neutral-subtle transition-colors focus-within:ring-1 focus-within:ring-brand-500">
+          <div className="flex-1 min-w-50 max-w-sm flex items-center gap-1.5 border border-border bg-card rounded-md px-2.5 h-8 text-xs font-medium text-foreground hover:bg-neutral-subtle transition-colors focus-within:ring-1 focus-within:ring-brand-500">
             <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <input
               type="text"
@@ -189,7 +189,7 @@ export function TicketTitleAndStatus({
             maxLength={50}
             onChange={(e) => setTicket((t) => ({ ...t, name: e.target.value }))}
             placeholder="Ticket title..."
-            className="-ml-1 text-ellipsis text-2xl font-light text-gray-900 bg-transparent border border-transparent hover:border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none rounded-md px-1.5 py-0.5 max-w-[calc(100%-2rem)] [field-sizing:content]"
+            className="-ml-1 text-ellipsis text-2xl font-light text-gray-900 bg-transparent border border-transparent hover:border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none rounded-md px-1.5 py-0.5 max-w-[calc(100%-2rem)] field-sizing-content"
           />
           <Pencil size={16} className="text-gray-400 shrink-0 pointer-events-none" />
         </div>
@@ -221,7 +221,7 @@ export function TicketTitleAndStatus({
         <div className="flex flex-wrap gap-1.5 items-center flex-1">
           {selectedTags.map((tag_id) => {
             const tag = tags.find((t) => t.tag_id === tag_id);
-            return tag ? <TagBadge key={tag_id} hover className="hover:!bg-neutral-border" tag={tag} onClick={() => toggleTag(tag.tag_id)} /> : null;
+            return tag ? <TagBadge key={tag_id} hover className="hover:bg-neutral-border!" tag={tag} onClick={() => toggleTag(tag.tag_id)} /> : null;
           })}
         </div>
         <DropdownMenu>

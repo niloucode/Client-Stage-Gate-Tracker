@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash2 } from "lucide-react";
+import { toast } from "@/components/ui/toast"
 
 export interface ModuleFormData {
 	name: string;
@@ -139,6 +140,24 @@ export function ModuleModal({
 		setFieldErrors({});
 		onSave(formData);
 		handleClose();
+
+		if (isEditMode)
+		{
+			toast.add({
+				title: "Module Edited",
+				description: `Module has been edited successfully.`,
+				type: "success",
+			});
+		}
+		else
+		{
+			toast.add({
+				title: "Module Added",
+				description: `Module has been added successfully.`,
+				type: "success",
+			});
+		}
+		
 	};
 
 	return (

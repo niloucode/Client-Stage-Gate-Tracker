@@ -2,6 +2,7 @@
 
 import { ShieldCheck, AlertCircle, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Http2ServerRequest } from "http2";
 
 /* -------------------------------------------------------------------------- */
 /*                                 Interfaces                                 */
@@ -81,7 +82,7 @@ function BaseStatCard({
     <Card className="p-6 border-brand-100 border max-h-50">
       <div className="flex h-10 items-center">{visual}</div>
       <div className="flex flex-col gap-1">
-        <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <h4 className="text-xs  uppercase tracking-wider text-muted-foreground">
           {title}
         </h4>
         {children}
@@ -113,18 +114,18 @@ function VelocityCard({ data }: { data: WeeklyVelocityData }) {
   return (
     <BaseStatCard visual={<SparklineBars />} title="Weekly Velocity">
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold tracking-tight text-foreground">
+        <h2 className="text-2xl  tracking-tight text-foreground">
           {data.value}
-        </span>
-        <span
-          className={`text-xs font-semibold ${
+        </h2>
+        <h4
+          className={`text-xs  ${
             data.changePositive
-              ? "text-emerald-600 dark:text-emerald-500"
+              ? "text-emerald-600! dark:text-emerald-500!"
               : "text-destructive"
           }`}
         >
           {data.change}
-        </span>
+        </h4>
       </div>
     </BaseStatCard>
   );
@@ -139,9 +140,9 @@ function RiskFactorCard({ data }: { data: RiskFactorData }) {
       }
       title="Risk Factor"
     >
-      <span className="text-2xl font-bold tracking-tight text-foreground">
+      <h2 className="text-2xl  tracking-tight text-foreground">
         {data.label}
-      </span>
+      </h2>
     </BaseStatCard>
   );
 }
@@ -159,16 +160,16 @@ function UpcomingDeadlinesCard({ data }: { data: UpcomingDeadlinesData }) {
       title="Upcoming Deadlines"
     >
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold tracking-tight text-foreground">
+        <h2 className="text-2xl  tracking-tight text-foreground">
           {data.count}
-        </span>
-        <span
-          className={`text-xs font-semibold ${
-            data.isUrgent ? "text-destructive" : "text-muted-foreground"
+        </h2>
+        <h4
+          className={`text-xs  ${
+            data.isUrgent ? "text-destructive!" : "text-muted-foreground!"
           }`}
         >
           {data.urgencyLabel}
-        </span>
+        </h4>
       </div>
     </BaseStatCard>
   );
@@ -184,7 +185,7 @@ export function ActivitySparklines({
   upcomingDeadlines = DEFAULT_DEADLINES,
 }: ActivitySparklinesProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="w-full grid grid-cols-1 gap-4 sm:grid-cols-3">
       <VelocityCard data={weeklyVelocity} />
       <RiskFactorCard data={riskFactor} />
       <UpcomingDeadlinesCard data={upcomingDeadlines} />

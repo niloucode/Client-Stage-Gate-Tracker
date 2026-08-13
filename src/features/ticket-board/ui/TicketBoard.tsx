@@ -36,6 +36,7 @@ import {
 } from "@/entities/tag/mutations";
 
 import { ChevronLeft } from "lucide-react"
+import { toast } from "@/components/ui/toast";
 
 // Types
 import { COLUMNS } from "../model/columns";
@@ -162,6 +163,13 @@ export default function TicketBoard({
 		} catch (error) {
 			console.error("Failed to create ticket:", error);
 		}
+
+		// Trigger Success Toast
+		toast.add({
+			title: "Ticket Created",
+			description: `Ticket has been created successfully.`,
+			type: "success",
+		});
 	}
 
 	/**
@@ -172,6 +180,12 @@ export default function TicketBoard({
 	 */
 	function handleDeleteTicket(ticketId: string) {
 		deleteTicketMutation.mutate({ ticketId, performed_by: user?.profile_id });
+		// Trigger Success Toast
+		toast.add({
+			title: "Ticket Deleted",
+			description: `Ticket has been deleted successfully.`,
+			type: "delete",
+		});
 	}
 
 	/**

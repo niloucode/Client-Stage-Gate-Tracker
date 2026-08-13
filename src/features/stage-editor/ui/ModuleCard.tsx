@@ -9,9 +9,10 @@ import {
 	useUpdateModule,
 	useDeleteModule,
 } from "@/entities/module/mutations";
+import { ConfirmDeleteModal } from "@/shared/ui/ConfirmDeleteModal"
 import { Button } from "@/components/ui/button";
-import { ConfirmDeleteModal } from "@/shared/ui";
 import { Plus, Clock, ChevronDown, EllipsisVertical } from "lucide-react";
+import { toast } from "@/components/ui/toast"
 
 // --- INLINE DATE LOGIC & HELPERS ---
 type WorkflowStatus = "not_started" | "started" | "ended";
@@ -203,6 +204,13 @@ export function ModuleCard({
 		});
 		setIsDeleteConfirmOpen(false);
 		setModuleToDelete(null);
+
+			// delete toast
+			toast.add({
+				title: "Module Deleted",
+				description: `Module has been deleted successfully.`,
+				type: "delete",
+			});
 	};
 
 	const getDeadlineColorClass = (state: string) => {
