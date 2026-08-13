@@ -409,7 +409,7 @@
       `ModuleModals.tsx`, `WorkflowModals.tsx`; stage form at
       `src/features/project-structure/ui/StageModal.tsx`) — required date UI
       (labels, validation) for the now-required plan dates.
-- [ ] Tickets form/editor (`features/ticket-board`) — dates must be
+- [ ] Tickets form/editor (`src/features/ticket-board`) — dates must be
       omitable; remove any client-side "deadline required" enforcement.
 - [ ] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
       keep the pure-helper pattern (`projectStatus.ts` style — pure helpers
