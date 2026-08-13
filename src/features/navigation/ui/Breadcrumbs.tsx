@@ -27,13 +27,13 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
 								{item.label}
 							</a>
 						) : (
-							<span
+							<h4
 								className={
-									isLast ? "text-brand-500" : "text-gray-700"
+									isLast ? "text-brand-500!" : "text-gray-700!"
 								}
 							>
 								{item.label}
-							</span>
+							</h4>
 						)}
 					</span>
 				)

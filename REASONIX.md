@@ -73,15 +73,22 @@ is not meaningful (the ticket itself is the subject of the deletion).
 ## Schema maintenance (read this before `db pull` / `db push`)
 
 The schema deliberately keeps **only `auth.users`** from Supabase's `auth`
-schema (see migration `20260811213000_4` operator notes). When refreshing the
-schema from the database, scope introspection to the `public` schema:
+schema (see migration `20260811213000_4` operator notes).
+
+**Important:** `--schemas public` alone FAILS (P4002) — `public.Profiles`
+has a cross-schema FK to `auth.users` (`Users_user_id_fkey`), so
+introspection must include the `auth` schema. That brings back all ~22
+auth tables, which is why the prune script exists:
 
 ```bash
-npx prisma db pull --schemas public
+npx prisma db pull
+node scripts/prune-auth-models.mjs   # strips auth models/enums + dangling users relations
+npx prisma format
+npx prisma generate
 ```
 
-Running plain `npx prisma db pull` (or `db push`) reintroduces all ~22
-Supabase auth tables into `schema.prisma` — re-prune them if that happens.
+Running plain `npx prisma db pull` without the prune step reintroduces all
+~22 Supabase auth tables into `schema.prisma` — always run the script after.
 
 ---
 

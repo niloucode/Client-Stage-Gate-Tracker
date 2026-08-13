@@ -124,7 +124,7 @@ export default function ClientFormModal({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="flex flex-col gap-5 px-6 py-6">
+				<div className="flex flex-col gap-5">
 					{/* Client Name */}
 					<FormInput
 						label="Client Name"
@@ -195,7 +195,7 @@ export default function ClientFormModal({
 						label="Billing Address"
 						required
 						rows={4}
-						maxLength={40}
+						maxLength={50}
 						placeholder="4050 Oz Street"
 						value={billingAddress}
 						error={fieldErrors.billing_address}

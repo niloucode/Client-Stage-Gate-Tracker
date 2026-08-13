@@ -2,9 +2,8 @@
 // import { redirect } from "next/navigation";
 import {
 	ActivitySparklines,
-	MyTicketsBoard,
+	TicketsBoard,
 	PendingContracts,
-	WatchedTicketsBoard,
 } from "@/features/landing-dashboard";
 import { useAuth } from "@/features/auth";
 import { useState, useEffect } from "react";
@@ -25,27 +24,33 @@ export default function DashboardPage() {
 	}, []);
 
 	return loading ? (
-		<div className="bg-[#F9F9FF] w-full h-full mx-auto p-8 flex flex-col items-center justify-center">
+		<div className="w-full h-full mx-auto flex flex-col items-center justify-center">
 			<div>Loading...</div>
 		</div>
 	) : (
-		<div className="bg-[#F9F9FF] w-full h-fit mx-auto p-8 flex flex-col items-center justify-center gap-10">
-			<div className="w-full h-fit pb-4 flex flex-col gap-4">
+		<div className="w-full h-fit mx-auto flex flex-col items-center justify-center">
+			<div className="w-full h-fit pb-4 mb-6 flex flex-col gap-4">
 				<div className="w-full h-fit text-3xl">
-					<b>
+					<h1>
 						{true ? `Personal Dashboard` : `Welcome Back, ${user?.first_name}`}
-					</b>
+					</h1>
 				</div>
-				<div className="w-full h-fit text-md">
+				<div className="subtitle">
 					{true
 						? `Review your active workload and watched developments.`
 						: `Review your active contracts.`}
 				</div>
 			</div>
-			<MyTicketsBoard />
-			<WatchedTicketsBoard />
+			<div>
+				
+			</div>
+			<div className="flex flex-col items-center justify-center gap-10 w-full">
+			<TicketsBoard />
+			<TicketsBoard variant="watched" />
+			<div className="flex w-full justify-between gap-5">
 			<PendingContracts />
-			<ActivitySparklines />
+			</div>
+			</div>
 		</div>
 	);
 }
