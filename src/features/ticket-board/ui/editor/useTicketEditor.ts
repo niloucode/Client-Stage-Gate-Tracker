@@ -66,7 +66,9 @@ export function useTicketEditor({
       console.error("Failed to add subtask:", error);
     };
 
-    const handleRemoveSubtask = async (subtaskId: string) => {
+  };
+
+  const handleRemoveSubtask = async (subtaskId: string) => {
     try {
       await updateTicketParentMutation.mutateAsync({
         ticketId: subtaskId,
@@ -76,7 +78,6 @@ export function useTicketEditor({
     } catch (error) {
       console.error("Failed to remove subtask:", error);
     }
-  };
   };
 
   const handleSubtaskClick = (subtask: Ticket) => {
