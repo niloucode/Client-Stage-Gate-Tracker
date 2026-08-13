@@ -37,7 +37,7 @@ export type CreateTicketParams = TicketCreateInput & {
 
 export const ticketUpdateSchema = ticketCreateSchema.partial().extend({
   status: z.enum(["PENDING", "IN_PROGRESS", "FINISHED"]).optional(),
-  parent_id: z.string().uuid().optional().nullable(),
+  parent_id: z.uuid().optional().nullable(),
 });
 
 export type TicketUpdateInput = z.infer<typeof ticketUpdateSchema>;

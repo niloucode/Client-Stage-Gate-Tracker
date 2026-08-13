@@ -99,12 +99,10 @@ export function useUpdateTicketParent() {
 		mutationFn: ({
 			ticketId,
 			parentId,
-			performed_by,
 		}: {
 			ticketId: string;
 			parentId: string | null;
-			performed_by?: string;
-		}) => updateTicketParent(ticketId, parentId, performed_by),
+		}) => updateTicketParent(ticketId, parentId),
 		onSuccess: async () => {
 			// This invalidation forces the board to refetch, which instantly 
 			// updates the subtask list in your TicketEditor!

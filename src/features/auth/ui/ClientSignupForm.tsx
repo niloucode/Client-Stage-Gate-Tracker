@@ -41,7 +41,7 @@ export function ClientSignupForm() {
 			confirmPassword: "",
 			inviteCode: "",
 		},
-		validators: { onBlur: clientSignupSchema, onSubmit: clientSignupSchema },
+		validators: { onSubmit: clientSignupSchema },
 		onSubmit: async ({ value }) => {
 			setError(null);
 			setSuccess(null);

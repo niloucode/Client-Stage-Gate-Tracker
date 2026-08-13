@@ -25,9 +25,9 @@ export function LoginForm() {
 
 	const form = useAppForm({
 		defaultValues: { email: "", password: "" },
-		// Live field warnings: validate on blur (empty/wrong input shows an
-		// error as soon as the user leaves the field) and on submit.
-		validators: { onBlur: loginSchema, onSubmit: loginSchema },
+		// Field warnings appear ONLY after a submit attempt — blurring an
+		// empty field must not flag the whole form (per product decision).
+		validators: { onSubmit: loginSchema },
 		onSubmit: async ({ value }) => {
 			setError(null);
 

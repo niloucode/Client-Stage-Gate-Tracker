@@ -204,16 +204,16 @@
 
 ## 10. Features layer
 
-- [ ] src/features/auth/index.ts
-- [ ] src/features/auth/context/auth_provider.tsx
-- [ ] src/features/auth/ui/LoginForm.tsx
-- [ ] src/features/auth/ui/ClientSignupForm.tsx
-- [ ] src/features/auth/ui/StaffSignupForm.tsx
-- [ ] src/features/auth/auth-forms.interaction.test.tsx
-- [ ] src/features/navigation/ui/index.ts
-- [ ] src/features/navigation/ui/TopNav.tsx
-- [ ] src/features/navigation/ui/AccountMenu.tsx
-- [ ] src/features/navigation/ui/Breadcrumbs.tsx
+- [x] src/features/auth/index.ts
+- [x] src/features/auth/context/auth_provider.tsx
+- [x] src/features/auth/ui/LoginForm.tsx
+- [x] src/features/auth/ui/ClientSignupForm.tsx
+- [x] src/features/auth/ui/StaffSignupForm.tsx
+- [x] src/features/auth/auth-forms.interaction.test.tsx
+- [x] src/features/navigation/ui/index.ts
+- [x] src/features/navigation/ui/TopNav.tsx
+- [x] src/features/navigation/ui/AccountMenu.tsx
+- [x] src/features/navigation/ui/Breadcrumbs.tsx
 - [x] src/features/client-manager/ui/AddClientModal.tsx (deleted — superseded by ClientFormModal)
 - [ ] src/features/client-manager/ui/ClientFormModal.tsx
 - [ ] src/features/client-manager/ui/EditClientModal.tsx

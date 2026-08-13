@@ -343,11 +343,11 @@ export function TicketSchedule({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-xs text-neutral-border/75">PLANNED START</Label>
-          <DateTimePicker value={ticket.plan_start_at ? new Date(ticket.plan_start_at) : undefined} onChange={(date) => setTicket((t) => ({ ...t, plan_start_at: date ?? null }))} placeholder="Pick planned start date" className="h-9 text-xs" />
+          <DateTimePicker value={ticket.plan_start_at ? new Date(ticket.plan_start_at) : undefined} onChange={(date) => setTicket((t) => ({ ...t, plan_start_at: date ?? t.plan_start_at }))} placeholder="Pick planned start date" className="h-9 text-xs" />
         </div>
         <div>
           <Label className="text-xs text-neutral-border/75">DEADLINE</Label>
-          <DateTimePicker value={ticket.plan_end_at ? new Date(ticket.plan_end_at) : undefined} onChange={(date) => setTicket((t) => ({ ...t, plan_end_at: date ?? null }))} placeholder="Pick deadline" className="h-9 text-xs" />
+          <DateTimePicker value={ticket.plan_end_at ? new Date(ticket.plan_end_at) : undefined} onChange={(date) => setTicket((t) => ({ ...t, plan_end_at: date ?? t.plan_end_at }))} placeholder="Pick deadline" className="h-9 text-xs" />
         </div>
         <div>
           <Label className="text-xs text-neutral-border/75">ACTUAL START</Label>

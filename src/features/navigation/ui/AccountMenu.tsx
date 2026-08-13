@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronRight, User } from "lucide-react";
 import { useAuth } from "@/features/auth";
 import { useDepartment } from "@/entities/department";
+import { useClients } from "@/entities/client";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -13,33 +13,23 @@ import {
 	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-export interface ProfileMenuItem {
-	label: string;
-	icon: "personal";
-	onClick?: () => void;
-}
-
-const ICONS = {
-	personal: User,
-};
-//   security: Settings,
-//   notifications: Bell,
-
-const DEFAULT_MENU_ITEMS: ProfileMenuItem[] = [
-	{ label: "Personal Information", icon: "personal" },
-];
-//   { label: "Security", icon: "security" },
-//   { label: "Notifications", icon: "notifications" },
-
-export function AccountMenu({
-	menuItems = DEFAULT_MENU_ITEMS,
-}: {
-	menuItems?: ProfileMenuItem[];
-}) {
+// TODO(fsd): cross-slice import — features/navigation imports useAuth from
+// features/auth (same-layer import, forbidden by FSD rule 4-1). Fix by moving
+// the auth context to the app providers layer (src/app) so both slices can
+// consume it downward, then delete this comment.
+export function AccountMenu() {
 	const { user, logout } = useAuth();
 	// Department lookup via TanStack Query (cached, keyed by department_id).
 	const { data: department } = useDepartment(user?.department_id ?? undefined);
 	const departmentName = department?.name ?? "No Department";
+
+	// Client employees have no department — show their company instead.
+	const { data: clients } = useClients();
+	const companyName = user?.client_id
+		? (clients?.find((c) => c.client_id === user.client_id)?.client_name ??
+			"Client")
+		: null;
+	const roleLabel = companyName ?? departmentName;
 
 	const userName = user
 		? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim()
@@ -52,10 +42,11 @@ export function AccountMenu({
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden bg-brand-600 text-xs font-bold text-neutral-surface ring-2 ring-transparent hover:ring-indigo-200 transition-all data-[popup-open]:ring-indigo-200">
+			<DropdownMenuTrigger className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden bg-brand-600 text-xs font-bold text-neutral-surface ring-2 ring-transparent hover:ring-indigo-200 transition-all data-popup-open:ring-indigo-200">
 				{userInitials}
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-72">
+				{/* No profile page yet — this header IS the profile summary. */}
 				<div className="flex flex-col items-center text-center pb-4 border-b border-gray-100 px-4 pt-4">
 					<Avatar className="w-16 h-16 text-lg mb-3">
 						<AvatarFallback className="bg-brand-600 text-neutral-surface text-lg font-bold">
@@ -69,31 +60,21 @@ export function AccountMenu({
 						variant="secondary"
 						className="mt-1.5 text-[11px] tracking-wide uppercase"
 					>
-						{departmentName}
+						{roleLabel}
 					</Badge>
+					{user?.job_title && (
+						<div className="mt-1.5 text-xs text-muted-foreground">
+							{user.job_title}
+						</div>
+					)}
 					<div className="mt-1.5 text-xs text-muted-foreground">
 						{userEmail}
 					</div>
-				</div>
-
-				<div className="py-2">
-					{menuItems.map((item) => {
-						const Icon = ICONS[item.icon];
-						return (
-							<button
-								key={item.label}
-								type="button"
-								onClick={item.onClick}
-								className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-							>
-								<span className="flex items-center gap-2.5">
-									<Icon className="w-4 h-4 stroke-[1.8]" />
-									{item.label}
-								</span>
-								<ChevronRight className="w-3 h-3 text-muted-foreground" />
-							</button>
-						);
-					})}
+					{user?.phone && (
+						<div className="mt-1 text-xs text-muted-foreground">
+							{user.phone}
+						</div>
+					)}
 				</div>
 
 				<DropdownMenuSeparator />
