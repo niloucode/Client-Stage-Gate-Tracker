@@ -87,7 +87,7 @@ export function TicketActivitySection({
 
       await createCommentMutation.mutateAsync({
         profile_id: user.id,
-        description: commentText,
+        description: commentText.trim(),
         parent_type: CommentParentType.TICKET_COMMENT,
         parent_id: ticketId,
         imageUrls,
@@ -98,6 +98,7 @@ export function TicketActivitySection({
       setCommentImagePreviews([]);
     } catch (error) {
       console.error("Error adding comment:", error);
+      setCommentError("Failed to post comment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

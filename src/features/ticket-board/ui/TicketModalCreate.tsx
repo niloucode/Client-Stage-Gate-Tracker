@@ -31,6 +31,9 @@ import { ChevronDown, Paperclip, Bug } from "lucide-react";
 import { useProfiles } from "@/entities/profile/queries";
 import { createClient } from "@/lib/supabase/client";
 import type { CreateTicketParams } from "@/shared/schemas";
+import { ticketCreateSchema } from "@/shared/schemas/ticket";
+import { getFieldErrors } from "@/shared/lib/zod";
+import { toast } from "@/components/ui/toast";
 
 /** Helper to derive box colors based strictly on issue urgency */
 function getIssueUrgencyStyle(issue: IssueItem | null) {
@@ -106,6 +109,7 @@ export default function TicketModalCreate({
 		"GET",
 	);
 	const [apiRoute, setApiRoute] = useState("");
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
 	function toggleTag(tagId: string) {
 		setSelectedTags((prev) =>
@@ -154,7 +158,27 @@ export default function TicketModalCreate({
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (!title.trim()) return;
+
+		const rawPayload = {
+			name: title.trim(),
+			description: description.trim() || null,
+			watcher_id: watcherId || null,
+			tagIds: selectedTags,
+			plan_start_at: startDate ?? null,
+			plan_end_at: deadline ?? null,
+			api_route: isApiTagSelected ? (apiRoute.trim() || null) : null,
+			api_method: isApiTagSelected ? apiMethod : null,
+		};
+
+		// Validate with Zod schema
+		const validation = ticketCreateSchema.safeParse(rawPayload);
+		if (!validation.success) {
+			const errors = getFieldErrors(validation);
+			setFieldErrors(errors);
+			return;
+		}
+
+		setFieldErrors({});
 
 		const imageUrls: string[] = [];
 
@@ -187,19 +211,20 @@ export default function TicketModalCreate({
 			}
 		}
 
-		onCreateTicket({
-			name: title.trim(),
-			plan_start_at: startDate ?? null,
-			plan_end_at: deadline ?? new Date(),
-			watcher_id: watcherId || null,
+		await onCreateTicket({
+			name: validation.data.name,
+			plan_start_at: validation.data.plan_start_at ?? null,
+			plan_end_at: validation.data.plan_end_at,
+			watcher_id: validation.data.watcher_id ?? null,
 			TicketAssigned: assignedIds,
-			tagIds: selectedTags,
-			description: description.trim() || null,
-			api_route: apiRoute || null,
-			api_method: apiMethod || null,
+			tagIds: validation.data.tagIds ?? [],
+			description: validation.data.description ?? null,
+			api_route: validation.data.api_route ?? null,
+			api_method: validation.data.api_method ?? null,
 			image_urls: imageUrls,
 		});
 
+		// Reset form state
 		setTitle("");
 		setDescription("");
 		setStartDate(undefined);
@@ -212,6 +237,7 @@ export default function TicketModalCreate({
 		setImagePreviews([]);
 		setApiMethod("GET");
 		setApiRoute("");
+		setFieldErrors({});
 		onClose();
 	}
 
@@ -232,7 +258,6 @@ export default function TicketModalCreate({
 					</DialogDescription>
 				</DialogHeader>
 
-
 				{/* Form */}
 				<form
 					onSubmit={handleSubmit}
@@ -244,7 +269,11 @@ export default function TicketModalCreate({
 						required
 						placeholder="e.g., Update Landing Page Hero"
 						value={title}
-						onChange={(e) => setTitle(e.target.value)}
+						error={fieldErrors.name}
+						onChange={(e) => {
+							setTitle(e.target.value);
+							if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: "" }));
+						}}
 						maxLength={50}
 					/>
 
@@ -254,9 +283,13 @@ export default function TicketModalCreate({
 						label="Description"
 						placeholder="Provide detailed information about this ticket..."
 						value={description}
-						onChange={(e) => setDescription(e.target.value)}
+						error={fieldErrors.description}
+						onChange={(e) => {
+							setDescription(e.target.value);
+							if (fieldErrors.description) setFieldErrors((prev) => ({ ...prev, description: "" }));
+						}}
 						rows={4}
-						maxLength={160}
+						maxLength={360}
 					/>
 
 					{/* Assigned to + Watchers row */}
@@ -431,30 +464,34 @@ export default function TicketModalCreate({
 					{/* Start Date + Deadline row */}
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-1.5">
-							<Label>
-								Planned Start
-							</Label>
+							<Label>Planned Start</Label>
 							<DateTimePicker
 								value={startDate}
-								onChange={setStartDate}
+								onChange={(d) => {
+									setStartDate(d);
+									if (fieldErrors.plan_start_at) setFieldErrors((prev) => ({ ...prev, plan_start_at: "" }));
+								}}
 								placeholder="Pick planned start date"
+								error={fieldErrors.plan_start_at}
 							/>
 						</div>
 						<div className="space-y-1.5">
-							<Label>
-								Deadline
-							</Label>
+							<Label required>Deadline</Label>
 							<DateTimePicker
 								value={deadline}
-								onChange={setDeadline}
+								onChange={(d) => {
+									setDeadline(d);
+									if (fieldErrors.plan_end_at) setFieldErrors((prev) => ({ ...prev, plan_end_at: "" }));
+								}}
 								placeholder="Pick deadline"
+								error={fieldErrors.plan_end_at}
 							/>
 						</div>
 					</div>
 
 					{/* Linked Issue Box */}
 					<div>
-						<Label >Linked Issue</Label>
+						<Label>Linked Issue</Label>
 						{(() => {
 							const style = getIssueUrgencyStyle(linkedIssue);
 							return (
@@ -558,7 +595,11 @@ export default function TicketModalCreate({
 									label="API Route"
 									placeholder="/api/v1/resource"
 									value={apiRoute}
-									onChange={(e) => setApiRoute(e.target.value)}
+									error={fieldErrors.api_route}
+									onChange={(e) => {
+										setApiRoute(e.target.value);
+										if (fieldErrors.api_route) setFieldErrors((prev) => ({ ...prev, api_route: "" }));
+									}}
 								/>
 							</div>
 						</div>
@@ -570,7 +611,7 @@ export default function TicketModalCreate({
 					<Button onClick={onClose} variant="ghost">
 						Cancel
 					</Button>
-					<Button onClick={handleSubmit} disabled={!title.trim()}>
+					<Button onClick={handleSubmit}>
 						Create Ticket
 					</Button>
 				</DialogFooter>

@@ -9,7 +9,6 @@ import {
 	toSchedulingDates,
 } from "@/shared/lib/scheduling";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
-import { Label } from "@/components/ui/label";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { FormInput } from "@/components/ui/forminput";
 import {
@@ -173,37 +172,37 @@ export function WorkflowModal({
 						}}
 					/>
 
-						<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-							<DateTimePicker
-								label="Plan Start"
-								required
-								value={formData.planStart ? new Date(formData.planStart) : undefined}
-								onChange={(date) => {
-									setFormData({
-										...formData,
-										planStart: date ?? null,
-									});
-									setFieldErrors((prev) => ({ ...prev, planStart: undefined }));
-								}}
-								placeholder="Pick plan start date"
-								error={fieldErrors.planStart}
-							/>
+					<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+						<DateTimePicker
+							label="Plan Start"
+							required
+							value={formData.planStart ? new Date(formData.planStart) : undefined}
+							onChange={(date) => {
+								setFormData({
+									...formData,
+									planStart: date ?? null,
+								});
+								setFieldErrors((prev) => ({ ...prev, planStart: undefined }));
+							}}
+							placeholder="Pick plan start date"
+							error={fieldErrors.planStart}
+						/>
 
-							<DateTimePicker
-								label="Deadline Date"
-								required
-								value={formData.planEnd ? new Date(formData.planEnd) : undefined}
-								onChange={(date) => {
-									setFormData({
-										...formData,
-										planEnd: date ?? null,
-									});
-									setFieldErrors((prev) => ({ ...prev, planEnd: undefined }));
-								}}
-								placeholder="Pick deadline date"
-								error={fieldErrors.planEnd}
-							/>
-						</div>
+						<DateTimePicker
+							label="Deadline Date"
+							required
+							value={formData.planEnd ? new Date(formData.planEnd) : undefined}
+							onChange={(date) => {
+								setFormData({
+									...formData,
+									planEnd: date ?? null,
+								});
+								setFieldErrors((prev) => ({ ...prev, planEnd: undefined }));
+							}}
+							placeholder="Pick deadline date"
+							error={fieldErrors.planEnd}
+						/>
+					</div>
 				</div>
 
 				<DialogFooter>

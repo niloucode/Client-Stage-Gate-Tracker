@@ -17,6 +17,7 @@ import {
 } from "@/entities/phase/mutations";
 import { Label } from "@/components/ui/label";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { toast } from "@/components/ui/toast";
 import {
 	Pencil,
 	X,
@@ -104,6 +105,12 @@ export const PhaseCard = forwardRef<
 		await deletePhaseMutation.mutateAsync({
 			phaseId: phase.phase_id,
 			stageId,
+		});
+
+		toast.add({
+			title: "Phase Deleted",
+			description: `"${phase.name}" has been deleted successfully.`,
+			type: "delete",
 		});
 
 		if (activePhase === phaseToDelete) {
@@ -197,6 +204,12 @@ export const PhaseCard = forwardRef<
 			planEnd: field === "planEnd" ? newDate : (currentPhase.planEnd ? new Date(currentPhase.planEnd) : undefined),
 			actualStart: currentPhase.actualStart ? new Date(currentPhase.actualStart) : undefined,
 			actualEnd: currentPhase.actualEnd ? new Date(currentPhase.actualEnd) : undefined,
+		});
+
+		toast.add({
+			title: "Phase Edited",
+			description: `"${currentPhase.name}" has been edited successfully.`,
+			type: "success",
 		});
 	};
 

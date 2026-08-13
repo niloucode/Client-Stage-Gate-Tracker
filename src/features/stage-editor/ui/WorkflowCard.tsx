@@ -11,8 +11,9 @@ import {
 	useDeleteWorkflow,
 	useReorderWorkflow,
 } from "@/entities/workflow/mutations";
+import { toast } from "@/components/ui/toast";
 
-import { Pencil, X, Plus, Clock, GripVertical,EllipsisVertical } from "lucide-react";
+import { Pencil, X, Plus, Clock, GripVertical, EllipsisVertical } from "lucide-react";
 
 interface WorkflowCardProps {
 	workflows: Workflow[];
@@ -150,6 +151,13 @@ export function WorkflowCard({
 			planEnd: data.planEnd ?? undefined,
 			actualEnd: data.actualEnd ?? undefined,
 		});
+
+		toast.add({
+			title: "Workflow Created",
+			description: `"${data.name}" has been created successfully.`,
+			type: "success",
+		});
+
 		setIsAddOpen(false);
 	};
 
@@ -168,6 +176,13 @@ export function WorkflowCard({
 			planEnd: data.planEnd ?? undefined,
 			actualEnd: data.actualEnd ?? undefined,
 		});
+
+		toast.add({
+			title: "Workflow Edited",
+			description: `"${data.name}" has been edited successfully.`,
+			type: "success",
+		});
+
 		setEditingWorkflow(null);
 	};
 
@@ -183,6 +198,13 @@ export function WorkflowCard({
 			workflowId: workflowToDelete.workflow_id,
 			stageId,
 		});
+
+		toast.add({
+			title: "Workflow Deleted",
+			description: `"${workflowToDelete.name}" has been deleted successfully.`,
+			type: "delete",
+		});
+
 		setIsDeleteConfirmOpen(false);
 		setWorkflowToDelete(null);
 	};
