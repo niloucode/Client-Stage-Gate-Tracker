@@ -222,17 +222,18 @@ export function StageSequence({
                   badge={badge}
                   onClick={() => onSelectStage?.(stage.id)}
                 />
-                {/* Per-stage actions menu (Task 5.7) */}
+                
+                {/* Per-stage actions menu */}
                 {(onEditStage || onDeleteStage) && (
-                  <div className="mt-1 h-6">
+                  <div className="mt-1">
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         aria-label={`Actions for ${stage.stageName}`}
-                        className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer data-[popup-open]:bg-slate-100"
                       >
-                        <EllipsisVertical className="border-2 border-brand-100 hover:opacity-100 opacity-0 transition-all duration-300 cursor-pointer absolute top-0 right-6 rounded-md bg-neutral-surface" size={24} />
+                        <EllipsisVertical size={16} />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="absolute right-0 top-0 w-44">
+                      <DropdownMenuContent align="end" className="w-44">
                         {onEditStage && (
                           <DropdownMenuItem onClick={() => onEditStage(stage.id)}>
                             <Pencil size={14} />
