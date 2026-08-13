@@ -39,6 +39,11 @@ export function SelectField({
 	const field = useFieldContext<string>();
 	const error = firstFieldError(field.state.meta.errors);
 
+	// Find the matching option object from current field value
+	const selectedOption = options.find(
+		(option) => String(option.value) === String(field.state.value),
+	);
+
 	return (
 		<div className={cn("flex flex-col gap-1", className)}>
 			{label && (
@@ -55,7 +60,10 @@ export function SelectField({
 					aria-invalid={error ? true : undefined}
 					aria-labelledby={label ? `${field.name}-label` : undefined}
 				>
-					<SelectValue placeholder={placeholder} />
+					{/* Pass selectedOption label explicitly so Radix doesn't fall back to displaying the ID */}
+					<SelectValue placeholder={placeholder}>
+						{selectedOption?.label}
+					</SelectValue>
 				</SelectTrigger>
 				<SelectContent>
 					{options.map((option) => (
