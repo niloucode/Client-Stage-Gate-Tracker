@@ -312,14 +312,14 @@ export function ManageMembersModal({
 					) : nonClientMembers.length === 0 ? (
 						<Lacking />
 					) : (
-						<div className="w-full bg-neutral-surface overflow-x-auto rounded h-80 overflow-y-scroll border-1 border-brand-100">
+						<div className="w-full bg-neutral-surface overflow-x-auto rounded h-80 overflow-y-scroll border border-brand-100">
 							<table className="w-full border-collapse text-left">
 								<thead className="sticky top-0 z-10 bg-brand-50 border-b border-brand-100 text-xs font-semibold text-neutral-border">
 									<tr>
 										<th scope="col" className="px-3 py-2.5">
 											NAME
 										</th>
-										<th scope="col" className="px-3 py-2.5 w-[140px]">
+										<th scope="col" className="px-3 py-2.5 w-35">
 											DEPARTMENT
 										</th>
 										<th scope="col" className="px-3 py-2.5 w-12 text-right">

@@ -92,7 +92,7 @@ export function ProjectCard({
 				</h3>
 				{/* Description — always shown, clamped to 3 lines */}
 				<p
-					className={`w-3/4 text-xs break-words ${project.description ? "text-slate-600" : "text-slate-400"}`}
+					className={`w-3/4 text-xs wrap-break-word ${project.description ? "text-slate-600" : "text-slate-400"}`}
 					style={{
 						display: "-webkit-box",
 						WebkitLineClamp: 3,
@@ -133,7 +133,7 @@ export function ProjectCard({
 						}}
 					>
 						<DropdownMenu>
-							<DropdownMenuTrigger className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-[popup-open]:bg-slate-100">
+							<DropdownMenuTrigger className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-popup-open:bg-slate-100">
 								<EllipsisVertical size={16} />
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end" className="w-56">
