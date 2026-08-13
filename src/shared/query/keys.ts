@@ -33,6 +33,7 @@ export const clientKeys = {
 	lists: () => [...clientKeys.all, "list"] as const,
 	details: () => [...clientKeys.all, "detail"] as const,
 	detail: (id: string) => [...clientKeys.details(), id] as const,
+	own: () => [...clientKeys.all, "own"] as const,
 };
 
 export const departmentKeys = {

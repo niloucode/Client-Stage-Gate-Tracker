@@ -15,10 +15,61 @@ type ClientMutationResult =
 	| { success: true; data: Clients; inviteCode?: string }
 	| { success: false; error: string };
 
+/**
+ * Owner-only gate for client management (create/update/rotate). Client
+ * employees and Project Team members are rejected — only the Project Owner
+ * department may mutate the client registry. The department is matched by
+ * NAME (unique in the DB) so no UUIDs are hardcoded.
+ */
+async function requireProjectOwner(): Promise<
+	{ ok: true } | { ok: false; error: string }
+> {
+	const userId = await getCurrentUserId();
+	if (!userId) return { ok: false, error: "Authentication required." };
+	const profile = await prisma.profiles.findUnique({
+		where: { profile_id: userId },
+		include: { Department: { select: { name: true } } },
+	});
+	if (
+		!profile ||
+		profile.client_id !== null ||
+		profile.Department?.name !== "Project Owner"
+	) {
+		return {
+			ok: false,
+			error: "Only the project owner can manage clients.",
+		};
+	}
+	return { ok: true };
+}
+
+/**
+ * Staff-only gate for READ access to the client registry. Client employees
+ * (and unauthenticated callers) must never receive the full client list.
+ */
+async function requireStaff(): Promise<{ ok: true } | { ok: false; error: string }> {
+	const userId = await getCurrentUserId();
+	if (!userId) return { ok: false, error: "Authentication required." };
+	const profile = await prisma.profiles.findUnique({
+		where: { profile_id: userId },
+		select: { client_id: true },
+	});
+	if (!profile || profile.client_id !== null) {
+		return { ok: false, error: "Only staff can view clients." };
+	}
+	return { ok: true };
+}
+
 export async function clientSelectAll() {
+	// Staff-only: the registry (names, TINs, emails, billing) must never be
+	// reachable by client profiles or unauthenticated callers. Throwing lets
+	// React Query surface isError for legitimate staff consumers.
+	const auth = await requireStaff();
+	if (!auth.ok) throw new Error(auth.error);
+
 	// No catch here: a thrown error lets React Query retry (cachePolicy
 	// retry: 1) and surface isError instead of silently degrading to [].
-	return prisma.clients.findMany({
+	const clients = await prisma.clients.findMany({
 		where: { is_deleted: false },
 		orderBy: { client_name: "asc" },
 		include: {
@@ -33,6 +84,31 @@ export async function clientSelectAll() {
 				},
 			},
 		},
+	});
+	// The invite-code HASH must never leave the server: expose only whether
+	// a code exists.
+	return clients.map(({ invite_code_hash, ...client }) => ({
+		...client,
+		has_invite_code: invite_code_hash !== null,
+	}));
+}
+
+/**
+ * The signed-in user's OWN client row (for company lookups in the account
+ * menu). Staff have no client — returns null. Client profiles get exactly
+ * their own company, never the registry.
+ */
+export async function clientSelectOwn() {
+	const userId = await getCurrentUserId();
+	if (!userId) return null;
+	const profile = await prisma.profiles.findUnique({
+		where: { profile_id: userId },
+		select: { client_id: true },
+	});
+	if (!profile?.client_id) return null;
+	return prisma.clients.findUnique({
+		where: { client_id: profile.client_id, is_deleted: false },
+		select: { client_id: true, client_name: true },
 	});
 }
 
@@ -80,6 +156,10 @@ export async function clientCreate(
 	client: ClientCreateType,
 ): Promise<ClientMutationResult> {
 	try {
+		// Owner-only: creating clients is a registry mutation.
+		const auth = await requireProjectOwner();
+		if (!auth.ok) return { success: false, error: auth.error };
+
 		// Validate before trusting the payload (schema lives in shared/schemas)
 		clientCreateSchema.parse(client);
 
@@ -113,15 +193,10 @@ export async function regenerateClientInviteCode(
 	clientId: string,
 ): Promise<ClientMutationResult> {
 	try {
-		const userId = await getCurrentUserId();
-		if (!userId) return { success: false, error: "Authentication required." };
-		const profile = await prisma.profiles.findUnique({
-			where: { profile_id: userId },
-			select: { client_id: true },
-		});
-		if (!profile || profile.client_id !== null) {
-			return { success: false, error: "Only staff can manage invite codes." };
-		}
+		// Owner-only: rotating the code hands out access to the client's
+		// employees — Project Team members must not see or rotate codes.
+		const auth = await requireProjectOwner();
+		if (!auth.ok) return { success: false, error: auth.error };
 
 		const inviteCode = generateInviteCode();
 		const updated = await prisma.clients.update({
@@ -176,6 +251,10 @@ export async function clientUpdate(
 	client: ClientType,
 ): Promise<ClientMutationResult> {
 	try {
+		// Owner-only: editing clients is a registry mutation.
+		const auth = await requireProjectOwner();
+		if (!auth.ok) return { success: false, error: auth.error };
+
 		clientSchema.parse(client);
 
 		const updated = await prisma.clients.update({

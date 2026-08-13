@@ -215,9 +215,14 @@
 - [x] src/features/navigation/ui/AccountMenu.tsx
 - [x] src/features/navigation/ui/Breadcrumbs.tsx
 - [x] src/features/client-manager/ui/AddClientModal.tsx (deleted — superseded by ClientFormModal)
-- [ ] src/features/client-manager/ui/ClientFormModal.tsx
-- [ ] src/features/client-manager/ui/EditClientModal.tsx
-- [ ] src/features/client-manager/ui/ViewTeamMembersModal.tsx
+- [x] src/features/client-manager/index.ts
+- [x] src/features/client-manager/model/types.ts
+- [x] src/features/client-manager/ui/ClientsPage.tsx (extracted from the app page — FSD)
+- [x] src/features/client-manager/ui/ClientsTable.tsx (split from ClientsPage)
+- [x] src/features/client-manager/ui/ClientFormModal.tsx
+- [x] src/features/client-manager/ui/EditClientModal.tsx (deleted — dead duplicate of ClientFormModal's edit mode)
+- [x] src/features/client-manager/ui/ViewTeamMembersModal.tsx
+- [x] src/features/client-manager/clients-page.role.test.tsx
 - [ ] src/features/contracts/ui/index.tsx
 - [ ] src/features/contracts/ui/ContractViewer.tsx
 - [ ] src/features/contracts/ui/ClientsDropdown.tsx

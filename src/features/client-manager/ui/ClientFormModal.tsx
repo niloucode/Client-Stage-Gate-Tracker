@@ -94,7 +94,11 @@ export default function ClientFormModal({
 				setFieldErrors(getFieldErrors(parsed));
 				return;
 			}
-			await clientUpdate(parsed.data);
+			const result = await clientUpdate(parsed.data);
+			if (!result.success) {
+				setCreateError(result.error);
+				return;
+			}
 			onClose();
 		} else {
 			const parsed = clientCreateSchema.safeParse({
@@ -252,6 +256,15 @@ export default function ClientFormModal({
 						}
 						onClearError={() => handleClearError("billing_address")}
 					/>
+
+					{/* Create/edit failures (e.g. duplicate TIN, owner-only
+						rejection) are visible here — not only in the
+						invite-code success view. */}
+					{createError && (
+						<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
+							{createError}
+						</p>
+					)}
 				</div>
 
 				<DialogFooter className="bg-muted/50 border-t p-6">

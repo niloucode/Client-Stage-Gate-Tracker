@@ -194,9 +194,24 @@ export const SidebarFooter = ({
 	</div>
 );
 
-export default function SidebarLayout({ children }: { children?: ReactNode }) {
+export default function SidebarLayout({
+	children,
+	showClientsLink = true,
+}: {
+	children?: ReactNode;
+	/** Client profiles must not see the Clients registry entry. The (app)
+	 * server layout resolves the role and passes this flag — a boolean is
+	 * serializable across the RSC boundary, while navItems (with icon
+	 * components) stay client-side. */
+	showClientsLink?: boolean;
+}) {
 	const pathname = usePathname();
 	const [collapsed, setCollapsed] = useState(false);
+
+	// Role-filtered nav items (client-side — icons must not cross RSC).
+	const items = showClientsLink
+		? navItems
+		: navItems.filter((item) => item.href !== "/clients");
 
 	return (
 		<div
@@ -213,7 +228,7 @@ export default function SidebarLayout({ children }: { children?: ReactNode }) {
 				<SidebarLogo collapsed={collapsed} />
 
 				<nav className="flex-1 px-2 py-4 space-y-0.5 overflow-hidden">
-					{navItems.map((item) => {
+					{items.map((item) => {
 						const isActive = pathname.startsWith(item.href);
 						return (
 							<SidebarNavItem

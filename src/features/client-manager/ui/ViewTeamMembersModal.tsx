@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
@@ -24,21 +24,26 @@ export default function ViewTeamMembersModal({
 	members,
 	onClose,
 }: ViewTeamMembersModalProps) {
-	// Cache members so they remain visible during the exit/closing transition
+	// Cache members so they remain visible during the exit/closing transition.
+	// "Adjust state during render" pattern (React docs): the prop is cleared
+	// (undefined) while the dialog animates out, so snapshot the last list —
+	// INCLUDING an empty one — so a different client with no members never
+	// shows the previous client's team. No setState-in-effect.
 	const [cachedMembers, setCachedMembers] = useState<TeamMember[] | undefined>(members)
-
-	useEffect(() => {
-		if (members && members.length > 0) {
+	const [prevMembers, setPrevMembers] = useState<TeamMember[] | undefined>(members)
+	if (members !== prevMembers) {
+		setPrevMembers(members)
+		if (members !== undefined) {
 			setCachedMembers(members)
 		}
-	}, [members])
+	}
 
 	// Fallback to cached members if the prop gets cleared/reset while closing
 	const displayMembers = members?.length ? members : cachedMembers
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-			<DialogContent className="max-w-[672px]">
+			<DialogContent className="max-w-2xl">
 				<DialogHeader>
 					<DialogTitle>Team Members</DialogTitle>
 				</DialogHeader>
@@ -55,8 +60,8 @@ export default function ViewTeamMembersModal({
 						))}
 					</div>
 					{/* Scrollable rows */}
-					{displayMembers && (
-						<div className="max-h-[300px] overflow-y-auto">
+					{displayMembers && displayMembers.length > 0 ? (
+						<div className="max-h-75 overflow-y-auto">
 							{displayMembers.map((member, i) => (
 								<div
 									key={member.id}
@@ -93,6 +98,10 @@ export default function ViewTeamMembersModal({
 								</div>
 							))}
 						</div>
+					) : (
+						<p className="px-4 py-8 text-center text-sm text-muted-foreground">
+							No team members yet.
+						</p>
 					)}
 				</div>
 			</DialogContent>

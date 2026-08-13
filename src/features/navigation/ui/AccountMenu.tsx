@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/features/auth";
 import { useDepartment } from "@/entities/department";
-import { useClients } from "@/entities/client";
+import { useClientOwn } from "@/entities/client";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -23,13 +23,11 @@ export function AccountMenu() {
 	const { data: department } = useDepartment(user?.department_id ?? undefined);
 	const departmentName = department?.name ?? "No Department";
 
-	// Client employees have no department — show their company instead.
-	const { data: clients } = useClients();
-	const companyName = user?.client_id
-		? (clients?.find((c) => c.client_id === user.client_id)?.client_name ??
-			"Client")
-		: null;
-	const roleLabel = companyName ?? departmentName;
+	// Client employees have no department — show their company instead. The
+	// lookup is scoped to the caller's OWN client row (never the registry).
+	const { data: ownClient } = useClientOwn(!!user?.client_id);
+	const companyName = ownClient?.client_name ?? "Client";
+	const roleLabel = user?.client_id ? companyName : departmentName;
 
 	const userName = user
 		? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim()
