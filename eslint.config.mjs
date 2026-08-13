@@ -62,6 +62,29 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Vendored third-party library (src/components/reui — reui gantt).
+  // Written in pre-React-Compiler style: render-phase ref reads for layout
+  // memoization, impure render computations, rest-sibling state stripping.
+  // These are deliberate upstream patterns, not bugs — the strict React
+  // Compiler rules and unused-vars strictness are relaxed for this folder
+  // only, so WebStorm/eslint noise doesn't block reviewing OUR code.
+  {
+    files: ["src/components/reui/**"],
+    rules: {
+      // React Compiler correctness rules (purity/immutability/refs/memo):
+      // the vendored library deliberately reads refs during render for
+      // layout memoization and uses impure render computations.
+      "react-hooks/purity": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { ignoreRestSiblings: true },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

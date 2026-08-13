@@ -125,6 +125,25 @@
 - [x] src/components/ui/textarea.tsx
 - [x] src/components/ui/toast.tsx
 - [x] src/components/ui/tooltip.tsx
+- [x] src/components/ui/checkbox.tsx
+- [x] src/components/ui/context-menu.tsx
+- [x] src/components/ui/tabs.tsx
+
+## 7b. Vendored component library (src/components/reui — gantt chart)
+
+> Vendored third-party code (reui gantt) — tracked for awareness; formatted,
+> dead code removed, and lint-scoped (React Compiler rules relaxed in
+> eslint.config.mjs for this folder only).
+
+- [x] src/components/reui/gantt/gantt.tsx
+- [x] src/components/reui/gantt/gantt-bar.tsx
+- [x] src/components/reui/gantt/gantt-dnd.tsx
+- [x] src/components/reui/gantt/gantt-i18n.tsx
+- [x] src/components/reui/gantt/gantt-lib.tsx
+- [x] src/components/reui/gantt/gantt-nav.tsx
+- [x] src/components/reui/gantt/gantt-recurrence.tsx
+- [x] src/components/reui/gantt/gantt-types.tsx
+- [x] src/components/reui/gantt/gantt-view.tsx
 
 ## 8. Shared layer — hooks & test setup
 
@@ -235,6 +254,20 @@
 - [ ] src/features/contracts/ui/ExecuteAgreementCard.tsx
 - [ ] src/features/contracts/ui/ExecutedBanner.tsx
 - [ ] src/features/gate-overview/GateOverview.tsx
+- [ ] src/features/gate-overview/GateFeedbackModal.tsx
+- [ ] src/features/dashboard-analytics/index.ts
+- [ ] src/features/dashboard-analytics/types.ts
+- [ ] src/features/dashboard-analytics/queries.ts
+- [ ] src/features/dashboard-analytics/lib/ganttMapping.ts
+- [ ] src/features/dashboard-analytics/lib/mockData.ts
+- [ ] src/features/dashboard-analytics/lib/schema.ts
+- [ ] src/features/dashboard-analytics/ui/DashboardAnalyticsPage.tsx
+- [ ] src/features/dashboard-analytics/ui/EmptyGanttState.tsx
+- [ ] src/features/dashboard-analytics/ui/GanttBarContent.tsx
+- [ ] src/features/dashboard-analytics/ui/GanttResourceLabel.tsx
+- [ ] src/features/dashboard-analytics/ui/GanttTabs.tsx
+- [ ] src/features/dashboard-analytics/ui/LevelFilterPills.tsx
+- [ ] src/features/dashboard-analytics/ui/ProjectGanttChart.tsx
 - [ ] src/features/issue-reporting/model/issues.ts
 - [ ] src/features/issue-reporting/ui/IssueDashboard.tsx
 - [ ] src/features/issue-reporting/ui/IssueReportingModal.tsx
@@ -262,13 +295,16 @@
 - [ ] src/features/stage-editor/ui/ModuleCard.tsx
 - [ ] src/features/stage-editor/ui/PhaseCard.tsx
 - [ ] src/features/stage-editor/ui/WorkflowCard.tsx
-- [ ] src/features/stage-editor/ui/modals/AddModule.tsx
-- [x] src/features/stage-editor/ui/modals/AddPhase.tsx (deleted — consolidated into PhaseModal.tsx)
-- [ ] src/features/stage-editor/ui/modals/AddWorkflow.tsx
-- [ ] src/features/stage-editor/ui/modals/EditModule.tsx
-- [x] src/features/stage-editor/ui/modals/EditPhase.tsx (deleted — consolidated into PhaseModal.tsx)
-- [ ] src/features/stage-editor/ui/modals/EditWorkflow.tsx
-- [ ] src/features/stage-editor/ui/modals/PhaseModal.tsx
+- [x] src/features/stage-editor/ui/modals/AddModule.tsx (deleted — consolidated into ModuleModals.tsx)
+- [x] src/features/stage-editor/ui/modals/AddPhase.tsx (deleted — consolidated into PhaseModals.tsx)
+- [x] src/features/stage-editor/ui/modals/AddWorkflow.tsx (deleted — consolidated into WorkflowModals.tsx)
+- [x] src/features/stage-editor/ui/modals/EditModule.tsx (deleted — consolidated into ModuleModals.tsx)
+- [x] src/features/stage-editor/ui/modals/EditPhase.tsx (deleted — consolidated into PhaseModals.tsx)
+- [x] src/features/stage-editor/ui/modals/EditWorkflow.tsx (deleted — consolidated into WorkflowModals.tsx)
+- [x] src/features/stage-editor/ui/modals/PhaseModal.tsx (deleted — consolidated into PhaseModals.tsx)
+- [ ] src/features/stage-editor/ui/modals/ModuleModals.tsx
+- [ ] src/features/stage-editor/ui/modals/PhaseModals.tsx
+- [ ] src/features/stage-editor/ui/modals/WorkflowModals.tsx
 - [ ] src/features/tag-manager/index.ts
 - [ ] src/features/tag-manager/ui/TagFormModal.tsx
 - [ ] src/features/tag-manager/ui/TagListModal.tsx
@@ -284,6 +320,11 @@
 - [ ] src/features/ticket-board/ui/TicketHistoryLog.tsx
 - [ ] src/features/ticket-board/ui/TicketModalCreate.tsx
 - [ ] src/features/ticket-board/ui/TicketModalEdit.tsx
+- [ ] src/features/ticket-board/ui/editor/TicketEditor.tsx
+- [ ] src/features/ticket-board/ui/editor/TicketEditorSubcomponents.tsx
+- [ ] src/features/ticket-board/ui/editor/TicketActivitySection.tsx
+- [ ] src/features/ticket-board/ui/editor/useTicketEditor.ts
+- [ ] src/features/ticket-board/ui/editor/helpers.tsx
 
 ## 11. App layer — layouts, pages, API routes
 
@@ -304,7 +345,8 @@
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx
+- [ ] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx
 - [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx

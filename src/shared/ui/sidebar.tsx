@@ -41,38 +41,42 @@ export const navItems: NavItem[] = [
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
-  <div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25 overflow-hidden">
-    <div className={`flex flex-col min-w-0 transition-all duration-300 ease-in-out`}> {/* ${collapsed ? "mx-auto" : ""} */}
-      {/* Logo container: switches between icon and full logo based on collapsed state */}
-      <div className="relative overflow-hidden h-5 transition-all duration-300 ease-in-out">
-        {collapsed ? (
-          <Image
-            src="/assets/logo/asceoft-icon-black.svg"
-            alt="Asceoft"
-            width={18}
-            height={18}
-            unoptimized
-          />
-        ) : (
-          <Image
-            src="/assets/logo/asceoft-logo-black.svg"
-            alt="Asceoft"
-            width={91}
-            height={18}
-            className="max-w-none"
-            unoptimized
-          />
-        )}
-      </div>
-      <p
-        className={`font-mono text-[9px] font-semibold tracking-[0.18em] text-gray-400 uppercase mt-1 whitespace-nowrap transition-all duration-300 ease-in-out ${
-          collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100"
-        }`}
-      >
-        Studio Portal
-      </p>
-    </div>
-  </div>
+	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25 overflow-hidden">
+		<div
+			className={`flex flex-col min-w-0 transition-all duration-300 ease-in-out`}
+		>
+			{" "}
+			{/* ${collapsed ? "mx-auto" : ""} */}
+			{/* Logo container: switches between icon and full logo based on collapsed state */}
+			<div className="relative overflow-hidden h-5 transition-all duration-300 ease-in-out">
+				{collapsed ? (
+					<Image
+						src="/assets/logo/asceoft-icon-black.svg"
+						alt="Asceoft"
+						width={18}
+						height={18}
+						unoptimized
+					/>
+				) : (
+					<Image
+						src="/assets/logo/asceoft-logo-black.svg"
+						alt="Asceoft"
+						width={91}
+						height={18}
+						className="max-w-none"
+						unoptimized
+					/>
+				)}
+			</div>
+			<p
+				className={`font-mono text-[9px] font-semibold tracking-[0.18em] text-gray-400 uppercase mt-1 whitespace-nowrap transition-all duration-300 ease-in-out ${
+					collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100"
+				}`}
+			>
+				Studio Portal
+			</p>
+		</div>
+	</div>
 );
 
 export const SidebarNavItem = ({
