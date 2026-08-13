@@ -438,3 +438,18 @@ body {
 [data-slot="gantt"] [data-slot="gantt-bar"] {
 	background-color: transparent;
 }
+
+/*
+ * Make Gantt bars unclickable and display a default arrow cursor.
+ */
+[data-slot="gantt"] [data-slot="gantt-bar"] {
+	pointer-events: none;
+	cursor: default;
+}
+
+/*
+ * Enable smooth scrolling for Gantt timeline viewports.
+ */
+[data-slot="gantt"] [data-slot="scroll-area-viewport"] {
+	scroll-behavior: smooth;
+}
