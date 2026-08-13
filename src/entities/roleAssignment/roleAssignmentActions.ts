@@ -6,6 +6,7 @@ import {
 	requireProjectMember,
 	requireProjectOwner,
 } from "@/lib/auth/projectAccess";
+import { resolveDashboardRole } from "./dashboardRole";
 
 /**
  * The caller's own role assignment for a project, or null. Scoped to the
@@ -214,4 +215,38 @@ export async function deleteClientRoleAssignment(
 		console.error("Failed to revoke client role:", error);
 		return { success: false, error: "Failed to revoke client role." };
 	}
+}
+
+const PROJECT_OWNER_ROLE = "Project Owner";
+
+/**
+ * The signed-in user's landing-dashboard view: "client" (Profiles.client_id
+ * set), "owner" (Project Owner on any project), or "staff". Unauthenticated
+ * and archived users resolve to "staff" — the app shell guards the route.
+ */
+export async function getMyDashboardRole() {
+	const userId = await getCurrentUserId();
+	if (!userId) return "staff" as const;
+
+	const profile = await prisma.profiles.findUnique({
+		where: { profile_id: userId, is_deleted: false },
+		select: { client_id: true },
+	});
+	if (!profile) return "staff" as const;
+
+	const ownerRole = await prisma.roles.findUnique({
+		where: { name: PROJECT_OWNER_ROLE },
+		select: { role_id: true },
+	});
+	if (!ownerRole) return "staff" as const;
+
+	const assignment = await prisma.roleAssignments.findFirst({
+		where: { user_id: userId, role_id: ownerRole.role_id },
+		select: { project_id: true },
+	});
+
+	return resolveDashboardRole({
+		clientId: profile.client_id,
+		ownerProjectIds: assignment ? [assignment.project_id] : [],
+	});
 }
