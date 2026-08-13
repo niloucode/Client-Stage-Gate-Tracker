@@ -35,13 +35,13 @@ interface NavItem {
 export const navItems: NavItem[] = [
 	// { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
 	{ label: "Projects", icon: Folder, href: "/projects" },
-	// { label: "Contracts", icon: FileText, href: "/contracts" },
+	// { label: "Contracts", icon: FileText, href: "/contracts" }, // TODO(contracts): route not built yet
 	{ label: "Clients", icon: ContactRound, href: "/clients" },
 	// { label: "Credentials Repo", icon: Key, href: "/credentials" },
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
-  <div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-[65px] overflow-hidden">
+  <div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25 overflow-hidden">
     <div className={`flex flex-col min-w-0 transition-all duration-300 ease-in-out`}> {/* ${collapsed ? "mx-auto" : ""} */}
       {/* Logo container: switches between icon and full logo based on collapsed state */}
       <div className="relative overflow-hidden h-5 transition-all duration-300 ease-in-out">

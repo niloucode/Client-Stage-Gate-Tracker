@@ -11,13 +11,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/shared/ui/PasswordInput";
-import { getFieldErrors } from "@/shared/lib/zod";
+import { useAppForm } from "@/shared/form";
 import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/features/auth";
 import { loginSchema } from "@/shared/schemas";
 import { profileKeys } from "@/shared/query/keys";
 
@@ -25,46 +20,31 @@ import { profileKeys } from "@/shared/query/keys";
 export function LoginForm() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
-	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-	const [loading, setLoading] = useState(false);
 	const supabase = createClient();
-	useAuth();
 
-	function fieldErrClass(key: string) {
-		return fieldErrors[key] ? "border-red-400 focus:ring-red-400" : "";
-	}
+	const form = useAppForm({
+		defaultValues: { email: "", password: "" },
+		// Live field warnings: validate on blur (empty/wrong input shows an
+		// error as soon as the user leaves the field) and on submit.
+		validators: { onBlur: loginSchema, onSubmit: loginSchema },
+		onSubmit: async ({ value }) => {
+			setError(null);
 
-	const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		setError(null);
-		setFieldErrors({});
+			const { error: supabaseError } = await supabase.auth.signInWithPassword({
+				email: value.email,
+				password: value.password,
+			});
 
-		const result = loginSchema.safeParse({ email, password });
-		if (!result.success) {
-			const mapped = getFieldErrors(result);
-			setFieldErrors(mapped);
-			return;
-		}
+			if (supabaseError) {
+				setError(supabaseError.message);
+				return;
+			}
 
-		setLoading(true);
-
-		const { error: supabaseError } = await supabase.auth.signInWithPassword({
-			email,
-			password,
-		});
-
-		if (supabaseError) {
-			setError(supabaseError.message);
-			setLoading(false);
-			return;
-		}
-
-		queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
-		router.refresh();
-	};
+			await queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
+			router.refresh();
+		},
+	});
 
 	return (
 		<div className="bg-neutral-surface rounded-md p-6 border border-brand-100">
@@ -75,52 +55,37 @@ export function LoginForm() {
 				<p className="text-sm text-gray-400 mt-1">Sign in to your workspace</p>
 			</div>
 
-			<form onSubmit={handleSignIn} className="space-y-4">
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					void form.handleSubmit();
+				}}
+				className="space-y-4"
+			>
 				{/* Email */}
-				<div>
-					<Label
-						htmlFor="email"
-						className="mb-1.5"
-						required
-						error={!!fieldErrors.email}
-					>
-						Email Address
-					</Label>
-					<Input
-						id="email"
-						type="email"
-						placeholder="name@company.com"
-						onChange={(e) => setEmail(e.target.value)}
-						className={fieldErrClass("email")}
-					/>
-					{fieldErrors.email && (
-						<p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>
+				<form.AppField name="email">
+					{(field) => (
+						<field.TextField
+							label="Email Address"
+							required
+							type="email"
+							autoComplete="email"
+							placeholder="name@company.com"
+						/>
 					)}
-				</div>
+				</form.AppField>
 
 				{/* Password */}
-				<div>
-					<div className="flex items-center justify-between mb-1.5">
-						<Label htmlFor="password" required error={!!fieldErrors.password}>
-							Password
-						</Label>
-						{/*<Link*/}
-						{/*  href="#"*/}
-						{/*  className="text-sm text-brand-600 hover:text-brand-500 transition-colors"*/}
-						{/*>*/}
-						{/*  Forgot password?*/}
-						{/*</Link>*/}
-					</div>
-					<PasswordInput
-						id="password"
-						placeholder="Enter your password"
-						onChange={(e) => setPassword(e.target.value)}
-						className={fieldErrClass("password")}
-					/>
-					{fieldErrors.password && (
-						<p className="text-xs text-destructive mt-1">{fieldErrors.password}</p>
+				<form.AppField name="password">
+					{(field) => (
+						<field.PasswordField
+							label="Password"
+							required
+							autoComplete="current-password"
+							placeholder="Enter your password"
+						/>
 					)}
-				</div>
+				</form.AppField>
 
 				{error && (
 					<p
@@ -131,9 +96,11 @@ export function LoginForm() {
 					</p>
 				)}
 
-				<Button className="w-full" type="submit" disabled={loading}>
-					{loading ? "Logging in…" : "Log In"}
-				</Button>
+				<form.AppForm>
+					<form.SubmitButton className="w-full" pendingLabel="Logging in…">
+						Log In
+					</form.SubmitButton>
+				</form.AppForm>
 			</form>
 
 			<p className="mt-4 text-xs text-gray-400 text-center leading-relaxed">

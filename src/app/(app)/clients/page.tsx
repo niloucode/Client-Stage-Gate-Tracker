@@ -7,16 +7,25 @@ import {
   Search,
   User,
   Pencil,
-  Eye,
-  EyeOff,
   Plus,
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
+  RefreshCw,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useClients } from "@/entities/client";
+import { regenerateClientInviteCode } from "@/entities/client";
 import ClientFormModal from "@/features/client-manager/ui/ClientFormModal";
 import ViewTeamMembersModal from "@/features/client-manager/ui/ViewTeamMembersModal";
 
@@ -28,7 +37,9 @@ interface Client {
   email: string;
   contactNumber: string;
   billingAddress: string;
-  companyCode: string;
+  // The plain code is shown ONCE at creation/regeneration; only its hash
+  // is stored, so the list can only reveal whether a code exists.
+  hasInviteCode: boolean;
   tin: string;
   profiles?: { profile_id: string; first_name: string; last_name: string; email: string; phone: string | null }[];
 }
@@ -118,16 +129,14 @@ function ClientTableHeader({ sortField, sortDirection, onSort, getSortIcon }: Cl
 
 interface ClientRowProps {
   client: Client;
-  isCodeVisible: boolean;
-  onToggleCode: (id: string) => void;
+  onRegenerateCode: (client: Client) => void;
   onViewMembers: (client: Client) => void;
   onEdit: (client: Client) => void;
 }
 
 function ClientRow({
   client,
-  isCodeVisible,
-  onToggleCode,
+  onRegenerateCode,
   onViewMembers,
   onEdit,
 }: ClientRowProps) {
@@ -151,15 +160,17 @@ function ClientRow({
       <td className="px-6 py-3.5 align-middle">
         <div className="flex items-center gap-1">
           <span className="font-mono text-[13px] font-normal text-muted-foreground">
-            {isCodeVisible ? client.companyCode : "••••••"}
+            {client.hasInviteCode ? "••••••" : "—"}
           </span>
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => onToggleCode(client.id)}
-            aria-label={isCodeVisible ? "Hide code" : "Show code"}
+            onClick={() => onRegenerateCode(client)}
+            aria-label="Regenerate invite code"
+            title="Regenerate invite code (the new code is shown once)"
+            className="rounded-full"
           >
-            {isCodeVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            <RefreshCw className="h-3 w-3" />
           </Button>
         </div>
       </td>
@@ -194,8 +205,7 @@ interface ClientTableProps {
   sortField: SortField;
   sortDirection: SortDirection;
   onSort: (field: SortField) => void;
-  visibleCodes: Record<string, boolean>;
-  onToggleCode: (id: string) => void;
+  onRegenerateCode: (client: Client) => void;
   onViewMembers: (client: Client) => void;
   onEdit: (client: Client) => void;
 }
@@ -205,8 +215,7 @@ function ClientTable({
   sortField,
   sortDirection,
   onSort,
-  visibleCodes,
-  onToggleCode,
+  onRegenerateCode,
   onViewMembers,
   onEdit,
 }: ClientTableProps) {
@@ -236,8 +245,7 @@ function ClientTable({
               <ClientRow
                 key={client.id}
                 client={client}
-                isCodeVisible={!!visibleCodes[client.id]}
-                onToggleCode={onToggleCode}
+                onRegenerateCode={onRegenerateCode}
                 onViewMembers={onViewMembers}
                 onEdit={onEdit}
               />
@@ -260,7 +268,7 @@ export default function ClientPage() {
     email: c.email ?? "",
     contactNumber: c.phone ?? "",
     billingAddress: c.billing_address,
-    companyCode: "",
+    hasInviteCode: !!c.invite_code_hash,
     tin: c.tin,
     profiles: c.Profiles,
   }));
@@ -269,13 +277,38 @@ export default function ClientPage() {
   const [viewMembersClient, setViewMembersClient] = useState<Client | null>(null);
   const [editClient, setEditClient] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [visibleCodes, setVisibleCodes] = useState<Record<string, boolean>>({});
+
+  // Regenerate-invite-code flow: the new code is shown exactly once.
+  const [regenerateClient, setRegenerateClient] = useState<Client | null>(null);
+  const [newInviteCode, setNewInviteCode] = useState<string | null>(null);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const handleRegenerateCode = async (client: Client) => {
+    setRegenerateClient(client);
+    setNewInviteCode(null);
+    setRegenerateError(null);
+    setIsRegenerating(true);
+    const result = await regenerateClientInviteCode(client.id);
+    setIsRegenerating(false);
+    if (!result.success) {
+      setRegenerateError(result.error);
+      return;
+    }
+    if (result.inviteCode) {
+      setNewInviteCode(result.inviteCode);
+      void refetch();
+    }
+  };
+
+  const closeRegenerateDialog = () => {
+    setRegenerateClient(null);
+    setNewInviteCode(null);
+    setRegenerateError(null);
+  };
 
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-
-  const toggleCode = (id: string) =>
-    setVisibleCodes((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const filteredClients = useMemo(
     () => clients.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase())),
@@ -343,8 +376,7 @@ export default function ClientPage() {
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={handleSort}
-          visibleCodes={visibleCodes}
-          onToggleCode={toggleCode}
+          onRegenerateCode={handleRegenerateCode}
           onViewMembers={setViewMembersClient}
           onEdit={setEditClient}
         />
@@ -383,6 +415,46 @@ export default function ClientPage() {
           void refetch();
         }}
       />
+
+      {/* Regenerate invite code — the new code is shown exactly once */}
+      <Dialog
+        open={regenerateClient !== null}
+        onOpenChange={(open) => {
+          if (!open) closeRegenerateDialog();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invite code — {regenerateClient?.name}</DialogTitle>
+            <DialogDescription>
+              {newInviteCode
+                ? "This code is shown ONCE. Share it with the client's employees so they can create their accounts."
+                : regenerateError ??
+                  (isRegenerating
+                    ? "Generating a new code… (the previous code is invalidated)"
+                    : "A new code will invalidate the previous one.")}
+            </DialogDescription>
+          </DialogHeader>
+          {newInviteCode && (
+            <div className="flex items-center justify-between gap-2 rounded-md border border-brand-100 bg-neutral-subtle px-4 py-3">
+              <span className="font-mono text-lg tracking-[0.3em] text-foreground">
+                {newInviteCode}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Copy invite code"
+                onClick={() => navigator.clipboard?.writeText(newInviteCode)}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={closeRegenerateDialog}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -8,9 +8,12 @@ import {
 	type ClientCreateType,
 } from "@/shared/schemas";
 import type { Clients } from "@/lib/generated/prisma";
+import { generateInviteCode, hashInviteCode } from "@/shared/lib/inviteCode";
+import { getCurrentUserId } from "@/lib/auth/projectAccess";
 
 type ClientMutationResult =
-	{ success: true; data: Clients } | { success: false; error: string };
+	| { success: true; data: Clients; inviteCode?: string }
+	| { success: false; error: string };
 
 export async function clientSelectAll() {
 	// No catch here: a thrown error lets React Query retry (cachePolicy
@@ -57,16 +60,40 @@ export async function clientCreate(
 		// Validate before trusting the payload (schema lives in shared/schemas)
 		clientCreateSchema.parse(client);
 
-		const newClient = await prisma.clients.create({
-			data: {
-				client_name: client.client_name,
-				tin: client.tin,
-				billing_address: client.billing_address,
-				email: client.email,
-				phone: client.phone,
-			},
-		});
-		return { success: true, data: newClient };
+		// Every new client gets an invite code so their employees can create
+		// profiles without seeing the client list. Only the hash is stored —
+		// the plain code is returned exactly once. Hash collisions (P2002 on
+		// the unique hash) are vanishingly rare (2^-60); retry with a fresh
+		// code instead of failing.
+		for (let attempt = 0; attempt < 3; attempt++) {
+			const inviteCode = generateInviteCode();
+			try {
+				const newClient = await prisma.clients.create({
+					data: {
+						client_name: client.client_name,
+						tin: client.tin,
+						billing_address: client.billing_address,
+						email: client.email,
+						phone: client.phone,
+						invite_code_hash: hashInviteCode(inviteCode),
+					},
+				});
+				return { success: true, data: newClient, inviteCode };
+			} catch (error) {
+				const meta = (
+					error as { code?: unknown; meta?: { target?: unknown } }
+				).meta;
+				const isCollision =
+					error &&
+					typeof error === "object" &&
+					"code" in error &&
+					error.code === "P2002" &&
+					Array.isArray(meta?.target) &&
+					(meta.target as string[]).includes("invite_code_hash");
+				if (!isCollision) throw error;
+			}
+		}
+		throw new Error("Could not allocate a unique invite code.");
 	} catch (error) {
 		// Clients_tin_key is a global unique — surface the actionable case.
 		if (
@@ -82,6 +109,74 @@ export async function clientCreate(
 		}
 		console.error("Failed to create client:", error);
 		return { success: false, error: "Failed to create client." };
+	}
+}
+
+/**
+ * Rotate a client's invite code (invalidates the old one). Returns the new
+ * plain code exactly once. STAFF ONLY: client employees must never read or
+ * rotate codes — the guard rejects any profile linked to a client.
+ */
+export async function regenerateClientInviteCode(
+	clientId: string,
+): Promise<ClientMutationResult> {
+	try {
+		const userId = await getCurrentUserId();
+		if (!userId) return { success: false, error: "Authentication required." };
+		const profile = await prisma.profiles.findUnique({
+			where: { profile_id: userId },
+			select: { client_id: true },
+		});
+		if (!profile || profile.client_id !== null) {
+			return { success: false, error: "Only staff can manage invite codes." };
+		}
+
+		const inviteCode = generateInviteCode();
+		const updated = await prisma.clients.update({
+			where: { client_id: clientId },
+			data: { invite_code_hash: hashInviteCode(inviteCode) },
+		});
+		return { success: true, data: updated, inviteCode };
+	} catch (error) {
+		console.error("Failed to regenerate client invite code:", error);
+		return { success: false, error: "Failed to regenerate invite code." };
+	}
+}
+
+export type InviteResolution =
+	| { success: true; client_id: string; client_name: string }
+	| { success: false; error: string };
+
+/**
+ * Resolve an invite code to its client. Used by the client signup form so
+ * employees can join their company WITHOUT ever seeing the client list.
+ * The code is compared case-insensitively via its HMAC hash.
+ */
+export async function resolveClientByInviteCode(
+	code: string,
+): Promise<InviteResolution> {
+	if (!code.trim()) {
+		return { success: false, error: "Enter your invite code." };
+	}
+	try {
+		const client = await prisma.clients.findUnique({
+			where: { invite_code_hash: hashInviteCode(code) },
+			select: { client_id: true, client_name: true, is_deleted: true },
+		});
+		if (!client || client.is_deleted) {
+			return {
+				success: false,
+				error: "Invalid invite code. Ask your project owner for the current code.",
+			};
+		}
+		return {
+			success: true,
+			client_id: client.client_id,
+			client_name: client.client_name,
+		};
+	} catch (error) {
+		console.error("Failed to resolve invite code:", error);
+		return { success: false, error: "Invalid invite code." };
 	}
 }
 

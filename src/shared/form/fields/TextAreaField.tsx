@@ -11,6 +11,7 @@ interface TextAreaFieldProps {
 	required?: boolean;
 	placeholder?: string;
 	rows?: number;
+	maxLength?: number;
 	className?: string;
 }
 
@@ -20,6 +21,7 @@ export function TextAreaField({
 	required,
 	placeholder,
 	rows,
+	maxLength,
 	className,
 }: TextAreaFieldProps) {
 	const field = useFieldContext<string>();
@@ -40,6 +42,7 @@ export function TextAreaField({
 				onBlur={field.handleBlur}
 				placeholder={placeholder}
 				rows={rows}
+				maxLength={maxLength}
 				aria-invalid={error ? true : undefined}
 			/>
 			{error && <p className="text-xs text-destructive">{error}</p>}

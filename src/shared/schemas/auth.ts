@@ -33,21 +33,19 @@ export type SignupInput = z.infer<typeof signupSchema>;
 
 export const clientSignupSchema = z
 	.object({
-		firstName: z.string().min(1, "First name is required"),
-		lastName: z.string().min(1, "Last name is required"),
-		companyName: z.string().min(1, "Company name is required"),
+		firstName: z.string().trim().min(1, "First name is required"),
+		lastName: z.string().trim().min(1, "Last name is required"),
 		email: z.email({ message: "Enter a valid email address" }),
+		phone: z.string().min(1, "Phone number is required"),
 		password: z.string().min(6, "Password must be at least 6 characters"),
 		confirmPassword: z.string().min(1, "Please confirm your password"),
-		streetNumber: z.string().min(1, "Street number is required"),
-		streetName: z.string().min(1, "Street name is required"),
-		city: z.string().min(1, "City is required"),
-		country: z.string().min(1, "Country is required"),
-		tin: z
+		// Invite code issued by the project owner — resolves the client the
+		// profile belongs to. Case-insensitive, 6-12 chars.
+		inviteCode: z
 			.string()
-			.min(1, "TIN is required")
-			.regex(/^\d+$/, "TIN must be numeric"),
-		phone: z.string().min(1, "Phone number is required"),
+			.trim()
+			.min(1, "Invite code is required")
+			.regex(/^[a-zA-Z0-9]{6,12}$/, "Enter a valid invite code"),
 	})
 	.refine((data) => data.password === data.confirmPassword, {
 		message: "Passwords do not match",
