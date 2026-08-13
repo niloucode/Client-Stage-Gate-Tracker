@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Ticket, Tag } from "@/entities/types";
 import TicketEditor from "./editor/TicketEditor";
 
@@ -18,8 +19,8 @@ interface TicketModalEditProps {
 }
 
 /**
- * The Modal shell. Contains only the overlay backdrop and the sliding container.
- * Only mounts the heavy `TicketEditor` content when it is explicitly open and provided with a ticket.
+ * The Modal shell. Remains mounted off-screen so CSS transform transitions
+ * trigger smoothly on every open and close interaction.
  */
 export default function TicketModalEdit({
   ticket,
@@ -27,23 +28,35 @@ export default function TicketModalEdit({
   onClose,
   ...rest
 }: TicketModalEditProps) {
-  if (!ticket) return null;
+  const [activeTicket, setActiveTicket] = useState<Ticket | null>(ticket);
+
+  useEffect(() => {
+    if (ticket) {
+      setActiveTicket(ticket);
+    }
+  }, [ticket]);
+
+  const showModal = Boolean(isOpen && ticket);
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-foreground/30 z-40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-foreground/30 z-40 transition-opacity duration-300 ${
+          showModal ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
         onClick={onClose}
       />
 
       {/* Sliding Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-160 bg-neutral-surface shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-160 max-w-full bg-neutral-surface shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${
+          showModal ? "translate-x-0" : "translate-x-full"
+        }`}
       >
-        {isOpen && (
+        {activeTicket && (
           <TicketEditor
-            initialTicket={ticket}
+            initialTicket={activeTicket}
             onClose={onClose}
             {...rest}
           />
