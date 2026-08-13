@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,7 +11,6 @@ import {
 	Settings,
 	ChevronLeft,
 	ChevronRight,
-	Boxes,
 	ContactRound,
 } from "lucide-react";
 
@@ -41,24 +41,29 @@ export const navItems: NavItem[] = [
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
-	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25">
-		<div className="flex items-center gap-3 min-w-0">
-			<div className="w-8 h-8 shrink-0 bg-gray-900 rounded-md flex items-center justify-center text-neutral-surface">
-				<Boxes className="w-5 h-5" />
-			</div>
-
+	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-[65px] overflow-hidden">
+		<div className="flex flex-col min-w-0 transition-all duration-300 ease-in-out">
+			{/* Logo container: crops to emblem mark when collapsed, expands to full logo when open */}
 			<div
-				className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${
+				className="relative overflow-hidden h-5 transition-all duration-300 ease-in-out"
+				style={{ width: collapsed ? "28px" : "91px" }}
+			>
+				<Image
+					src="/assets/logo/asceoft-logo-black.svg"
+					alt="Asceoft"
+					width={91}
+					height={18}
+					className="max-w-none"
+					unoptimized
+				/>
+			</div>
+			<p
+				className={`font-mono text-[9px] font-semibold tracking-[0.18em] text-gray-400 uppercase mt-1 whitespace-nowrap transition-all duration-300 ease-in-out ${
 					collapsed ? "max-w-0 opacity-0" : "max-w-40 opacity-100"
 				}`}
 			>
-				<p className="font-sans text-sm font-semibold text-gray-900 leading-tight">
-					Acesoft
-				</p>
-				<p className="font-mono text-[10px] text-gray-400 tracking-widest uppercase">
-					Studio Portal
-				</p>
-			</div>
+				Studio Portal
+			</p>
 		</div>
 	</div>
 );

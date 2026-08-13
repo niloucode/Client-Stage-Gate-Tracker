@@ -1,18 +1,42 @@
 "use client";
 
-import { ShieldCheck, AlertCircle } from "lucide-react";
+import { ShieldCheck, AlertCircle, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
+/* -------------------------------------------------------------------------- */
+/*                                 Interfaces                                 */
+/* -------------------------------------------------------------------------- */
+
+export interface WeeklyVelocityData {
+  value: number;
+  change: string;
+  changePositive: boolean;
+}
+
+export interface RiskFactorData {
+  label: string;
+}
+
+export interface UpcomingDeadlinesData {
+  count: number;
+  urgencyLabel: string;
+  isUrgent: boolean;
+}
+
+export interface ActivitySparklinesProps {
+  weeklyVelocity?: WeeklyVelocityData;
+  riskFactor?: RiskFactorData;
+  upcomingDeadlines?: UpcomingDeadlinesData;
+}
+
 interface SparklineBar {
-  opacity: number; // 0–1
+  opacity: number;
   heightPx: number;
 }
 
-interface ActivitySparklinesProps {
-  weeklyVelocity?: { value: number; change: string; changePositive: boolean };
-  riskFactor?: { label: string };
-  upcomingDeadlines?: { count: number; urgencyLabel: string; isUrgent: boolean };
-}
+/* -------------------------------------------------------------------------- */
+/*                                 Constants                                  */
+/* -------------------------------------------------------------------------- */
 
 const SPARKLINE_BARS: SparklineBar[] = [
   { opacity: 0.2, heightPx: 16 },
@@ -22,115 +46,148 @@ const SPARKLINE_BARS: SparklineBar[] = [
   { opacity: 1.0, heightPx: 40 },
 ];
 
-const SPARKLINE_COLOR = "#3525cd";
+const DEFAULT_VELOCITY: WeeklyVelocityData = {
+  value: 24,
+  change: "+12%",
+  changePositive: true,
+};
+
+const DEFAULT_RISK: RiskFactorData = {
+  label: "Low",
+};
+
+const DEFAULT_DEADLINES: UpcomingDeadlinesData = {
+  count: 2,
+  urgencyLabel: "Today",
+  isUrgent: true,
+};
+
+
+/* -------------------------------------------------------------------------- */
+/*                              Sub-Components                                */
+/* -------------------------------------------------------------------------- */
+
+/** Base layout container for all stat cards */
+function BaseStatCard({
+  visual,
+  title,
+  children,
+}: {
+  visual: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="p-6 border-brand-100 border max-h-50">
+      <div className="flex h-10 items-center">{visual}</div>
+      <div className="flex flex-col gap-1">
+        <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h4>
+        {children}
+      </div>
+    </Card>
+  );
+}
+
+/** Visual element rendering sparkline bar chart */
+function SparklineBars() {
+  return (
+    <div className="flex h-10 items-end gap-1">
+      {SPARKLINE_BARS.map((bar, i) => (
+        <div
+          key={i}
+          className="w-2.5 rounded-xs bg-brand-600"
+          style={{
+            height: `${bar.heightPx}px`,
+            opacity: bar.opacity,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Card 1: Weekly Velocity */
+function VelocityCard({ data }: { data: WeeklyVelocityData }) {
+  return (
+    <BaseStatCard visual={<SparklineBars />} title="Weekly Velocity">
+      <div className="flex items-baseline gap-2">
+        <span className="text-2xl font-bold tracking-tight text-foreground">
+          {data.value}
+        </span>
+        <span
+          className={`text-xs font-semibold ${
+            data.changePositive
+              ? "text-emerald-600 dark:text-emerald-500"
+              : "text-destructive"
+          }`}
+        >
+          {data.change}
+        </span>
+      </div>
+    </BaseStatCard>
+  );
+}
+
+/** Card 2: Risk Factor */
+function RiskFactorCard({ data }: { data: RiskFactorData }) {
+  return (
+    <BaseStatCard
+      visual={
+        <ShieldCheck className="h-7 w-7 text-emerald-600 dark:text-emerald-500" />
+      }
+      title="Risk Factor"
+    >
+      <span className="text-2xl font-bold tracking-tight text-foreground">
+        {data.label}
+      </span>
+    </BaseStatCard>
+  );
+}
+
+/** Card 3: Upcoming Deadlines */
+function UpcomingDeadlinesCard({ data }: { data: UpcomingDeadlinesData }) {
+  const Icon = data.isUrgent ? AlertCircle : Clock;
+  const iconStyle = data.isUrgent
+    ? "text-destructive"
+    : "text-muted-foreground";
+
+  return (
+    <BaseStatCard
+      visual={<Icon className={`h-7 w-7 ${iconStyle}`} />}
+      title="Upcoming Deadlines"
+    >
+      <div className="flex items-baseline gap-2">
+        <span className="text-2xl font-bold tracking-tight text-foreground">
+          {data.count}
+        </span>
+        <span
+          className={`text-xs font-semibold ${
+            data.isUrgent ? "text-destructive" : "text-muted-foreground"
+          }`}
+        >
+          {data.urgencyLabel}
+        </span>
+      </div>
+    </BaseStatCard>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Main Component                               */
+/* -------------------------------------------------------------------------- */
 
 export function ActivitySparklines({
-  weeklyVelocity = { value: 24, change: "+12%", changePositive: true },
-  riskFactor = { label: "Low" },
-  upcomingDeadlines = { count: 2, urgencyLabel: "Today", isUrgent: true },
+  weeklyVelocity = DEFAULT_VELOCITY,
+  riskFactor = DEFAULT_RISK,
+  upcomingDeadlines = DEFAULT_DEADLINES,
 }: ActivitySparklinesProps) {
   return (
-    <div className="grid grid-cols-3 gap-4">
-      {/* Card 1: Weekly Velocity */}
-      <Card
-        className="flex flex-row items-center gap-4 px-5 py-4"
-        style={{ border: "1px solid #c7c4d8", borderRadius: "12px" }}
-      >
-        {/* Sparkline bars */}
-        <div className="flex items-end gap-1" style={{ height: "40px" }}>
-          {SPARKLINE_BARS.map((bar, i) => (
-            <div
-              key={i}
-              style={{
-                width: "10px",
-                height: `${bar.heightPx}px`,
-                backgroundColor: SPARKLINE_COLOR,
-                opacity: bar.opacity,
-                borderRadius: "2px",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Stats */}
-        <div className="flex flex-col gap-1">
-          <span
-            className="text-[11px] font-semibold uppercase tracking-wide"
-            style={{ color: "#777587" }}
-          >
-            Weekly Velocity
-          </span>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold" style={{ color: "#151c27" }}>
-              {weeklyVelocity.value}
-            </span>
-            <span
-              className="text-[13px] font-semibold"
-              style={{
-                color: weeklyVelocity.changePositive ? "#006c49" : "#ba1a1a",
-              }}
-            >
-              {weeklyVelocity.change}
-            </span>
-          </div>
-        </div>
-      </Card>
-
-      {/* Card 2: Risk Factor */}
-      <Card
-        className="flex flex-row items-center gap-4 px-5 py-4"
-        style={{ border: "1px solid #c7c4d8", borderRadius: "12px" }}
-      >
-        <ShieldCheck
-          className="h-8 w-8 shrink-0"
-          style={{ color: "#006c49" }}
-        />
-        <div className="flex flex-col gap-1">
-          <span
-            className="text-[11px] font-semibold uppercase tracking-wide"
-            style={{ color: "#777587" }}
-          >
-            Risk Factor
-          </span>
-          <span className="text-2xl font-bold" style={{ color: "#151c27" }}>
-            {riskFactor.label}
-          </span>
-        </div>
-      </Card>
-
-      {/* Card 3: Upcoming Deadlines */}
-      <Card
-        className="flex flex-row items-center justify-between px-5 py-4"
-        style={{ border: "1px solid #c7c4d8", borderRadius: "12px" }}
-      >
-        <div className="flex flex-col gap-1">
-          <span
-            className="text-[11px] font-semibold uppercase tracking-wide"
-            style={{ color: "#777587" }}
-          >
-            Upcoming Deadlines
-          </span>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold" style={{ color: "#151c27" }}>
-              {upcomingDeadlines.count}
-            </span>
-            <span
-              className="text-sm font-bold"
-              style={{
-                color: upcomingDeadlines.isUrgent ? "#ba1a1a" : "#151c27",
-              }}
-            >
-              {upcomingDeadlines.urgencyLabel}
-            </span>
-          </div>
-        </div>
-        {upcomingDeadlines.isUrgent && (
-          <AlertCircle
-            className="h-5 w-5 shrink-0"
-            style={{ color: "#ba1a1a" }}
-          />
-        )}
-      </Card>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <VelocityCard data={weeklyVelocity} />
+      <RiskFactorCard data={riskFactor} />
+      <UpcomingDeadlinesCard data={upcomingDeadlines} />
     </div>
   );
 }

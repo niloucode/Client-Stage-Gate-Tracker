@@ -1,4 +1,3 @@
 export { ActivitySparklines } from "./ui/ActivitySparklines";
-export { MyTicketsBoard } from "./ui/MyTicketsBoard";
+export { TicketsBoard } from "./ui/TicketsBoard";
 export { PendingContracts } from "./ui/PendingContracts";
-export { WatchedTicketsBoard } from "./ui/WatchedTicketsBoard";
