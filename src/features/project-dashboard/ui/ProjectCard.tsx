@@ -64,7 +64,7 @@ export function ProjectCard({
 	return (
 		<Link
 			href={targetHref}
-			className="@container bg-neutral-surface-subtle cursor-pointer rounded-md border border-[#C7C4D8] gap-4 p-5 hover:shadow-md transition-shadow flex flex-col justify-between h-full select-none"
+			className="hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 @container bg-neutral-surface-subtle cursor-pointer rounded-md border border-[#C7C4D8] gap-4 p-5 flex flex-col justify-between h-full select-none"
 		>
 			{/* Client Name — always shown */}
 			<div className="flex justify-between items-center w-full">
