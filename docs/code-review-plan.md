@@ -214,6 +214,7 @@
 - [x] src/features/navigation/ui/TopNav.tsx
 - [x] src/features/navigation/ui/AccountMenu.tsx
 - [x] src/features/navigation/ui/Breadcrumbs.tsx
+- [x] src/features/navigation/account-menu.test.tsx
 - [x] src/features/client-manager/ui/AddClientModal.tsx (deleted — superseded by ClientFormModal)
 - [x] src/features/client-manager/index.ts
 - [x] src/features/client-manager/model/types.ts

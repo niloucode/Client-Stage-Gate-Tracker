@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAuth } from "@/features/auth";
 import { useDepartment } from "@/entities/department";
 import { useClientOwn } from "@/entities/client";
@@ -19,6 +20,13 @@ import {
 // consume it downward, then delete this comment.
 export function AccountMenu() {
 	const { user, logout } = useAuth();
+	// Local pending state so the LOG OUT button disables while sign-out and
+	// the navigation run (the provider additionally guards re-entry).
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
+	const handleLogout = async () => {
+		setIsLoggingOut(true);
+		await logout();
+	};
 	// Department lookup via TanStack Query (cached, keyed by department_id).
 	const { data: department } = useDepartment(user?.department_id ?? undefined);
 	const departmentName = department?.name ?? "No Department";
@@ -79,10 +87,11 @@ export function AccountMenu() {
 				<div className="px-4 py-2">
 					<button
 						type="button"
-						onClick={logout}
-						className="w-full py-2.5 rounded-sm bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm tracking-wide transition-colors"
+						onClick={handleLogout}
+						disabled={isLoggingOut}
+						className="w-full py-2.5 rounded-sm bg-brand-600 hover:bg-brand-500 text-neutral-surface text-sm tracking-wide transition-colors disabled:opacity-60 disabled:cursor-wait"
 					>
-						LOG OUT
+						{isLoggingOut ? "LOG OUT…" : "LOG OUT"}
 					</button>
 				</div>
 			</DropdownMenuContent>

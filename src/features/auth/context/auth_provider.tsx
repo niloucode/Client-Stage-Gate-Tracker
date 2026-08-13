@@ -6,6 +6,7 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	type ReactNode,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,8 +46,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	const supabase = createClient();
 	const router = useRouter();
 	const pathname = usePathname();
+	// Guards logout against re-entry while sign-out is still in flight.
+	const loggingOutRef = useRef(false);
 
 	const logout = useCallback(async () => {
+		// Re-entrancy guard: a double press while logout is in flight is a
+		// no-op (the menu can fire the handler twice on fast clicks).
+		if (loggingOutRef.current) return;
+		loggingOutRef.current = true;
 		try {
 			// 1. Sign out from Supabase — LOCAL scope clears the current
 			// browser session without a server round-trip, so logout always
@@ -56,10 +63,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			console.error("Error during logout:", error);
 		} finally {
 			// 2. Clear TanStack Query cache so stale user/profile data is
-			// wiped immediately, then always route to the login page.
+			// wiped immediately, then navigate to the login page.
+			// NOTE: no router.refresh() here — refresh re-renders the CURRENT
+			// route and can supersede the in-flight push, leaving the user on
+			// the (logged-out) app page until a second press. replace() also
+			// keeps the app shell out of the history stack.
 			queryClient.clear();
-			router.push("/login");
-			router.refresh();
+			router.replace("/login");
+			loggingOutRef.current = false;
 		}
 		// createClient() returns the same browser client per URL+key, so the
 		// closure is stable — excluding it keeps the callback identity stable.
