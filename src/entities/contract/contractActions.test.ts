@@ -1,5 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { isPdfFile } from "./contractActions";
+
+vi.mock("@/lib/prisma", () => ({
+	prisma: { contracts: { findMany: vi.fn() } },
+}));
+
+import { getContractsByProjectOwnerId } from "./contractActions";
+import { prisma } from "@/lib/prisma";
+
+const findManyMock = vi.mocked(prisma.contracts.findMany);
+
+afterEach(() => {
+	vi.clearAllMocks();
+});
 
 /**
  * Server-side PDF magic-byte sniffing (Task 2.7): a file is accepted only
@@ -38,5 +51,48 @@ describe("isPdfFile", () => {
 		expect(await isPdfFile(makeFile(png, "img.pdf", "application/pdf"))).toBe(
 			false,
 		);
+	});
+});
+
+describe("getContractsByProjectOwnerId", () => {
+	it("filters contracts through Projects -> RoleAssignments -> Roles", async () => {
+		const contract = { contract_id: "c1" };
+		findManyMock.mockResolvedValue([contract] as never);
+
+		const result = await getContractsByProjectOwnerId("profile-1");
+
+		expect(result).toEqual({ success: true, data: [contract] });
+		expect(findManyMock).toHaveBeenCalledWith({
+			where: {
+				is_deleted: false,
+				Projects: {
+					RoleAssignments: {
+						some: {
+							user_id: "profile-1",
+							Roles: {
+								name: "Project Owner",
+							},
+						},
+					},
+				},
+			},
+			include: {
+				Projects: {
+					select: {
+						name: true,
+					},
+				},
+			},
+		});
+	});
+
+	it("returns an error when no profile ID is provided", async () => {
+		const result = await getContractsByProjectOwnerId("");
+
+		expect(result).toEqual({
+			success: false,
+			error: "No profile ID provided.",
+		});
+		expect(findManyMock).not.toHaveBeenCalled();
 	});
 });

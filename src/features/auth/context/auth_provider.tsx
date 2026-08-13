@@ -87,9 +87,7 @@ export function AuthProvider({ children }: prop) {
 		if (!(AUTH_PAGES as readonly string[]).includes(pathname)) return;
 
 		if (user.client_id) {
-			// TEMPORARY: clients land on /contracts until the Client Portal
-			// (/client) is built.
-			router.replace("/contracts");
+			router.replace("/dashboard");
 			return;
 		}
 

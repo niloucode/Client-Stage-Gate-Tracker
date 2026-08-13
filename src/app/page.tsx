@@ -16,9 +16,7 @@ export default async function RootPage() {
 	// and the {success, data} contract (Task 4.1).
 	const result = await getProfileById(user.id);
 	if (result.success && result.data?.client_id) {
-		// TEMPORARY: clients land on /contracts until the Client Portal
-		// (/client) is built.
-		redirect("/contracts");
+		redirect("/dashboard");
 	}
 	redirect("/projects");
 }

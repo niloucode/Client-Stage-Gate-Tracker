@@ -8,7 +8,7 @@ import {
 	type CreateTicketParams,
 	type UpdateTicketParams,
 } from "@/shared/schemas";
-import { ticketInclude } from "./types";
+import { ticketInclude, dashboardTicketInclude } from "./types";
 import { rollupTicketAncestors } from "./lib/dateRollup";
 import { logHistoryEvent } from "./lib/logHistoryEvent";
 import { z } from "zod";
@@ -390,7 +390,7 @@ export async function cascadeSoftDeleteTicket(
 }
 
 export async function selectTicketsByWorkflow(workflow_id: string) {
-	z.string().uuid().parse(workflow_id);
+	z.string().parse(workflow_id);
 	try {
 		return await prisma.tickets.findMany({
 			where: { is_deleted: false, workflow_id },
@@ -398,6 +398,39 @@ export async function selectTicketsByWorkflow(workflow_id: string) {
 		});
 	} catch (error) {
 		console.error("Error fetching tickets by workflow:", error);
+		return [];
+	}
+}
+
+export async function selectTicketsByWatcherID(watcher_id: string) {
+	z.string().parse(watcher_id);
+	try {
+		return await prisma.tickets.findMany({
+			where: { is_deleted: false, watcher_id },
+			include: dashboardTicketInclude,
+		});
+	} catch (error) {
+		console.error("Error fetching tickets by watcher ID:", error);
+		return [];
+	}
+}
+
+export async function selectTicketsByProfileID(profile_id: string) {
+	z.string().parse(profile_id);
+	try {
+		return await prisma.tickets.findMany({
+			where: {
+				is_deleted: false,
+				TicketAssigned: {
+					some: {
+						profile_id,
+					},
+				},
+			},
+			include: dashboardTicketInclude,
+		});
+	} catch (error) {
+		console.error("Error fetching tickets by profile ID:", error);
 		return [];
 	}
 }

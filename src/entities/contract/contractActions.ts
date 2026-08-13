@@ -29,10 +29,10 @@ export async function isPdfFile(file: File): Promise<boolean> {
 }
 
 export async function uploadContract(formData: FormData) {
-  const clientId = formData.get("clientId") as string;
-  const projectId = formData.get("projectId") as string;
-  const file = formData.get("file") as File;
-  const contractName = formData.get("contractName") as string;
+	const clientId = formData.get("clientId") as string;
+	const projectId = formData.get("projectId") as string;
+	const file = formData.get("file") as File;
+	const contractName = formData.get("contractName") as string;
 	try {
 		// Authorization: caller must be a member of the project
 		const auth = await assertProjectMember(projectId);
@@ -82,7 +82,9 @@ export async function uploadContract(formData: FormData) {
 		});
 
 		const rawName =
-			contractName.trim() === "" ? updatedContract.contract_id : contractName.trim();
+			contractName.trim() === ""
+				? updatedContract.contract_id
+				: contractName.trim();
 		// Storage paths must stay flat under <projectId>/ — strip slashes and
 		// backslashes so every uploaded path matches the deleteContract guard.
 		const fileName = rawName.replace(/[\\/]+/g, "-");
@@ -126,7 +128,6 @@ export async function uploadContract(formData: FormData) {
 	}
 }
 
-
 // ── GET SIGNED URL ────────────────────────────────────────────────────────────
 
 export async function getContractUrl(filePath: string) {
@@ -157,47 +158,54 @@ export async function getContractUrl(filePath: string) {
 
 // ── SOFT DELETE ───────────────────────────────────────────────────────────────
 export async function deleteContract(projectId: string, filePath: string) {
-  try {
-    // Authorization: caller must be a member of the project
-    const auth = await assertProjectMember(projectId);
-    if (!auth.ok) return { success: false, error: auth.error };
+	try {
+		// Authorization: caller must be a member of the project
+		const auth = await assertProjectMember(projectId);
+		if (!auth.ok) return { success: false, error: auth.error };
 
-    // Bind the storage path to this project — never delete a path supplied
-    // for a different project, and no `../` traversal. Escape projectId so
-    // the interpolated regex stays anchored even for non-UUID ids.
-    const escapedProjectId = projectId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (!new RegExp(`^${escapedProjectId}/[^/]+\\.pdf$`).test(filePath)) {
-      return { success: false, error: "Invalid file path for this project." };
-    }
+		// Bind the storage path to this project — never delete a path supplied
+		// for a different project, and no `../` traversal. Escape projectId so
+		// the interpolated regex stays anchored even for non-UUID ids.
+		const escapedProjectId = projectId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		if (!new RegExp(`^${escapedProjectId}/[^/]+\\.pdf$`).test(filePath)) {
+			return { success: false, error: "Invalid file path for this project." };
+		}
 
-    const adminSupabase = createAdminClient();
+		const adminSupabase = createAdminClient();
 
-    const { error: storageError } = await adminSupabase.storage
-      .from("contracts")
-      .remove([filePath]);
+		const { error: storageError } = await adminSupabase.storage
+			.from("contracts")
+			.remove([filePath]);
 
-    if (storageError) {
-      return { success: false, error: storageError.message };
-    }
+		if (storageError) {
+			return { success: false, error: storageError.message };
+		}
 
-    await prisma.contracts.update({
-      where: { project_id: projectId },
-      data: { 
-		deleted_at: new Date(), is_deleted: true , file_path: null, contract_name: null,
-        client_signature: null, client_initials: null, client_signed_at: null,
-        project_owner_signature: null, project_owner_initials: null, project_owner_signed_at: null
-	},
-    });
+		await prisma.contracts.update({
+			where: { project_id: projectId },
+			data: {
+				deleted_at: new Date(),
+				is_deleted: true,
+				file_path: null,
+				contract_name: null,
+				client_signature: null,
+				client_initials: null,
+				client_signed_at: null,
+				project_owner_signature: null,
+				project_owner_initials: null,
+				project_owner_signed_at: null,
+			},
+		});
 
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to delete contract:", error);
+		return { success: true };
+	} catch (error) {
+		console.error("Failed to delete contract:", error);
 		return {
 			success: false,
 			error:
 				error instanceof Error ? error.message : "Failed to delete contract.",
 		};
-  }
+	}
 }
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
@@ -222,6 +230,101 @@ export async function getContractByProjectId(projectId: string) {
 			success: false,
 			error:
 				error instanceof Error ? error.message : "Failed to fetch contract.",
+		};
+	}
+}
+
+export async function getContractsByClientId(clientId: string) {
+	try {
+		if (!clientId) {
+			return { success: false, error: "No client ID provided." };
+		}
+
+		const contract = await prisma.contracts.findMany({
+			where: {
+				client_id: clientId,
+				is_deleted: false,
+			},
+		});
+
+		return { success: true, data: contract };
+	} catch (error) {
+		console.error("Failed to fetch contract:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to fetch contract.",
+		};
+	}
+}
+
+export async function getContractsByClientIdWithProject(clientId: string) {
+	try {
+		if (!clientId) {
+			return { success: false, error: "No client ID provided." };
+		}
+
+		const contracts = await prisma.contracts.findMany({
+			where: {
+				client_id: clientId,
+				is_deleted: false,
+			},
+			include: {
+				Projects: {
+					select: {
+						name: true,
+					},
+				},
+			},
+		});
+
+		return { success: true, data: contracts };
+	} catch (error) {
+		console.error("Failed to fetch contracts:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to fetch contracts.",
+		};
+	}
+}
+
+export async function getContractsByProjectOwnerId(profileId: string) {
+	try {
+		if (!profileId) {
+			return { success: false, error: "No profile ID provided." };
+		}
+
+		const contracts = await prisma.contracts.findMany({
+			where: {
+				is_deleted: false,
+				Projects: {
+					RoleAssignments: {
+						some: {
+							user_id: profileId,
+							Roles: {
+								name: "Project Owner",
+							},
+						},
+					},
+				},
+			},
+			include: {
+				Projects: {
+					select: {
+						name: true,
+					},
+				},
+			},
+		});
+
+		return { success: true, data: contracts };
+	} catch (error) {
+		console.error("Failed to fetch contracts:", error);
+		return {
+			success: false,
+			error:
+				error instanceof Error ? error.message : "Failed to fetch contracts.",
 		};
 	}
 }

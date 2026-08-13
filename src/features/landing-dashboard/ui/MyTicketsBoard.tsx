@@ -1,90 +1,64 @@
 "use client";
 
-import { Ticket, Calendar } from "lucide-react";
+import { Ticket, Calendar, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useMemo } from "react";
+import { DashboardTicket } from "@/entities/types";
+import { useRouter } from "next/navigation";
 
-interface WorkflowBadge {
-	label: string;
-	bg: string;
-	stroke: string;
-	text: string;
-}
+// interface WorkflowBadge {
+// 	label: string;
+// 	bg: string;
+// 	stroke: string;
+// 	text: string;
+// }
 
-interface TagBadge {
-	label: string;
-	bg: string;
-	text: string;
-}
+// interface TagBadge {
+// 	label: string;
+// 	bg: string;
+// 	text: string;
+// }
 
 interface MyTicket {
 	id: string;
 	name: string;
 	project: string;
 	module: string;
-	workflow: WorkflowBadge;
-	tag: TagBadge;
-	dueDate: string;
-	dueDateUrgent?: boolean;
+	workflow: string;
+	tags: ({ Tags: { name: string; color: string | null } } & {
+		ticket_id: string;
+		tag_id: string;
+	})[];
+	dueDate: Date;
 }
 
 interface MyTicketsBoardProps {
-	tickets?: MyTicket[];
+	tickets: DashboardTicket[];
 	activeCount?: number;
-	onViewAll?: () => void;
 }
 
-const PLACEHOLDER_TICKETS: MyTicket[] = [
-	{
-		id: "1",
-		name: "Implement SSO",
-		project: "Asceoft",
-		module: "Auth",
-		workflow: {
-			label: "Dev",
-			bg: "#e2e8f8",
-			stroke: "#c7c4d8",
-			text: "#464555",
-		},
-		tag: { label: "High Priority", bg: "#ffdad6", text: "#93000a" },
-		dueDate: "Oct 25",
-	},
-	{
-		id: "2",
-		name: "Dashboard Bento Grid Refactor",
-		project: "Portal 2.0",
-		module: "UI/UX",
-		workflow: {
-			label: "Review",
-			bg: "#885500",
-			stroke: "#684000",
-			text: "#ffd4a4",
-		},
-		tag: { label: "Feature", bg: "#6cf8bb", text: "#00714d" },
-		dueDate: "Oct 28",
-	},
-	{
-		id: "3",
-		name: "Database Indexing Policy",
-		project: "Core Engine",
-		module: "Infrastructure",
-		workflow: {
-			label: "Backlog",
-			bg: "#e2e8f8",
-			stroke: "#c7c4d8",
-			text: "#464555",
-		},
-		tag: { label: "Optimization", bg: "#dce2f3", text: "#777587" },
-		dueDate: "Nov 02",
-	},
-];
+const COL_WIDTHS = "grid-cols-[1.67fr_1fr_1fr_1fr_1fr_1fr]";
 
-const COL_WIDTHS = "grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr]";
+//IM NOT SURE ABOUT THIS SO JUST CHANGE IT WHENEVER
+const REDIR_PATH = "/projects/[projectId]/issues/";
 
-export function MyTicketsBoard({
-	tickets = PLACEHOLDER_TICKETS,
-	activeCount = 3,
-	onViewAll,
-}: MyTicketsBoardProps) {
+export function MyTicketsBoard({ tickets }: MyTicketsBoardProps) {
+	const router = useRouter();
+	const myTickets = useMemo<MyTicket[]>(
+		() =>
+			tickets.map((ticket) => ({
+				id: ticket.ticket_id,
+				name: ticket.name,
+				project: ticket.Workflows.Modules.Phases.Stages.Projects.name,
+				module: ticket.Workflows.Modules.name,
+				workflow: ticket.Workflows.name,
+				tags: ticket.TicketTags,
+				dueDate: ticket.plan_end_at,
+			})),
+		[tickets],
+	);
+	const activeCount = myTickets.length;
+
 	return (
 		<Card
 			className="overflow-hidden w-full py-0 gap-0"
@@ -114,7 +88,7 @@ export function MyTicketsBoard({
 					</span>
 				</div>
 				<button
-					onClick={onViewAll}
+					onClick={() => router.push(REDIR_PATH)}
 					className="text-[12px] font-normal underline-offset-2 hover:underline"
 					style={{ color: "#3525cd" }}
 				>
@@ -151,72 +125,98 @@ export function MyTicketsBoard({
 				</div>
 
 				{/* Rows */}
-				{tickets.map((ticket, i) => (
+				{myTickets.map((myTicket, i) => (
 					<div
-						key={ticket.id}
+						key={myTicket.id}
 						className={`grid ${COL_WIDTHS} items-center px-6 py-4`}
 						style={{
 							borderBottom:
-								i < tickets.length - 1 ? "1px solid #c7c4d8" : "none",
+								i < myTickets.length - 1 ? "1px solid #c7c4d8" : "none",
 						}}
 					>
-						{/* Ticket name */}
-						<span className="text-[13px]" style={{ color: "#151c27" }}>
-							{ticket.name}
-						</span>
+						{/* myTicket name */}
+						<div
+							className="flex flex-auto w-fit max-w-[80%] text-[13px]"
+							style={{ color: "#151c27" }}
+						>
+							{myTicket.name}
+						</div>
 
 						{/* Project */}
-						<span className="text-[13px]" style={{ color: "#464555" }}>
-							{ticket.project}
-						</span>
+						<div
+							className="flex flex-auto w-fit max-w-[80%] text-[13px]"
+							style={{ color: "#464555" }}
+						>
+							{myTicket.project}
+						</div>
 
 						{/* Module */}
-						<span className="text-[13px]" style={{ color: "#464555" }}>
-							{ticket.module}
-						</span>
+						<div
+							className="w-fit max-w-[80%] flex flex-auto text-[13px]"
+							style={{ color: "#464555" }}
+						>
+							{myTicket.module}
+						</div>
 
 						{/* Workflow badge */}
 						<div>
-							<span
-								className="inline-block rounded-md px-2 py-0.5 text-[11px] font-semibold"
+							<div
+								className="w-fit max-w-[80%] flex flex-auto rounded-md py-0.5 pt-1 text-[11px] font-semibold text-left px-2"
 								style={{
-									backgroundColor: ticket.workflow.bg,
-									border: `1px solid ${ticket.workflow.stroke}`,
-									color: ticket.workflow.text,
+									backgroundColor: "#E2E8F8",
+									border: `1px solid #C7C4D84D`,
+									color: "#000000",
 								}}
 							>
-								{ticket.workflow.label}
-							</span>
+								{myTicket.workflow}
+							</div>
 						</div>
 
 						{/* Tag */}
-						<div>
-							<span
-								className="inline-block rounded px-2 py-0.5 text-[10px] font-bold"
-								style={{
-									backgroundColor: ticket.tag.bg,
-									color: ticket.tag.text,
-								}}
-							>
-								{ticket.tag.label}
-							</span>
-						</div>
+
+						{myTicket.tags.map((tag) => (
+							<div key={myTicket.id}>
+								<div
+									className="w-fit max-w-[80%] flex flex-auto rounded px-2 py-0.5 pt-1 text-[10px] font-bold "
+									style={{
+										backgroundColor: tag.Tags.color ?? "#444444",
+										color: "#000000",
+									}}
+								>
+									{tag.Tags.name}
+								</div>
+							</div>
+						))}
 
 						{/* Due date */}
-						<div className="flex items-center gap-1.5">
-							<Calendar
-								className="h-3 w-3 shrink-0"
-								style={{ color: ticket.dueDateUrgent ? "#ba1a1a" : "#464555" }}
-							/>
-							<span
+						<div className="w-fit max-w-[80%] xl:break-normal break-all flex flex-auto items-center gap-1.5">
+							{myTicket.dueDate.getTime() <= new Date().getTime() ? (
+								<AlertTriangle
+									className="h-3 w-3 shrink-0"
+									style={{ color: "#ba1a1a" }}
+								/>
+							) : (
+								<Calendar
+									className="h-3 w-3 shrink-0"
+									style={{ color: "#464555" }}
+								/>
+							)}
+
+							<div
 								className="text-[13px]"
 								style={{
-									color: ticket.dueDateUrgent ? "#ba1a1a" : "#464555",
-									fontWeight: ticket.dueDateUrgent ? 600 : 400,
+									color:
+										myTicket.dueDate.getTime() <= new Date().getTime()
+											? "#ba1a1a"
+											: "#464555",
+									fontWeight:
+										myTicket.dueDate.getTime() <= new Date().getTime()
+											? 600
+											: 400,
 								}}
 							>
-								{ticket.dueDate}
-							</span>
+								{myTicket.dueDate.toDateString()}
+							</div>
 						</div>
 					</div>
 				))}

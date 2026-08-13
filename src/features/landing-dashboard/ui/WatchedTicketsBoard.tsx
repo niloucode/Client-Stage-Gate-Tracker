@@ -1,208 +1,244 @@
 "use client";
 
-import { Eye, Calendar } from "lucide-react";
+import { Eye, Calendar, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
-
-interface WorkflowBadge {
-  label: string;
-  bg: string;
-  stroke: string;
-  text: string;
-}
-
-interface TagBadge {
-  label: string;
-  bg: string;
-  text: string;
-}
-
-interface Assignee {
-  initials: string;
-  name: string;
-  avatarBg: string;
-}
+import { useMemo } from "react";
+import { DashboardTicket } from "@/entities/types";
 
 interface WatchedTicket {
-  id: string;
-  name: string;
-  project: string;
-  module: string;
-  workflow: WorkflowBadge;
-  tag: TagBadge;
-  assignee: Assignee;
-  dueDate: string;
-  dueDateUrgent?: boolean;
+	id: string;
+	name: string;
+	project: string;
+	module: string;
+	workflow: string;
+	tags: ({ Tags: { name: string; color: string | null } } & {
+		ticket_id: string;
+		tag_id: string;
+	})[];
+	assignees: string[];
+	dueDate: Date;
 }
 
 interface WatchedTicketsBoardProps {
-  tickets?: WatchedTicket[];
-  updatesCount?: number;
+	tickets: DashboardTicket[];
 }
-
-const PLACEHOLDER_TICKETS: WatchedTicket[] = [
-  {
-    id: "1",
-    name: "Stripe Integration Fix",
-    project: "Billing",
-    module: "API",
-    workflow: { label: "Testing", bg: "#6cf8bb", stroke: "#006c49", text: "#00714d" },
-    tag: { label: "Critical", bg: "#ffdad6", text: "#93000a" },
-    assignee: { initials: "JD", name: "John Doe", avatarBg: "#ffddb8" },
-    dueDate: "Today",
-    dueDateUrgent: true,
-  },
-  {
-    id: "2",
-    name: "iOS 17 Compatibility Check",
-    project: "Mobile App",
-    module: "Client",
-    workflow: { label: "In Progress", bg: "#e2e8f8", stroke: "#c7c4d8", text: "#464555" },
-    tag: { label: "Compliance", bg: "#dce2f3", text: "#777587" },
-    assignee: { initials: "SM", name: "Sarah M.", avatarBg: "#e2dfff" },
-    dueDate: "Oct 30",
-    dueDateUrgent: false,
-  },
-];
 
 const COL_WIDTHS = "grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr_1fr]";
 
-export function WatchedTicketsBoard({
-  tickets = PLACEHOLDER_TICKETS,
-  updatesCount = 2,
-}: WatchedTicketsBoardProps) {
-  return (
-    <Card
-      className="overflow-hidden"
-      style={{ border: "1px solid #c7c4d8", borderRadius: "12px" }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center gap-2 px-6 py-4"
-        style={{
-          backgroundColor: "#f9f9ff",
-          borderBottom: "1px solid #c7c4d8",
-        }}
-      >
-        <Eye className="h-4 w-4" style={{ color: "#684000" }} />
-        <span className="text-base font-semibold" style={{ color: "#151c27" }}>
-          Watching
-        </span>
-        <span
-          className="rounded-full px-2.5 py-0.5 text-[10px] font-bold"
-          style={{ backgroundColor: "#ffddb8", color: "#2a1700" }}
-        >
-          {updatesCount} UPDATES
-        </span>
-      </div>
+export function WatchedTicketsBoard({ tickets }: WatchedTicketsBoardProps) {
+	const watchedTickets = useMemo<WatchedTicket[]>(
+		() =>
+			tickets.map((ticket) => {
+				const names: string[] = [];
+				const ta = ticket.TicketAssigned;
 
-      {/* Table */}
-      <div>
-        {/* Table header */}
-        <div
-          className={`grid ${COL_WIDTHS} px-6 py-3`}
-          style={{
-            backgroundColor: "#f0f3ff",
-            borderBottom: "1px solid #c7c4d8",
-          }}
-        >
-          {["Ticket Name", "Project", "Module", "Workflow", "Tags", "Assigned To", "Due Date"].map((col) => (
-            <span
-              key={col}
-              className="text-[11px] font-bold uppercase"
-              style={{ color: "#777587" }}
-            >
-              {col}
-            </span>
-          ))}
-        </div>
+				for (let j = 0; j < ta.length; j++)
+					names.push(`${ta[j].Profile.first_name} ${ta[j].Profile.last_name}`);
 
-        {/* Rows */}
-        {tickets.map((ticket, i) => (
-          <div
-            key={ticket.id}
-            className={`grid ${COL_WIDTHS} items-center px-6 py-4`}
-            style={{
-              borderBottom: i < tickets.length - 1 ? "1px solid #c7c4d8" : "none",
-            }}
-          >
-            {/* Ticket name */}
-            <span className="text-[13px]" style={{ color: "#151c27" }}>
-              {ticket.name}
-            </span>
+				if (names.length === 0) names.push("None");
 
-            {/* Project */}
-            <span className="text-[13px]" style={{ color: "#464555" }}>
-              {ticket.project}
-            </span>
+				const tempTags = ticket.TicketTags.length == 0 ? [] : ticket.TicketTags;
 
-            {/* Module */}
-            <span className="text-[13px]" style={{ color: "#464555" }}>
-              {ticket.module}
-            </span>
+				return {
+					id: ticket.ticket_id,
+					name: ticket.name,
+					project: ticket.Workflows.Modules.Phases.Stages.Projects.name,
+					module: ticket.Workflows.Modules.name,
+					workflow: ticket.Workflows.name,
+					tags: tempTags,
+					assignees: names,
+					dueDate: ticket.plan_end_at,
+				};
+			}),
+		[tickets],
+	);
 
-            {/* Workflow badge */}
-            <div>
-              <span
-                className="inline-block rounded-md px-2 py-0.5 text-[11px] font-semibold"
-                style={{
-                  backgroundColor: ticket.workflow.bg,
-                  border: `1px solid ${ticket.workflow.stroke}`,
-                  color: ticket.workflow.text,
-                }}
-              >
-                {ticket.workflow.label}
-              </span>
-            </div>
+	return (
+		<Card
+			className="overflow-hidden w-full py-0 gap-0"
+			style={{ border: "1px solid #c7c4d8", borderRadius: "12px" }}
+		>
+			{/* Header */}
+			<div
+				className="flex items-center gap-2 px-6 py-4"
+				style={{
+					backgroundColor: "#f9f9ff",
+					borderBottom: "1px solid #c7c4d8",
+				}}
+			>
+				<Eye className="h-4 w-4" style={{ color: "#684000" }} />
+				<span className="text-base font-semibold" style={{ color: "#151c27" }}>
+					Watching
+				</span>
+				{/* <span
+					className="rounded-full px-2.5 py-0.5 text-[10px] font-bold"
+					style={{ backgroundColor: "#ffddb8", color: "#2a1700" }}
+				>
+					{updatesCount} UPDATES
+				</span> */}
+			</div>
 
-            {/* Tag */}
-            <div>
-              <span
-                className="inline-block rounded px-2 py-0.5 text-[10px] font-bold"
-                style={{
-                  backgroundColor: ticket.tag.bg,
-                  color: ticket.tag.text,
-                }}
-              >
-                {ticket.tag.label}
-              </span>
-            </div>
+			{/* Table */}
+			<div>
+				{/* Table header */}
+				<div
+					className={`grid ${COL_WIDTHS} px-6 py-3`}
+					style={{
+						backgroundColor: "#f0f3ff",
+						borderBottom: "1px solid #c7c4d8",
+					}}
+				>
+					{[
+						"Ticket Name",
+						"Project",
+						"Module",
+						"Workflow",
+						"Tags",
+						"Assigned To",
+						"Due Date",
+					].map((col) => (
+						<span
+							key={col}
+							className="text-[11px] font-bold uppercase"
+							style={{ color: "#777587" }}
+						>
+							{col}
+						</span>
+					))}
+				</div>
 
-            {/* Assigned to */}
-            <div className="flex items-center gap-2">
-              <div
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-                style={{ backgroundColor: ticket.assignee.avatarBg }}
-              >
-                <span className="text-[8px] font-bold" style={{ color: "#151c27" }}>
-                  {ticket.assignee.initials}
-                </span>
-              </div>
-              <span className="text-[13px]" style={{ color: "#464555" }}>
-                {ticket.assignee.name}
-              </span>
-            </div>
+				{/* Rows */}
+				{watchedTickets.map((watchedTicket, i) => (
+					<div
+						key={watchedTicket.id}
+						className={`grid ${COL_WIDTHS} items-center px-6 py-4`}
+						style={{
+							borderBottom:
+								i < watchedTickets.length - 1 ? "1px solid #c7c4d8" : "none",
+						}}
+					>
+						{/* watchedTicket name */}
+						<div
+							className="w-fit max-w-[80%] xl:break-normal break-all flex flex-auto text-[13px]"
+							style={{ color: "#151c27" }}
+						>
+							{watchedTicket.name}
+						</div>
 
-            {/* Due date */}
-            <div className="flex items-center gap-1.5">
-              <Calendar
-                className="h-3 w-3 shrink-0"
-                style={{ color: ticket.dueDateUrgent ? "#ba1a1a" : "#464555" }}
-              />
-              <span
-                className="text-[13px]"
-                style={{
-                  color: ticket.dueDateUrgent ? "#ba1a1a" : "#464555",
-                  fontWeight: ticket.dueDateUrgent ? 600 : 400,
-                }}
-              >
-                {ticket.dueDate}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </Card>
-  );
+						{/* Project */}
+						<div
+							className="w-fit max-w-[80%] xl:break-normal break-all flex flex-auto text-[13px]"
+							style={{ color: "#464555" }}
+						>
+							{watchedTicket.project}
+						</div>
+
+						{/* Module */}
+						<div
+							className="w-fit max-w-[80%] xl:break-normal break-all flex flex-auto text-[13px]"
+							style={{ color: "#464555" }}
+						>
+							{watchedTicket.module}
+						</div>
+
+						{/* Workflow badge */}
+						<div>
+							<div
+								className="w-fit max-w-[80%] xl:break-normal break-all flex flex-auto rounded-md py-0.5 pt-1 text-[11px] font-semibold px-2"
+								style={{
+									backgroundColor: "#E2E8F8",
+									border: `1px solid #C7C4D84D`,
+									color: "#000000",
+								}}
+							>
+								{watchedTicket.workflow}
+							</div>
+						</div>
+
+						{/* Tag */}
+						{watchedTicket.tags.length > 0 &&
+							watchedTicket.tags.map((tag, i) => (
+								<div key={watchedTicket.id}>
+									{" "}
+									<div
+										className="w-fit max-w-[80%] xl:break-normal break-all flex flex-auto rounded px-2 py-0.5 pt-1 text-[10px] text-center font-bold "
+										style={{
+											backgroundColor: tag.Tags.color ?? "#444444",
+											color: "#000000",
+										}}
+									>
+										{tag.Tags.name}
+									</div>
+								</div>
+							))}
+
+						{watchedTicket.tags.length === 0 && (
+							<div key={watchedTicket.id}></div>
+						)}
+
+						{/* Assigned to */}
+						{watchedTicket.assignees.map((a, i) => (
+							<div
+								key={i}
+								className="w-fit max-w-[80%] xl:break-normal break-all flex flex-auto items-center gap-2"
+							>
+								<div
+									className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+									style={{ backgroundColor: "#E2DFFF" }}
+								>
+									<div
+										className="text-[8px] font-bold"
+										style={{ color: "#151c27" }}
+									>
+										{a == "None"
+											? ""
+											: a
+													.split(" ")
+													.map((word) => word.charAt(0))
+													.join(" ")}
+									</div>
+								</div>
+								<div className="text-[13px]" style={{ color: "#464555" }}>
+									{a}
+								</div>
+							</div>
+						))}
+
+						{/* Due date */}
+						<div className="w-fit max-w-[80%] xl:break-normal break-all flex flex-auto items-center gap-1.5">
+							{watchedTicket.dueDate.getTime() <= new Date().getTime() ? (
+								<AlertTriangle
+									className="h-3 w-3 shrink-0"
+									style={{ color: "#ba1a1a" }}
+								/>
+							) : (
+								<Calendar
+									className="h-3 w-3 shrink-0"
+									style={{ color: "#464555" }}
+								/>
+							)}
+
+							<div
+								className="text-[13px]"
+								style={{
+									color:
+										watchedTicket.dueDate.getTime() <= new Date().getTime()
+											? "#ba1a1a"
+											: "#464555",
+									fontWeight:
+										watchedTicket.dueDate.getTime() <= new Date().getTime()
+											? 600
+											: 400,
+								}}
+							>
+								{watchedTicket.dueDate.toDateString()}
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+		</Card>
+	);
 }
 
 export default WatchedTicketsBoard;

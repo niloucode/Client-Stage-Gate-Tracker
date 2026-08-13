@@ -14,7 +14,9 @@ export default function PS() {
 				// Task 5.6: only "View Contract" is linked for now; the
 				// Credentials Repository and Issue Reporting buttons stay
 				// unlinked until those features land.
-				onViewContract={() => router.push("/contracts")}
+				onViewContract={() =>
+					router.push(`/projects/${projectId}/contract?projectId=${projectId}`)
+				}
 			/>
 		</>
 	);

@@ -9,9 +9,9 @@ recently fixed behavior.
 
 | Role | Destination | Why |
 |---|---|---|
-| Project Owner / Team | `/projects` (ProjectDashboard feature) | `DEFAULT_PROJECT_REDIRECT` in `src/features/auth/context/auth_provider.tsx` — **TEMPORARY**: flip to `/dashboard` once the Landing Dashboard is built. |
-| Client (`client_id` set) | `/contracts` | **TEMPORARY** until the Client Portal is built. |
-| Unknown-role profile | `/projects` (fallback) | Signed-in users are never left stranded on an auth page. |
+| Project Owner / Team | `/dashboard` (Landing Dashboard) | `DEFAULT_PROJECT_REDIRECT` in `src/features/auth/context/auth_provider.tsx`. |
+| Client (`client_id` set) | `/dashboard` (Landing Dashboard) | Landing Dashboard shows the client's pending contracts. |
+| Unknown-role profile | `/dashboard` (fallback) | Signed-in users are never left stranded on an auth page. |
 | Anonymous | `/login` | Middleware (`src/lib/supabase/proxy.ts`) + root page. |
 
 Redirect implementation notes:
@@ -23,9 +23,8 @@ Redirect implementation notes:
   `userRef`-based listener redirect (which almost never fired due to a stale
   ref) is gone.
 - `src/app/page.tsx` — root `/` is a **role-aware server redirect**
-  (`getUser()` + one profile lookup): clients → `/contracts`, everyone else
-  → `/projects`. Matches the client effect exactly. Replaces the old static
-  `/login` redirect that bounced signed-in users in a 3-hop chain.
+  (`getUser()` + one profile lookup): everyone → `/dashboard`. Replaces the
+  old static `/login` redirect that bounced signed-in users in a 3-hop chain.
 - `src/app/(app)/(workspace)/page.tsx` was deleted: it resolved to `/` and
   conflicted with the root page (and would have crashed reading a
   nonexistent `[projectId]` param).

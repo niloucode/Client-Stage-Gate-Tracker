@@ -1,6 +1,11 @@
+import { Prisma } from "@/lib/generated/prisma";
+
 export type EntityFilterStatus = "active" | "deleted" | "all";
 
-export type { TicketPayload as Ticket } from "@/entities/ticket/types";
+export type {
+	TicketPayload as Ticket,
+	DashboardTicketPayload as DashboardTicket,
+} from "@/entities/ticket/types";
 export type { CommentWithImages as Comment } from "@/entities/comment/types";
 
 export interface Profile {
@@ -37,3 +42,13 @@ export interface Contract {
 	client_signed_at: Date | null;
 	project_owner_signed_at: Date | null;
 }
+
+export type ContractPayload = Prisma.ContractsGetPayload<{
+	include: {
+		Projects: {
+			select: {
+				name: true;
+			};
+		};
+	};
+}>;
