@@ -21,40 +21,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { status as TicketStatus } from "@/lib/generated/prisma";
+import { TICKET_STATUS_CONFIG } from "@/entities/ticket";
+import type { AssigneeData, TagBadgeData, TicketItem } from "../model/types";
 
 /* ========================================================================== */
 /*                                1. TICKETS                                  */
 /* ========================================================================== */
-
-export interface WorkflowData {
-  label: string;
-}
-
-export interface TagBadgeData {
-  label: string;
-  bg: string;
-  text: string;
-}
-
-export interface AssigneeData {
-  initials: string;
-  avatarBg: string;
-  name?: string;
-}
-
-export interface TicketItem {
-  id: string;
-  name: string;
-  project: string;
-  module: string;
-  workflow: WorkflowData | string;
-  status: TicketStatus;
-  tag: TagBadgeData;
-  assignees?: AssigneeData[];
-  dueAt?: Date | string;
-  dueDate?: string;
-  dueDateUrgent?: boolean;
-}
 
 export interface TicketsBoardProps {
   variant?: "my" | "watched";
@@ -65,80 +37,6 @@ export interface TicketsBoardProps {
 
 type SortField = "name" | "project" | "status" | "tag" | "assignees" | "dueAt";
 type SortDirection = "asc" | "desc";
-
-// Generates 25 mock items with realistic varying dueAt timestamps
-const NOW_MS = Date.now();
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
-
-const MOCK_OFFSET_MS = [
-  -2 * HOUR_MS,          // Overdue by 2 hours
-  12 * 60 * 1000,        // 12m left
-  42 * 60 * 1000,        // 42m left
-  2 * HOUR_MS,           // 2h left
-  5 * HOUR_MS,           // 5h left
-  14 * HOUR_MS,          // 14h left
-  1 * DAY_MS + 2 * HOUR_MS,  // 1d left
-  2 * DAY_MS,            // 2d left
-  3 * DAY_MS + 6 * HOUR_MS,  // 3d left
-  5 * DAY_MS,            // 5d left
-  8 * DAY_MS,            // 8d left
-  12 * DAY_MS,           // 12d left
-];
-
-const MOCK_EXTENDED_TICKETS: TicketItem[] = Array.from({ length: 25 }, (_, i) => {
-  const dueOffset = MOCK_OFFSET_MS[i % MOCK_OFFSET_MS.length];
-  const dueAt = new Date(NOW_MS + dueOffset);
-
-  return {
-    id: `ticket-${i + 1}`,
-    name: `Ticket Issue #${i + 1} - ${
-      ["Implement SSO", "Dashboard Bento Grid Refactor", "Database Indexing", "Stripe Fix", "iOS 17 Compatibility"][i % 5]
-    }`,
-    project: ["Asceoft", "Portal 2.0", "Core Engine", "Billing", "Mobile App"][i % 5],
-    module: ["Auth", "UI/UX", "Infrastructure", "API", "Client"][i % 5],
-    workflow: { label: ["Auth Flow", "Dashboard UI", "Core DB", "Billing API", "Client App"][i % 5] },
-    status: [TicketStatus.IN_PROGRESS, TicketStatus.PENDING, TicketStatus.FINISHED][i % 3],
-    tag: [
-      { label: "High Priority", bg: "#ffdad6", text: "#93000a" },
-      { label: "Feature", bg: "#6cf8bb", text: "#00714d" },
-      { label: "Critical", bg: "#ffdad6", text: "#93000a" },
-      { label: "Optimization", bg: "#dce2f3", text: "#777587" },
-    ][i % 4],
-    assignees: [
-      { initials: "JD", avatarBg: "#ffddb8", name: "John Doe" },
-      ...(i % 2 === 0 ? [{ initials: "SM", avatarBg: "#e2dfff", name: "Sarah M." }] : []),
-      ...(i % 3 === 0 ? [{ initials: "AK", avatarBg: "#bbf7d0", name: "Alex K." }] : []),
-    ],
-    dueAt,
-  };
-});
-
-/* -------------------------------------------------------------------------- */
-/*                              Sub-Components                                */
-/* -------------------------------------------------------------------------- */
-
-/** Status styling matching Kanban board definitions (`src/features/ticket-board`) */
-const STATUS_CONFIG: Record<
-  TicketStatus,
-  { label: string; dot: string; text: string }
-> = {
-  PENDING: {
-    label: "Pending",
-    dot: "bg-yellow-500",
-    text: "text-yellow-600",
-  },
-  IN_PROGRESS: {
-    label: "In Progress",
-    dot: "bg-brand-600",
-    text: "text-brand-600",
-  },
-  FINISHED: {
-    label: "Finished",
-    dot: "bg-green-500",
-    text: "text-green-600",
-  },
-};
 
 const STATUS_WEIGHT: Record<TicketStatus, number> = {
   PENDING: 1,
@@ -154,12 +52,10 @@ const COLUMN_FIELD_MAP: Record<string, SortField> = {
   "Tags": "tag",
   "Assigned To": "assignees",
   "Due Date": "dueAt",
-  "due at": "dueAt",
-  "Time Left": "dueAt",
 };
 
 function StatusCell({ status }: { status: TicketStatus }) {
-  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING;
+  const config = TICKET_STATUS_CONFIG[status] ?? TICKET_STATUS_CONFIG.PENDING;
 
   return (
     <div className="flex items-center gap-1.5">
@@ -275,7 +171,7 @@ function DueDateCell({
 
 export function TicketsBoard({
   variant = "my",
-  tickets = MOCK_EXTENDED_TICKETS,
+  tickets = [],
   count,
   title,
 }: TicketsBoardProps) {
@@ -343,7 +239,7 @@ export function TicketsBoard({
     });
   }, [tickets, sortField, sortDirection]);
 
-  const totalPages = Math.ceil(sortedTickets.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(sortedTickets.length / pageSize));
   const paginatedTickets = sortedTickets.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -468,7 +364,13 @@ export function TicketsBoard({
         {/* Dashboard Preview Table (First 5 sorted items) */}
         <div className="m-0 p-0">
           {renderTableHeader(false)}
-          {renderTableRows(sortedTickets.slice(0, 5))}
+          {sortedTickets.length === 0 ? (
+            <div className="px-6 py-10 text-center text-sm text-muted-foreground">
+              No tickets to show.
+            </div>
+          ) : (
+            renderTableRows(sortedTickets.slice(0, 5))
+          )}
         </div>
 
         {/* POPUP MODAL DIALOG WITH 10 ROWS & PAGINATION */}
@@ -496,7 +398,13 @@ export function TicketsBoard({
           {/* Modal Table Body */}
           <div className="flex-1 overflow-y-auto">
             {renderTableHeader(true)}
-            {renderTableRows(paginatedTickets, true)}
+            {paginatedTickets.length === 0 ? (
+              <div className="px-6 py-10 text-center text-sm text-muted-foreground">
+                No tickets to show.
+              </div>
+            ) : (
+              renderTableRows(paginatedTickets, true)
+            )}
           </div>
 
           {/* Pagination Controls */}
