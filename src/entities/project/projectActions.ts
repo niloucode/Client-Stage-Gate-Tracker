@@ -14,6 +14,7 @@ import {
 	requireProjectMember,
 	requireProjectOwner,
 } from "@/lib/auth/projectAccess";
+import { computeProjectStatus, isProjectOwnerRole } from "./projectStatus";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,31 +33,6 @@ export interface ProjectWithStatus {
 	is_owner: boolean;
 	client_name: string | null;
 	client_id: string | null;
-}
-
-/**
- * Pure status computation: PENDING until the contract is fully signed,
- * ACTIVE once signed but stages remain, COMPLETED once signed and all
- * stages are finished.
- */
-export function computeProjectStatus(input: {
-	contractSigned: boolean;
-	totalStages: number;
-	finishedStages: number;
-}): ProjectStatus {
-	const { contractSigned, totalStages, finishedStages } = input;
-	if (contractSigned && totalStages > 0 && finishedStages === totalStages) {
-		return "COMPLETED";
-	}
-	if (contractSigned) return "ACTIVE";
-	return "PENDING";
-}
-
-/** True when the given role name is the Project Owner role. */
-export function isProjectOwnerRole(
-	roleName: string | null | undefined,
-): boolean {
-	return roleName === "Project Owner";
 }
 
 /**

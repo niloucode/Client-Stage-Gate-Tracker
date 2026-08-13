@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeProjectStatus, isProjectOwnerRole } from "./projectActions";
+import { computeProjectStatus, isProjectOwnerRole } from "./projectStatus";
 
 describe("computeProjectStatus", () => {
 	it("returns PENDING while the contract is not fully signed", () => {

@@ -11,7 +11,7 @@ export {
 	selectProjectsForMember,
 } from "./projectActions";
 export type { ProjectStatus, ProjectWithStatus } from "./projectActions";
-export { computeProjectStatus, isProjectOwnerRole } from "./projectActions";
+export { computeProjectStatus, isProjectOwnerRole } from "./projectStatus";
 
 export {
 	useProjects,
