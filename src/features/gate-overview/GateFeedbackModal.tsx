@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface GateFeedbackEntry {
@@ -58,30 +58,30 @@ function GateFeedbackCard({ entry }: { entry: GateFeedbackEntry }) {
   const config = VARIANT_CONFIG[entry.variant];
 
   return (
-    <div className="overflow-hidden rounded-md border border-border/60 shadow-2xs">
+    <div className="overflow-hidden shadow-2xs">
       {/* Row Header */}
       <div
         className={`grid grid-cols-[40px_130px_1fr] items-center px-4 py-3 text-sm text-foreground ${config.headerBg}`}
       >
-        <span className="font-semibold text-foreground/80">{entry.number}</span>
-        <span className="font-medium text-foreground">{entry.date}</span>
+        <h4>{entry.number}</h4>
+        <h4>{entry.date}</h4>
         <div className="flex items-center gap-2.5 min-w-0">
-          <Avatar className="size-7 shrink-0">
+          <Avatar>
             {entry.reviewer.avatar && (
               <AvatarImage src={entry.reviewer.avatar} alt={entry.reviewer.name} />
             )}
-            <AvatarFallback className="bg-primary/20 text-xs font-semibold text-primary">
+            <AvatarFallback className="bg-brand-600 text-xs font-semibold! text-brand-50">
               {entry.reviewer.initials || getInitials(entry.reviewer.name)}
             </AvatarFallback>
           </Avatar>
-          <span className="truncate font-semibold text-foreground">
+          <h4 >
             {entry.reviewer.name}
-          </span>
+          </h4>
         </div>
       </div>
 
       {/* Feedback Body */}
-      <div className={`space-y-1.5 p-4 border-t border-border/30 ${config.bodyBg}`}>
+      <div className={`space-y-1.5 p-4 border-t border-brand-100/30 ${config.bodyBg}`}>
         <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
           GATE FEEDBACK
         </p>
@@ -117,6 +117,28 @@ const DEFAULT_ENTRIES: GateFeedbackEntry[] = [
     feedback:
       "The submission is currently missing the critical competitor analysis for the APAC region, which is a mandatory requirement for this phase. Please ensure that the updated report includes a detailed breakdown of the top three regional rivals and their current infrastructure footprint before resubmitting for final approval.",
     variant: "rejected",
+  },{
+    id: "fb-3",
+    number: 2,
+    date: "Oct 05, 2024",
+    reviewer: {
+      name: "Stephen Claro",
+      initials: "MC",
+    },
+    feedback:
+      "The submission is currently missing the critical competitor analysis for the APAC region, which is a mandatory requirement for this phase. Please ensure that the updated report includes a detailed breakdown of the top three regional rivals and their current infrastructure footprint before resubmitting for final approval.",
+    variant: "approved",
+  },{
+    id: "fb-4",
+    number: 2,
+    date: "Oct 05, 2024",
+    reviewer: {
+      name: "John Lorens Tee",
+      initials: "MC",
+    },
+    feedback:
+      "The submission is currently missing the critical competitor analysis for the APAC region, which is a mandatory requirement for this phase. Please ensure that the updated report includes a detailed breakdown of the top three regional rivals and their current infrastructure footprint before resubmitting for final approval.",
+    variant: "rejected",
   },
 ];
 
@@ -127,49 +149,36 @@ export function GateFeedbackModal({
 }: GateFeedbackModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>
-						Gate Feedback
-					</DialogTitle>
-					<DialogDescription>
-						Review client comments and feedback entries for this gate.
-					</DialogDescription>
-				</DialogHeader>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Gate Feedback</DialogTitle>
+          <DialogDescription>
+            Review client comments and feedback entries for this gate.
+          </DialogDescription>
+        </DialogHeader>
 
-				<div className="space-y-4">
+        <div className="-m-5 -mb-11">
           {/* Table Column Headers */}
-          <div className="grid grid-cols-[40px_130px_1fr] px-4 py-2.5 text-[11px] font-bold tracking-wider text-muted-foreground uppercase bg-[#EEEEF8] rounded-sm">
+          <div className="grid grid-cols-[40px_130px_1fr] px-4 py-2.5 text-[11px] font-bold tracking-wider text-muted-foreground uppercase bg-neutral-subtle">
             <span>#</span>
             <span>DATE</span>
             <span>REVIEWER</span>
           </div>
 
           {/* Feedback Entries List */}
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+          <div className="max-h-[60vh] overflow-y-auto">
             {entries.map((entry) => (
               <GateFeedbackCard key={entry.id || entry.number} entry={entry} />
             ))}
           </div>
         </div>
 
-						<DialogFooter className="mt-6" showCloseButton={false}>
-							<Button
-								type="button"
-								variant="ghost"
-								onClick={onClose}
-							>
-								Cancel
-							</Button>
-						</DialogFooter>
-			</DialogContent>
-		</Dialog>
+        <DialogFooter className="mt-6" showCloseButton={false}>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
-
-
-
-
-
-
-

@@ -108,6 +108,8 @@ export function ProjectDashboard() {
 		if (result.success && result.data) {
 			setShowAddModal(false)
 			setManageMembersProjectId(result.data.project_id)
+
+			// TOAST CALLER
 			toast.add({
 				title: "Project Added",
 				description: "Project successfully added",
@@ -127,7 +129,10 @@ export function ProjectDashboard() {
 		})
 		if (result.success) {
 			setEditProject(null)
-			toast.add({ title: "Project Edited", description: "Project successfully edited" })
+
+			// TOAST CALLER
+			toast.add({ title: "Project Edited", description: "Project successfully edited",
+				type: "success", })
 		}
 	}
 
