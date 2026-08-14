@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { generateInviteCode } from "@/shared/lib/inviteCode";
+import { getCurrentUserId } from "@/lib/auth/projectAccess";
 
 export async function getDepartmentById(departmentId?: string) {
 	if (!departmentId) return null;
@@ -36,4 +38,24 @@ export async function selectDepartments() {
 			name: true,
 		},
 	});
+}
+
+/**
+ * Generates an invite code for a staff member (Project Team or Project Owner).
+ */
+export async function generateStaffInviteCode(
+	departmentName: "Project Team" | "Project Owner",
+) {
+	const userId = await getCurrentUserId();
+	if (!userId) {
+		return { success: false, error: "Authentication required." };
+	}
+
+	const code = generateInviteCode();
+
+	return {
+		success: true,
+		inviteCode: code,
+		department: departmentName,
+	};
 }

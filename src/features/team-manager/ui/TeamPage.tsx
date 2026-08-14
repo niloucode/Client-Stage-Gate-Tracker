@@ -2,21 +2,24 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, Key } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useTeamProfiles } from "@/entities/profile/queries";
+import { useDepartment } from "@/entities/department";
 import { useAuth } from "@/features/auth";
 import { TeamTable } from "./TeamTable";
+import { GenerateStaffCodeModal } from "./GenerateStaffCodeModal";
 import type { TeamMember, TeamSortField, SortDirection } from "../model/types";
 
 function TeamHeader() {
 	return (
 		<div className="mb-6">
 			<h1 className="text-4xl font-bold tracking-wide text-foreground">
-				Team
+				Project Team
 			</h1>
 			<p className="subtitle">
-				View the staff members and specialists working in your studio.
+				View the fellow project members working in the project.
 			</p>
 		</div>
 	);
@@ -25,9 +28,16 @@ function TeamHeader() {
 interface TeamToolbarProps {
 	searchQuery: string;
 	onSearchChange: (value: string) => void;
+	onGenerateCode: () => void;
+	showGenerateButton: boolean;
 }
 
-function TeamToolbar({ searchQuery, onSearchChange }: TeamToolbarProps) {
+function TeamToolbar({
+	searchQuery,
+	onSearchChange,
+	onGenerateCode,
+	showGenerateButton,
+}: TeamToolbarProps) {
 	return (
 		<div className="mb-5 flex gap-6 justify-between items-center max-h-10">
 			<div className="flex w-187.25 items-center gap-2 rounded-md border border-border bg-neutral-surface px-4 py-2">
@@ -40,6 +50,12 @@ function TeamToolbar({ searchQuery, onSearchChange }: TeamToolbarProps) {
 					className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0"
 				/>
 			</div>
+			{showGenerateButton && (
+				<Button className="flex items-center gap-2" onClick={onGenerateCode}>
+					<Key className="w-3.5 h-3.5" />
+					Generate Code
+				</Button>
+			)}
 		</div>
 	);
 }
@@ -48,9 +64,12 @@ export function TeamPage() {
 	const router = useRouter();
 	const { user, isLoading: isAuthLoading } = useAuth();
 	const isClient = !!user?.client_id;
+	const { data: department } = useDepartment(user?.department_id ?? undefined);
+	const isOwner = department?.name === "Project Owner";
 
 	const { data: teamData } = useTeamProfiles({ enabled: !isClient });
 
+	const [showGenerateModal, setShowGenerateModal] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sortField, setSortField] = useState<TeamSortField>("name");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -133,20 +152,29 @@ export function TeamPage() {
 	};
 
 	return (
-		<main className="flex flex-1 flex-col overflow-hidden">
-			<TeamHeader />
+		<>
+			<main className="flex flex-1 flex-col overflow-hidden">
+				<TeamHeader />
 
-			<TeamToolbar
-				searchQuery={searchQuery}
-				onSearchChange={setSearchQuery}
-			/>
+				<TeamToolbar
+					searchQuery={searchQuery}
+					onSearchChange={setSearchQuery}
+					onGenerateCode={() => setShowGenerateModal(true)}
+					showGenerateButton={isOwner}
+				/>
 
-			<TeamTable
-				members={sortedMembers}
-				sortField={sortField}
-				sortDirection={sortDirection}
-				onSort={handleSort}
+				<TeamTable
+					members={sortedMembers}
+					sortField={sortField}
+					sortDirection={sortDirection}
+					onSort={handleSort}
+				/>
+			</main>
+
+			<GenerateStaffCodeModal
+				isOpen={showGenerateModal}
+				onClose={() => setShowGenerateModal(false)}
 			/>
-		</main>
+		</>
 	);
 }
