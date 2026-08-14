@@ -14,6 +14,7 @@ export const tagKeys = {
 export const profileKeys = {
 	all: ["profiles"] as const,
 	lists: () => [...profileKeys.all, "list"] as const,
+	team: () => [...profileKeys.all, "team"] as const,
 	details: () => [...profileKeys.all, "detail"] as const,
 	detail: (id: string | undefined) => [...profileKeys.details(), id] as const,
 	currentUser: () => [...profileKeys.all, "currentUser"] as const,
@@ -89,3 +90,4 @@ export const dashboardKeys = {
 	watchedTickets: () => [...dashboardKeys.all, "watched-tickets"] as const,
 	myContracts: () => [...dashboardKeys.all, "my-contracts"] as const,
 };
+

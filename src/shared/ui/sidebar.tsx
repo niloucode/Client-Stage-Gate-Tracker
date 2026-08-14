@@ -12,6 +12,7 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	ContactRound,
+	Users,
 } from "lucide-react";
 
 // Font configurations
@@ -36,6 +37,7 @@ export const navItems: NavItem[] = [
 	{ label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
 	{ label: "Projects", icon: Folder, href: "/projects" },
 	// { label: "Contracts", icon: FileText, href: "/contracts" }, // TODO(contracts): route not built yet
+	{ label: "Team", icon: Users, href: "/team" },
 	{ label: "Clients", icon: ContactRound, href: "/clients" },
 	// { label: "Credentials Repo", icon: Key, href: "/credentials" },
 ];
@@ -211,11 +213,12 @@ export default function SidebarLayout({
 }) {
 	const pathname = usePathname();
 	const [collapsed, setCollapsed] = useState(false);
+	
 
 	// Role-filtered nav items (client-side — icons must not cross RSC).
 	const items = showClientsLink
 		? navItems
-		: navItems.filter((item) => item.href !== "/clients");
+		: navItems.filter((item) => item.href !== "/clients" && item.href !== "/team");
 
 	return (
 		<div

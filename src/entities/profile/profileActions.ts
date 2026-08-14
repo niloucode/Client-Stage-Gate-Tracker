@@ -237,3 +237,31 @@ export async function getProfileByEmail(profileEmail: string) {
 		return { success: false, error: "Failed to fetch user details." };
 	}
 }
+
+/**
+ * Fetches all non-deleted staff profiles (internal team members), ordered by name.
+ */
+export async function selectTeamProfiles() {
+	return prisma.profiles.findMany({
+		where: {
+			is_deleted: false,
+			client_id: null,
+		},
+		orderBy: { first_name: "asc" },
+		select: {
+			profile_id: true,
+			first_name: true,
+			last_name: true,
+			email: true,
+			phone: true,
+			job_title: true,
+			department_id: true,
+			Department: {
+				select: {
+					department_id: true,
+					name: true,
+				},
+			},
+		},
+	});
+}

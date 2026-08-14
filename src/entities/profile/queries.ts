@@ -2,13 +2,18 @@
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { profileKeys } from "@/shared/query/keys";
-import { selectProfile, getCurrentUserProfile } from "./profileActions";
+import { selectProfile, getCurrentUserProfile, selectTeamProfiles } from "./profileActions";
 
 const profileQueryOptions = {
 	list: () =>
 		queryOptions({
 			queryKey: profileKeys.lists(),
 			queryFn: selectProfile,
+		}),
+	team: () =>
+		queryOptions({
+			queryKey: profileKeys.team(),
+			queryFn: selectTeamProfiles,
 		}),
 	currentUser: () =>
 		queryOptions({
@@ -20,6 +25,13 @@ const profileQueryOptions = {
 
 export function useProfiles() {
 	return useQuery(profileQueryOptions.list());
+}
+
+export function useTeamProfiles(options?: { enabled?: boolean }) {
+	return useQuery({
+		...profileQueryOptions.team(),
+		enabled: options?.enabled,
+	});
 }
 
 export function useCurrentUser() {
