@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/toast";
 import {
   Dialog,
   DialogContent,
@@ -239,14 +240,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   textColor,
   className = "",
 }) => (
-  <Card className={`border border-border bg-card shadow-xs hover:shadow-sm transition-all rounded-md ${className}`}>
-    <CardHeader className="pb-2 space-y-0">
-      <CardTitle className="text-xs font-semibold text-muted-foreground tracking-wide">
+  <Card className={`${className}`}>
+    <CardHeader>
+      <CardTitle>
         {title}
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <div className={`text-3xl font-bold ${textColor}`}>{count}</div>
+      <h2 className={`${textColor}`}>{count}</h2>
     </CardContent>
   </Card>
 );
@@ -258,7 +259,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 export interface IssueCardProps {
   issue: IssueItem;
   onClick?: () => void;
-  onLinkClick?: (issue: IssueItem) => void; // Callback to link this specific issue
+  onLinkClick?: (issue: IssueItem) => void;
   className?: string;
 }
 
@@ -300,14 +301,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({
       </div>
 
       <div className="flex items-center gap-2 shrink-0 ml-4">
-        {/* Row-Level "Link" Button */}
         {onLinkClick && (
           <Button
             type="button"
             size="sm"
             variant="outline"
             onClick={(e) => {
-              e.stopPropagation(); // Prevents opening the details modal
+              e.stopPropagation();
               onLinkClick(issue);
             }}
             className="h-8 gap-1.5 text-xs font-semibold text-brand-600 border-brand-200 hover:bg-brand-50 hover:text-brand-700 rounded-md"
@@ -324,12 +324,6 @@ export const IssueCard: React.FC<IssueCardProps> = ({
 /* -------------------------------------------------------------------------- */
 /* 3. ISSUE DETAILS MODAL (EXPORTED)                                          */
 /* -------------------------------------------------------------------------- */
-
-export interface IssueDetailsModalProps {
-  issue: IssueItem | null;
-  open: boolean;
-  onClose: () => void;
-}
 
 export interface IssueDetailsModalProps {
   issue: IssueItem | null;
@@ -457,7 +451,7 @@ export interface IssueBoxProps {
   onIssueClick?: (issue: IssueItem) => void;
   onNewIssueClick?: () => void;
   showNewIssueButton?: boolean;
-  onLinkIssue?: (issue: IssueItem) => void; // Fired when row "Link" button is clicked
+  onLinkIssue?: (issue: IssueItem) => void;
   className?: string;
 }
 
@@ -478,13 +472,11 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
   const [sortByUrgency, setSortByUrgency] = useState<SortOrder>(defaultSortOrder);
   const [urgencyFilter, setUrgencyFilter] = useState<UrgencyFilterOption>(defaultUrgencyFilter);
 
-  // 1. Filter issues by urgency level
   const filteredByUrgency = useMemo(() => {
     if (urgencyFilter === "all") return issues;
     return issues.filter((iss) => iss.urgency === urgencyFilter);
   }, [issues, urgencyFilter]);
 
-  // 2. Sort issues by urgency weight
   const sortedIssues = useMemo(() => {
     if (sortByUrgency === "none") return filteredByUrgency;
 
@@ -496,7 +488,6 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
     });
   }, [filteredByUrgency, sortByUrgency]);
 
-  // 3. Pagination calculation
   const totalPages = Math.ceil(sortedIssues.length / itemsPerPage) || 1;
   const validPage = Math.min(currentPage, totalPages);
   const startIndex = (validPage - 1) * itemsPerPage;
@@ -515,14 +506,12 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setUrgencyFilter(e.target.value as UrgencyFilterOption);
-    setCurrentPage(1); // Reset to page 1 on filter
+    setCurrentPage(1);
   };
 
   return (
     <Card className={`shadow-xs rounded-md border border-border overflow-hidden bg-card ${className}`}>
-      {/* Box Header - Tight padding level with the close X button */}
       <div className="px-5 py-2.5 pr-12 border-b border-border flex items-center justify-between flex-wrap gap-2.5">
-        {/* Left side: Title, Badge, and Filter/Sort Controls */}
         <div className="flex items-center gap-2.5 flex-wrap">
           <h3 className="text-base font-bold capitalize text-foreground">
             {title}
@@ -534,7 +523,6 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
             {filteredByUrgency.length} / {totalCountDenominator}
           </Badge>
 
-          {/* Urgency Filter Dropdown */}
           <div className="flex items-center gap-1.5 border border-border bg-card rounded-md px-2.5 h-8 text-xs font-medium text-foreground hover:bg-neutral-subtle transition-colors">
             <Filter className="w-3.5 h-3.5 text-muted-foreground" />
             <select
@@ -549,7 +537,6 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
             </select>
           </div>
 
-          {/* Sort by Urgency Toggle Button */}
           <Button
             variant="outline"
             size="sm"
@@ -570,7 +557,6 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
           </Button>
         </div>
 
-        {/* Right side: New Issue Button (ONLY shown if showNewIssueButton is true) */}
         {showNewIssueButton && onNewIssueClick && (
           <div className="flex items-center gap-2">
             <Button
@@ -584,7 +570,6 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
         )}
       </div>
 
-      {/* List Content */}
       <CardContent className="space-y-2.5 p-4">
         {paginatedIssues.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground flex flex-col items-center justify-center space-y-2">
@@ -603,7 +588,6 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
         )}
       </CardContent>
 
-      {/* Pagination Controls Footer */}
       <div className="px-5 py-3 border-t border-border flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium">
         <Button
           variant="ghost"
@@ -649,12 +633,10 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
   const [selectedIssue, setSelectedIssue] = useState<IssueItem | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Filter issues by active tab
   const activeIssues = useMemo(() => {
     return issues.filter((iss) => iss.status === activeTab);
   }, [issues, activeTab]);
 
-  // Metric counts
   const unlinkedCount = issues.filter((i) => i.status === "unlinked").length;
   const urgentCount = issues.filter((i) => i.urgency === "high" && i.status !== "resolved").length;
   const resolvedCount = issues.filter((i) => i.status === "resolved").length;
@@ -686,54 +668,50 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
 
     setIssues((prev) => [newIssue, ...prev]);
     setIsCreateModalOpen(false);
+
+    toast.add({
+      title: "Issue Reported",
+      description: `"${formData.name}" has been reported successfully.`,
+      type: "success",
+    });
   };
 
   return (
-    <div className="flex h-screen w-full bg-background font-sans">
+    <>
       <div className="flex-1 flex flex-col min-w-0">
         <main className="flex-1 p-6 md:p-10 space-y-8 mx-auto w-full max-w-7xl">
-          {/* Header Title */}
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">Issue Reporting</h2>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1">
+            <h1>Issue Reporting</h1>
+            <p className="subtitle">
               View the client-specified issues that need to be resolved in the project.
             </p>
           </div>
 
-          {/* Metric Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <MetricCard title="Unlinked Issues" count={unlinkedCount} textColor="text-brand-500" />
-            <MetricCard title="Highly Urgent Issues" count={urgentCount} textColor="text-red-600" />
-            <MetricCard title="Issues Resolved" count={resolvedCount} textColor="text-green-600" />
+            <MetricCard title="Unlinked Issues" count={unlinkedCount} textColor="text-brand-500!" />
+            <MetricCard title="Highly Urgent Issues" count={urgentCount} textColor="text-red-600!" />
+            <MetricCard title="Issues Resolved" count={resolvedCount} textColor="text-green-600!" />
           </div>
 
-          {/* Filter Tabs Toolbar Row */}
-          <div className="bg-brand-50/60 p-1.5 rounded-md flex items-center justify-between gap-3 border border-border">
-            <div className="flex items-center gap-2 flex-1">
-              {TABS.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <Button
-                    key={tab.id}
-                    type="button"
-                    variant={isActive ? "default" : "ghost"}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 h-10 gap-2 text-xs font-semibold rounded-md transition-all ${
-                      isActive
-                        ? "bg-brand-500 text-primary-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground hover:bg-transparent"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </Button>
-                );
-              })}
-            </div>
+          <div className="bg-brand-50/60 p-1.5 rounded-md flex gap-7 border border-brand-100">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <Button
+                  key={tab.id}
+                  type="button"
+                  variant={isActive ? "default" : "ghost"}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="flex-1" // <-- Replaces w-full / w-1/3
+                >
+                  {Icon && <Icon className="w-4 h-4" />}
+                  {tab.label}
+                </Button>
+              );
+            })}
           </div>
 
-          {/* Reusable Compartmentalized Issue Box */}
           <IssueBox
             title={`${activeTab} Issues`}
             issues={activeIssues}
@@ -744,20 +722,18 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
         </main>
       </div>
 
-      {/* Details View Modal */}
       <IssueDetailsModal
         issue={selectedIssue}
         open={Boolean(selectedIssue)}
         onClose={() => setSelectedIssue(null)}
       />
 
-      {/* Creation Modal */}
       <IssueReportingModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
         onSubmitSuccess={handleCreateIssueSuccess}
       />
-    </div>
+    </>
   );
 };
 

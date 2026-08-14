@@ -20,6 +20,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { generateStaffInviteCode } from "@/entities/department";
+import { toast } from "@/components/ui/toast";
 
 interface GenerateStaffCodeModalProps {
 	isOpen: boolean;
@@ -35,7 +36,6 @@ export function GenerateStaffCodeModal({
 	>("Project Team");
 	const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 	const [isGenerating, setIsGenerating] = useState(false);
-	const [copied, setCopied] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	// Track previous isOpen state to handle resetting state when modal opens
@@ -47,31 +47,43 @@ export function GenerateStaffCodeModal({
 		if (isOpen) {
 			setGeneratedCode(null);
 			setError(null);
-			setCopied(false);
 		}
 	}
 
 	const handleGenerate = async () => {
 		setIsGenerating(true);
 		setError(null);
-		setCopied(false);
 
 		const result = await generateStaffInviteCode(department);
 		setIsGenerating(false);
 
 		if (!result.success || !result.inviteCode) {
-			setError(result.error ?? "Failed to generate invite code.");
+			const errMsg = result.error ?? "Failed to generate invite code.";
+			setError(errMsg);
+			toast.add({
+				title: "Generation Failed",
+				description: errMsg,
+				type: "error",
+			});
 			return;
 		}
 
 		setGeneratedCode(result.inviteCode);
+		toast.add({
+			title: "Invite Code Generated",
+			description: `Code for ${department} created successfully.`,
+			type: "success",
+		});
 	};
 
 	const handleCopy = () => {
 		if (!generatedCode) return;
 		void navigator.clipboard.writeText(generatedCode);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 4000);
+		toast.add({
+			title: "Copied to Clipboard",
+			description: "Invite code copied to your clipboard.",
+			type: "success",
+		});
 	};
 
 	const handleClose = () => {
@@ -96,19 +108,7 @@ export function GenerateStaffCodeModal({
 				{generatedCode ? (
 					<div className="flex min-h-40 flex-col justify-between">
 						<div className="space-y-1.5">
-							<div className="flex justify-between items-center w-full">
-								<Label>
-									{department} Invite Code
-								</Label>
-								
-								<div className="h-4">
-									{copied && (
-										<p className="text-xs text-emerald-600 font-medium text-start ml-auto">
-											✓ Copied to clipboard!
-										</p>
-									)}
-								</div>
-							</div>
+							<Label>{department} Invite Code</Label>
 							<div className="flex items-center justify-between gap-2 rounded-md border border-brand-100 bg-neutral-subtle px-4 py-3">
 								<span className="font-mono text-lg tracking-[0.25em] text-foreground select-all">
 									{generatedCode}

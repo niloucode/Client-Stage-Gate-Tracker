@@ -146,11 +146,11 @@ function ProjectTimelineCard({
 				<div className="flex flex-row gap-5">
 					<div className="flex flex-col">
 						<Label>Actual Start</Label>
-						<h2>{formatDate(startDate)}</h2>
+						<h2>{startDate ? formatDate(startDate) : "Not started"}</h2>
 					</div>
 					<div className="flex flex-col">
 						<Label>Planned End</Label>
-						<h2>{formatDate(endDate)}</h2>
+						<h2>{endDate ? formatDate(endDate) : "Not set"}</h2>
 					</div>
 				</div>
 			</CardContent>
@@ -282,8 +282,11 @@ function TicketCard({
 			onKeyDown={openTicketOnKeyDown}
 			title={`Open ${name}`}
 		>
-			<CardContent className="flex flex-col justify-between gap-3 p-3 lg:flex-row lg:items-center">
-				<div className="flex items-center gap-2.5 min-w-0 flex-1">
+			<CardContent className="flex flex-col justify-between gap-3 px-3 lg:flex-row lg:items-center">
+				<div className="flex flex-col align-left gap-2 min-w-0 flex-1">
+					<h3 className="truncate">
+						{name}
+					</h3>
 					<Badge
 						variant="outline"
 						className="shrink-0 gap-1 rounded border-neutral-border/60 bg-neutral-subtle/50 px-2 py-0.5 text-2xs font-semibold text-muted-foreground"
@@ -291,9 +294,6 @@ function TicketCard({
 						<Workflow className="h-3 w-3 shrink-0" />
 						<span>{workflowName}</span>
 					</Badge>
-					<h4 className="text-xs font-semibold text-charcoal truncate">
-						{name}
-					</h4>
 				</div>
 
 				<Badge
@@ -404,25 +404,31 @@ export function ProjectStructure({
 			: 0;
 
 	// Calculate overall project date range dynamically
+	// Calculate overall project date range dynamically
 	const overallDateRange = (() => {
-		const projObj = project as
-			| (typeof project & { start_date?: Date; end_date?: Date })
-			| undefined;
-		if (projObj?.start_date || projObj?.end_date) {
+		// 1. Check direct project date columns from Prisma
+		const actualStart = project?.actual_start_at
+			? new Date(project.actual_start_at)
+			: null;
+		const planEnd = project?.plan_end_at ? new Date(project.plan_end_at) : null;
+
+		if (actualStart || planEnd) {
 			return {
-				start: projObj.start_date ? new Date(projObj.start_date) : null,
-				end: projObj.end_date ? new Date(projObj.end_date) : null,
+				start: actualStart,
+				end: planEnd,
 			};
 		}
-		// Fallback: Calculate from stages
+
+		// 2. Fallback: Calculate from stages if project-level dates are not set
 		const startTimes = stageItems
-			.map((s) => s.actualStart ?? s.planStart)
-			.filter(Boolean)
-			.map((d) => new Date(d!).getTime());
+			.map((s) => s.actualStart)
+			.filter((d): d is Date => Boolean(d))
+			.map((d) => new Date(d).getTime());
+
 		const endTimes = stageItems
-			.map((s) => s.actualEnd ?? s.planEnd)
-			.filter(Boolean)
-			.map((d) => new Date(d!).getTime());
+			.map((s) => s.planEnd)
+			.filter((d): d is Date => Boolean(d))
+			.map((d) => new Date(d).getTime());
 
 		return {
 			start: startTimes.length > 0 ? new Date(Math.min(...startTimes)) : null,
@@ -523,10 +529,10 @@ export function ProjectStructure({
 			{/* Page Title */}
 			<div>
 				<h1 className="text-2xl font-bold tracking-tight text-charcoal sm:text-3xl">
-					{project?.name ?? "Field Pilot & Rollout"}
+					{project?.name ?? "Untitled Project"}
 				</h1>
 				<p className="subtitle">
-					{(project as unknown as { description?: string })?.description ??
+					{(project as unknown as { description?: string })?.description ||
 						"Project structure & stage roadmap view"}
 				</p>
 			</div>
@@ -606,7 +612,7 @@ export function ProjectStructure({
 							<div className="min-w-0 flex-1">
 								<div className="flex items-center gap-2.5 flex-wrap">
 									<h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
-										{selectedStage?.name ?? "No stages yet"}
+										{selectedStage?.name ?? "No stage selected"}
 									</h2>
 									{selectedStage?.approved && (
 										<Badge className="border border-green-600/30 bg-green-100 text-green-700 font-bold uppercase text-2xs px-2 py-0.5 rounded-md hover:bg-green-100">
@@ -615,7 +621,10 @@ export function ProjectStructure({
 									)}
 								</div>
 								<p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-									{selectedStage?.description}
+									{selectedStage?.description ||
+										(stages.length === 0
+											? "No stages have been created for this project yet. Add a stage to get started."
+											: "No description provided for this stage.")}
 								</p>
 							</div>
 						</div>
@@ -623,7 +632,7 @@ export function ProjectStructure({
 						<div className="flex shrink-0 items-center gap-2 rounded-md border border-brand-200 bg-brand-50 px-3.5 py-2 text-brand-600 self-start sm:px-4 sm:py-2.5 lg:self-auto">
 							<Calendar className="h-3.5 w-3.5 shrink-0" />
 							<span className="text-xs font-semibold sm:whitespace-nowrap">
-								{selectedStage?.dateRange}
+								{selectedStage?.dateRange ?? "No timeline set"}
 							</span>
 						</div>
 					</div>
@@ -663,10 +672,10 @@ export function ProjectStructure({
 					</div>
 				</div>
 
-				<CardContent className="p-5">
-					<Card className="border border-warm-gray-200 bg-neutral-subtle/50">
-						<CardHeader className="p-4 pb-2">
-							<CardTitle className="text-sm font-bold text-charcoal">
+				<CardContent>
+					<Card className="bg-neutral-subtle/50">
+						<CardHeader>
+							<CardTitle>
 								Expiring Tickets
 							</CardTitle>
 							<CardDescription className="text-2xs text-muted-foreground">
@@ -685,9 +694,11 @@ export function ProjectStructure({
 										/>
 									))
 								) : (
-									<p className="text-xs text-muted-foreground">
-										No expiring tickets.
-									</p>
+									<div className="py-6 text-center">
+										<p className="text-xs text-muted-foreground">
+											No expiring tickets found for this project.
+										</p>
+									</div>
 								)}
 							</div>
 						</CardContent>

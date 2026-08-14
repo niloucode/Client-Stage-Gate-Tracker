@@ -294,16 +294,16 @@ function Calendar({
 				month_grid: "w-full border-collapse space-y-0.5",
 				weekdays: cn("flex", props.showWeekNumber && "justify-end"),
 				weekday:
-					"text-muted-foreground rounded-md w-8 font-normal text-[0.75rem] text-center",
+					"text-muted-foreground rounded-sm w-8 font-normal text-[0.75rem] text-center",
 				week: "flex w-full mt-1",
-				day: "h-8 w-8 text-center text-xs p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 has-aria-[selected]:bg-accent first:has-aria-[selected]:rounded-l-md last:has-aria-[selected]:rounded-r-md focus-within:relative focus-within:z-20 rounded-md",
+				day: "h-8 w-8 text-center text-xs p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 has-aria-[selected]:bg-accent first:has-aria-[selected]:rounded-l-md last:has-aria-[selected]:rounded-r-md focus-within:relative focus-within:z-20 rounded-sm",
 				day_button: cn(
 					buttonVariants({ variant: "ghost" }),
-					"h-8 w-8 p-0 text-xs font-normal aria-selected:opacity-100 rounded-md",
+					"h-8 w-8 p-0 text-xs font-normal aria-selected:opacity-100 rounded-sm",
 				),
 				range_end: "day-range-end",
 				selected:
-					"bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
+					"bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-sm",
 				today: "bg-accent text-accent-foreground font-semibold",
 				outside:
 					"day-outside text-muted-foreground opacity-40 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
@@ -816,7 +816,7 @@ const DateTimePicker = React.forwardRef<
 								variant="secondary"
 								aria-invalid={isError ? true : undefined}
 								className={cn(
-									"w-full justify-start text-left font-normal",
+									"w-full h-10.5 justify-start text-left font-normal",
 									!value && "text-gray-400",
 									isError && "border-destructive ring-1 ring-destructive/20",
 									className,

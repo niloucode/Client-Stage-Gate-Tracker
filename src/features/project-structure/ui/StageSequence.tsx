@@ -168,94 +168,106 @@ export function StageSequence({
 				)}
 			</div>
 
-			{/* Stepper Timeline */}
-			<div className="hide-scrollbar overflow-x-auto py-2">
-				<div
-					className="relative flex items-start justify-between min-w-full px-2"
-					style={{ minWidth: `${stages.length * NODE_SLOT}px` }}
-				>
-					{/* Progress Connector Line */}
-					{stages.length > 1 && (
-						<div
-							className="absolute -translate-y-1/2 rounded-full"
-							style={{
-								top: CIRCLE_CENTER_Y,
-								left: NODE_SLOT / 2,
-								width: `calc(100% - ${NODE_SLOT}px)`,
-								height: 3,
-								backgroundColor: "#E5E3E0",
-							}}
-						>
-							<div
-								className="h-full rounded-full bg-brand-600 transition-all duration-300"
-								style={{ width: `${progressPct}%` }}
-							/>
-						</div>
-					)}
-
-					{/* Node Items */}
-					{stages.map((stage) => {
-						const badge = stage.approved
-							? "approved"
-							: stage.current
-								? "current"
-								: null;
-
-						return (
-							<div
-								key={stage.stage_id}
-								className="relative z-10 flex flex-col items-center"
-								style={{ width: NODE_SLOT }}
-							>
-								<StageStep
-									stageNumber={stage.number ?? 0}
-									stageName={stage.name}
-									status={stage.approved ? "approved" : "unapproved"}
-									selected={selectedId === stage.stage_id}
-									badge={badge}
-									onClick={() => onSelectStage?.(stage.stage_id)}
-								/>
-
-								{/* Per-stage actions menu */}
-								{(onEditStage || onDeleteStage) && (
-									<div className="mt-1">
-										<DropdownMenu>
-											<DropdownMenuTrigger
-												aria-label={`Actions for ${stage.name}`}
-												className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer data-popup-open:bg-slate-100"
-											>
-												<EllipsisVertical size={16} />
-											</DropdownMenuTrigger>
-											<DropdownMenuContent align="end" className="w-44">
-												{onEditStage && (
-													<DropdownMenuItem
-														onClick={() => onEditStage(stage.stage_id)}
-													>
-														<Pencil size={14} />
-														Edit
-													</DropdownMenuItem>
-												)}
-												{onEditStage && onDeleteStage && (
-													<DropdownMenuSeparator />
-												)}
-												{onDeleteStage && (
-													<DropdownMenuItem
-														onClick={() => onDeleteStage(stage.stage_id)}
-														className="text-destructive focus:text-destructive"
-													>
-														<Trash2 size={14} />
-														Delete
-													</DropdownMenuItem>
-												)}
-											</DropdownMenuContent>
-										</DropdownMenu>
-									</div>
-								)}
-							</div>
-						);
-					})}
+			{/* Stepper Timeline / Empty State */}
+			{stages.length === 0 ? (
+				<div className="flex flex-col items-center justify-center py-8 text-center bg-neutral-subtle/30 rounded-md border border-dashed border-warm-gray-200 my-2">
+					<Workflow className="h-8 w-8 text-muted-foreground/40 mb-2" />
+					<p className="text-sm font-medium text-charcoal">No stages in sequence</p>
+					<p className="text-xs text-muted-foreground mt-1 max-w-sm">
+						{showAddButton
+							? "Create your first stage to establish the project roadmap and milestone sequence."
+							: "No stages have been defined for this project roadmap yet."}
+					</p>
 				</div>
-			</div>
+			) : (
+				<div className="hide-scrollbar overflow-x-auto py-2">
+					<div
+						className="relative flex items-start justify-between min-w-full px-2"
+						style={{ minWidth: `${stages.length * NODE_SLOT}px` }}
+					>
+						{/* Progress Connector Line */}
+						{stages.length > 1 && (
+							<div
+								className="absolute -translate-y-1/2 rounded-full"
+								style={{
+									top: CIRCLE_CENTER_Y,
+									left: NODE_SLOT / 2,
+									width: `calc(100% - ${NODE_SLOT}px)`,
+									height: 3,
+									backgroundColor: "#E5E3E0",
+								}}
+							>
+								<div
+									className="h-full rounded-full bg-brand-600 transition-all duration-300"
+									style={{ width: `${progressPct}%` }}
+								/>
+							</div>
+						)}
+
+						{/* Node Items */}
+						{stages.map((stage) => {
+							const badge = stage.approved
+								? "approved"
+								: stage.current
+									? "current"
+									: null;
+
+							return (
+								<div
+									key={stage.stage_id}
+									className="relative z-10 flex flex-col items-center"
+									style={{ width: NODE_SLOT }}
+								>
+									<StageStep
+										stageNumber={stage.number ?? 0}
+										stageName={stage.name}
+										status={stage.approved ? "approved" : "unapproved"}
+										selected={selectedId === stage.stage_id}
+										badge={badge}
+										onClick={() => onSelectStage?.(stage.stage_id)}
+									/>
+
+									{/* Per-stage actions menu */}
+									{(onEditStage || onDeleteStage) && (
+										<div className="mt-1">
+											<DropdownMenu>
+												<DropdownMenuTrigger
+													aria-label={`Actions for ${stage.name}`}
+													className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer data-popup-open:bg-slate-100"
+												>
+													<EllipsisVertical size={16} />
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="end" className="w-44">
+													{onEditStage && (
+														<DropdownMenuItem
+															onClick={() => onEditStage(stage.stage_id)}
+														>
+															<Pencil size={14} />
+															Edit
+														</DropdownMenuItem>
+													)}
+													{onEditStage && onDeleteStage && (
+														<DropdownMenuSeparator />
+													)}
+													{onDeleteStage && (
+														<DropdownMenuItem
+															onClick={() => onDeleteStage(stage.stage_id)}
+															className="text-destructive focus:text-destructive"
+														>
+															<Trash2 size={14} />
+															Delete
+														</DropdownMenuItem>
+													)}
+												</DropdownMenuContent>
+											</DropdownMenu>
+										</div>
+									)}
+								</div>
+							);
+						})}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
