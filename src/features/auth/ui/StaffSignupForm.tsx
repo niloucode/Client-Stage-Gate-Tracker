@@ -142,109 +142,115 @@ export function StaffSignupForm() {
 				e.preventDefault();
 				void form.handleSubmit();
 			}}
-			className="space-y-4"
+			className="flex flex-col gap-5 w-lg mx-auto"
 		>
+			{/* Invite code */}
+			<form.AppField name="inviteCode">
+				{(field) => (
+					<field.TextField
+						label="Invite Code"
+						required
+						autoComplete="off"
+						placeholder="e.g. K7Q2M9XWAB"
+						className="[&_input]:font-mono [&_input]:uppercase"
+					/>
+				)}
+			</form.AppField>
+
 			{/* First Name + Last Name */}
-			<div className="flex gap-3">
-				<div className="flex-1">
+			<div className="flex gap-4">
+				<div className="flex-1 min-w-0">
 					<form.AppField name="firstName">
 						{(field) => (
 							<field.TextField
 								label="First Name"
 								required
-								placeholder="John"
 								autoComplete="given-name"
+								placeholder="Jean"
 							/>
 						)}
 					</form.AppField>
 				</div>
-				<div className="flex-1">
+				<div className="flex-1 min-w-0">
 					<form.AppField name="lastName">
 						{(field) => (
 							<field.TextField
 								label="Last Name"
 								required
-								placeholder="Cecil"
 								autoComplete="family-name"
+								placeholder="Gunnhildr"
 							/>
 						)}
 					</form.AppField>
 				</div>
 			</div>
 
-			{/* Work Email */}
-			<form.AppField name="email">
+			{/* Email + Phone Number */}
+			<div className="flex gap-4">
+				<div className="flex-1 min-w-0">
+					<form.AppField name="email">
+						{(field) => (
+							<field.TextField
+								label="Email"
+								required
+								type="email"
+								autoComplete="email"
+								placeholder="employee@client.com"
+							/>
+						)}
+					</form.AppField>
+				</div>
+				<div className="flex-1 min-w-0">
+					<form.AppField name="phone">
+						{(field) => (
+							<field.PhoneField
+								label="Contact Number"
+								required
+								placeholder="+1 (555) 000-0000"
+							/>
+						)}
+					</form.AppField>
+				</div>
+			</div>
+
+			{/* Job Title */}
+			<form.AppField name="jobTitle">
 				{(field) => (
 					<field.TextField
-						label="Work Email"
+						label="Job Title"
 						required
-						type="email"
-						autoComplete="email"
-						placeholder="name@company.com"
+						placeholder="e.g. Product Director"
 					/>
 				)}
 			</form.AppField>
 
-			{/* Phone Number */}
-			<form.AppField name="phone">
-				{(field) => (
-					<field.PhoneField
-						label="Phone Number"
-						required
-						placeholder="+1 (555) 000-0000"
-					/>
-				)}
-			</form.AppField>
-
-			{/* Job Title + Invite Code */}
-			<div className="flex gap-3">
-				<div className="flex-1">
-					<form.AppField name="jobTitle">
+			{/* Password + Confirm Password */}
+			<div className="flex gap-4">
+				<div className="flex-1 min-w-0">
+					<form.AppField name="password">
 						{(field) => (
-							<field.TextField
-								label="Job Title"
+							<field.PasswordField
+								label="Password"
 								required
-								placeholder="e.g. Product Director"
+								autoComplete="new-password"
+								placeholder="Create a password"
 							/>
 						)}
 					</form.AppField>
 				</div>
-				<div className="flex-1">
-					<form.AppField name="inviteCode">
+				<div className="flex-1 min-w-0">
+					<form.AppField name="confirmPassword">
 						{(field) => (
-							<field.TextField
-								label="Invite Code"
+							<field.PasswordField
+								label="Confirm Password"
 								required
-								placeholder="e.g. ABC234XYZ789"
+								autoComplete="new-password"
+								placeholder="Confirm your password"
 							/>
 						)}
 					</form.AppField>
 				</div>
 			</div>
-
-			{/* Password */}
-			<form.AppField name="password">
-				{(field) => (
-					<field.PasswordField
-						label="Password"
-						required
-						autoComplete="new-password"
-						placeholder="Create a password"
-					/>
-				)}
-			</form.AppField>
-
-			{/* Confirm Password */}
-			<form.AppField name="confirmPassword">
-				{(field) => (
-					<field.PasswordField
-						label="Confirm Password"
-						required
-						autoComplete="new-password"
-						placeholder="Confirm your password"
-					/>
-				)}
-			</form.AppField>
 
 			{/* Error message */}
 			{error && (
@@ -261,9 +267,9 @@ export function StaffSignupForm() {
 					{success}
 				</p>
 			)}
-			<div>
-				<div className="text-center mt-6 mb-2">
-					<p className="text-[11px] text-gray-400 leading-relaxed">
+
+			<div className="flex flex-col gap-2">
+					<p className="text-center text-[11px] text-gray-400 leading-relaxed">
 						By signing up, you agree to our{" "}
 						<Link
 							href="#"
@@ -279,37 +285,27 @@ export function StaffSignupForm() {
 							Privacy Policy
 						</Link>
 					</p>
-				</div>
+				{/* Submit Button */}
 				<form.AppForm>
 					<form.SubmitButton
-						className="mt-2 w-full"
+						className="w-full"
 						pendingLabel="Creating account…"
 					>
 						Join Workspace
 					</form.SubmitButton>
 				</form.AppForm>
-			</div>
 
-			{/* OR divider */}
-			<div className="relative my-6">
-				<div className="absolute inset-0 flex items-center">
-					<div className="w-full border-t border-gray-200" />
-				</div>
-				<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-					<span className="bg-neutral-surface px-3 text-gray-400">OR</span>
-				</div>
+				{/* Sign in link */}
+				<p className="mt-2 text-center text-sm text-gray-500">
+					Already have an account?{" "}
+					<Link
+						href="/login"
+						className="text-brand-600 hover:text-brand-500 transition-colors"
+					>
+						Sign in
+					</Link>
+				</p>
 			</div>
-
-			{/* Sign in link */}
-			<p className="text-center text-sm text-gray-500">
-				Already have an account?{" "}
-				<Link
-					href="/login"
-					className="text-brand-600 hover:text-brand-500 transition-colors"
-				>
-					Sign in
-				</Link>
-			</p>
 		</form>
 	);
 }

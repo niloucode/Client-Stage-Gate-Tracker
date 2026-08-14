@@ -21,18 +21,19 @@ export default function ClientSignupPage() {
 				</div>
 
 				{/* Form */}
-				<div className="w-full bg-neutral-surface rounded-md p-6 border border-brand-100 max-w-[380px] mx-auto my-auto">
-					<div className="mb-7">
-						<h2>
-							Create your account
-						</h2>
-						<p className="text-sm text-gray-400 mt-1">
-							Use the invite code from your project owner
-						</p>
+				<div className="flex flex-col justify-center flex-1">
+					<div className="bg-neutral-surface rounded-md p-6 border border-brand-100 mx-auto">
+						<div className="mb-7">
+							<h2>
+								Create your account
+							</h2>
+							<p className="text-sm text-gray-400 mt-1">
+								Use the invite code from your project owner
+							</p>
+						</div>
+						<ClientSignupForm />
 					</div>
-					<ClientSignupForm />
 				</div>
-
 			</div>
 
 			{/* ── Right Panel — sticky ── */}
