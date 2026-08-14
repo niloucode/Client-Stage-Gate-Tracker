@@ -4,7 +4,6 @@
  */
 
 import Image from "next/image";
-import Link from "next/link";
 import { Hanken_Grotesk } from "next/font/google";
 import { StaffSignupForm } from "@/features/auth";
 
@@ -34,7 +33,7 @@ export default function SignupPage() {
 
 				{/* Form — vertically centred */}
 				<div className="flex flex-col justify-center flex-1">
-					<div className="w-full bg-neutral-surface rounded-md p-6 border border-brand-100 max-w-[380px] mx-auto">
+					<div className="w-full bg-neutral-surface rounded-md p-6 border border-brand-100 max-w-95 mx-auto">
 						<div className="mb-7">
 							<h2>
 								Create your account
@@ -49,7 +48,7 @@ export default function SignupPage() {
 
 			{/* ── Right Panel ── */}
 			<div className="hidden lg:flex flex-col items-center justify-center flex-1 relative overflow-hidden bg-navy-900">
-				<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#0f2044_0%,_#060D1C_70%)]" />
+				<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#0f2044_0%,#060D1C_70%)]" />
 				<div className="relative z-10 flex flex-col items-center">
 					<Image
 						src="/assets/logo/asceoft-logo-white.svg"
@@ -58,7 +57,7 @@ export default function SignupPage() {
 						height={32}
 						unoptimized
 					/>
-					<div className="mt-3 w-8 h-[2px] bg-brand-500 rounded-full" />
+					<div className="mt-3 w-8 h-0.5 bg-brand-500 rounded-full" />
 				</div>
 			</div>
 		</div>
