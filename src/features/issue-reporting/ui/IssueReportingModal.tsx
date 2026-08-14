@@ -538,6 +538,7 @@ const StepRow = ({
         />
         {step.image && (
           <div className="mt-2 relative inline-block group">
+            {/* eslint-disable-next-line @next/next/no-img-element -- legacy mock UI; next/image migration tracked with the issue-reporting feature */}
             <img
               src={step.image}
               alt="Attachment"

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
+import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Paperclip } from "lucide-react";
 import { useCreateComment } from "@/entities/comment/mutations";
@@ -16,12 +17,12 @@ export function TicketActivitySection({
   ticketId,
   comments,
   currentUser,
-  onImageClick,
+  onImageClickAction,
 }: {
   ticketId: string;
   comments: CommentWithImages[];
   currentUser: ProfileType | null;
-  onImageClick: (src: string) => void;
+  onImageClickAction: (src: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState<"all" | "comments" | "history">("all");
   const [commentText, setCommentText] = useState("");
@@ -32,7 +33,7 @@ export function TicketActivitySection({
 
   const createCommentMutation = useCreateComment();
 
-  function handleCommentImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleCommentImageChange(e: ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files) return;
 
@@ -80,20 +81,35 @@ export function TicketActivitySection({
       setIsSubmitting(true);
       supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("You must be logged in to post a comment.");
+      if (!user) {
+        setCommentError("You must be logged in to post a comment.");
+        return;
+      }
 
       const imageUrls: string[] = [];
+      let uploadError: string | null = null;
       for (const file of commentImages) {
         const fileExt = file.name.split(".").pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `comments/${fileName}`;
 
         const { error } = await supabase.storage.from("images").upload(filePath, file, { cacheControl: "3600", upsert: false });
-        if (error) throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+        if (error) {
+          uploadError = `Failed to upload ${file.name}: ${error.message}`;
+          break;
+        }
 
         const { data: { publicUrl } } = supabase.storage.from("images").getPublicUrl(filePath);
         uploadedPaths.push(filePath);
         imageUrls.push(publicUrl);
+      }
+
+      if (uploadError) {
+        if (uploadedPaths.length > 0) {
+          await supabase.storage.from("images").remove(uploadedPaths);
+        }
+        setCommentError(uploadError);
+        return;
       }
 
       await createCommentMutation.mutateAsync({
@@ -155,7 +171,16 @@ export function TicketActivitySection({
                       {comment.images?.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
                           {comment.images.map((img) => (
-                            <img key={img.image_id} src={img.image_src} alt="attachment" className="max-h-40 rounded-md object-contain cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onImageClick(img.image_src)} />
+                            <Image
+                              key={img.image_id}
+                              src={img.image_src}
+                              alt="attachment"
+                              width={400}
+                              height={300}
+                              unoptimized
+                              className="max-h-40 w-auto rounded-md object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => onImageClickAction(img.image_src)}
+                            />
                           ))}
                         </div>
                       )}
@@ -177,6 +202,8 @@ export function TicketActivitySection({
                 <div className="px-3 pt-2.5 flex flex-wrap gap-2">
                   {commentImagePreviews.map((preview, idx) => (
                     <div key={idx} className="relative inline-block">
+                      {/* blob: previews are not supported by next/image — plain img is intentional */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={preview} alt={`Preview ${idx + 1}`} className="h-16 w-auto rounded-md border border-gray-200 object-cover" />
                       <button type="button" onClick={() => removeImage(idx)} className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-800 text-white flex items-center justify-center text-[10px] hover:bg-red-600">×</button>
                     </div>
@@ -186,7 +213,7 @@ export function TicketActivitySection({
               <textarea
                 value={commentText}
                 onChange={(e) => { setCommentText(e.target.value); setCommentError(null); }}
-                onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleAddComment(); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) void handleAddComment(); }}
                 placeholder="Add a comment... (Ctrl+Enter to post)"
                 rows={2}
                 className="w-full px-3 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none resize-none bg-transparent"
@@ -198,7 +225,7 @@ export function TicketActivitySection({
                 </label>
                 <div className="flex items-center gap-2">
                   {commentError && <p className="text-xs text-destructive">{commentError}</p>}
-                  <button type="button" onClick={handleAddComment} disabled={(!commentText.trim() && commentImages.length === 0) || isSubmitting} className="text-xs font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors">
+                  <button type="button" onClick={() => void handleAddComment()} disabled={(!commentText.trim() && commentImages.length === 0) || isSubmitting} className="text-xs font-semibold text-neutral-surface bg-brand-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-md transition-colors">
                     {isSubmitting ? "Posting..." : "Comment"}
                   </button>
                 </div>

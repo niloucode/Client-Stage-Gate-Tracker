@@ -166,11 +166,10 @@ export default function TicketBoard({
 		: null;
 
 	/**
-	 * Intercepts selection events on individual ticket layout targets to open the view/edit drawer.
-	 * Includes a guard condition checking the mutable dragging reference to avoid firing
-	 * accidental element selections at the immediate termination of item canvas shifts.
-	 * @param {Ticket} ticket - The specific ticket entity being targeted for inspection.
-	 * @returns {void}
+	 * Intercepts selection events on individual ticket layout targets to
+	 * open the view/edit drawer. Guards against accidental selection right
+	 * after a drag ends.
+	 * @param ticket - The ticket being inspected.
 	 */
 	function handleSelectTicket(ticket: Ticket) {
 		if (wasDraggingRef.current) return;
@@ -181,24 +180,11 @@ export default function TicketBoard({
 	}
 
 	/**
-	 * Asynchronously posts fields gathered by the creation modal component configuration to the database backend.
-	 * Provides error isolation by preserving structural state rollback snapshots if the downstream
-	 * network request throws an unhandled server error mutation exception.
-	 * * @async
-	 * @param {Object} params - Cleaned property payload collected from form context inputs.
-	 * @param {string} params.name - Target display summary title for the generated ticket.
-	 * @param {Date} params.deadline_date - Due date timestamp threshold flag for overdue visual triggers.
-	 * @param {string | null} [params.watcher_id] - Profile reference string track for monitoring changes.
-	 * @param {string[] | null} [params.TicketAssigned] - Collection array of profile reference id keys linked to assignees.
-	 * @param {string[] | null} [params.tagIds] - Primary key association list attaching metadata styling tags.
-	 * @param {string | null} [params.description] - Markdown descriptive content text block string.
-	 * @param {Date | null} [params.start_date] - Timestamp scheduling baseline start window boundary.
-	 * @param {Date | null} [params.finish_date] - Timestamp scheduling baseline completion window boundary.
-	 * @returns {Promise<void>} Resolves when the local state append routine completes.
+	 * Posts the create-modal payload to the server. The modal owns all
+	 * toasts (success + failure) — failures propagate to its catch.
+	 * @param data - Cleaned payload from the create form (see CreateTicketFormData).
 	 */
 	async function handleCreateTicket(data: CreateTicketFormData) {
-		// The create modal owns all toasts (success + failure) — no duplicate
-		// toast here, and failures propagate to the modal's catch.
 		await createTicketMutation.mutateAsync({
 			...data,
 			workflow_id: workflow_id,
@@ -246,16 +232,9 @@ export default function TicketBoard({
 	}
 
 	/**
-	 * Processes the creation of a new tag or updates an existing tag by invoking
-	 * backend server actions and optimistically/reactively updating the local state.
-	 * * - If a `tag_id` is present, it targets an update mutation (`updateTag`).
-	 * - If `tag_id` is empty or falsy, it defaults to a creation sequence (`createTag`).
-	 * * @async
-	 * @param {string} tag_id - The unique identifier of the target tag. Pass an empty string or nullish value to trigger tag creation.
-	 * @param {string} name - The intended display name for the tag.
-	 * @param {string | null} [description] - Optional contextual details or summary of the tag's purpose.
-	 * @param {string | null} [color] - Optional Hex code, Tailwind class, or color variant identifier for UI styling.
-	 * @returns {Promise<void>} Resolves when the database mutations complete and React component state is successfully reconciled.
+	 * Creates or updates a tag: a `tag_id` targets an update, otherwise the
+	 * tag is created. Returns `{ error }` so the TagManager can surface it.
+	 * @param input - The tag payload (`tag_id` empty/falsy = create).
 	 */
 	async function handleSaveTag({
 		name,
@@ -286,22 +265,16 @@ export default function TicketBoard({
 	}
 
 	/**
-	 * Executes soft delete sequences on categorization tags. Removes references instantly from layout options
-	 * and retains a contextual rollback fallback array to cover unexpected database operational failures.
-	 * * @async
-	 * @param {string} tagId - Target primary key mapping to the custom styling metadata structure.
-	 * @returns {Promise<void>} Resolves when structural mutations finish execution steps.
+	 * Soft-deletes a tag.
+	 * @param tagId - The tag to remove.
 	 */
 	function handleDeleteTag(tagId: string) {
 		deleteTagMutation.mutate(tagId);
 	}
 
 	/**
-	 * Captures active pointer initialization signals emitted from active dnd-kit draggable component bounds.
-	 * Sets the layout state values with the current target card string and flags tracking parameters
-	 * to ensure background selections remain blocked during the motion phase.
-	 * @param {DragStartEvent} event - Native dnd-kit synthetic payload context tracking mouse/touch triggers.
-	 * @returns {void}
+	 * Records the dragged card id and blocks selection while dragging.
+	 * @param event - dnd-kit drag-start payload.
 	 */
 	function handleDragStart(event: DragStartEvent) {
 		if (isClientProfile) return;
@@ -310,13 +283,10 @@ export default function TicketBoard({
 	}
 
 	/**
-	 * Validates landing node layouts at pointer finalization boundaries to execute lane state shifts.
-	 * Modifies columns optimistically across local collections and handles exceptions by restoring
-	 * state signatures if backend mutations drop or timeout. Includes a short timeout delay clear
-	 * to separate trailing pointer tap events from completed movement paths.
-	 * * @async
-	 * @param {DragEndEvent} event - Context event tracking target item nodes and overlapping droppable lanes.
-	 * @returns {Promise<void>}
+	 * Moves a ticket to the column it was dropped on (awaited, with an
+	 * error toast on failure), then releases the drag lock after a short
+	 * delay so the trailing pointer tap doesn't open the slide-over.
+	 * @param event - dnd-kit drag-end payload.
 	 */
 	async function handleDragEnd(event: DragEndEvent) {
 		if (isClientProfile) return;

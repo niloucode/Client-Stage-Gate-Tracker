@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { Ticket, Tag } from "@/entities/types";
 import { status as StatusEnum } from "@/lib/generated/prisma";
 import type { ProfileSelect } from "@/entities/profile";
@@ -46,13 +46,13 @@ export function StatusBadge({ status }: { status: StatusEnum }) {
 
 export function SubtaskSelectionModal({
   open,
-  onOpenChange,
-  onSelectSubtask,
+  onOpenChangeAction,
+  onSelectSubtaskAction,
   availableTickets,
 }: {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSelectSubtask: (ticket: Ticket) => void;
+  onOpenChangeAction: (open: boolean) => void;
+  onSelectSubtaskAction: (ticket: Ticket) => void;
   availableTickets: Ticket[];
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,7 +64,7 @@ export function SubtaskSelectionModal({
   }, [availableTickets, searchQuery]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChangeAction}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0 border-none bg-card rounded-md overflow-hidden shadow-2xl">
         <DialogHeader className="sr-only">
           <DialogTitle>Add Subtask</DialogTitle>
@@ -109,7 +109,7 @@ export function SubtaskSelectionModal({
               <div
                 key={ticket.ticket_id}
                 className="flex items-center justify-between p-3.5 bg-card border border-border rounded-md hover:border-brand-200 hover:bg-brand-10/50 cursor-pointer transition-all group"
-                onClick={() => { onSelectSubtask(ticket); onOpenChange(false); }}
+                onClick={() => { onSelectSubtaskAction(ticket); onOpenChangeAction(false); }}
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div className="space-y-0.5 min-w-0">
@@ -149,19 +149,19 @@ export function TicketTitleAndStatus({
   ticket,
   tags,
   selectedTags,
-  setTicket,
-  setSelectedTags,
+  setTicketAction,
+  setSelectedTagsAction,
 }: {
   ticket: Ticket;
   tags: Tag[];
   selectedTags: string[];
-  setTicket: React.Dispatch<React.SetStateAction<Ticket>>;
-  setSelectedTags: React.Dispatch<React.SetStateAction<string[]>>;
+  setTicketAction: Dispatch<SetStateAction<Ticket>>;
+  setSelectedTagsAction: Dispatch<SetStateAction<string[]>>;
 }) {
   const currentStatusConfig = STATUS_CONFIG[ticket.status] ?? STATUS_CONFIG.PENDING;
 
   function setStatus(val: StatusEnum) {
-    setTicket((t) => {
+    setTicketAction((t) => {
       const now = new Date();
       return {
         ...t,
@@ -172,7 +172,7 @@ export function TicketTitleAndStatus({
     });
   }
 
-  const toggleTag = (tagId: string) => setSelectedTags((prev) => prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]);
+  const toggleTag = (tagId: string) => setSelectedTagsAction((prev) => prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]);
 
   return (
     <div className="flex flex-col gap-3 px-5 py-3.5 border-b border-gray-100 shrink-0 relative">
@@ -182,7 +182,7 @@ export function TicketTitleAndStatus({
             type="text"
             value={ticket.name}
             maxLength={50}
-            onChange={(e) => setTicket((t) => ({ ...t, name: e.target.value }))}
+            onChange={(e) => setTicketAction((t) => ({ ...t, name: e.target.value }))}
             placeholder="Ticket title..."
             className="-ml-1 text-ellipsis text-2xl font-light text-gray-900 bg-transparent border border-transparent hover:border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none rounded-md px-1.5 py-0.5 max-w-[calc(100%-2rem)] field-sizing-content"
           />
@@ -242,11 +242,11 @@ export function TicketTitleAndStatus({
 export function TicketAssignees({
   ticket,
   profiles,
-  setTicket,
+  setTicketAction,
 }: {
   ticket: Ticket;
   profiles: ProfileSelect[];
-  setTicket: React.Dispatch<React.SetStateAction<Ticket>>;
+  setTicketAction: Dispatch<SetStateAction<Ticket>>;
 }) {
   const availableProfiles = profiles.filter((u) => !(ticket.TicketAssigned || []).some((a) => a.profile_id === u.profile_id));
   const watcher = profiles.find((u) => u.profile_id === ticket.watcher_id);
@@ -268,7 +268,7 @@ export function TicketAssignees({
                   {availableProfiles.map((p) => (
                     <DropdownMenuItem
                       key={p.profile_id}
-                      onClick={() => setTicket((t) => ({ ...t, TicketAssigned: [...(t.TicketAssigned || []), { ticket_id: t.ticket_id, profile_id: p.profile_id, assigned_date: new Date(), Profile: p }] }))}
+                      onClick={() => setTicketAction((t) => ({ ...t, TicketAssigned: [...(t.TicketAssigned || []), { ticket_id: t.ticket_id, profile_id: p.profile_id, assigned_date: new Date(), Profile: p }] }))}
                       className="cursor-pointer"
                     >
                       <span className="flex items-center gap-2 truncate">
@@ -290,7 +290,7 @@ export function TicketAssignees({
                 <UserAvatar name={fullName} />
                 <button
                   type="button"
-                  onClick={() => setTicket((t) => ({ ...t, TicketAssigned: t.TicketAssigned.filter((x) => x.profile_id !== a.profile_id) }))}
+                  onClick={() => setTicketAction((t) => ({ ...t, TicketAssigned: t.TicketAssigned.filter((x) => x.profile_id !== a.profile_id) }))}
                   className="absolute inset-0 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs font-bold"
                 >✕</button>
               </div>
@@ -308,9 +308,9 @@ export function TicketAssignees({
             <DropdownMenuContent className="w-52 max-h-52 overflow-y-auto" align="start">
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-2 py-1">Select Watcher</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setTicket((t) => ({ ...t, watcher_id: null }))} className="cursor-pointer text-xs text-gray-400">None</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTicketAction((t) => ({ ...t, watcher_id: null }))} className="cursor-pointer text-xs text-gray-400">None</DropdownMenuItem>
                 {profiles.map((p) => (
-                  <DropdownMenuItem key={p.profile_id} onClick={() => setTicket((t) => ({ ...t, watcher_id: p.profile_id }))} className="cursor-pointer">
+                  <DropdownMenuItem key={p.profile_id} onClick={() => setTicketAction((t) => ({ ...t, watcher_id: p.profile_id }))} className="cursor-pointer">
                     <span className="flex items-center gap-2 truncate">
                       <UserAvatar name={`${p.first_name} ${p.last_name}`} size="w-6 h-6 text-[10px]" color="bg-emerald-500" />
                       <span className="text-sm text-gray-700 font-medium truncate">{`${p.first_name} ${p.last_name}`}</span>
@@ -325,7 +325,7 @@ export function TicketAssignees({
           {watcher ? (
             <div title={`${watcher.first_name} ${watcher.last_name}`} className="group relative inline-flex items-center justify-center shrink-0 gap-2">
               <UserAvatar name={`${watcher.first_name} ${watcher.last_name}`} color="bg-emerald-500" />
-              <button type="button" onClick={() => setTicket((t) => ({ ...t, watcher_id: null }))} className="absolute inset-0 rounded-full bg-black/30 p-3 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs font-bold">✕</button>
+              <button type="button" onClick={() => setTicketAction((t) => ({ ...t, watcher_id: null }))} className="absolute inset-0 rounded-full bg-black/30 p-3 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-xs font-bold">✕</button>
               <span className="text-sm text-neutral-border">{`${watcher.first_name} ${watcher.last_name}`}</span>
             </div>
           ) : <span className="text-sm text-gray-400">Unassigned</span>}
@@ -336,12 +336,12 @@ export function TicketAssignees({
 }
 
 export function TicketApiDetails({
-  apiMethod, apiRoute, setApiMethod, setApiRoute,
+  apiMethod, apiRoute, setApiMethodAction, setApiRouteAction,
 }: {
   apiMethod: "GET" | "POST" | "PUT" | "DELETE";
   apiRoute: string;
-  setApiMethod: (val: "GET" | "POST" | "PUT" | "DELETE") => void;
-  setApiRoute: (val: string) => void;
+  setApiMethodAction: (val: "GET" | "POST" | "PUT" | "DELETE") => void;
+  setApiRouteAction: (val: string) => void;
 }) {
   return (
     <div className="space-y-2">
@@ -353,20 +353,20 @@ export function TicketApiDetails({
         </div>
       )}
       <div className="grid grid-cols-[110px_1fr] gap-3">
-        <select value={apiMethod} onChange={(e) => setApiMethod(e.target.value as "GET" | "POST" | "PUT" | "DELETE")} className="w-full rounded-md border border-gray-200 bg-neutral-surface px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <select value={apiMethod} onChange={(e) => setApiMethodAction(e.target.value as "GET" | "POST" | "PUT" | "DELETE")} className="w-full rounded-md border border-gray-200 bg-neutral-surface px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
           {["GET", "POST", "PUT", "DELETE"].map((m) => <option key={m}>{m}</option>)}
         </select>
-        <Input placeholder="/api/v1/resource" value={apiRoute} onChange={(e) => setApiRoute(e.target.value)} />
+        <Input placeholder="/api/v1/resource" value={apiRoute} onChange={(e) => setApiRouteAction(e.target.value)} />
       </div>
     </div>
   );
 }
 
 export function TicketSchedule({
-  ticket, setTicket, showDateError,
+  ticket, setTicketAction, showDateError,
 }: {
   ticket: Ticket;
-  setTicket: React.Dispatch<React.SetStateAction<Ticket>>;
+  setTicketAction: Dispatch<SetStateAction<Ticket>>;
   showDateError?: boolean;
 }) {
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
@@ -380,7 +380,7 @@ export function TicketSchedule({
           <DateTimePicker
             label="PLANNED START"
             value={ticket.plan_start_at ? new Date(ticket.plan_start_at) : undefined}
-            onChange={(date) => setTicket((t) => ({ ...t, plan_start_at: date ?? t.plan_start_at }))}
+            onChange={(date) => setTicketAction((t) => ({ ...t, plan_start_at: date ?? t.plan_start_at }))}
             placeholder="Pick planned start date"
             className="h-9 text-xs"
             error={showDateError ? "Start must be before End" : undefined}
@@ -391,7 +391,7 @@ export function TicketSchedule({
             label="DEADLINE"
             required
             value={ticket.plan_end_at ? new Date(ticket.plan_end_at) : undefined}
-            onChange={(date) => setTicket((t) => ({ ...t, plan_end_at: date ?? t.plan_end_at }))}
+            onChange={(date) => setTicketAction((t) => ({ ...t, plan_end_at: date ?? t.plan_end_at }))}
             placeholder="Pick deadline"
             className="h-9 text-xs"
             error={showDateError ? "Start must be before End" : undefined}
@@ -427,13 +427,13 @@ export function TicketSchedule({
                 <span className={`truncate ${style.text}`}>{linkedIssue ? linkedIssue.name : "Link an issue..."}</span>
               </div>
               {linkedIssue && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); setLinkedIssue(null); setTicket((t) => ({ ...t, issue_id: null })); }} className={`text-xs font-bold px-1 shrink-0 ${style.close}`} title="Unlink Issue">✕</button>
+                <button type="button" onClick={(e) => { e.stopPropagation(); setLinkedIssue(null); setTicketAction((t) => ({ ...t, issue_id: null })); }} className={`text-xs font-bold px-1 shrink-0 ${style.close}`} title="Unlink Issue">✕</button>
               )}
             </div>
           );
         })()}
       </div>
-      <IssueTableModal open={isIssueModalOpen} onOpenChange={setIsIssueModalOpen} onSelectIssue={(issue) => { setLinkedIssue(issue); setTicket((t) => ({ ...t, issue_id: issue.id })); }} />
+      <IssueTableModal open={isIssueModalOpen} onOpenChange={setIsIssueModalOpen} onSelectIssue={(issue) => { setLinkedIssue(issue); setTicketAction((t) => ({ ...t, issue_id: issue.id })); }} />
     </div>
   );
 }

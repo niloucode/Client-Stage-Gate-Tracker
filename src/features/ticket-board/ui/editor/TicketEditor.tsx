@@ -6,6 +6,7 @@ import { Ticket, Tag } from "@/entities/types";
 import { useProjectMembers } from "@/entities/profile";
 import { useTicketImages, useTicketComments } from "@/entities/comment/queries";
 import { status as StatusEnum } from "@/lib/generated/prisma";
+import Image from "next/image";
 import ImageLightbox from "@/shared/ui/image-lightbox";
 import { Button, FormInput, Label } from "@/components/ui";
 
@@ -24,8 +25,8 @@ import { ticketCode } from "./helpers";
 export default function TicketEditor({
   initialTicket,
   tags,
-  onClose,
-  onUpdate,
+  onCloseAction,
+  onUpdateAction,
   allTickets = [],
   isSubtaskView = false,
   parentTicket = null,
@@ -34,8 +35,8 @@ export default function TicketEditor({
 }: {
   initialTicket: Ticket;
   tags: Tag[];
-  onClose: () => void;
-  onUpdate: (t: Ticket) => void;
+  onCloseAction: () => void;
+  onUpdateAction: (t: Ticket) => void;
   allTickets?: Ticket[];
   isSubtaskView?: boolean;
   parentTicket?: Ticket | null;
@@ -56,8 +57,8 @@ export default function TicketEditor({
   const state = useTicketEditor({
     initialTicket,
     tags,
-    onUpdate,
-    onClose,
+    onUpdate: onUpdateAction,
+    onClose: onCloseAction,
     isSubtaskView,
     allTickets,
   });
@@ -69,7 +70,7 @@ export default function TicketEditor({
         <span className="font-mono text-sm text-brand-500">
           {isSubtaskView ? "Subtask" : ticketCode(initialTicket.ticket_id)}
         </span>
-        <Button variant="ghost" size="icon-sm" onClick={onClose}>
+        <Button variant="ghost" size="icon-sm" onClick={onCloseAction}>
           <X className="text-neutral-border hover:text-foreground transition-all duration-300" />
         </Button>
       </div>
@@ -91,8 +92,8 @@ export default function TicketEditor({
         ticket={state.ticket}
         tags={tags}
         selectedTags={state.selectedTags}
-        setTicket={state.setTicket}
-        setSelectedTags={state.setSelectedTags}
+        setTicketAction={state.setTicket}
+        setSelectedTagsAction={state.setSelectedTags}
       />
 
       <div className="flex-1 overflow-y-auto scrollbar-gutter-stable pb-24">
@@ -101,19 +102,19 @@ export default function TicketEditor({
           <TicketAssignees
             ticket={state.ticket}
             profiles={profiles}
-            setTicket={state.setTicket}
+            setTicketAction={state.setTicket}
           />
           {state.isApiTagSelected && (
             <TicketApiDetails
               apiMethod={state.apiMethod}
               apiRoute={state.apiRoute}
-              setApiMethod={state.setApiMethod}
-              setApiRoute={state.setApiRoute}
+              setApiMethodAction={state.setApiMethod}
+              setApiRouteAction={state.setApiRoute}
             />
           )}
           <TicketSchedule
             ticket={state.ticket}
-            setTicket={state.setTicket}
+            setTicketAction={state.setTicket}
             showDateError={state.showDateError}
           />
         </div>
@@ -233,7 +234,7 @@ export default function TicketEditor({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  state.handleRemoveSubtask(subtask.ticket_id);
+                                  void state.handleRemoveSubtask(subtask.ticket_id);
                                 }}
                                 className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
                                 title="Remove subtask"
@@ -288,10 +289,13 @@ export default function TicketEditor({
             </p>
             <div className="flex flex-wrap gap-2">
               {ticketImages.map((img) => (
-                <img
+                <Image
                   key={img.image_id}
                   src={img.image_src}
                   alt="attachment"
+                  width={200}
+                  height={200}
+                  unoptimized
                   className="h-16 w-auto rounded-md border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => state.setLightboxSrc(img.image_src)}
                 />
@@ -305,7 +309,7 @@ export default function TicketEditor({
           ticketId={state.ticket.ticket_id}
           comments={comments}
           currentUser={state.user}
-          onImageClick={state.setLightboxSrc}
+          onImageClickAction={state.setLightboxSrc}
         />
       </div>
 
@@ -313,7 +317,7 @@ export default function TicketEditor({
       <div className="fixed bottom-0 right-0 w-160 flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-neutral-surface z-50">
         <button
           type="button"
-          onClick={onClose}
+          onClick={onCloseAction}
           className="text-sm font-medium text-gray-500 px-4 py-2 rounded-md hover:bg-gray-100"
         >
           Cancel
@@ -342,7 +346,7 @@ export default function TicketEditor({
             state.setIsSubtaskViewOpen(false);
             state.setSelectedSubtask(null);
           }}
-          onUpdate={onUpdate}
+          onUpdate={onUpdateAction}
           tags={tags}
           allTickets={allTickets}
           isSubtaskView={true}
@@ -354,8 +358,8 @@ export default function TicketEditor({
 
       <SubtaskSelectionModal
         open={state.isSubtaskSelectionOpen}
-        onOpenChange={state.setIsSubtaskSelectionOpen}
-        onSelectSubtask={state.handleAddSubtask}
+        onOpenChangeAction={state.setIsSubtaskSelectionOpen}
+        onSelectSubtaskAction={state.handleAddSubtask}
         availableTickets={state.availableTickets}
       />
     </div>

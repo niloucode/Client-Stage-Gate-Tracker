@@ -57,92 +57,76 @@ export const ticketHistoryEntrySchema = z
 			});
 		}
 
-		// ── details structure ───────────────────────────────────────────
+		// ── details structure (validated without throw-in-try control flow) ──
+		const details = entry.details;
+
 		// RENAMED and UPDATED_STATUS carry JSON {from, to} where both are strings.
 		if (
 			(entry.action === "RENAMED" || entry.action === "UPDATED_STATUS") &&
-			entry.details
+			details &&
+			!hasStringFields(details, ["from", "to"])
 		) {
-			try {
-				const parsed = JSON.parse(entry.details);
-				if (
-					typeof parsed !== "object" ||
-					!parsed ||
-					typeof parsed.from !== "string" ||
-					typeof parsed.to !== "string"
-				) {
-					throw new Error("invalid shape");
-				}
-			} catch {
-				ctx.addIssue({
-					code: "custom",
-					message: `details for "${entry.action}" must be JSON with {from, to} strings`,
-					path: ["details"],
-				});
-			}
+			ctx.addIssue({
+				code: "custom",
+				message: `details for "${entry.action}" must be JSON with {from, to} strings`,
+				path: ["details"],
+			});
 		}
 
 		// WATCHER_CHANGED carries JSON {from, to} where values are UUID strings or null.
-		if (entry.action === "WATCHER_CHANGED" && entry.details) {
-			try {
-				const parsed = JSON.parse(entry.details);
-				if (typeof parsed !== "object" || !parsed)
-					throw new Error("invalid shape");
-				if (parsed.from !== null && typeof parsed.from !== "string")
-					throw new Error("invalid from");
-				if (parsed.to !== null && typeof parsed.to !== "string")
-					throw new Error("invalid to");
-			} catch {
-				ctx.addIssue({
-					code: "custom",
-					message: `details for WATCHER_CHANGED must be JSON with {from, to} as UUID strings or null`,
-					path: ["details"],
-				});
-			}
+		if (entry.action === "WATCHER_CHANGED" && details && !isWatcherChangedDetails(details)) {
+			ctx.addIssue({
+				code: "custom",
+				message: `details for WATCHER_CHANGED must be JSON with {from, to} as UUID strings or null`,
+				path: ["details"],
+			});
 		}
 
 		// FINISHED carries JSON {from} with the previous status.
-		if (entry.action === "FINISHED" && entry.details) {
-			try {
-				const parsed = JSON.parse(entry.details);
-				if (
-					typeof parsed !== "object" ||
-					!parsed ||
-					typeof parsed.from !== "string"
-				) {
-					throw new Error("invalid shape");
-				}
-			} catch {
-				ctx.addIssue({
-					code: "custom",
-					message: `details for FINISHED must be JSON with {from} string`,
-					path: ["details"],
-				});
-			}
+		if (entry.action === "FINISHED" && details && !hasStringFields(details, ["from"])) {
+			ctx.addIssue({
+				code: "custom",
+				message: `details for FINISHED must be JSON with {from} string`,
+				path: ["details"],
+			});
 		}
 
 		// CREATED and DELETE carry JSON {ticket_name} string.
 		if (
 			(entry.action === "CREATED" || entry.action === "DELETE") &&
-			entry.details
+			details &&
+			!hasStringFields(details, ["ticket_name"])
 		) {
-			try {
-				const parsed = JSON.parse(entry.details);
-				if (
-					typeof parsed !== "object" ||
-					!parsed ||
-					typeof parsed.ticket_name !== "string"
-				) {
-					throw new Error("invalid shape");
-				}
-			} catch {
-				ctx.addIssue({
-					code: "custom",
-					message: `details for "${entry.action}" must be JSON with {ticket_name} string`,
-					path: ["details"],
-				});
-			}
+			ctx.addIssue({
+				code: "custom",
+				message: `details for "${entry.action}" must be JSON with {ticket_name} string`,
+				path: ["details"],
+			});
 		}
 	});
 
-export type TicketHistoryEntryInput = z.infer<typeof ticketHistoryEntrySchema>;
+/** True when `value` parses as a JSON object whose listed fields are all strings. */
+function hasStringFields(value: string, fields: string[]): boolean {
+	try {
+		const parsed: unknown = JSON.parse(value);
+		if (typeof parsed !== "object" || parsed === null) return false;
+		return fields.every(
+			(f) => typeof (parsed as Record<string, unknown>)[f] === "string",
+		);
+	} catch {
+		return false;
+	}
+}
+
+/** True when `value` parses as a JSON object with {from, to} as UUID strings or null. */
+function isWatcherChangedDetails(value: string): boolean {
+	try {
+		const parsed: unknown = JSON.parse(value);
+		if (typeof parsed !== "object" || parsed === null) return false;
+		const { from, to } = parsed as Record<string, unknown>;
+		const isUuidOrNull = (v: unknown) => v === null || typeof v === "string";
+		return isUuidOrNull(from) && isUuidOrNull(to);
+	} catch {
+		return false;
+	}
+}

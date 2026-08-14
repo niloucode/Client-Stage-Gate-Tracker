@@ -37,7 +37,7 @@ import {
 /* TYPES & INTERFACES                                                        */
 /* -------------------------------------------------------------------------- */
 
-import type { UrgencyLevel, BugType, IssueItem, StepItem } from "@/entities/issue";
+import type { UrgencyLevel, BugType, IssueItem } from "@/entities/issue";
 export type { UrgencyLevel, BugType, StepItem, IssueItem } from "@/entities/issue";
 export type UrgencyFilterOption = UrgencyLevel | "all";
 
@@ -393,6 +393,7 @@ export const IssueDetailsModal: React.FC<IssueDetailsModalProps> = ({
                       <div className="flex-1 text-xs mt-0.5 text-foreground">
                         {step.description}
                         {step.image && (
+                          // eslint-disable-next-line @next/next/no-img-element -- legacy mock UI; next/image migration tracked with the issue-reporting feature
                           <img src={step.image} alt="Attachment" className="mt-2 h-16 w-16 object-cover rounded border border-border" />
                         )}
                       </div>
@@ -627,7 +628,7 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
       name: formData.name,
       type: formData.type || "other",
       specificType: formData.specificType,
-      urgency: formData.urgency,
+      urgency: formData.urgency || "low",
       status: "unlinked",
       clientName: "Current Client",
       reportedAt: `${now.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" })}, ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}`,

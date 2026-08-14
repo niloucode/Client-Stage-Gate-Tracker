@@ -44,7 +44,7 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
       name: formData.name,
       type: formData.type || "other",
       specificType: formData.specificType,
-      urgency: formData.urgency,
+      urgency: formData.urgency || "low",
       status: "unlinked",
       clientName: "Current User",
       reportedAt: `${now.toLocaleDateString("en-US", {

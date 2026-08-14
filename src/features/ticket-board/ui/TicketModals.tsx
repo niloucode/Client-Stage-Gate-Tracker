@@ -255,7 +255,7 @@ export function TicketModalCreate({
 		onClose();
 	};
 
-	async function handleSubmit(e: React.FormEvent) {
+	async function handleSubmit(e: React.SyntheticEvent) {
 		e.preventDefault();
 
 		const rawPayload = {
@@ -289,6 +289,7 @@ export function TicketModalCreate({
 
 		const imageUrls: string[] = [];
 		const uploadedPaths: string[] = [];
+		let uploadError: string | null = null;
 
 		if (imageFiles.length > 0) {
 			try {
@@ -305,8 +306,10 @@ export function TicketModalCreate({
 							upsert: false,
 						});
 
-					if (error)
-						throw new Error(`Failed to upload image: ${error.message}`);
+					if (error) {
+						uploadError = `Failed to upload image: ${error.message}`;
+						break;
+					}
 
 					const {
 						data: { publicUrl },
@@ -317,6 +320,11 @@ export function TicketModalCreate({
 				}
 			} catch (err) {
 				console.error("Image upload failed:", err);
+				uploadError =
+					err instanceof Error ? err.message : "Failed to upload images.";
+			}
+
+			if (uploadError) {
 				// All-or-nothing: remove already-uploaded files and abort the
 				// ticket creation so no ticket is created without its images.
 				if (uploadedPaths.length > 0) {
@@ -683,6 +691,8 @@ export function TicketModalCreate({
 								<div className="flex flex-wrap gap-3 pt-1">
 									{imagePreviews.map((preview, idx) => (
 										<div key={idx} className="relative inline-block">
+											{/* blob: previews are not supported by next/image — plain img is intentional */}
+											{/* eslint-disable-next-line @next/next/no-img-element */}
 											<img
 												src={preview}
 												alt={`Preview ${idx + 1}`}
@@ -822,8 +832,8 @@ export function TicketModalEdit({
 					<TicketEditor
 						key={activeTicket.ticket_id}
 						initialTicket={activeTicket}
-						onClose={onClose}
-						onUpdate={handleTicketUpdate}
+						onCloseAction={onClose}
+						onUpdateAction={handleTicketUpdate}
 						{...rest}
 					/>
 				)}
