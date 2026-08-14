@@ -159,12 +159,11 @@ export function ModuleCard({
 
 	const handleDeleteModule = async () => {
 		if (!moduleToDelete || activePhase === null) return;
-		await deleteModuleMutation.mutateAsync({
-			moduleId: moduleToDelete,
-			stageId,
-		});
-		setIsDeleteConfirmOpen(false);
-		setModuleToDelete(null);
+		try {
+			await deleteModuleMutation.mutateAsync({
+				moduleId: moduleToDelete,
+				stageId,
+			});
 
 			// delete toast
 			toast.add({
@@ -172,6 +171,19 @@ export function ModuleCard({
 				description: `Module has been deleted successfully.`,
 				type: "delete",
 			});
+		} catch (error) {
+			toast.add({
+				title: "Delete Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Something went wrong deleting the module.",
+				type: "error",
+			});
+		} finally {
+			setIsDeleteConfirmOpen(false);
+			setModuleToDelete(null);
+		}
 	};
 
 	const getDeadlineColorClass = (state: string) => {

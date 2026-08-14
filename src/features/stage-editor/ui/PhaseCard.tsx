@@ -100,25 +100,36 @@ export const PhaseCard = forwardRef<
 		const phase = phases.find((p) => p.number === phaseToDelete);
 		if (!phase) return;
 
-		await deletePhaseMutation.mutateAsync({
-			phaseId: phase.phase_id,
-			stageId,
-		});
+		try {
+			await deletePhaseMutation.mutateAsync({
+				phaseId: phase.phase_id,
+				stageId,
+			});
 
-		toast.add({
-			title: "Phase Deleted",
-			description: `"${phase.name}" has been deleted successfully.`,
-			type: "delete",
-		});
+			toast.add({
+				title: "Phase Deleted",
+				description: `"${phase.name}" has been deleted successfully.`,
+				type: "delete",
+			});
 
-		if (activePhase === phaseToDelete) {
-			setActivePhase(null);
-		} else if (activePhase !== null && activePhase > phaseToDelete) {
-			setActivePhase(activePhase - 1);
+			if (activePhase === phaseToDelete) {
+				setActivePhase(null);
+			} else if (activePhase !== null && activePhase > phaseToDelete) {
+				setActivePhase(activePhase - 1);
+			}
+		} catch (error) {
+			toast.add({
+				title: "Delete Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Something went wrong deleting the phase.",
+				type: "error",
+			});
+		} finally {
+			setIsDeleteConfirmOpen(false);
+			setPhaseToDelete(null);
 		}
-
-		setIsDeleteConfirmOpen(false);
-		setPhaseToDelete(null);
 	};
 
 	// Drag and Drop Handlers
@@ -179,13 +190,27 @@ export const PhaseCard = forwardRef<
 			return;
 		}
 
-		await reorderPhaseMutation.mutateAsync({
-			phaseId: draggedPhase.phase_id,
-			targetNumber,
-			stageId,
-		});
-
-		setDraggedIndex(null);
+		try {
+			await reorderPhaseMutation.mutateAsync({
+				phaseId: draggedPhase.phase_id,
+				targetNumber,
+				stageId,
+			});
+		} catch (error) {
+			toast.add({
+				title: "Reorder Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Something went wrong reordering the phases.",
+				type: "error",
+			});
+		} finally {
+			setDraggedIndex(null);
+			document.querySelectorAll(".drag-over").forEach((el) => {
+				el.classList.remove("drag-over");
+			});
+		}
 	};
 
 	// Find the current active phase to populate the details section

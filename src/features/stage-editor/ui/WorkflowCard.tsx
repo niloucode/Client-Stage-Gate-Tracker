@@ -139,19 +139,30 @@ export function WorkflowCard({
 
 	const handleDeleteWorkflow = async () => {
 		if (!workflowToDelete) return;
-		await deleteWorkflowMutation.mutateAsync({
-			workflowId: workflowToDelete.workflow_id,
-			stageId,
-		});
+		try {
+			await deleteWorkflowMutation.mutateAsync({
+				workflowId: workflowToDelete.workflow_id,
+				stageId,
+			});
 
-		toast.add({
-			title: "Workflow Deleted",
-			description: `"${workflowToDelete.name}" has been deleted successfully.`,
-			type: "delete",
-		});
-
-		setIsDeleteConfirmOpen(false);
-		setWorkflowToDelete(null);
+			toast.add({
+				title: "Workflow Deleted",
+				description: `"${workflowToDelete.name}" has been deleted successfully.`,
+				type: "delete",
+			});
+		} catch (error) {
+			toast.add({
+				title: "Delete Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Something went wrong deleting the workflow.",
+				type: "error",
+			});
+		} finally {
+			setIsDeleteConfirmOpen(false);
+			setWorkflowToDelete(null);
+		}
 	};
 
 	// Drag and Drop Handlers
@@ -212,13 +223,27 @@ export function WorkflowCard({
 			return;
 		}
 
-		await reorderWorkflowMutation.mutateAsync({
-			workflowId: draggedWf.workflow_id,
-			targetNumber,
-			stageId,
-		});
-
-		setDraggedIndex(null);
+		try {
+			await reorderWorkflowMutation.mutateAsync({
+				workflowId: draggedWf.workflow_id,
+				targetNumber,
+				stageId,
+			});
+		} catch (error) {
+			toast.add({
+				title: "Reorder Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Something went wrong reordering the workflows.",
+				type: "error",
+			});
+		} finally {
+			setDraggedIndex(null);
+			document.querySelectorAll(".drag-over-workflow").forEach((el) => {
+				el.classList.remove("drag-over-workflow");
+			});
+		}
 	};
 
 	return (
