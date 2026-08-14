@@ -3,14 +3,16 @@
 import { useState, useMemo } from "react";
 import { z } from "zod";
 import { Plus, Save, Trash2 } from "lucide-react";
+import { useSelector } from "@tanstack/react-form";
 
 import type { Module } from "../../types";
-import { getFieldErrors } from "@/shared/lib/zod";
+import { useAppForm, formErrorToMessage } from "@/shared/form";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import {
 	hasValidPlannedRange,
 	toSchedulingDates,
 } from "@/shared/lib/scheduling";
+import { useCreateModule, useUpdateModule } from "@/entities/module/mutations";
 import {
 	Button,
 	ConfirmationModal,
@@ -25,13 +27,6 @@ import {
 	toast,
 } from "@/components/ui";
 
-export interface ModuleFormData {
-	name: string;
-	planStart: Date | null;
-	planEnd: Date | null;
-	actualEnd: Date | null;
-}
-
 export interface ModuleModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -40,107 +35,133 @@ export interface ModuleModalProps {
 	 */
 	module?: Module | null;
 	activePhase?: number | null;
-	onSave: (data: ModuleFormData) => void;
+	stageId: string;
+	/** Parent phase — required for Create mode. */
+	phaseId?: string | null;
 	onDelete?: () => void;
 }
 
-function areDatesEqual(d1: Date | null, d2: Date | null): boolean {
-	if (!d1 && !d2) return true;
-	if (!d1 || !d2) return false;
-	const t1 = d1.getTime();
-	const t2 = d2.getTime();
-	if (Number.isNaN(t1) && Number.isNaN(t2)) return true;
-	return t1 === t2;
-}
+const moduleModalSchema = z
+	.object({
+		name: z
+			.string()
+			.min(1, "Module name is required")
+			.max(35, "Module name must be 35 characters or less"),
+		planStart: z
+			.date()
+			.nullable()
+			.refine((val): val is Date => val !== null, {
+				error: "Plan Start Date is required",
+			}),
+		planEnd: z
+			.date()
+			.nullable()
+			.refine((val): val is Date => val !== null, {
+				error: "Plan End Date is required",
+			}),
+		actualStart: z.date().optional().nullable(),
+		actualEnd: z.date().optional().nullable(),
+	})
+	.superRefine((data, ctx) => {
+		if (!hasValidPlannedRange(toSchedulingDates(data))) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Start must be before End",
+				path: ["planStart"],
+			});
+			ctx.addIssue({
+				code: "custom",
+				message: "End must be after Start",
+				path: ["planEnd"],
+			});
+		}
+	});
 
-const baseModuleModalSchema = z.object({
-	name: z
-		.string()
-		.min(1, "Module name is required")
-		.max(35, "Module name must be 35 characters or less"),
-	planStart: z
-		.date()
-		.nullable()
-		.refine((val): val is Date => val !== null, {
-			message: "Plan Start Date is required",
-		}),
-	planEnd: z
-		.date()
-		.nullable()
-		.refine((val): val is Date => val !== null, {
-			message: "Plan End Date is required",
-		}),
-	actualStart: z.date().optional().nullable(),
-	actualEnd: z.date().optional().nullable(),
-});
-
-const moduleModalSchema = baseModuleModalSchema.superRefine((data, ctx) => {
-	if (!hasValidPlannedRange(toSchedulingDates(data))) {
-		ctx.addIssue({
-			code: "custom",
-			message: "Start must be before End",
-			path: ["planStart"],
-		});
-		ctx.addIssue({
-			code: "custom",
-			message: "End must be after Start",
-			path: ["planEnd"],
-		});
-	}
-});
-
-const getInitialFormData = (module?: Module | null): ModuleFormData => ({
-	name: module?.name ?? "",
-	planStart: module?.planStart ? new Date(module.planStart) : null,
-	planEnd: module?.planEnd ? new Date(module.planEnd) : null,
-	actualEnd: module?.actualEnd ? new Date(module.actualEnd) : null,
-});
-
-type FieldErrors = Partial<Record<keyof ModuleFormData, string>>;
+type ModuleFormValues = z.input<typeof moduleModalSchema>;
 
 export function ModuleModal({
 	isOpen,
 	onClose,
 	module,
 	activePhase,
-	onSave,
+	stageId,
+	phaseId,
 	onDelete,
 }: ModuleModalProps) {
-	const initialFormData = useMemo(() => getInitialFormData(module), [module]);
-
-	const [displayModule, setDisplayModule] = useState(module);
-	const [formData, setFormData] = useState<ModuleFormData>(initialFormData);
-	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+	const isEditMode = Boolean(module);
 	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
-	const isEditMode = Boolean(displayModule);
+	const createModuleMutation = useCreateModule();
+	const updateModuleMutation = useUpdateModule();
 
-	// Reset form when modal opens
+	const defaultValues: ModuleFormValues = useMemo(
+		() => ({
+			name: module?.name ?? "",
+			planStart: module?.planStart ? new Date(module.planStart) : null,
+			planEnd: module?.planEnd ? new Date(module.planEnd) : null,
+			actualStart: module?.actualStart ? new Date(module.actualStart) : null,
+			actualEnd: module?.actualEnd ? new Date(module.actualEnd) : null,
+		}),
+		[module],
+	);
+
+	const form = useAppForm({
+		defaultValues,
+		validators: { onSubmit: moduleModalSchema },
+		onSubmit: async ({ value }) => {
+			if (isEditMode && module) {
+				await updateModuleMutation.mutateAsync({
+					moduleId: module.module_id,
+					stageId,
+					name: value.name,
+					// non-null guaranteed by moduleModalSchema (required plan dates)
+					planStart: value.planStart!,
+					planEnd: value.planEnd!,
+					actualStart: value.actualStart ?? undefined,
+					actualEnd: value.actualEnd ?? undefined,
+				});
+				toast.add({
+					title: "Module Edited",
+					description: `"${value.name}" has been edited successfully.`,
+					type: "success",
+				});
+			} else {
+				if (!phaseId) return;
+				await createModuleMutation.mutateAsync({
+					phaseId,
+					stageId,
+					name: value.name,
+					// non-null guaranteed by moduleModalSchema (required plan dates)
+					planStart: value.planStart!,
+					planEnd: value.planEnd!,
+					actualStart: value.actualStart ?? undefined,
+					actualEnd: value.actualEnd ?? undefined,
+				});
+				toast.add({
+					title: "Module Added",
+					description: `"${value.name}" has been added successfully.`,
+					type: "success",
+				});
+			}
+			handleClose();
+		},
+	});
+
+	// Correct TanStack Form store subscription (useStore is a deprecated alias).
+	const isDirty = useSelector(form.store, (state) => state.isDirty);
+
+	// Reset form whenever modal opens
 	useResetOnOpen(isOpen, () => {
-		setDisplayModule(module);
-		setFormData(initialFormData);
-		setFieldErrors({});
+		form.reset(defaultValues);
 		setShowDiscardConfirm(false);
 	});
 
-	// Check if user has made unsaved modifications
-	const isDirty = useMemo(() => {
-		return (
-			formData.name !== initialFormData.name ||
-			!areDatesEqual(formData.planStart, initialFormData.planStart) ||
-			!areDatesEqual(formData.planEnd, initialFormData.planEnd) ||
-			!areDatesEqual(formData.actualEnd, initialFormData.actualEnd)
-		);
-	}, [formData, initialFormData]);
-
 	const handleClose = () => {
-		setFormData(initialFormData);
-		setFieldErrors({});
+		form.reset();
 		setShowDiscardConfirm(false);
 		onClose();
 	};
 
-	// Prevents exiting if unsaved changes exist
 	const handleAttemptClose = () => {
 		if (isDirty) {
 			setShowDiscardConfirm(true);
@@ -154,37 +175,7 @@ export function ModuleModal({
 		handleClose();
 	};
 
-	const clearFieldError = (field: keyof ModuleFormData) => {
-		if (fieldErrors[field]) {
-			setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
-		}
-	};
-
-	const handleSubmit = () => {
-		const result = moduleModalSchema.safeParse(formData);
-		if (!result.success) {
-			const mapped = getFieldErrors(result);
-			setFieldErrors(mapped);
-			return;
-		}
-		setFieldErrors({});
-		onSave(formData);
-		handleClose();
-
-		if (isEditMode) {
-			toast.add({
-				title: "Module Edited",
-				description: "Module has been edited successfully.",
-				type: "success",
-			});
-		} else {
-			toast.add({
-				title: "Module Added",
-				description: "Module has been added successfully.",
-				type: "success",
-			});
-		}
-	};
+	const isPending = createModuleMutation.isPending || updateModuleMutation.isPending;
 
 	return (
 		<>
@@ -206,86 +197,108 @@ export function ModuleModal({
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className="space-y-4">
-						<FormInput
-							variant="input"
-							label="Module Name"
-							required
-							maxLength={35}
-							value={formData.name}
-							placeholder="e.g., Authentication & Identity"
-							error={fieldErrors.name}
-							onChange={(e) => {
-								setFormData({ ...formData, name: e.target.value });
-								clearFieldError("name");
+					<form.AppForm>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								void form.handleSubmit();
 							}}
-						/>
+						>
+							<div className="flex flex-col gap-4">
+								<form.AppField name="name">
+									{(field) => (
+										<FormInput
+											label="Module Name"
+											required
+											maxLength={35}
+											value={field.state.value}
+											placeholder="e.g., Authentication & Identity"
+											error={
+												formErrorToMessage(field.state.meta.errors[0]) ??
+												undefined
+											}
+											onChange={(e) => field.handleChange(e.target.value)}
+										/>
+									)}
+								</form.AppField>
 
-						<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-							<DateTimePicker
-								label="Plan Start"
-								required
-								value={
-									formData.planStart ? new Date(formData.planStart) : undefined
-								}
-								onChange={(date) => {
-									setFormData({
-										...formData,
-										planStart: date ?? null,
-									});
-									clearFieldError("planStart");
-									clearFieldError("planEnd");
-								}}
-								placeholder="Pick Planned Start"
-								error={fieldErrors.planStart}
-							/>
+								<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+									<form.AppField name="planStart">
+										{(field) => (
+											<DateTimePicker
+												label="Plan Start"
+												required
+												value={
+													field.state.value
+														? new Date(field.state.value)
+														: undefined
+												}
+												onChange={(date) => field.handleChange(date ?? null)}
+												placeholder="Pick Planned Start"
+												error={
+													formErrorToMessage(field.state.meta.errors[0]) ??
+													undefined
+												}
+											/>
+										)}
+									</form.AppField>
 
-							<DateTimePicker
-								label="Plan End"
-								required
-								value={
-									formData.planEnd ? new Date(formData.planEnd) : undefined
-								}
-								onChange={(date) => {
-									setFormData({
-										...formData,
-										planEnd: date ?? null,
-									});
-									clearFieldError("planStart");
-									clearFieldError("planEnd");
-								}}
-								placeholder="Pick Planned End"
-								error={fieldErrors.planEnd}
-							/>
-						</div>
-					</div>
+									<form.AppField name="planEnd">
+										{(field) => (
+											<DateTimePicker
+												label="Plan End"
+												required
+												value={
+													field.state.value
+														? new Date(field.state.value)
+														: undefined
+												}
+												onChange={(date) => field.handleChange(date ?? null)}
+												placeholder="Pick Planned End"
+												error={
+													formErrorToMessage(field.state.meta.errors[0]) ??
+													undefined
+												}
+											/>
+										)}
+									</form.AppField>
+								</div>
+							</div>
 
-					<DialogFooter>
-						{isEditMode && onDelete && (
-							<Button
-								type="button"
-								className="mr-auto"
-								variant="destructive"
-								onClick={onDelete}
-							>
-								<Trash2 className="mr-2 h-4 w-4" /> Delete Module
-							</Button>
-						)}
-						<Button type="button" variant="ghost" onClick={handleAttemptClose}>
-							Cancel
-						</Button>
-						<Button type="button" onClick={handleSubmit}>
-							{isEditMode ? (
-								<>
-									<Save className="mr-2 h-4 w-4" /> Save Changes
-								</>
-							) : (
-								<>
-									<Plus className="mr-2 h-4 w-4" /> Add Module
-								</>
-							)}
-						</Button>
-					</DialogFooter>
+							<DialogFooter className="mt-6" showCloseButton={false}>
+								{isEditMode && onDelete && (
+									<Button
+										type="button"
+										className="mr-auto"
+										variant="destructive"
+										onClick={onDelete}
+									>
+										<Trash2 className="mr-2 h-4 w-4" /> Delete Module
+									</Button>
+								)}
+								<Button
+									type="button"
+									variant="ghost"
+									onClick={handleAttemptClose}
+									disabled={isPending}
+								>
+									Cancel
+								</Button>
+								<form.SubmitButton pendingLabel={isEditMode ? "Saving…" : "Adding…"}>
+									{isEditMode ? (
+										<>
+											<Save className="mr-2 h-4 w-4" /> Save Changes
+										</>
+									) : (
+										<>
+											<Plus className="mr-2 h-4 w-4" /> Add Module
+										</>
+									)}
+								</form.SubmitButton>
+							</DialogFooter>
+						</form>
+					</form.AppForm>
 				</DialogContent>
 			</Dialog>
 
@@ -306,18 +319,10 @@ export function ModuleModal({
 
 // ── Backward-compatible Aliases ──────────────────────────────────────────────
 
-export function AddModule(
-	props: Omit<ModuleModalProps, "module" | "onSave"> & {
-		onSubmit: (data: ModuleFormData) => void;
-	},
-) {
-	return <ModuleModal {...props} module={null} onSave={props.onSubmit} />;
+export function AddModule(props: Omit<ModuleModalProps, "module">) {
+	return <ModuleModal {...props} module={null} />;
 }
 
-export function EditModule(
-	props: ModuleModalProps & {
-		onDelete: () => void;
-	},
-) {
+export function EditModule(props: ModuleModalProps) {
 	return <ModuleModal {...props} />;
 }

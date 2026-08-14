@@ -6,8 +6,6 @@ import type { Workflow } from "../types";
 import { AddWorkflow, EditWorkflow } from "@/features/stage-editor/ui/modals/WorkflowModals";
 import { ConfirmDeleteModal } from "@/shared/ui";
 import {
-	useCreateWorkflow,
-	useUpdateWorkflow,
 	useDeleteWorkflow,
 	useReorderWorkflow,
 } from "@/entities/workflow/mutations";
@@ -114,8 +112,6 @@ export function WorkflowCard({
 	);
 	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-	const createWorkflowMutation = useCreateWorkflow();
-	const updateWorkflowMutation = useUpdateWorkflow();
 	const deleteWorkflowMutation = useDeleteWorkflow();
 	const reorderWorkflowMutation = useReorderWorkflow();
 
@@ -133,56 +129,6 @@ export function WorkflowCard({
 			minute: "2-digit",
 			hour12: true,
 		});
-	};
-
-	const handleAddWorkflow = async (data: {
-		name: string;
-		planStart: Date | null;
-		planEnd: Date | null;
-		actualEnd: Date | null;
-	}) => {
-		await createWorkflowMutation.mutateAsync({
-			moduleId,
-			stageId,
-			name: data.name,
-			// non-null guaranteed by the modal schema (required plan dates)
-			planStart: data.planStart!,
-			planEnd: data.planEnd!,
-			actualEnd: data.actualEnd ?? undefined,
-		});
-
-		toast.add({
-			title: "Workflow Created",
-			description: `"${data.name}" has been created successfully.`,
-			type: "success",
-		});
-
-		setIsAddOpen(false);
-	};
-
-	const handleSaveWorkflow = async (data: {
-		name: string;
-		planStart: Date | null;
-		planEnd: Date | null;
-		actualEnd: Date | null;
-	}) => {
-		if (!editingWorkflow) return;
-		await updateWorkflowMutation.mutateAsync({
-			workflowId: editingWorkflow.workflow_id,
-			stageId,
-			name: data.name,
-			planStart: data.planStart ?? undefined,
-			planEnd: data.planEnd ?? undefined,
-			actualEnd: data.actualEnd ?? undefined,
-		});
-
-		toast.add({
-			title: "Workflow Edited",
-			description: `"${data.name}" has been edited successfully.`,
-			type: "success",
-		});
-
-		setEditingWorkflow(null);
 	};
 
 	const confirmDelete = (workflow: Workflow) => {
@@ -447,16 +393,18 @@ export function WorkflowCard({
 			{/* Add Workflow Modal */}
 			<AddWorkflow
 				isOpen={isAddOpen}
+				moduleId={moduleId}
+				stageId={stageId}
 				onClose={() => setIsAddOpen(false)}
-				onSubmit={handleAddWorkflow}
 			/>
 
 			{/* Edit Workflow Modal */}
 			<EditWorkflow
 				isOpen={editingWorkflow !== null}
 				workflow={editingWorkflow}
+				moduleId={moduleId}
+				stageId={stageId}
 				onClose={() => setEditingWorkflow(null)}
-				onSave={handleSaveWorkflow}
 				onDelete={() => editingWorkflow && confirmDelete(editingWorkflow)}
 			/>
 

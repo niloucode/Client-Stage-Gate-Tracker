@@ -4,11 +4,7 @@ import { useState } from "react";
 import type { Module, Phase } from "../types";
 import { WorkflowCard } from "./WorkflowCard";
 import { AddModule, EditModule } from "@/features/stage-editor/ui/modals/ModuleModals";
-import {
-	useCreateModule,
-	useUpdateModule,
-	useDeleteModule,
-} from "@/entities/module/mutations";
+import { useDeleteModule } from "@/entities/module/mutations";
 import { ConfirmDeleteModal } from "@/components/ui/confirmation-modal"
 import { Button } from "@/components/ui/button";
 import { Plus, Clock, ChevronDown, EllipsisVertical } from "lucide-react";
@@ -105,8 +101,6 @@ export function ModuleCard({
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 	const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
-	const createModuleMutation = useCreateModule();
-	const updateModuleMutation = useUpdateModule();
 	const deleteModuleMutation = useDeleteModule();
 
 	const currentPhase =
@@ -121,43 +115,6 @@ export function ModuleCard({
 	};
 
 	const openEditModuleModal = (module: Module) => setEditingModule(module);
-
-	const handleAddModule = async (data: {
-		name: string;
-		planStart: Date | null;
-		planEnd: Date | null;
-		actualEnd: Date | null;
-	}) => {
-		if (activePhase === null || !currentPhase) return;
-		await createModuleMutation.mutateAsync({
-			phaseId: currentPhase.phase_id,
-			stageId,
-			name: data.name,
-			// non-null guaranteed by the modal schema (required plan dates)
-			planStart: data.planStart!,
-			planEnd: data.planEnd!,
-			actualEnd: data.actualEnd ?? undefined,
-		});
-		setIsAddOpen(false);
-	};
-
-	const handleSaveModule = async (data: {
-		name: string;
-		planStart: Date | null;
-		planEnd: Date | null;
-		actualEnd: Date | null;
-	}) => {
-		if (!editingModule) return;
-		await updateModuleMutation.mutateAsync({
-			moduleId: editingModule.module_id,
-			stageId,
-			name: data.name,
-			planStart: data.planStart ?? undefined,
-			planEnd: data.planEnd ?? undefined,
-			actualEnd: data.actualEnd ?? undefined,
-		});
-		setEditingModule(null);
-	};
 
 	const handleEditDeleteClick = () => {
 		if (!editingModule) return;
@@ -394,16 +351,17 @@ export function ModuleCard({
 			<AddModule
 				isOpen={isAddOpen}
 				activePhase={activePhase}
+				stageId={stageId}
+				phaseId={currentPhase?.phase_id ?? null}
 				onClose={() => setIsAddOpen(false)}
-				onSubmit={handleAddModule}
 			/>
 
 			{/* Edit Module Modal */}
 			<EditModule
 				isOpen={editingModule !== null}
 				module={editingModule}
+				stageId={stageId}
 				onClose={() => setEditingModule(null)}
-				onSave={handleSaveModule}
 				onDelete={handleEditDeleteClick}
 			/>
 
