@@ -195,26 +195,17 @@ export default function TicketBoard({
 	 * @returns {Promise<void>} Resolves when the local state append routine completes.
 	 */
 	async function handleCreateTicket(data: CreateTicketFormData) {
-		try {
-			await createTicketMutation.mutateAsync({
-				...data,
-				workflow_id: workflow_id,
-				status: TicketStatus.PENDING,
-				TicketAssigned: data.TicketAssigned ?? [],
-				tagIds: data.tagIds ?? [],
-				performed_by: user?.profile_id,
-			} as CreateTicketParams & { performed_by?: string });
-			setModalOpen(false);
-		} catch (error) {
-			console.error("Failed to create ticket:", error);
-		}
-
-		// Trigger Success Toast
-		toast.add({
-			title: "Ticket Created",
-			description: `Ticket has been created successfully.`,
-			type: "success",
-		});
+		// The create modal owns all toasts (success + failure) — no duplicate
+		// toast here, and failures propagate to the modal's catch.
+		await createTicketMutation.mutateAsync({
+			...data,
+			workflow_id: workflow_id,
+			status: TicketStatus.PENDING,
+			TicketAssigned: data.TicketAssigned ?? [],
+			tagIds: data.tagIds ?? [],
+			performed_by: user?.profile_id,
+		} as CreateTicketParams & { performed_by?: string });
+		setModalOpen(false);
 	}
 
 	/**
@@ -325,18 +316,27 @@ export default function TicketBoard({
 	 * @param {DragEndEvent} event - Context event tracking target item nodes and overlapping droppable lanes.
 	 * @returns {Promise<void>}
 	 */
-	function handleDragEnd(event: DragEndEvent) {
+	async function handleDragEnd(event: DragEndEvent) {
 		if (isClientProfile) return;
 		const { active, over } = event;
 		setActiveId(null);
 
 		if (over && active.id !== over.id) {
 			const newStatus = over.id as TicketStatus;
-			updateStatusMutation.mutate({
-				ticketId: active.id as string,
-				status: newStatus,
-				performed_by: user?.profile_id,
-			});
+			try {
+				await updateStatusMutation.mutateAsync({
+					ticketId: active.id as string,
+					status: newStatus,
+					performed_by: user?.profile_id,
+				});
+			} catch (error) {
+				toast.add({
+					title: "Move Failed",
+					description:
+						error instanceof Error ? error.message : "Something went wrong.",
+					type: "error",
+				});
+			}
 		}
 
 		setTimeout(() => {
