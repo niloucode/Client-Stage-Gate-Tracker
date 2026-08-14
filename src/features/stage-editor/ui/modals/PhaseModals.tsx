@@ -62,28 +62,26 @@ const basePhaseModalSchema = z.object({
 
 const phaseModalSchema = basePhaseModalSchema.superRefine((data, ctx) => {
 	if (!hasValidPlannedRange(toSchedulingDates(data))) {
-		const message = "Start must be before End";
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "Start must be before End",
 			path: ["planStart"],
 		});
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "End must be after Start",
 			path: ["planEnd"],
 		});
 	}
 	if (!hasValidActualRange(toSchedulingDates(data))) {
-		const message = "Actual Start date must be before Actual End date";
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "Start must be before End",
 			path: ["actualStart"],
 		});
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "End must be after Start",
 			path: ["actualEnd"],
 		});
 	}

@@ -14,8 +14,6 @@ import {
 	useDeletePhase,
 	useReorderPhase,
 } from "@/entities/phase/mutations";
-import { Label } from "@/components/ui/label";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { toast } from "@/components/ui/toast";
 import {
 	Pencil,
@@ -191,10 +189,10 @@ export const PhaseCard = forwardRef<
 	return (
 		<>
 			<div className="relative bg-neutral-surface border border-slate-200 rounded-md shadow-sm mb-8">
-				<div className="px-8 py-8 relative">
+				<div className="px-8 py-6 relative">
 					{/* Empty State */}
 					{phases.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-8 text-center">
+						<div className="flex flex-col items-center justify-center py-6 text-center">
 							<p className="text-sm text-neutral-subtle">No phases yet</p>
 							<p className="text-xs text-slate-400 mt-1">
 								Click Add Phase to create your first phase
@@ -239,14 +237,14 @@ export const PhaseCard = forwardRef<
 							>
 								{/* Dynamic Width Container */}
 								<div
-									className="relative flex items-start justify-between pt-6 px-8 transition-all duration-300"
+									className="relative flex items-start justify-between pt-3 pb-3 px-8 transition-all duration-300"
 									style={{
 										minWidth: phases.length > 5 ? `${phases.length * 160}px` : "100%",
 										width: "100%",
 									}}
 								>
-									{/* Connecting Line through Node Centers (56px = 32px px-8 padding + 24px half node width) */}
-									<div className="z-0 absolute left-[56px] right-[56px] top-[48px] h-0.5 bg-brand-100 pointer-events-none" />
+									{/* Connecting Line through Node Centers */}
+									<div className="z-0 absolute left-[56px] right-[56px] top-[36px] h-0.5 bg-brand-100 pointer-events-none" />
 
 									{phases.map((phase, index) => {
 										const num = phase.number ?? 0;
@@ -256,7 +254,6 @@ export const PhaseCard = forwardRef<
 										return (
 											<div
 												key={phase.phase_id}
-												/* Fixed width wrapper matching circle width (48px) ensures equal flex spacing */
 												className="relative flex flex-col items-center flex-shrink-0 w-12 transition-all duration-200 cursor-grab active:cursor-grabbing"
 												draggable={true}
 												onDragStart={(e) => handleDragStart(e, index)}
@@ -273,16 +270,16 @@ export const PhaseCard = forwardRef<
 														}
 														className="focus:outline-none"
 													>
-														{/* Node Circle */}
+														{/* Node Circle — Styled to match ProjectStructure circle design */}
 														<div
 															className={`
-																relative flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold border-2 transition-all shadow-xs
+																relative flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold transition-all shadow-xs
 																${
 																	isActive
-																		? "border-brand-600 bg-brand-600 text-white ring-4 ring-brand-100"
+																		? "border-4 border-brand-100 bg-brand-600 text-white"
 																		: isCompleted
-																			? "border-brand-500 bg-brand-500 text-white group-hover:border-brand-600 group-hover:bg-brand-600"
-																			: "border-warm-gray-200 bg-neutral-subtle text-neutral-border group-hover:border-brand-500 group-hover:bg-brand-50 group-hover:text-brand-600"
+																			? "border-4 border-brand-100 bg-brand-500 text-white group-hover:bg-brand-600"
+																			: "border-4 border-brand-100 bg-neutral-surface text-brand-600 group-hover:bg-brand-50"
 																}
 															`}
 														>
@@ -312,7 +309,7 @@ export const PhaseCard = forwardRef<
 													</button>
 												</div>
 
-												{/* Phase Labels (Wider than node, centered under circle) */}
+												{/* Phase Labels */}
 												<div className="mt-2.5 flex flex-col items-center text-center w-28 -ml-8 -mr-8 pointer-events-none">
 													<div
 														className={`
@@ -370,65 +367,80 @@ export const PhaseCard = forwardRef<
 
 				{/* Phase Details Section */}
 				{currentPhase && (
-					<div className="flex flex-col lg:flex-row items-start justify-between gap-6 p-6 border-t border-slate-200 bg-neutral-surface rounded-b-xl">
-						{/* Left: Phase Title & Description */}
+					<div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 p-6 border-t border-slate-200 bg-neutral-surface rounded-b-xl">
+						{/* Left: Circle Badge + Phase Title & Description */}
 						<div className="flex flex-col flex-1 min-w-0">
-							<h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
-								{currentPhase.name}
-							</h2>
-							<p className="mt-2 text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+							<div className="flex items-center gap-3">
+								<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-4 border-brand-100 text-base font-bold text-brand-600 bg-neutral-surface shadow-xs">
+									{currentPhase.number ?? "—"}
+								</div>
+								<h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl truncate">
+									{currentPhase.name}
+								</h2>
+							</div>
+							<p className="mt-2 text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap pl-13">
 								{currentPhase.description || "No description provided."}
 							</p>
 						</div>
 
-						{/* Right: 2x2 Disabled Date Picker Grid */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full lg:w-fit shrink-0">
-							{/* Planned Start (Disabled) */}
-							<div className="space-y-1.5">
-								<Label>
-									PLANNED START
-								</Label>
-								<DateTimePicker
-									value={currentPhase.planStart ? new Date(currentPhase.planStart) : undefined}
-									disabled
-									placeholder="Not set yet"
-								/>
+						{/* Right: Clean 2-Group / 1-Row Planned vs Actual Date Viewer */}
+						<div className="flex flex-wrap items-center gap-6 rounded-md border border-slate-200 bg-neutral-subtle/50 px-5 py-3 text-xs w-full lg:w-fit shrink-0">
+							{/* Planned Section */}
+							<div className="flex flex-col gap-1">
+								<span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+									Planned
+								</span>
+								<div className="flex items-center gap-1.5 font-medium text-foreground">
+									<span>
+										{currentPhase.planStart
+											? new Date(currentPhase.planStart).toLocaleDateString("en-US", {
+													month: "short",
+													day: "numeric",
+													year: "numeric",
+											  })
+											: "Not set"}
+									</span>
+									<span className="text-muted-foreground font-normal">–</span>
+									<span>
+										{currentPhase.planEnd
+											? new Date(currentPhase.planEnd).toLocaleDateString("en-US", {
+													month: "short",
+													day: "numeric",
+													year: "numeric",
+											  })
+											: "Not set"}
+									</span>
+								</div>
 							</div>
 
-							{/* Planned End (Disabled) */}
-							<div className="space-y-1.5">
-								<Label>
-									PLANNED END
-								</Label>
-								<DateTimePicker
-									value={currentPhase.planEnd ? new Date(currentPhase.planEnd) : undefined}
-									disabled
-									placeholder="Not set yet"
-								/>
-							</div>
+							<div className="h-8 w-px bg-slate-200 hidden sm:block" />
 
-							{/* Actual Start (Disabled) */}
-							<div className="space-y-1.5">
-								<Label>
-									ACTUAL START
-								</Label>
-								<DateTimePicker
-									value={currentPhase.actualStart ? new Date(currentPhase.actualStart) : undefined}
-									disabled
-									placeholder="Not started yet"
-								/>
-							</div>
-
-							{/* Actual End (Disabled) */}
-							<div className="space-y-1.5">
-								<Label>
-									ACTUAL END
-								</Label>
-								<DateTimePicker
-									value={currentPhase.actualEnd ? new Date(currentPhase.actualEnd) : undefined}
-									disabled
-									placeholder="Not finished yet"
-								/>
+							{/* Actual Section */}
+							<div className="flex flex-col gap-1">
+								<span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+									Actual
+								</span>
+								<div className="flex items-center gap-1.5 font-medium text-foreground">
+									<span>
+										{currentPhase.actualStart
+											? new Date(currentPhase.actualStart).toLocaleDateString("en-US", {
+													month: "short",
+													day: "numeric",
+													year: "numeric",
+											  })
+											: "Not started"}
+									</span>
+									<span className="text-muted-foreground font-normal">–</span>
+									<span>
+										{currentPhase.actualEnd
+											? new Date(currentPhase.actualEnd).toLocaleDateString("en-US", {
+													month: "short",
+													day: "numeric",
+													year: "numeric",
+											  })
+											: "Not finished"}
+									</span>
+								</div>
 							</div>
 						</div>
 					</div>

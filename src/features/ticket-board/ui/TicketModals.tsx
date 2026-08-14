@@ -65,15 +65,14 @@ export interface TicketModalEditProps {
 
 const createTicketModalSchema = ticketCreateSchema.superRefine((data, ctx) => {
 	if (data.plan_start_at && data.plan_end_at && data.plan_start_at > data.plan_end_at) {
-		const message = "Start must be before End";
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "Start must be before End",
 			path: ["plan_start_at"],
 		});
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "End must be after Start",
 			path: ["plan_end_at"],
 		});
 	}
