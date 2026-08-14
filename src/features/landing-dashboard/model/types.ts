@@ -20,6 +20,10 @@ export interface TicketItem {
 	id: string;
 	name: string;
 	project: string;
+	/** Project id — needed to deep-link a ticket to its workflow board. */
+	projectId: string;
+	/** Workflow id — the board the ticket lives on. */
+	workflowId: string;
 	module: string;
 	workflow: WorkflowData | string;
 	status: TicketStatus;

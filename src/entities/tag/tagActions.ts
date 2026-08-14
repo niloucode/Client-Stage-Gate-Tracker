@@ -11,8 +11,11 @@ import { z } from "zod";
 
 /**
  * Global tag reference list (cross-ticket categorization). Bounded to 100.
+ * Authenticated-only (2026-08-14 audit): anonymous callers get nothing.
  */
 export async function selectTag() {
+	const userId = await getCurrentUserId();
+	if (!userId) return [];
 	return prisma.tags.findMany({
 		where: { is_deleted: false },
 		orderBy: { name: "asc" },

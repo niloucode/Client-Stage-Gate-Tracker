@@ -2,11 +2,11 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import {
-	assertProjectMember,
 	assertProjectMemberNotClient,
 	resolvePhaseProject,
 } from "@/lib/auth/projectAccess";
 import { reorderBySortKey } from "@/shared/lib/fractionalSort";
+import { softDeleteWorkflowSubtree } from "@/entities/ticket/lib/softDelete";
 
 /**
  * Cascading soft delete: phase + its modules + workflows + tickets, batched
@@ -52,25 +52,7 @@ export async function cascadeSoftDeletePhase(
 			});
 			const workflowIds = childWorkflows.map((w) => w.workflow_id);
 
-			if (workflowIds.length > 0) {
-				await tx.workflows.updateMany({
-					where: { workflow_id: { in: workflowIds } },
-					data: { is_deleted: true, deleted_at: new Date() },
-				});
-
-				const childTickets = await tx.tickets.findMany({
-					where: { workflow_id: { in: workflowIds }, is_deleted: false },
-					select: { ticket_id: true },
-				});
-				const ticketIds = childTickets.map((t) => t.ticket_id);
-
-				if (ticketIds.length > 0) {
-					await tx.tickets.updateMany({
-						where: { ticket_id: { in: ticketIds } },
-						data: { is_deleted: true, deleted_at: new Date() },
-					});
-				}
-			}
+			await softDeleteWorkflowSubtree(tx, workflowIds);
 		}
 	};
 

@@ -24,6 +24,7 @@ import {
 } from "./lib/activityStats";
 import { z } from "zod";
 import {
+	assertProjectMember,
 	assertProjectMemberNotClient,
 	getCurrentUserId,
 	resolveTicketProject,
@@ -391,6 +392,15 @@ export async function cascadeSoftDeleteTicket(
 export async function selectTicketsByWorkflow(workflow_id: string) {
 	// No catch: a thrown error lets React Query retry and surface isError.
 	z.uuid().parse(workflow_id);
+
+	// Membership guard (2026-08-14 ticket deep-link audit): the action is
+	// independently callable — non-members must not read another project's
+	// ticket tree (assignees, tags). Clients pass as members (read-only).
+	const projectId = await resolveWorkflowProject(workflow_id);
+	if (!projectId) return [];
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) throw new Error(auth.error);
+
 	return prisma.tickets.findMany({
 		where: { is_deleted: false, workflow_id },
 		include: ticketInclude,
@@ -404,6 +414,13 @@ export async function selectTicketsByWorkflow(workflow_id: string) {
 export async function selectTicketHistory(ticketId: string) {
 	// No catch: a thrown error lets React Query retry and surface isError.
 	z.uuid().parse(ticketId);
+
+	// Membership guard (2026-08-14): same rationale as selectTicketsByWorkflow.
+	const projectId = await resolveTicketProject(ticketId);
+	if (!projectId) return [];
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) throw new Error(auth.error);
+
 	return prisma.historyEvent.findMany({
 		where: { ticket_id: ticketId },
 		orderBy: { performed_at: "desc" },
@@ -458,6 +475,7 @@ const ticketDashboardSelect = {
 	plan_end_at: true,
 	Workflows: {
 		select: {
+			workflow_id: true,
 			name: true,
 			Modules: {
 				select: {
