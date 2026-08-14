@@ -12,12 +12,29 @@ import {
 	useIssueStats,
 } from "@/features/landing-dashboard";
 import { useAuth } from "@/features/auth";
-import { IssueCharts } from "@/features/issue-reporting";
+
+type IssueStatsShape = {
+	high?: number;
+	medium?: number;
+	low?: number;
+	assigned?: number;
+	unassigned?: number;
+	highCount?: number;
+	mediumCount?: number;
+	lowCount?: number;
+	assignedCount?: number;
+	unassignedCount?: number;
+	issuesBySeverity?: { high?: number; medium?: number; low?: number };
+	assignedVsUnassigned?: { assigned?: number; unassigned?: number };
+	bySeverity?: { high?: number; medium?: number; low?: number };
+	byAssignment?: { assigned?: number; unassigned?: number };
+};
 
 export default function DashboardPage() {
 	const { user } = useAuth();
 	const roleQuery = useDashboardRole();
 
+	// Strict role-based query activation to ensure backend endpoints are gated
 	const showTickets = roleQuery.data === "staff" || roleQuery.data === "owner";
 	const showContracts =
 		roleQuery.data === "client" || roleQuery.data === "owner";
@@ -57,6 +74,49 @@ export default function DashboardPage() {
 
 	const isClient = roleQuery.data === "client";
 
+	// Safely map IssueStats payload properties without using `any`
+	const statsData = issueStats.data as unknown as IssueStatsShape | undefined;
+
+	const issuesBySeverity = statsData
+		? {
+				high:
+					statsData.high ??
+					statsData.highCount ??
+					statsData.issuesBySeverity?.high ??
+					statsData.bySeverity?.high ??
+					0,
+				medium:
+					statsData.medium ??
+					statsData.mediumCount ??
+					statsData.issuesBySeverity?.medium ??
+					statsData.bySeverity?.medium ??
+					0,
+				low:
+					statsData.low ??
+					statsData.lowCount ??
+					statsData.issuesBySeverity?.low ??
+					statsData.bySeverity?.low ??
+					0,
+			}
+		: undefined;
+
+	const assignedVsUnassigned = statsData
+		? {
+				assigned:
+					statsData.assigned ??
+					statsData.assignedCount ??
+					statsData.assignedVsUnassigned?.assigned ??
+					statsData.byAssignment?.assigned ??
+					0,
+				unassigned:
+					statsData.unassigned ??
+					statsData.unassignedCount ??
+					statsData.assignedVsUnassigned?.unassigned ??
+					statsData.byAssignment?.unassigned ??
+					0,
+			}
+		: undefined;
+
 	return (
 		<div className="mx-auto flex h-fit w-full flex-col items-center justify-center">
 			<div className="mb-6 flex h-fit w-full flex-col gap-4 pb-4">
@@ -79,11 +139,10 @@ export default function DashboardPage() {
 							weeklyVelocity={sparklines.data.weeklyVelocity}
 							riskFactor={sparklines.data.riskFactor}
 							upcomingDeadlines={sparklines.data.upcomingDeadlines}
+							issuesBySeverity={issuesBySeverity}
+							assignedVsUnassigned={assignedVsUnassigned}
 						/>
 					</div>
-				)}
-				{showTickets && issueStats.data && (
-					<IssueCharts data={issueStats.data} />
 				)}
 				{showTickets && (
 					<>
