@@ -109,7 +109,6 @@ function SectionLabel({
 }
 
 function ProjectOverviewCard({ progress }: { progress: number }) {
-	progress = 67
 	return (
 		<Card className="flex h-full flex-col justify-between border border-warm-gray-200 bg-neutral-surface shadow-xs">
 			<CardHeader className="">
