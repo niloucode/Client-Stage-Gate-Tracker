@@ -6,7 +6,7 @@ import { ModuleCard } from "@/features/stage-editor/ui/ModuleCard"
 import { PhaseCard } from "@/features/stage-editor/ui/PhaseCard"
 import type { Phase } from "@/features/stage-editor/types"
 import { useStageTree } from "@/entities/stage/queries"
-import { Plus, ChevronLeft } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Back } from "@/components/ui/back"
 

@@ -11,7 +11,7 @@ import {
 } from "@/entities/project";
 import { useCurrentUser } from "@/entities/profile";
 
-import { EditProjectModal } from "./modals/EditProjectModal";
+import { EditProjectModal } from "./modals/ProjectModals";
 import { ManageMembersModal } from "./modals/ManageMembersModal";
 import { DeleteProjectModal } from "./modals/DeleteProjectModal";
 

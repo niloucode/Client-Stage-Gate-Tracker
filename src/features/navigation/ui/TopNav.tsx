@@ -29,7 +29,7 @@ function useRealBreadcrumbs(): BreadcrumbItem[] {
 	const { data: project } = useProject(match?.[1] ?? null)
 
 	if (match) {
-		const crumbs: BreadcrumbItem[] = [{ label: "Projects" }]
+		const crumbs: BreadcrumbItem[] = [{ label: "Projects", href: "/projects" }]
 		if (project) {
 			crumbs.push({
 				label: project.name,
@@ -49,9 +49,13 @@ function useRealBreadcrumbs(): BreadcrumbItem[] {
 
 	const segments = pathname.split("/").filter(Boolean)
 	if (segments.length === 0) return [{ label: "Dashboard" }]
-	return segments.map((seg) => ({
-		label: SECTION_LABELS[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1),
-	}))
+	return segments.map((seg, idx) => {
+		const isLast = idx === segments.length - 1
+		return {
+			label: SECTION_LABELS[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1),
+			href: isLast ? undefined : `/${segments.slice(0, idx + 1).join("/")}`,
+		}
+	})
 }
 
 export default function TopNav() {

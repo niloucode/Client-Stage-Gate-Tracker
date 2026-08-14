@@ -259,30 +259,30 @@ export const PhaseCard = forwardRef<
 							<div
 								ref={scrollContainerRef}
 								onScroll={checkScroll}
-								className="relative z-10 overflow-x-auto scroll-smooth hide-scrollbar"
+								className="relative z-10 overflow-x-auto scroll-smooth hide-scrollbar p-1"
 								style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
 							>
-								{/* Connecting Line through Node Centers */}
-								<div className="z-0 absolute left-0 right-0 top-[54px] h-0.5 bg-brand-100 pointer-events-none" />
-
+								{/* Dynamic Width Container */}
 								<div
-									className="flex items-start pt-7"
-									style={{ minWidth: `${phases.length * 180}px` }}
+									className="relative flex items-start justify-between pt-6 px-8 transition-all duration-300"
+									style={{
+										minWidth: phases.length > 5 ? `${phases.length * 160}px` : "100%",
+										width: "100%",
+									}}
 								>
+									{/* Connecting Line through Node Centers (56px = 32px px-8 padding + 24px half node width) */}
+									<div className="z-0 absolute left-[56px] right-[56px] top-[48px] h-0.5 bg-brand-100 pointer-events-none" />
+
 									{phases.map((phase, index) => {
 										const num = phase.number ?? 0;
 										const isActive = phase.number === activePhase;
-										const isCompleted =
-											activePhase !== null && num < activePhase;
+										const isCompleted = activePhase !== null && num < activePhase;
 
 										return (
 											<div
 												key={phase.phase_id}
-												className="relative flex flex-col items-center flex-shrink-0 transition-all duration-200 cursor-grab active:cursor-grabbing"
-												style={{
-													width: `${100 / phases.length}%`,
-													minWidth: "140px",
-												}}
+												/* Fixed width wrapper matching circle width (48px) ensures equal flex spacing */
+												className="relative flex flex-col items-center flex-shrink-0 w-12 transition-all duration-200 cursor-grab active:cursor-grabbing"
 												draggable={true}
 												onDragStart={(e) => handleDragStart(e, index)}
 												onDragEnd={handleDragEnd}
@@ -290,25 +290,25 @@ export const PhaseCard = forwardRef<
 												onDragLeave={handleDragLeave}
 												onDrop={(e) => handleDrop(e, index)}
 											>
+												{/* Node Circle & Action Buttons */}
 												<div className="relative z-10 flex flex-col items-center group">
 													<button
 														onClick={() =>
-															phase.number !== null &&
-															setActivePhase(phase.number)
+															phase.number !== null && setActivePhase(phase.number)
 														}
 														className="focus:outline-none"
 													>
-														{/* Node Circle matching Sequence design */}
+														{/* Node Circle */}
 														<div
 															className={`
-																	relative flex h-13 w-13 items-center justify-center rounded-full text-sm font-bold border-2 transition-all shadow-xs
-																	${
-																		isActive
-																			? "border-brand-600 bg-brand-600 text-white ring-4 ring-brand-100"
-																			: isCompleted
-																				? "border-brand-500 bg-brand-500 text-white group-hover:border-brand-600 group-hover:bg-brand-600"
-																				: "border-warm-gray-200 bg-neutral-subtle text-neutral-border group-hover:border-brand-500 group-hover:bg-brand-50 group-hover:text-brand-600"
-																	}
+																relative flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold border-2 transition-all shadow-xs
+																${
+																	isActive
+																		? "border-brand-600 bg-brand-600 text-white ring-4 ring-brand-100"
+																		: isCompleted
+																			? "border-brand-500 bg-brand-500 text-white group-hover:border-brand-600 group-hover:bg-brand-600"
+																			: "border-warm-gray-200 bg-neutral-subtle text-neutral-border group-hover:border-brand-500 group-hover:bg-brand-50 group-hover:text-brand-600"
+																}
 															`}
 														>
 															<span>{phase.number ?? ""}</span>
@@ -328,8 +328,7 @@ export const PhaseCard = forwardRef<
 													{/* Delete Button on Group Hover */}
 													<button
 														onClick={() =>
-															phase.number !== null &&
-															confirmDelete(phase.number)
+															phase.number !== null && confirmDelete(phase.number)
 														}
 														className="flex items-center justify-center h-4 w-4 absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
 														title="Delete phase"
@@ -338,57 +337,49 @@ export const PhaseCard = forwardRef<
 													</button>
 												</div>
 
-												{/* Phase Labels */}
-												<div className="mt-3 text-center">
+												{/* Phase Labels (Wider than node, centered under circle) */}
+												<div className="mt-2.5 flex flex-col items-center text-center w-28 -ml-8 -mr-8 pointer-events-none">
 													<div
 														className={`
-															text-xs font-semibold tracking-wide
-															max-w-[120px] truncate
-															${
-																isActive
-																	? "text-brand-600"
-																	: "text-neutral-muted"
-															}
+															text-xs font-semibold tracking-wide truncate w-full pointer-events-auto
+															${isActive ? "text-brand-600" : "text-neutral-muted"}
 														`}
 														title={phase.name}
 													>
 														{phase.name}
 													</div>
-													{/* 4-date display */}
+
+													{/* Clean 2-Line Dates Display */}
 													{phase.planStart && phase.planEnd && (
-														<div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">
-															{new Date(phase.planStart).toLocaleDateString(
-																"en-US",
-																{
+														<div className="text-[10px] text-muted-foreground mt-1 flex flex-col gap-0.5 w-full pointer-events-auto">
+															<span className="truncate">
+																{new Date(phase.planStart).toLocaleDateString("en-US", {
 																	month: "short",
 																	day: "numeric",
-																},
-															)}{" "}
-															–{" "}
-															{new Date(phase.planEnd).toLocaleDateString(
-																"en-US",
-																{
+																})}{" "}
+																–{" "}
+																{new Date(phase.planEnd).toLocaleDateString("en-US", {
 																	month: "short",
 																	day: "numeric",
-																},
-															)}
+																})}
+															</span>
 															{(phase.actualStart || phase.actualEnd) && (
-																<>
-																	{" · "}
+																<span className="text-neutral-400 truncate">
+																	Act:{" "}
 																	{new Date(
 																		phase.actualStart ?? phase.planStart,
 																	).toLocaleDateString("en-US", {
 																		month: "short",
 																		day: "numeric",
 																	})}
-																	{"–"}
+																	–
 																	{new Date(
 																		phase.actualEnd ?? phase.planEnd,
 																	).toLocaleDateString("en-US", {
 																		month: "short",
 																		day: "numeric",
 																	})}
-																</>
+																</span>
 															)}
 														</div>
 													)}
@@ -416,7 +407,7 @@ export const PhaseCard = forwardRef<
 						</div>
 
 						{/* Right: 2x2 Date Picker Grid */}
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-1/2 shrink-0">
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full lg:w-fit shrink-0">
 							{/* Planned Start */}
 							<div className="space-y-1.5">
 								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
@@ -465,6 +456,7 @@ export const PhaseCard = forwardRef<
 								/>
 							</div>
 						</div>
+						
 					</div>
 				)}
 			</div>
