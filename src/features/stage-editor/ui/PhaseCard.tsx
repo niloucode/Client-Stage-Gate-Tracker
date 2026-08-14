@@ -385,7 +385,7 @@ export const PhaseCard = forwardRef<
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full lg:w-fit shrink-0">
 							{/* Planned Start (Disabled) */}
 							<div className="space-y-1.5">
-								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+								<Label>
 									PLANNED START
 								</Label>
 								<DateTimePicker
@@ -397,7 +397,7 @@ export const PhaseCard = forwardRef<
 
 							{/* Planned End (Disabled) */}
 							<div className="space-y-1.5">
-								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+								<Label>
 									PLANNED END
 								</Label>
 								<DateTimePicker
@@ -409,7 +409,7 @@ export const PhaseCard = forwardRef<
 
 							{/* Actual Start (Disabled) */}
 							<div className="space-y-1.5">
-								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+								<Label>
 									ACTUAL START
 								</Label>
 								<DateTimePicker
@@ -421,7 +421,7 @@ export const PhaseCard = forwardRef<
 
 							{/* Actual End (Disabled) */}
 							<div className="space-y-1.5">
-								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
+								<Label>
 									ACTUAL END
 								</Label>
 								<DateTimePicker

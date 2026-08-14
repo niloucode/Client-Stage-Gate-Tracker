@@ -6,7 +6,7 @@ import { Ticket, Tag } from "@/entities/types";
 import { useProfiles } from "@/entities/profile";
 import { useTicketImages, useTicketComments } from "@/entities/comment/queries";
 import { status as StatusEnum } from "@/lib/generated/prisma";
-import ImageLightbox from "@/shared/ui/ImageLightbox";
+import ImageLightbox from "@/shared/ui/image-lightbox";
 import { Avatar, Button, FormInput, Label } from "@/components/ui";
 
 import TicketModalEdit from "../TicketModals";

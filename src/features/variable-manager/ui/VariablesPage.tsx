@@ -21,10 +21,10 @@ function VariablesHeader() {
 	return (
 		<div className="mb-6">
 			<h1 className="text-4xl font-bold tracking-wide text-foreground">
-				Credentials, Links, and Repositories
+				Project Variables
 			</h1>
 			<p className="subtitle">
-				Manage and share project passwords and keys.
+				Manage and share project passwords, credentials, and keys.
 			</p>
 		</div>
 	);

@@ -2,7 +2,7 @@
 
 import { useFieldContext } from "../contexts";
 import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/shared/ui/PasswordInput";
+import { PasswordInput } from "@/shared/ui/password-input";
 import { cn } from "@/lib/utils";
 import { firstFieldError } from "./TextField";
 
