@@ -118,12 +118,12 @@ model Contracts {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Department {
-  department_id     String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name              String     @unique
-  invite_code_hash  String?    @unique
-  is_deleted        Boolean    @default(false)
-  deleted_at        DateTime?  @db.Timestamptz(6)
-  Profiles          Profiles[]
+  department_id    String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String     @unique
+  is_deleted       Boolean    @default(false)
+  deleted_at       DateTime?  @db.Timestamptz(6)
+  invite_code_hash String?    @unique @db.VarChar(64)
+  Profiles         Profiles[]
 
   @@schema("public")
 }

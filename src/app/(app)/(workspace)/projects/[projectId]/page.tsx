@@ -16,6 +16,8 @@ export default function PS() {
 				// Credentials Repository and Issue Reporting buttons stay
 				// unlinked until those features land.
 				onViewContract={() => router.push(`/projects/${projectId}/contract`)}
+				onCredentialsRepo={() => router.push(`/projects/${projectId}/variables`)}
+				onIssueReport={() => router.push(`/projects/${projectId}/issues`)}
 			/>
 		</>
 	);

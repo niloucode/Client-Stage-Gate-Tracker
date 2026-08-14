@@ -21,9 +21,13 @@ export function useCreateWorkflow() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (
+		mutationFn: async (
 			params: { moduleId: string; stageId: string } & WorkflowCreateInput,
-		) => createWorkflow(params.moduleId, params),
+		) => {
+			const result = await createWorkflow(params.moduleId, params);
+			if (!result.success) throw new Error(result.error ?? "Failed to create workflow.");
+			return result;
+		},
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
@@ -36,9 +40,13 @@ export function useUpdateWorkflow() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (
+		mutationFn: async (
 			params: { workflowId: string; stageId: string } & WorkflowUpdateInput,
-		) => updateWorkflow(params.workflowId, params),
+		) => {
+			const result = await updateWorkflow(params.workflowId, params);
+			if (!result.success) throw new Error(result.error ?? "Failed to update workflow.");
+			return result;
+		},
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
@@ -51,8 +59,11 @@ export function useDeleteWorkflow() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (params: { workflowId: string; stageId: string }) =>
-			cascadeSoftDeleteWorkflow(params.workflowId),
+		mutationFn: async (params: { workflowId: string; stageId: string }) => {
+			const result = await cascadeSoftDeleteWorkflow(params.workflowId);
+			if (!result.success) throw new Error(result.error ?? "Failed to delete workflow.");
+			return result;
+		},
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),

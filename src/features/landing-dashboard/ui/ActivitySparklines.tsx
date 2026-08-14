@@ -49,11 +49,11 @@ export interface AssignedVsUnassignedData {
 }
 
 export interface ActivitySparklinesProps {
-	weeklyVelocity?: WeeklyVelocityData;
-	riskFactor?: RiskFactorData;
-	upcomingDeadlines?: UpcomingDeadlinesData;
-	issuesBySeverity?: IssuesBySeverityData;
-	assignedVsUnassigned?: AssignedVsUnassignedData;
+	weeklyVelocity: WeeklyVelocityData;
+	riskFactor: RiskFactorData;
+	upcomingDeadlines: UpcomingDeadlinesData;
+	issuesBySeverity: IssuesBySeverityData;
+	assignedVsUnassigned: AssignedVsUnassignedData;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -78,19 +78,67 @@ const velocityChartConfig = {
 } satisfies ChartConfig;
 
 const severityChartConfig = {
-	High: { label: "High", color: "var(--color-brand-500, hsl(var(--brand-500)))" },
-	Medium: { label: "Medium", color: "var(--color-brand-200, hsl(var(--brand-200)))" },
+	High: {
+		label: "High",
+		color: "var(--color-brand-500, hsl(var(--brand-500)))",
+	},
+	Medium: {
+		label: "Medium",
+		color: "var(--color-brand-200, hsl(var(--brand-200)))",
+	},
 	Low: { label: "Low", color: "var(--color-brand-100, hsl(var(--brand-100)))" },
-	high: { label: "High", color: "var(--color-brand-500, hsl(var(--brand-500)))" },
-	medium: { label: "Medium", color: "var(--color-brand-200, hsl(var(--brand-200)))" },
+	high: {
+		label: "High",
+		color: "var(--color-brand-500, hsl(var(--brand-500)))",
+	},
+	medium: {
+		label: "Medium",
+		color: "var(--color-brand-200, hsl(var(--brand-200)))",
+	},
 	low: { label: "Low", color: "var(--color-brand-100, hsl(var(--brand-100)))" },
+	None: { label: "No issues", color: "var(--border)" },
 } satisfies ChartConfig;
 
+/**
+ * Donut tooltip formatter: the empty-state ring uses a placeholder slice
+ * (value 1, purely to draw the circle) — never show that fabricated count.
+ */
+function donutTooltipFormatter(value: unknown, name: unknown) {
+	if (name === "None") {
+		return (
+			<div className="flex w-full items-center gap-2">
+				<span className="text-muted-foreground">No issues</span>
+			</div>
+		);
+	}
+	return (
+		<div className="flex w-full items-center justify-between gap-2">
+			<span className="text-muted-foreground">{String(name)}</span>
+			<span className="text-foreground font-semibold tabular-nums">
+				{Number(value).toLocaleString()}
+			</span>
+		</div>
+	);
+}
+
 const assignmentChartConfig = {
-	Assigned: { label: "Assigned", color: "var(--color-brand-500, hsl(var(--brand-500)))" },
-	Unassigned: { label: "Unassigned", color: "var(--color-brand-200, hsl(var(--brand-200)))" },
-	assigned: { label: "Assigned", color: "var(--color-brand-500, hsl(var(--brand-500)))" },
-	unassigned: { label: "Unassigned", color: "var(--color-brand-200, hsl(var(--brand-200)))" },
+	Assigned: {
+		label: "Assigned",
+		color: "var(--color-brand-500, hsl(var(--brand-500)))",
+	},
+	Unassigned: {
+		label: "Unassigned",
+		color: "var(--color-brand-200, hsl(var(--brand-200)))",
+	},
+	assigned: {
+		label: "Assigned",
+		color: "var(--color-brand-500, hsl(var(--brand-500)))",
+	},
+	unassigned: {
+		label: "Unassigned",
+		color: "var(--color-brand-200, hsl(var(--brand-200)))",
+	},
+	None: { label: "No issues", color: "var(--border)" },
 } satisfies ChartConfig;
 
 /** Weekly velocity sparkline: one bar per weekday (Mon–Sun). */
@@ -175,7 +223,12 @@ function IssuesBySeverityCard({ data }: { data?: IssuesBySeverityData }) {
 					<PieChart>
 						<ChartTooltip
 							cursor={false}
-							content={<ChartTooltipContent nameKey="name" />}
+							content={
+								<ChartTooltipContent
+									nameKey="name"
+									formatter={donutTooltipFormatter}
+								/>
+							}
 						/>
 						<Pie
 							data={displayData}
@@ -268,7 +321,12 @@ function AssignedVsUnassignedCard({
 					<PieChart>
 						<ChartTooltip
 							cursor={false}
-							content={<ChartTooltipContent nameKey="name" />}
+							content={
+								<ChartTooltipContent
+									nameKey="name"
+									formatter={donutTooltipFormatter}
+								/>
+							}
 						/>
 						<Pie
 							data={displayData}
@@ -365,9 +423,7 @@ function RiskAndDeadlinesCard({
 						Risk Factor
 					</h4>
 				</div>
-				<h3 className="text-xl text-foreground pl-6">
-					{riskLabel}
-				</h3>
+				<h3 className="text-xl text-foreground pl-6">{riskLabel}</h3>
 			</div>
 
 			{/* Bottom section: Upcoming Deadlines (Stacked Rows) */}
@@ -375,9 +431,7 @@ function RiskAndDeadlinesCard({
 				<div className="flex items-center gap-2">
 					<DeadlineIcon
 						className={`h-4 w-4 shrink-0 ${
-							isUrgent
-								? "text-destructive"
-								: "text-muted-foreground"
+							isUrgent ? "text-destructive" : "text-muted-foreground"
 						}`}
 					/>
 					<h4 className="text-xs uppercase tracking-wider text-muted-foreground">

@@ -17,9 +17,13 @@ export function useCreateModule() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (
+		mutationFn: async (
 			params: { phaseId: string; stageId: string } & ModuleCreateInput,
-		) => createModule(params.phaseId, params),
+		) => {
+			const result = await createModule(params.phaseId, params);
+			if (!result.success) throw new Error(result.error ?? "Failed to create module.");
+			return result;
+		},
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
@@ -32,9 +36,13 @@ export function useUpdateModule() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (
+		mutationFn: async (
 			params: { moduleId: string; stageId: string } & ModuleUpdateInput,
-		) => updateModule(params.moduleId, params),
+		) => {
+			const result = await updateModule(params.moduleId, params);
+			if (!result.success) throw new Error(result.error ?? "Failed to update module.");
+			return result;
+		},
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),
@@ -47,8 +55,11 @@ export function useDeleteModule() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (params: { moduleId: string; stageId: string }) =>
-			cascadeSoftDeleteModule(params.moduleId),
+		mutationFn: async (params: { moduleId: string; stageId: string }) => {
+			const result = await cascadeSoftDeleteModule(params.moduleId);
+			if (!result.success) throw new Error(result.error ?? "Failed to delete module.");
+			return result;
+		},
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({
 				queryKey: stageKeys.tree(variables.stageId),

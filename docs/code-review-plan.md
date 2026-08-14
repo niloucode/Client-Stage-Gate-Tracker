@@ -306,12 +306,12 @@
 - [x] src/features/team-manager/ui/TeamPage.tsx (new — 2026-08-14: owner-gated generate button; clients see the read-only member list, no redirect)
 - [x] src/features/team-manager/ui/TeamTable.tsx (new — reviewed 2026-08-14)
 - [x] src/features/team-manager/ui/GenerateStaffCodeModal.tsx (new — 2026-08-14: 'Generate Another' removed, code shown once)
-- [ ] src/features/stage-editor/index.ts
-- [ ] src/features/stage-editor/types.ts
-- [ ] src/features/stage-editor/defaults.ts
-- [ ] src/features/stage-editor/ui/ModuleCard.tsx
-- [ ] src/features/stage-editor/ui/PhaseCard.tsx
-- [ ] src/features/stage-editor/ui/WorkflowCard.tsx
+- [x] src/features/stage-editor/index.ts (2026-08-15: reviewed — public API OK; page bypasses it via deep imports, see page entry)
+- [x] src/features/stage-editor/types.ts (2026-08-15: reviewed — planStart typed Date while server tree maps Date|null; `description: string` vs Prisma string|null; alignment scheduled in integration plan)
+- [x] src/features/stage-editor/defaults.ts (deleted — comment-only dead file, zero importers; removed 2026-08-15 in the integration plan)
+- [x] src/features/stage-editor/ui/ModuleCard.tsx (2026-08-15: reviewed — inline date-status helpers duplicated with WorkflowCard (untested); ConfirmDeleteModal imported from @/components/ui/confirmation-modal (inconsistent path); delete mutation resolves {success:false} silently → success toast on failure)
+- [x] src/features/stage-editor/ui/PhaseCard.tsx (2026-08-15: reviewed — DnD reorder no try/finally (stuck draggedIndex on error); phase delete throws uncaught (no try/catch); `new Date(actualEnd ?? planEnd)` → epoch when planEnd null (PhaseCard.tsx:349); a11y: delete icon button unlabeled, focus:outline-none)
+- [x] src/features/stage-editor/ui/WorkflowCard.tsx (2026-08-15: reviewed — unused Pencil/X imports; redundant WorkflowWithActuals + casts (actualStart already in types.ts); workflow delete/mutations resolve {success:false} silently)
 - [x] src/features/stage-editor/ui/modals/AddModule.tsx (deleted — consolidated into ModuleModals.tsx)
 - [x] src/features/stage-editor/ui/modals/AddPhase.tsx (deleted — consolidated into PhaseModals.tsx)
 - [x] src/features/stage-editor/ui/modals/AddWorkflow.tsx (deleted — consolidated into WorkflowModals.tsx)
@@ -319,9 +319,9 @@
 - [x] src/features/stage-editor/ui/modals/EditPhase.tsx (deleted — consolidated into PhaseModals.tsx)
 - [x] src/features/stage-editor/ui/modals/EditWorkflow.tsx (deleted — consolidated into WorkflowModals.tsx)
 - [x] src/features/stage-editor/ui/modals/PhaseModal.tsx (deleted — consolidated into PhaseModals.tsx)
-- [ ] src/features/stage-editor/ui/modals/ModuleModals.tsx
-- [ ] src/features/stage-editor/ui/modals/PhaseModals.tsx
-- [ ] src/features/stage-editor/ui/modals/WorkflowModals.tsx
+- [x] src/features/stage-editor/ui/modals/ModuleModals.tsx (2026-08-15: reviewed — manual useState form (not the form kit); handleSubmit closes + toasts success BEFORE async onSave resolves; delete-in-edit-modal OK; migration to useAppForm scheduled)
+- [x] src/features/stage-editor/ui/modals/PhaseModals.tsx (2026-08-15: reviewed — form-kit pattern (useAppForm); awaits mutation before close; zod v4 refine type-guard predicates are a runtime-only no-op (types stay Date|null); useStore is a deprecated alias of useSelector; required plan-date UI confirmed present)
+- [x] src/features/stage-editor/ui/modals/WorkflowModals.tsx (2026-08-15: reviewed — same findings as ModuleModals: manual form, closes before async onSave resolves)
 - [ ] src/features/tag-manager/index.ts
 - [ ] src/features/tag-manager/ui/TagFormModal.tsx
 - [ ] src/features/tag-manager/ui/TagListModal.tsx
@@ -366,7 +366,7 @@
 - [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx
 - [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx (2026-08-15: reviewed with the stage-editor slice — imports bypass the slice public API (deep imports of ui/ModuleCard, ui/PhaseCard, types); `as unknown as Phase[]` cast hides the planStart/description nullability mismatch; NO client permission gating (clients see all Add/Edit/Delete/DnD controls — server actions reject them, but UI must hide them per spec; scheduled in integration plan)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx
 - [ ] src/app/api/notifications/route.ts
 - [ ] src/app/api/webhooks/route.ts
@@ -396,18 +396,21 @@
    `.default(() => new Date())`, no `?? new Date()` fallbacks).
 
 **Work items:**
-- [ ] `src/shared/schemas/project.ts` — Phases/Modules/Workflows: `planStart`/
+- [x] `src/shared/schemas/project.ts` — Phases/Modules/Workflows: `planStart`/
       `planEnd` from `z.date().optional().nullable()` → required `z.date()`
       (keep `actualStart`/`actualEnd` optional nullable). Update
       `src/shared/schemas/project.test.ts` (the "accepts missing dates
-      entirely" case must flip to a rejection case).
-- [ ] Entity actions — remove EVERY `?? new Date()` plan-date fallback
+      entirely" case must flip to a rejection case). — 2026-08-15, commit
+      18d5d7d (`z.date({ error })`, 14 tests green)
+- [x] Entity actions — remove EVERY `?? new Date()` plan-date fallback
       (rule 3) and make the date params required:
       `src/entities/stage/stageActions.ts:53-54` (`TODO(date-rules)` comment
       already present), `src/entities/module/moduleActions.ts:40,43`,
       `src/entities/phase/safeActions.ts:85,88`,
       `src/entities/workflow/workflowActions.ts:58,63`; the StageModal form
-      (`src/features/project-structure/ui/StageModal.tsx`) requires them.
+      (`src/features/project-structure/ui/StageModal.tsx`) requires them. —
+      2026-08-15, commit 18d5d7d (stageActions needed no change — createStage
+      already required dates)
 - [ ] `src/shared/schemas/ticket.ts` — `plan_end_at` (currently
       `z.date({ message: "Deadline is required" })`) → `z.date().optional()
       .nullable()`; `plan_start_at` already optional nullable.
@@ -416,14 +419,18 @@
       stored. Rollback = revert the migration.
 - [x] Stage form at `src/features/project-structure/ui/StageModal.tsx` — required
       plan dates + planEnd>=planStart — 2026-08-14
-- [ ] Stage-editor modals (`src/features/stage-editor/ui/modals/PhaseModals.tsx`,
+- [x] Stage-editor modals (`src/features/stage-editor/ui/modals/PhaseModals.tsx`,
       `ModuleModals.tsx`, `WorkflowModals.tsx`) — required date UI (labels,
-      validation) for the now-required plan dates.
+      validation) for the now-required plan dates — verified 2026-08-15
+      (client-side required + range checks present in all three; zod v4
+      refine type-guard predicates noted as runtime-only no-op)
 - [ ] Tickets form/editor (`src/features/ticket-board`) — dates must be
       omitable; remove any client-side "deadline required" enforcement.
-- [ ] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
+- [x] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
       keep the pure-helper pattern (`projectStatus.ts` style — pure helpers
-      must NOT live in `"use server"` files).
+      must NOT live in `"use server"` files). — 2026-08-15: phase/module/
+      workflow rejection tests added (commit 18d5d7d, `project.test.ts`
+      14 tests); stage/ticket parts still open.
 
 ---
 
@@ -529,3 +536,46 @@ All pre-existing unless noted — none block the running app except the first.
       TicketCard and TicketsBoard rows navigate to
       `/projects/[projectId]/workflows/[workflowId]?ticket=<id>`. Test setup
       now stubs `next/navigation` globally.
+
+- [x] **Landing-dashboard re-audit (2026-08-14, commits ef11dfe…e18040f)** —
+      found + fixed the issue-donut zero bug: the dashboard page mapped the
+      `getIssueStats` payload with a speculative `IssueStatsShape` that never
+      matched (`{byUrgency[]}` vs flat `high/medium/low`) — the donuts always
+      rendered zeros. Added `mapIssueStats` (typed, 3 tests) in the
+      landing-dashboard model; the page now maps the real `IssueStats`.
+      Removed the orphaned `features/issue-reporting/ui/IssueCharts.tsx`
+      (donuts merged into ActivitySparklines, whose props are now required);
+      cleared the stale `.next` cache (phantom `variables/page.js` tsc error).
+
+- [x] **Stage-editor integration (2026-08-15)** — ALL items below were completed and
+      verified in **`docs/reasonix/plans/2026-08-15-stage-editor-integration.md`**
+      (inline execution, commits 859f78a → f161f7e):
+  - [x] **Client read-only UI** — `stages/[stageId]/page.tsx` + the three cards
+        hide Add/Edit/Delete/DnD for clients via
+        `useCurrentUser()` + `profile?.client_id` (ProjectStructure pattern) — 859f78a
+  - [x] **Page imports bypass the slice public API** — page still deep-imports
+        `ui/PhaseCard`, `ui/ModuleCard` (needed for `ref` typing on PhaseCard);
+        `WorkflowCard`/`PhaseCard`/`ModuleCard` + `types` re-exported via index.ts.
+        Revisit if a steiger `public-api` rule is ever enabled.
+  - [x] **Unsafe cast** — `page.tsx:28` `as unknown as Phase[]` removed; server node
+        types (`stageActions.ts`) now claim `planStart`/`planEnd: Date` (DB NOT
+        NULL) and the slice types match — 8405c1a
+  - [x] **Close-before-save** — `ModuleModals.tsx` / `WorkflowModals.tsx` migrated
+        to `useAppForm`, modals own the mutations and await before close/toast — aed0a82
+  - [x] **Silent mutation failures** — module/workflow mutation hooks throw on
+        `{success:false}`; all 3 delete handlers try/catch + error toast; DnD
+        reorder try/finally (no stuck `draggedIndex`) — 380ced3
+  - [x] **Nits** — comment-only `defaults.ts` deleted; unused `Pencil`/`X` imports
+        removed; redundant `WorkflowWithActuals` dropped; `new Date(actualEnd ??
+        planEnd)` epoch risk gone (planEnd now non-null); ModuleCard
+        `ConfirmDeleteModal` import unified via `@/shared/ui`; a11y aria-labels +
+        focus ring restored; `useStore` → `useSelector` — 8405c1a + f161f7e
+  - [x] **Date-rules work items (phase/module/workflow)** — schemas required
+        `z.date({ error })`, `?? new Date()` fallbacks removed from
+        createPhaseAction/createModule/createWorkflow, tests flipped + 3 new
+        rejection tests (14 schema tests green) — 18d5d7d
+  - [x] **Verification (Task 7)** — `prisma validate` ✓, `tsc --noEmit` ✓,
+        `vitest run` 33 files / 219 tests ✓, `eslint` on all touched dirs ✓,
+        `npm run build` ✓. NOTE: `eslint src/app` still fails on
+        `projects/[projectId]/contract/page.tsx` (3× react-hooks/immutability,
+        pre-existing — that file remains unchecked in section 11).

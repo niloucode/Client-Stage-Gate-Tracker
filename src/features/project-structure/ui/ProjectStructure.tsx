@@ -13,10 +13,10 @@ import {
 	ArrowRight,
 	LayoutGrid,
 	Eye,
-	Lock,
 	Workflow,
 	Ticket,
 	LucideIcon,
+	Clock,
 } from "lucide-react";
 
 import {
@@ -29,6 +29,8 @@ import {
 import { Back } from "@/components/ui/back";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/toast";
 import { ConfirmDeleteModal } from "@/shared/ui";
 import { cn } from "@/lib/utils";
 import { cascadeSoftDeleteStage, useProjectStages } from "@/entities/stage";
@@ -71,6 +73,24 @@ interface ProjectStructureProps {
 	onIssueReport?: () => void;
 }
 
+// ─── Date Formatting Helpers ──────────────────────────────────────────────────
+
+function formatDate(d: Date | string | null | undefined): string {
+	if (!d) return "—";
+	return new Date(d).toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
+
+function stageDateRange(stage: Stage): string {
+	const start = stage.actualStart ?? stage.planStart;
+	const end = stage.actualEnd ?? stage.planEnd;
+	if (!start && !end) return "No dates set";
+	return `${formatDate(start)} — ${formatDate(end)}`;
+}
+
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
 function SectionLabel({
@@ -88,25 +108,20 @@ function SectionLabel({
 	);
 }
 
-function ProjectOverviewCard({
-	projectName,
-	progress,
-}: {
-	projectName: string;
-	progress: number;
-}) {
+function ProjectOverviewCard({ progress }: { progress: number }) {
 	return (
-		<Card className="h-full border border-warm-gray-200 bg-neutral-surface shadow-xs">
-			<CardHeader>
-				<SectionLabel icon={LayoutDashboard} label="Project Overview" />
-				<h2>{projectName}</h2>
-			</CardHeader>
-			<CardContent className="flex flex-col gap-1 pt-1 mt-6">
+		<Card className="flex h-full flex-col justify-between border border-warm-gray-200 bg-neutral-surface shadow-xs">
+			<CardHeader className="">
 				<SectionLabel icon={BarChart2} label="Overall Progress" />
-				<h2>{progress}%</h2>
-				<div className="h-2.5 w-full overflow-hidden rounded-full border border-neutral-border/10 bg-neutral-subtle">
+			</CardHeader>
+			<CardContent className="flex flex-col">
+				<div className="flex items-baseline justify-between">
+					<Label>Completion</Label>
+					<span className="text-2xl font-bold text-brand-600">{progress}%</span>
+				</div>
+				<div className="h-7.5 w-full overflow-hidden rounded-sm border border-neutral-border/10 bg-neutral-subtle">
 					<div
-						className="h-full rounded-full bg-green-600 transition-all duration-500"
+						className="h-full rounded-sm bg-green-600 transition-all duration-500"
 						style={{ width: `${progress}%` }}
 					/>
 				</div>
@@ -115,44 +130,94 @@ function ProjectOverviewCard({
 	);
 }
 
+function ProjectTimelineCard({
+	startDate,
+	endDate,
+}: {
+	startDate?: Date | null;
+	endDate?: Date | null;
+}) {
+	return (
+		<Card className="flex h-full flex-col justify-between border border-warm-gray-200 bg-neutral-surface shadow-xs">
+			<CardHeader className="">
+				<SectionLabel icon={Clock} label="Project Dates" />
+			</CardHeader>
+			<CardContent className="">
+				<div className="flex flex-row gap-5">
+					<div className="flex flex-col">
+						<Label>Actual Start</Label>
+						<h2>{formatDate(startDate)}</h2>
+					</div>
+					<div className="flex flex-col">
+						<Label>Planned End</Label>
+						<h2>{formatDate(endDate)}</h2>
+					</div>
+				</div>
+			</CardContent>
+		</Card>
+	);
+}
+
 function ProjectAccessCard({
+	projectId,
 	onViewContract,
 	onCredentialsRepo,
 	onIssueReport,
 }: {
+	projectId?: string;
 	onViewContract?: () => void;
 	onCredentialsRepo?: () => void;
 	onIssueReport?: () => void;
 }) {
+	const router = useRouter();
+
+	const handleViewContract =
+		onViewContract ??
+		(() => {
+			if (projectId) router.push(`/projects/${projectId}/contract`);
+		});
+
+	const handleCredentials =
+		onCredentialsRepo ??
+		(() => {
+			if (projectId) router.push(`/projects/${projectId}/variables`);
+		});
+
+	const handleIssueReport =
+		onIssueReport ??
+		(() => {
+			if (projectId) router.push(`/projects/${projectId}/issues`);
+		});
+
 	return (
-		<Card className="h-full border border-warm-gray-200 bg-neutral-surface shadow-xs">
-			<CardHeader>
-				<SectionLabel icon={Lock} label="Project Access" />
-			</CardHeader>
-			<CardContent className="h-full grid grid-cols-1 gap-2.5 px-4 pt-1 sm:grid-cols-3 lg:grid-cols-1">
+		<Card className="flex h-full flex-col justify-between border border-warm-gray-200 bg-neutral-surface shadow-xs">
+			<CardContent className="flex h-full flex-col justify-center gap-2">
 				<Button
 					size="sm"
-					onClick={onViewContract}
-					className="w-full h-8 justify-start gap-2 px-2 py-3 text-wrap border border-brand-500/30 bg-brand-100/70 text-xs text-brand-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-brand-100 active:bg-brand-100 active:shadow-inner active:translate-y-px"
+					onClick={handleViewContract}
+					variant="outline"
+					className="h-8 justify-start gap-2 text-xs"
 				>
-					<Eye className="h-3.5 w-3.5 shrink-0" />
-					<span className="text-wrap">View Contract</span>
+					<Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+					View Contract
 				</Button>
 				<Button
 					size="sm"
-					onClick={onCredentialsRepo}
-					className="w-full h-8 justify-start gap-2 px-2 py-3 text-wrap border border-green-500/30 bg-green-100/70 text-xs text-green-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-green-100 active:bg-green-100 active:shadow-inner active:translate-y-px"
+					onClick={handleCredentials}
+					variant="outline"
+					className="h-8 justify-start gap-2 text-xs"
 				>
-					<Key className="h-3.5 w-3.5 shrink-0" />
-					<span className="text-wrap">Project Variables</span>
+					<Key className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+					Project Variables
 				</Button>
 				<Button
 					size="sm"
-					onClick={onIssueReport}
-					className="w-full h-8 justify-start gap-2 px-2 py-3 border border-red-500/30 bg-red-100/70 text-xs text-red-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-red-100 active:bg-red-100 active:shadow-inner active:translate-y-px"
+					onClick={handleIssueReport}
+					variant="outline"
+					className="h-8 justify-start gap-2 text-xs"
 				>
-					<Bug className="h-3.5 w-3.5 shrink-0" />
-					<span className="text-wrap">Issue Reporting</span>
+					<Bug className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+					Issue Reporting
 				</Button>
 			</CardContent>
 		</Card>
@@ -161,7 +226,7 @@ function ProjectAccessCard({
 
 function StatCard({ label, done, total, icon: Icon }: StatItem) {
 	return (
-		<Card size="sm" className=" bg-neutral-surface">
+		<Card size="sm" className="bg-neutral-surface">
 			<CardContent className="flex items-center gap-3.5 p-3.5">
 				<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-brand-500/20 bg-brand-500/10 text-brand-600">
 					<Icon className="h-3.5 w-3.5" />
@@ -218,7 +283,6 @@ function TicketCard({
 			title={`Open ${name}`}
 		>
 			<CardContent className="flex flex-col justify-between gap-3 p-3 lg:flex-row lg:items-center">
-				{/* Left: Workflow Badge & Ticket Title */}
 				<div className="flex items-center gap-2.5 min-w-0 flex-1">
 					<Badge
 						variant="outline"
@@ -227,10 +291,11 @@ function TicketCard({
 						<Workflow className="h-3 w-3 shrink-0" />
 						<span>{workflowName}</span>
 					</Badge>
-					<h4>{name}</h4>
+					<h4 className="text-xs font-semibold text-charcoal truncate">
+						{name}
+					</h4>
 				</div>
 
-				{/* Right: Expiring Tag */}
 				<Badge
 					variant="secondary"
 					className={cn(
@@ -262,7 +327,7 @@ function StageActionButton({
 	return (
 		<Button
 			variant="outline"
-			className="h-auto w-full rounded-sm! p-3.5 text-left font-normal border-brand-500/30 bg-neutral-surface text-brand-600 hover:bg-brand-50"
+			className="h-auto w-full rounded-md p-3.5 text-left font-normal border-brand-500/30 bg-neutral-surface text-brand-600 hover:bg-brand-50"
 			{...props}
 		>
 			<div className="flex w-full items-center justify-between gap-3 min-w-0">
@@ -287,26 +352,6 @@ function StageActionButton({
 	);
 }
 
-// ─── Date formatting ─────────────────────────────────────────────────────────
-
-function formatDate(d: Date | null | undefined): string {
-	if (!d) return "—";
-	return new Date(d).toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	});
-}
-
-function stageDateRange(stage: Stage): string {
-	// Show actual dates once they are materialized (contract signing / gate
-	// approval); fall back to the planned window.
-	const start = stage.actualStart ?? stage.planStart;
-	const end = stage.actualEnd ?? stage.planEnd;
-	if (!start && !end) return "No dates set";
-	return `${formatDate(start)} — ${formatDate(end)}`;
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ProjectStructure({
@@ -325,11 +370,9 @@ export function ProjectStructure({
 		useProjectStages(projectId);
 	const { data: stats } = useProjectStats(projectId ?? null);
 	const { data: profile } = useCurrentUser();
-	// Spec 5: client profiles (linked via the contract) are read-only here.
 	const isClientProfile = !!profile?.client_id;
 
-	// Real stage list (ordered by number server-side); mark the current stage
-	// as the first unapproved one (or the last stage when all are approved).
+	// Stage mapping & selection
 	const stageItems: Stage[] = stages.map((s) => ({
 		...s,
 		current: false,
@@ -344,10 +387,6 @@ export function ProjectStructure({
 		};
 	}
 
-	// Selection: user override while on the page, defaulting to the current
-	// stage once data arrives (derived — no effect needed). If the override
-	// no longer exists in the live list (e.g. deleted in another session),
-	// fall back to the default so the overview never shows a dead stage.
 	const [selectedOverride, setSelectedOverride] = useState<string | null>(null);
 	const defaultStageId =
 		currentIndex >= 0 ? stageItems[currentIndex].stage_id : null;
@@ -364,9 +403,33 @@ export function ProjectStructure({
 				)
 			: 0;
 
-	// The Stage Details section follows the Stepper selection — mirrors the
-	// phase stepper pattern (currentPhase = phases.find(p => p.number ===
-	// activePhase)): clicking a stage node swaps the overview below.
+	// Calculate overall project date range dynamically
+	const overallDateRange = (() => {
+		const projObj = project as
+			| (typeof project & { start_date?: Date; end_date?: Date })
+			| undefined;
+		if (projObj?.start_date || projObj?.end_date) {
+			return {
+				start: projObj.start_date ? new Date(projObj.start_date) : null,
+				end: projObj.end_date ? new Date(projObj.end_date) : null,
+			};
+		}
+		// Fallback: Calculate from stages
+		const startTimes = stageItems
+			.map((s) => s.actualStart ?? s.planStart)
+			.filter(Boolean)
+			.map((d) => new Date(d!).getTime());
+		const endTimes = stageItems
+			.map((s) => s.actualEnd ?? s.planEnd)
+			.filter(Boolean)
+			.map((d) => new Date(d!).getTime());
+
+		return {
+			start: startTimes.length > 0 ? new Date(Math.min(...startTimes)) : null,
+			end: endTimes.length > 0 ? new Date(Math.max(...endTimes)) : null,
+		};
+	})();
+
 	const selectedStage: StageDetailsInfo | null = (() => {
 		const stage = stageItems.find((s) => s.stage_id === selectedStageId);
 		if (!stage) return null;
@@ -418,7 +481,6 @@ export function ProjectStructure({
 		}),
 	);
 
-	// Add/Edit Stage modal state
 	const [stageModalOpen, setStageModalOpen] = useState(false);
 	const [stageToEdit, setStageToEdit] = useState<{
 		stage_id: string;
@@ -428,7 +490,6 @@ export function ProjectStructure({
 		planEnd?: Date | null;
 	} | null>(null);
 
-	// Delete confirmation state (subtree soft-delete)
 	const [stageToDelete, setStageToDelete] = useState<{
 		id: string;
 		name: string;
@@ -456,182 +517,185 @@ export function ProjectStructure({
 	}
 
 	return (
-		<div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
-			{/* Navigation Link */}
+		<div className="flex flex-1 flex-col min-w-0 overflow-x-hidden space-y-5">
 			<Back link={`/projects`} />
 
-			{/* Grid Layout */}
-			<div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
-				{/* Project Overview Card */}
-				<div className="lg:col-span-10">
-					<ProjectOverviewCard
-						projectName={project?.name ?? "Untitled Project"}
-						progress={computedProgress}
+			{/* Page Title */}
+			<div>
+				<h1 className="text-2xl font-bold tracking-tight text-charcoal sm:text-3xl">
+					{project?.name ?? "Field Pilot & Rollout"}
+				</h1>
+				<p className="subtitle">
+					{(project as unknown as { description?: string })?.description ??
+						"Project structure & stage roadmap view"}
+				</p>
+			</div>
+
+			{/* Top Overview Cards Grid */}
+			<div className="grid grid-cols-1 gap-3 md:grid-cols-5 items-stretch">
+				<div className="md:col-span-2 flex flex-col h-full">
+					<ProjectTimelineCard
+						startDate={overallDateRange.start}
+						endDate={overallDateRange.end}
 					/>
 				</div>
-
-				{/* Project Access Card */}
-				<div className="lg:col-span-2">
+				<div className="md:col-span-2 flex flex-col h-full">
+					<ProjectOverviewCard progress={computedProgress} />
+				</div>
+				<div className="md:col-span-1 flex flex-col h-full">
 					<ProjectAccessCard
+						projectId={projectId}
 						onViewContract={onViewContract}
 						onCredentialsRepo={onCredentialsRepo}
 						onIssueReport={onIssueReport}
 					/>
 				</div>
-
-				{/* Stage Sequence & Detailed Content */}
-				<Card className="overflow-hidden rounded-md border border-warm-gray-200 bg-neutral-surface shadow-xs lg:col-span-10">
-					{/* Stage Sequence Header */}
-					<div className="border-b border-warm-gray-200 px-4">
-						<StageSequence
-							stages={stageItems}
-							selectedId={selectedStageId}
-							onSelectStage={setSelectedOverride}
-							onAddStage={() => {
-								setStageToEdit(null);
-								setStageModalOpen(true);
-							}}
-							onEditStage={
-								isClientProfile
-									? undefined
-									: (id) => {
-											const s = stageItems.find((x) => x.stage_id === id);
-											if (s) {
-												setStageToEdit({
-													stage_id: s.stage_id,
-													name: s.name,
-													description: s.description,
-													planStart: s.planStart,
-													planEnd: s.planEnd,
-												});
-												setStageModalOpen(true);
-											}
-										}
-							}
-							onDeleteStage={
-								isClientProfile
-									? undefined
-									: (id) => {
-											const s = stageItems.find((x) => x.stage_id === id);
-											setStageDeleteError(null);
-											setStageToDelete(
-												s ? { id: s.stage_id, name: s.name } : { id, name: "" },
-											);
-										}
-							}
-							showAddButton={!isClientProfile}
-						/>
-					</div>
-
-					{/* Stage Details & Stage Actions Section (Full Bleed Border-B) */}
-					<div className="border-b border-warm-gray-200 p-5 pb-9 space-y-5">
-						<SectionLabel icon={Calendar} label="Stage Details" />
-
-						{/* Stage Header Details */}
-						<div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
-							<div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-4 min-w-0 flex-1">
-								<div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 border-brand-100 text-2xl font-bold text-brand-600 sm:h-16 sm:w-16 sm:text-3xl">
-									{selectedStage?.number ?? "—"}
-								</div>
-								<div className="min-w-0 flex-1">
-									<div className="flex items-center gap-2.5 flex-wrap">
-										<h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
-											{selectedStage?.name ?? "No stages yet"}
-										</h2>
-										{selectedStage?.approved && (
-											<Badge className="border border-green-600/30 bg-green-100 text-green-700 font-bold uppercase text-2xs px-2 py-0.5 rounded-md hover:bg-green-100">
-												APPROVED
-											</Badge>
-										)}
-									</div>
-									<p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-										{selectedStage?.description}
-									</p>
-								</div>
-							</div>
-
-							<div className="flex shrink-0 items-center gap-2 rounded-md border border-brand-200 bg-brand-50 px-3.5 py-2 text-brand-600 self-start sm:px-4 sm:py-2.5 lg:self-auto">
-								<Calendar className="h-3.5 w-3.5 shrink-0" />
-								<span className="text-xs font-semibold sm:whitespace-nowrap">
-									{selectedStage?.dateRange}
-								</span>
-							</div>
-						</div>
-
-						{/* Stats Overview */}
-						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-							{statItems.map((stat) => (
-								<StatCard key={stat.label} {...stat} />
-							))}
-						</div>
-
-						{/* Stage Actions */}
-						<div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-2">
-							<StageActionButton
-								title="Preview Stage"
-								description="Explore full stage modules & workflow hierarchy"
-								icon={Workflow}
-								onClick={() =>
-									projectId &&
-									selectedStageId &&
-									router.push(
-										`/projects/${projectId}/stages/${selectedStageId}`,
-									)
-								}
-								isPrimary
-							/>
-							<StageActionButton
-								title="Preview Gate"
-								description="Review mandatory compliance milestones"
-								icon={LayoutGrid}
-								onClick={() =>
-									projectId &&
-									selectedStageId &&
-									router.push(
-										`/projects/${projectId}/stages/${selectedStageId}/gate`,
-									)
-								}
-							/>
-						</div>
-					</div>
-
-					{/* Current Phase & Expiring Tickets Section */}
-					<CardContent className="p-5 space-y-5">
-						<Card className="border border-warm-gray-200 bg-neutral-subtle/50">
-							<CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-								<div>
-									<CardTitle>
-										<h3>Expiring Tickets</h3>
-									</CardTitle>
-									<CardDescription className="mt-0.5 text-xs text-muted-foreground">
-										Unfinished tickets with the closest deadlines
-									</CardDescription>
-								</div>
-							</CardHeader>
-
-							<CardContent className="p-4 pt-1 space-y-2.5">
-								<div className="grid grid-cols-1 gap-2.5">
-									{expiringTickets.length > 0 ? (
-										expiringTickets.map((ticket) => (
-											<TicketCard
-												key={ticket.ticket_id}
-												{...ticket}
-												projectId={projectId}
-											/>
-										))
-									) : (
-										<p className="text-xs text-muted-foreground">
-											No expiring tickets.
-										</p>
-									)}
-								</div>
-							</CardContent>
-						</Card>
-					</CardContent>
-				</Card>
 			</div>
 
-			{/* Add/Edit Stage modal */}
+			{/* Stage Sequence & Content Card */}
+			<Card className="overflow-hidden rounded-md border border-warm-gray-200 bg-neutral-surface shadow-xs">
+				<div className="border-b border-warm-gray-200 px-4">
+					<StageSequence
+						stages={stageItems}
+						selectedId={selectedStageId}
+						onSelectStage={setSelectedOverride}
+						onAddStage={() => {
+							setStageToEdit(null);
+							setStageModalOpen(true);
+						}}
+						onEditStage={
+							isClientProfile
+								? undefined
+								: (id) => {
+										const s = stageItems.find((x) => x.stage_id === id);
+										if (s) {
+											setStageToEdit({
+												stage_id: s.stage_id,
+												name: s.name,
+												description: s.description,
+												planStart: s.planStart,
+												planEnd: s.planEnd,
+											});
+											setStageModalOpen(true);
+										}
+									}
+						}
+						onDeleteStage={
+							isClientProfile
+								? undefined
+								: (id) => {
+										const s = stageItems.find((x) => x.stage_id === id);
+										setStageDeleteError(null);
+										setStageToDelete(
+											s ? { id: s.stage_id, name: s.name } : { id, name: "" },
+										);
+									}
+						}
+						showAddButton={!isClientProfile}
+					/>
+				</div>
+
+				<div className="border-b border-warm-gray-200 p-5 space-y-5">
+					<SectionLabel icon={Calendar} label="Stage Details" />
+
+					<div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+						<div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-4 min-w-0 flex-1">
+							<div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-4 border-brand-100 text-2xl font-bold text-brand-600 sm:h-16 sm:w-16 sm:text-3xl">
+								{selectedStage?.number ?? "—"}
+							</div>
+							<div className="min-w-0 flex-1">
+								<div className="flex items-center gap-2.5 flex-wrap">
+									<h2 className="text-xl font-bold tracking-tight text-charcoal sm:text-2xl">
+										{selectedStage?.name ?? "No stages yet"}
+									</h2>
+									{selectedStage?.approved && (
+										<Badge className="border border-green-600/30 bg-green-100 text-green-700 font-bold uppercase text-2xs px-2 py-0.5 rounded-md hover:bg-green-100">
+											APPROVED
+										</Badge>
+									)}
+								</div>
+								<p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+									{selectedStage?.description}
+								</p>
+							</div>
+						</div>
+
+						<div className="flex shrink-0 items-center gap-2 rounded-md border border-brand-200 bg-brand-50 px-3.5 py-2 text-brand-600 self-start sm:px-4 sm:py-2.5 lg:self-auto">
+							<Calendar className="h-3.5 w-3.5 shrink-0" />
+							<span className="text-xs font-semibold sm:whitespace-nowrap">
+								{selectedStage?.dateRange}
+							</span>
+						</div>
+					</div>
+
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+						{statItems.map((stat) => (
+							<StatCard key={stat.label} {...stat} />
+						))}
+					</div>
+
+					<div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-2">
+						<StageActionButton
+							title="Preview Stage"
+							description="Explore full stage modules & workflow hierarchy"
+							icon={Workflow}
+							onClick={() =>
+								projectId &&
+								selectedStageId &&
+								router.push(
+									`/projects/${projectId}/stages/${selectedStageId}`,
+								)
+							}
+							isPrimary
+						/>
+						<StageActionButton
+							title="Preview Gate"
+							description="Review mandatory compliance milestones"
+							icon={LayoutGrid}
+							onClick={() =>
+								projectId &&
+								selectedStageId &&
+								router.push(
+									`/projects/${projectId}/stages/${selectedStageId}/gate`,
+								)
+							}
+						/>
+					</div>
+				</div>
+
+				<CardContent className="p-5">
+					<Card className="border border-warm-gray-200 bg-neutral-subtle/50">
+						<CardHeader className="p-4 pb-2">
+							<CardTitle className="text-sm font-bold text-charcoal">
+								Expiring Tickets
+							</CardTitle>
+							<CardDescription className="text-2xs text-muted-foreground">
+								Unfinished tickets with the closest deadlines
+							</CardDescription>
+						</CardHeader>
+
+						<CardContent className="p-4 pt-1 space-y-2.5">
+							<div className="grid grid-cols-1 gap-2.5">
+								{expiringTickets.length > 0 ? (
+									expiringTickets.map((ticket) => (
+										<TicketCard
+											key={ticket.ticket_id}
+											{...ticket}
+											projectId={projectId}
+										/>
+									))
+								) : (
+									<p className="text-xs text-muted-foreground">
+										No expiring tickets.
+									</p>
+								)}
+							</div>
+						</CardContent>
+					</Card>
+				</CardContent>
+			</Card>
+
+			{/* Stage Modal (Create / Edit Stage) */}
 			<StageModal
 				isOpen={stageModalOpen}
 				stage={stageToEdit}
@@ -640,19 +704,20 @@ export function ProjectStructure({
 				onSaved={() => void refreshStageData()}
 			/>
 
-			{/* Stage delete confirmation (subtree soft-delete) */}
+			{/* Stage Delete Confirmation Modal */}
 			<ConfirmDeleteModal
 				isOpen={stageToDelete !== null}
 				noun="Stage"
 				title={
-					stageToDelete ? `Delete Stage "${stageToDelete.name}"?` : undefined
+					stageToDelete ? `Delete Stage?` : undefined
 				}
 				description={
 					stageDeleteError ??
-					"This soft-deletes the stage and its entire subtree (phases, modules, workflows, tickets). This action cannot be undone."
+					"This action cannot be undone."
 				}
 				onConfirm={() => {
 					if (!stageToDelete) return;
+					const deletedName = stageToDelete.name;
 					void cascadeSoftDeleteStage(stageToDelete.id).then((result) => {
 						if (result.success) {
 							void refreshStageData();
@@ -661,12 +726,22 @@ export function ProjectStructure({
 							);
 							setStageDeleteError(null);
 							setStageToDelete(null);
+							toast.add({
+								title: "Stage Deleted",
+								description: `"${deletedName}" has been deleted successfully.`,
+								type: "delete",
+							});
 						} else {
-							setStageDeleteError(
+							const errMsg =
 								typeof result.error === "string"
 									? result.error
-									: "Failed to delete the stage.",
-							);
+									: "Failed to delete the stage.";
+							setStageDeleteError(errMsg);
+							toast.add({
+								title: "Delete Failed",
+								description: errMsg,
+								type: "error",
+							});
 						}
 					});
 				}}

@@ -145,7 +145,7 @@ export function ClientSignupForm() {
 				e.preventDefault();
 				void form.handleSubmit();
 			}}
-			className="flex flex-col gap-5"
+			className="flex flex-col gap-5 w-lg mx-auto"
 		>
 			{/* Invite code */}
 			<form.AppField name="inviteCode">
@@ -154,15 +154,15 @@ export function ClientSignupForm() {
 						label="Invite Code"
 						required
 						autoComplete="off"
-						placeholder="e.g. K7Q2M9XWAB" // 12-char code from the project owner
+						placeholder="e.g. K7Q2M9XWAB"
 						className="[&_input]:font-mono [&_input]:uppercase"
 					/>
 				)}
 			</form.AppField>
 
-			{/* Contact person */}
+			{/* First Name + Last Name */}
 			<div className="flex gap-4">
-				<div className="flex-1">
+				<div className="flex-1 min-w-0">
 					<form.AppField name="firstName">
 						{(field) => (
 							<field.TextField
@@ -174,7 +174,7 @@ export function ClientSignupForm() {
 						)}
 					</form.AppField>
 				</div>
-				<div className="flex-1">
+				<div className="flex-1 min-w-0">
 					<form.AppField name="lastName">
 						{(field) => (
 							<field.TextField
@@ -188,52 +188,61 @@ export function ClientSignupForm() {
 				</div>
 			</div>
 
-			{/* Email + Phone */}
-			<form.AppField name="email">
-				{(field) => (
-					<field.TextField
-						label="Email"
-						required
-						type="email"
-						autoComplete="email"
-						placeholder="employee@client.com"
-					/>
-				)}
-			</form.AppField>
+			{/* Email + Contact Number */}
+			<div className="flex gap-4">
+				<div className="flex-1 min-w-0">
+					<form.AppField name="email">
+						{(field) => (
+							<field.TextField
+								label="Email"
+								required
+								type="email"
+								autoComplete="email"
+								placeholder="employee@client.com"
+							/>
+						)}
+					</form.AppField>
+				</div>
+				<div className="flex-1 min-w-0">
+					<form.AppField name="phone">
+						{(field) => (
+							<field.PhoneField
+								label="Contact Number"
+								required
+								placeholder="+1 (555) 000-0000"
+							/>
+						)}
+					</form.AppField>
+				</div>
+			</div>
 
-			<form.AppField name="phone">
-				{(field) => (
-					<field.PhoneField
-						label="Contact Number"
-						required
-						placeholder="+1 (555) 000-0000"
-					/>
-				)}
-			</form.AppField>
-
-			{/* Password */}
-			<form.AppField name="password">
-				{(field) => (
-					<field.PasswordField
-						label="Password"
-						required
-						autoComplete="new-password"
-						placeholder="Create a password"
-					/>
-				)}
-			</form.AppField>
-
-			{/* Confirm Password */}
-			<form.AppField name="confirmPassword">
-				{(field) => (
-					<field.PasswordField
-						label="Confirm Password"
-						required
-						autoComplete="new-password"
-						placeholder="Confirm your password"
-					/>
-				)}
-			</form.AppField>
+			{/* Password + Confirm Password */}
+			<div className="flex gap-4">
+				<div className="flex-1 min-w-0">
+					<form.AppField name="password">
+						{(field) => (
+							<field.PasswordField
+								label="Password"
+								required
+								autoComplete="new-password"
+								placeholder="Create a password"
+							/>
+						)}
+					</form.AppField>
+				</div>
+				<div className="flex-1 min-w-0">
+					<form.AppField name="confirmPassword">
+						{(field) => (
+							<field.PasswordField
+								label="Confirm Password"
+								required
+								autoComplete="new-password"
+								placeholder="Confirm your password"
+							/>
+						)}
+					</form.AppField>
+				</div>
+			</div>
 
 			{/* Error message */}
 			{error && (
@@ -252,25 +261,23 @@ export function ClientSignupForm() {
 			)}
 
 			<div className="flex flex-col gap-2">
-				{/* Footer */}
-				<div className="text-center mt-auto mb-2">
-					<p className="text-[11px] text-gray-400 leading-relaxed">
-						By signing up, you agree to our{" "}
-						<Link
-							href="#"
-							className="underline hover:text-gray-500 transition-colors"
-						>
-							Terms of Service
-						</Link>{" "}
-						and{" "}
-						<Link
-							href="#"
-							className="underline hover:text-gray-500 transition-colors"
-						>
-							Privacy Policy
-						</Link>
-					</p>
-				</div>
+				<p className="text-center text-[11px] text-gray-400 leading-relaxed">
+					By signing up, you agree to our{" "}
+					<Link
+						href="#"
+						className="underline hover:text-gray-500 transition-colors"
+					>
+						Terms of Service
+					</Link>{" "}
+					and{" "}
+					<Link
+						href="#"
+						className="underline hover:text-gray-500 transition-colors"
+					>
+						Privacy Policy
+					</Link>
+				</p>
+
 				{/* Submit Button */}
 				<form.AppForm>
 					<form.SubmitButton
@@ -280,18 +287,9 @@ export function ClientSignupForm() {
 						Create Account
 					</form.SubmitButton>
 				</form.AppForm>
-				{/* OR divider */}
-				<div className="relative my-4">
-					<div className="absolute inset-0 flex items-center">
-						<div className="w-full border-t border-gray-200" />
-					</div>
-					<div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-						<span className="bg-neutral-surface px-3 text-gray-400">OR</span>
-					</div>
-				</div>
 
 				{/* Sign in link */}
-				<p className="text-center text-sm text-gray-500">
+				<p className="mt-2 text-center text-sm text-gray-500">
 					Already have an account?{" "}
 					<Link
 						href="/login"

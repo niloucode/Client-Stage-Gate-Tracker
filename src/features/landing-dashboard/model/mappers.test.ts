@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { mapDashboardTicketRow, mapContractRow, tagToBadge } from "./mappers";
+import {
+	mapDashboardTicketRow,
+	mapContractRow,
+	mapIssueStats,
+	tagToBadge,
+} from "./mappers";
 import type { DashboardTicketRow } from "@/entities/ticket";
 import type { ContractRow } from "@/entities/contract";
 
@@ -107,5 +112,44 @@ describe("mapContractRow", () => {
 			Projects: { name: "Nexus" },
 		};
 		expect(mapContractRow(row as ContractRow).status).toBe("executed");
+	});
+});
+
+describe("mapIssueStats", () => {
+	it("maps the byUrgency array into the donut shape", () => {
+		const mapped = mapIssueStats({
+			total: 10,
+			byUrgency: [
+				{ urgency: "LOW", count: 3 },
+				{ urgency: "MEDIUM", count: 4 },
+				{ urgency: "HIGH", count: 2 },
+			],
+			assigned: 6,
+			unassigned: 4,
+		});
+		expect(mapped).toEqual({
+			issuesBySeverity: { high: 2, medium: 4, low: 3 },
+			assignedVsUnassigned: { assigned: 6, unassigned: 4 },
+		});
+	});
+
+	it("defaults missing urgency buckets to zero", () => {
+		const mapped = mapIssueStats({
+			total: 0,
+			byUrgency: [],
+			assigned: 0,
+			unassigned: 0,
+		});
+		expect(mapped.issuesBySeverity).toEqual({ high: 0, medium: 0, low: 0 });
+	});
+
+	it("handles a single populated bucket", () => {
+		const mapped = mapIssueStats({
+			total: 2,
+			byUrgency: [{ urgency: "HIGH", count: 2 }],
+			assigned: 1,
+			unassigned: 1,
+		});
+		expect(mapped.issuesBySeverity).toEqual({ high: 2, medium: 0, low: 0 });
 	});
 });

@@ -6,6 +6,7 @@ import { ModuleCard } from "@/features/stage-editor/ui/ModuleCard"
 import { PhaseCard } from "@/features/stage-editor/ui/PhaseCard"
 import type { Phase } from "@/features/stage-editor/types"
 import { useStageTree } from "@/entities/stage/queries"
+import { useCurrentUser } from "@/entities/profile/queries"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Back } from "@/components/ui/back"
@@ -25,7 +26,12 @@ function EditorContent({
 	const router = useRouter()
 	const searchParams = useSearchParams()
 	const { data: stageTree, isLoading, error } = useStageTree(stageId)
-	const phases = (stageTree?.phases ?? []) as unknown as Phase[]
+	const { data: profile } = useCurrentUser()
+	// Spec: client profiles (linked via the contract) are read-only here;
+	// project team and project owners have full edit access.
+	const isClientProfile = !!profile?.client_id
+	// PhaseNode (stage tree) is structurally assignable to Phase — no cast needed
+	const phases: Phase[] = stageTree?.phases ?? []
 
 	// Restore phase: sessionStorage → URL param → null
 	const initialPhase = (() => {
@@ -97,10 +103,12 @@ function EditorContent({
 						{stageTree?.description || "Define project phases, modules, and workflows."}
 					</p>
 				</div>
-				<Button onClick={() => stepperRef.current?.openCreateModal()}>
-					<Plus />
-					Add Phase
-				</Button>
+				{!isClientProfile && (
+					<Button onClick={() => stepperRef.current?.openCreateModal()}>
+						<Plus />
+						Add Phase
+					</Button>
+				)}
 			</div>
 
 			<PhaseCard
@@ -109,6 +117,7 @@ function EditorContent({
 				stageId={stageId}
 				activePhase={activePhase}
 				setActivePhase={setActivePhase}
+				readOnly={isClientProfile}
 			/>
 
 			<ModuleCard
@@ -116,6 +125,7 @@ function EditorContent({
 				phases={phases}
 				projectId={projectId}
 				stageId={stageId}
+				readOnly={isClientProfile}
 			/>
 		</div>
 	)

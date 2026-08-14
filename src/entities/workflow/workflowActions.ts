@@ -56,12 +56,13 @@ export async function createWorkflow(
 			data: {
 				name,
 				sort_key: nextKey,
-				plan_start_at: planStart ?? new Date(),
+				// Date rules: plan dates required (schema-enforced) — no fallback
+				plan_start_at: planStart,
 				actual_end_at: actualEnd ?? null,
 				actual_start_at: actualStart ?? null,
 				is_approved: isApproved ?? false,
 				module_id: moduleId,
-				plan_end_at: planEnd ?? new Date(),
+				plan_end_at: planEnd,
 			},
 		});
 		return { success: true, data: newWorkflow };

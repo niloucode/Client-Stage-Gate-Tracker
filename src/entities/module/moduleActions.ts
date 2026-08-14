@@ -38,10 +38,11 @@ export async function createModule(phaseId: string, input: ModuleCreateInput) {
 		const newModule = await prisma.modules.create({
 			data: {
 				name,
-				plan_start_at: planStart ?? new Date(),
+				// Date rules: plan dates required (schema-enforced) — no fallback
+				plan_start_at: planStart,
 				actual_end_at: actualEnd ?? null,
 				actual_start_at: actualStart ?? null,
-				plan_end_at: planEnd ?? new Date(),
+				plan_end_at: planEnd,
 				phase_id: phaseId,
 			},
 		});
