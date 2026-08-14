@@ -340,7 +340,7 @@ model Tickets {
   watcher_id      String?          @db.Uuid
   api_route       String?
   api_method      ApiMethod?
-  plan_start_at   DateTime         @db.Timestamptz(6)
+  plan_start_at   DateTime?        @db.Timestamptz(6)
   actual_start_at DateTime?        @db.Timestamptz(6)
   parent_id       String?          @db.Uuid
   issue_id        String?          @db.Uuid

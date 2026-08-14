@@ -47,7 +47,8 @@ export async function createTicket(
 		const created = await tx.tickets.create({
 			data: {
 				name: data.name,
-				plan_start_at: new Date(),
+				// Spec: plan_start_at optional (nullable); plan_end_at required
+				plan_start_at: data.plan_start_at ?? null,
 				plan_end_at: data.plan_end_at,
 				status: data.status,
 				workflow_id: data.workflow_id,
@@ -222,6 +223,9 @@ export async function updateTicket(
 			where: { ticket_id: data.ticket_id },
 			data: {
 				name: data.name,
+				// undefined = don't touch; null = explicitly clear; Date = set
+				plan_start_at:
+					data.plan_start_at === undefined ? undefined : data.plan_start_at,
 				plan_end_at: data.plan_end_at,
 				status: data.status,
 				workflow_id: data.workflow_id,

@@ -17,7 +17,8 @@ import type { Prisma } from "@/lib/generated/prisma";
  */
 
 interface TicketDateInput {
-	plan_start_at: Date;
+	// plan_start_at is nullable since 2026-08-15 (tickets may omit it).
+	plan_start_at: Date | null;
 	plan_end_at: Date;
 	actual_start_at: Date | null;
 	actual_end_at: Date | null;
@@ -42,18 +43,21 @@ export function rollupWorkflowDates(tickets: TicketDateInput[]): RolledUpDates {
 		};
 	}
 
-	let planStart: Date = tickets[0].plan_start_at;
+	let planStart: Date | null = null;
 	let planEnd: Date = tickets[0].plan_end_at;
 	let actualStart: Date | null = null;
 	let actualEnd: Date | null = null;
 	const allFinished = tickets.every((t) => t.status === "FINISHED");
 
 	for (const t of tickets) {
-		if (t.plan_start_at < planStart) planStart = t.plan_start_at;
+		// Tickets without a planned start still bound the window via plan_end.
+		if (t.plan_start_at && (!planStart || t.plan_start_at < planStart)) {
+			planStart = t.plan_start_at;
+		}
 		if (t.plan_end_at > planEnd) planEnd = t.plan_end_at;
 
 		const start = t.actual_start_at ?? t.plan_start_at;
-		if (!actualStart || start < actualStart) actualStart = start;
+		if (start && (!actualStart || start < actualStart)) actualStart = start;
 
 		if (t.actual_end_at && (!actualEnd || t.actual_end_at > actualEnd)) {
 			actualEnd = t.actual_end_at;

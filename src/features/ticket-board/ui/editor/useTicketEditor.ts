@@ -123,7 +123,8 @@ export function useTicketEditor({
 				workflow_id: ticket.workflow_id,
 				name: ticket.name.trim(),
 				plan_start_at: ticket.plan_start_at ? new Date(ticket.plan_start_at) : null,
-				plan_end_at: ticket.plan_end_at ? new Date(ticket.plan_end_at) : new Date(),
+				// Deadline is required (spec) and cannot be cleared in the UI — no fallback.
+				plan_end_at: new Date(ticket.plan_end_at),
 				actual_start_at: ticket.actual_start_at ? new Date(ticket.actual_start_at) : null,
 				actual_end_at: ticket.actual_end_at ? new Date(ticket.actual_end_at) : null,
 				status: ticket.status,

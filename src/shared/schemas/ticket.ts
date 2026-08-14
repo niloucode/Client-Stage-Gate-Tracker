@@ -13,7 +13,7 @@ export const ticketCreateSchema = z.object({
 	watcher_id: z.uuid().optional().nullable(),
 	tagIds: z.array(z.uuid()).optional().nullable(),
 	plan_start_at: z.date().optional().nullable(),
-	plan_end_at: z.date({ message: "Plan End Date is required" }),
+	plan_end_at: z.date({ error: "Plan End Date is required" }),
 	actual_start_at: z.date().optional().nullable(),
 	actual_end_at: z.date().optional().nullable(),
 	api_route: z.string().optional().nullable(),
