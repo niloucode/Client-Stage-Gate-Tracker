@@ -37,7 +37,7 @@ export const navItems: NavItem[] = [
 	{ label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
 	{ label: "Projects", icon: Folder, href: "/projects" },
 	// { label: "Contracts", icon: FileText, href: "/contracts" }, // TODO(contracts): route not built yet
-	{ label: "Team", icon: Users, href: "/team" },
+	{ label: "Project Team", icon: Users, href: "/team" },
 	{ label: "Clients", icon: ContactRound, href: "/clients" },
 	// { label: "Credentials Repo", icon: Key, href: "/credentials" },
 ];
