@@ -296,23 +296,24 @@ export async function getStageTree(stageId: string) {
 			number: number;
 			ticketCount: number;
 			progress: number;
-			planStart: Date | null;
-			planEnd: Date | null;
+			// plan dates are NOT NULL in the DB (date rules); actuals are nullable
+			planStart: Date;
+			planEnd: Date;
 			actualStart: Date | null;
 			actualEnd: Date | null;
 		};
 		type ModuleNode = Prisma.ModulesGetPayload<object> & {
 			workflows: WorkflowNode[];
-			planStart: Date | null;
-			planEnd: Date | null;
+			planStart: Date;
+			planEnd: Date;
 			actualStart: Date | null;
 			actualEnd: Date | null;
 		};
 		type PhaseNode = Prisma.PhasesGetPayload<object> & {
 			number: number;
 			modules: ModuleNode[];
-			planStart: Date | null;
-			planEnd: Date | null;
+			planStart: Date;
+			planEnd: Date;
 			actualStart: Date | null;
 			actualEnd: Date | null;
 		};

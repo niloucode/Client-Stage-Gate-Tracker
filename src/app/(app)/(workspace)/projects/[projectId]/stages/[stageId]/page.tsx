@@ -30,8 +30,8 @@ function EditorContent({
 	// Spec: client profiles (linked via the contract) are read-only here;
 	// project team and project owners have full edit access.
 	const isClientProfile = !!profile?.client_id
-	// TODO(date-alignment): cast removed in Task 2 once PhaseNode types match Phase
-	const phases = (stageTree?.phases ?? []) as unknown as Phase[]
+	// PhaseNode (stage tree) is structurally assignable to Phase — no cast needed
+	const phases: Phase[] = stageTree?.phases ?? []
 
 	// Restore phase: sessionStorage → URL param → null
 	const initialPhase = (() => {
