@@ -236,7 +236,7 @@ function ProjectAccessCard({
         className="w-full h-8 justify-start gap-2 px-2 py-3 text-wrap border border-green-500/30 bg-green-100/70 text-xs text-green-600 shadow-xs transition-all duration-150 hover:border-transparent hover:bg-green-100 active:bg-green-100 active:shadow-inner active:translate-y-px"
       >
         <Key className="h-3.5 w-3.5 shrink-0" />
-        <span className="text-wrap">Credentials Repository</span>
+        <span className="text-wrap">Project Variables</span>
       </Button>
       <Button
         size="sm"
