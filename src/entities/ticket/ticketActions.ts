@@ -342,6 +342,7 @@ export async function updateTicketStatus(
 export async function cascadeSoftDeleteTicket(
 	ticketId: string,
 	performed_by?: string,
+	mode: "cascade" | "promote" = "cascade",
 	_txClient?: Prisma.TransactionClient,
 ) {
 	z.uuid().parse(ticketId);
@@ -359,13 +360,38 @@ export async function cascadeSoftDeleteTicket(
 			select: { name: true, workflow_id: true },
 		});
 
-		await db.tickets.update({
-			where: { ticket_id: ticketId },
-			data: {
-				is_deleted: true,
-				deleted_at: new Date(),
-			},
-		});
+		if (mode === "cascade") {
+			// Spec: deleting a parent cascades to the whole parent_id subtree.
+			const idsToDelete = [ticketId];
+			let frontier = [ticketId];
+			while (frontier.length > 0) {
+				const children = await db.tickets.findMany({
+					where: { parent_id: { in: frontier }, is_deleted: false },
+					select: { ticket_id: true },
+				});
+				frontier = children.map((c) => c.ticket_id);
+				idsToDelete.push(...frontier);
+			}
+
+			await db.tickets.updateMany({
+				where: { ticket_id: { in: idsToDelete } },
+				data: { is_deleted: true, deleted_at: new Date() },
+			});
+		} else {
+			// Spec: "promote" — subtasks become top-level tickets first.
+			await db.tickets.updateMany({
+				where: { parent_id: ticketId, is_deleted: false },
+				data: { parent_id: null },
+			});
+
+			await db.tickets.update({
+				where: { ticket_id: ticketId },
+				data: {
+					is_deleted: true,
+					deleted_at: new Date(),
+				},
+			});
+		}
 
 		if (performed_by) {
 			await logHistoryEvent(db, {

@@ -12,7 +12,7 @@ interface TicketColumnProps {
 	tickets: Ticket[];
 	subtasksByParent: ReadonlyMap<string, Ticket[]>;
 	onSelectTicket: (ticket: Ticket) => void;
-	onDeleteTicket?: (ticketId: string) => void;
+	onDeleteTicket?: (ticketId: string, mode: "cascade" | "promote") => void;
 }
 
 export default function TicketColumn({

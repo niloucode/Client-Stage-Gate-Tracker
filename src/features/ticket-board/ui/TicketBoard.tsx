@@ -221,16 +221,35 @@ export default function TicketBoard({
 	 * Soft-deletes a ticket via the delete mutation. The ticket disappears
 	 * from the board when the server mutation succeeds (query invalidation
 	 * refetches the list) — there is no client-side optimistic removal.
-	 * @param {string} ticketId - The UUID of the ticket to delete.
+	 * `mode` is chosen in the delete dialog: "cascade" removes the whole
+	 * subtask subtree, "promote" turns subtasks into top-level tickets.
+	 * @param ticketId - The UUID of the ticket to delete.
+	 * @param mode - What happens to the ticket's subtasks.
 	 */
-	function handleDeleteTicket(ticketId: string) {
-		deleteTicketMutation.mutate({ ticketId, performed_by: user?.profile_id });
-		// Trigger Success Toast
-		toast.add({
-			title: "Ticket Deleted",
-			description: `Ticket has been deleted successfully.`,
-			type: "delete",
-		});
+	async function handleDeleteTicket(
+		ticketId: string,
+		mode: "cascade" | "promote",
+	) {
+		try {
+			await deleteTicketMutation.mutateAsync({
+				ticketId,
+				mode,
+				performed_by: user?.profile_id,
+			});
+			// Trigger Success Toast
+			toast.add({
+				title: "Ticket Deleted",
+				description: `Ticket has been deleted successfully.`,
+				type: "delete",
+			});
+		} catch (error) {
+			toast.add({
+				title: "Delete Failed",
+				description:
+					error instanceof Error ? error.message : "Something went wrong.",
+				type: "error",
+			});
+		}
 	}
 
 	/**

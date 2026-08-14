@@ -73,11 +73,13 @@ export function useDeleteTicket() {
 	return useMutation({
 		mutationFn: ({
 			ticketId,
+			mode,
 			performed_by,
 		}: {
 			ticketId: string;
+			mode: "cascade" | "promote";
 			performed_by?: string;
-		}) => cascadeSoftDeleteTicket(ticketId, performed_by),
+		}) => cascadeSoftDeleteTicket(ticketId, performed_by, mode),
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
 			if (variables.performed_by) {

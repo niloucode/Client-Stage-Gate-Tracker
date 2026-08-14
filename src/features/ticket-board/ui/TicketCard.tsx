@@ -36,7 +36,7 @@ export function TicketCardContent({
 	ticket: Ticket;
 	subtasks: Ticket[];
 	onSelect: (ticket: Ticket) => void;
-	onDelete: (ticketId: string) => void;
+	onDelete: (ticketId: string, mode: "cascade" | "promote") => void;
 	isSubtask?: boolean;
 	/** Clients are read-only: hide the delete button. */
 	readOnly?: boolean;
@@ -45,6 +45,7 @@ export function TicketCardContent({
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
 	// Real subtasks passed from the board — no dummy fallback.
+	const hasSubtasks = subtasks.length > 0;
 
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
@@ -252,23 +253,62 @@ export function TicketCardContent({
 					<AlertDialogHeader>
 						<AlertDialogTitle>Delete Ticket?</AlertDialogTitle>
 						<AlertDialogDescription>
-							Are you sure you want to delete{" "}
-							<span className="font-medium text-foreground">{ticket.name}</span>
-							? This action cannot be undone.
+							{hasSubtasks ? (
+								<>
+									<span className="font-medium text-foreground">{ticket.name}</span>{" "}
+									has{" "}
+									<strong>
+										{subtasks.length} subtask{subtasks.length === 1 ? "" : "s"}
+									</strong>
+									. What should happen to them?
+								</>
+							) : (
+								<>
+									Are you sure you want to delete{" "}
+									<span className="font-medium text-foreground">
+										{ticket.name}
+									</span>
+									? This action cannot be undone.
+								</>
+							)}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
-					<AlertDialogFooter>
+					<AlertDialogFooter
+						className={hasSubtasks ? "flex-col sm:flex-col gap-2" : undefined}
+					>
+						{hasSubtasks && (
+							<>
+								<AlertDialogAction
+									onClick={() => {
+										setIsDeleteModalOpen(false);
+										onDelete(ticket.ticket_id, "cascade");
+									}}
+								>
+									Cascade delete (subtasks too)
+								</AlertDialogAction>
+								<AlertDialogAction
+									onClick={() => {
+										setIsDeleteModalOpen(false);
+										onDelete(ticket.ticket_id, "promote");
+									}}
+								>
+									Promote subtasks to tickets
+								</AlertDialogAction>
+							</>
+						)}
+						{!hasSubtasks && (
+							<AlertDialogAction
+								onClick={() => {
+									setIsDeleteModalOpen(false);
+									onDelete(ticket.ticket_id, "cascade");
+								}}
+							>
+								Delete
+							</AlertDialogAction>
+						)}
 						<AlertDialogCancel onClick={() => setIsDeleteModalOpen(false)}>
 							Cancel
 						</AlertDialogCancel>
-						<AlertDialogAction
-							onClick={() => {
-								setIsDeleteModalOpen(false);
-								onDelete(ticket.ticket_id);
-							}}
-						>
-							Delete
-						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
@@ -291,7 +331,7 @@ export default function TicketCard({
 	ticket: Ticket;
 	subtasks: Ticket[];
 	onSelect: (ticket: Ticket) => void;
-	onDelete: (ticketId: string) => void;
+	onDelete: (ticketId: string, mode: "cascade" | "promote") => void;
 	/** Clients are read-only: dragging is disabled. */
 	readOnly?: boolean;
 }) {
