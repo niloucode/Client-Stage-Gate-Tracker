@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { prisma } from "@/lib/prisma";
+import { contractSignedStart } from "@/shared/lib/scheduling/stageSchedule";
 import {
 	contractUploadSchema,
 	contractSignSchema,
@@ -302,21 +303,70 @@ export async function signContract(
 		const auth = await assertProjectMember(projectId);
 		if (!auth.ok) return { success: false, error: auth.error };
 
+		// The claimed role must be backed by a real role assignment on this
+		// project — otherwise any member could forge the owner/client
+		// signature (pre-existing vector; verified in the 2026-08-14
+		// security review and now enforced).
+		const claimedRole = await prisma.roles.findUnique({
+			where: { name: role },
+			select: { role_id: true },
+		});
+		if (!claimedRole) {
+			return { success: false, error: "Unknown signing role." };
+		}
+		const roleAssignment = await prisma.roleAssignments.findFirst({
+			where: {
+				project_id: projectId,
+				user_id: auth.userId,
+				role_id: claimedRole.role_id,
+			},
+		});
+		if (!roleAssignment) {
+			return {
+				success: false,
+				error: `You do not hold the "${role}" role for this project.`,
+			};
+		}
+
 		const isClient = role === "Client Viewer";
 
-		await prisma.contracts.update({
-			where: { project_id: projectId },
-			data: isClient
-				? {
-						client_signature: fullName,
-						client_initials: initials,
-						client_signed_at: new Date(),
-					}
-				: {
-						project_owner_signature: fullName,
-						project_owner_initials: initials,
-						project_owner_signed_at: new Date(),
+		// Spec 1 (project-structure): once BOTH parties have signed, the
+		// first stage's actual start is the later of the two signature
+		// dates. Materialized in the same transaction as the signature.
+		await prisma.$transaction(async (tx) => {
+			const updated = await tx.contracts.update({
+				where: { project_id: projectId },
+				data: isClient
+					? {
+							client_signature: fullName,
+							client_initials: initials,
+							client_signed_at: new Date(),
+						}
+					: {
+							project_owner_signature: fullName,
+							project_owner_initials: initials,
+							project_owner_signed_at: new Date(),
+						},
+				select: {
+					client_signed_at: true,
+					project_owner_signed_at: true,
+				},
+			});
+
+			const signedAt = contractSignedStart(
+				updated.project_owner_signed_at,
+				updated.client_signed_at,
+			);
+			if (signedAt) {
+				await tx.stages.updateMany({
+					where: {
+						project_id: projectId,
+						number: 1,
+						is_deleted: false,
 					},
+					data: { actual_start_at: signedAt },
+				});
+			}
 		});
 
 		return { success: true };

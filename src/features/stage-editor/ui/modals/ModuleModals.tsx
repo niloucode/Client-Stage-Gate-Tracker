@@ -69,12 +69,12 @@ const moduleModalSchema = baseModuleModalSchema.superRefine((data, ctx) => {
 	if (!hasValidPlannedRange(toSchedulingDates(data))) {
 		const message = "Start must be before End";
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["planStart"],
 		});
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["planEnd"],
 		});

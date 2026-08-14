@@ -1,9 +1,14 @@
 "use client";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { dashboardKeys } from "@/shared/query/keys";
+import { dashboardKeys, issueKeys } from "@/shared/query/keys";
 import { getMyDashboardRole } from "@/entities/roleAssignment";
-import { selectMyTickets, selectWatchedTickets } from "@/entities/ticket";
+import {
+	selectMyTickets,
+	selectWatchedTickets,
+	getActivitySparklines,
+} from "@/entities/ticket";
+import { getIssueStats } from "@/entities/issue";
 import { getMyContracts } from "@/entities/contract";
 import { mapDashboardTicketRow, mapContractRow } from "./mappers";
 
@@ -32,6 +37,18 @@ const dashboardQueryOptions = {
 			queryFn: async () => (await getMyContracts()).map(mapContractRow),
 			enabled,
 		}),
+	sparklines: (enabled: boolean) =>
+		queryOptions({
+			queryKey: dashboardKeys.sparklines(),
+			queryFn: getActivitySparklines,
+			enabled,
+		}),
+	issueStats: (enabled: boolean) =>
+		queryOptions({
+			queryKey: issueKeys.stats(),
+			queryFn: getIssueStats,
+			enabled,
+		}),
 };
 
 export function useDashboardRole() {
@@ -48,4 +65,12 @@ export function useWatchedTickets(enabled: boolean) {
 
 export function useMyContracts(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.myContracts(enabled));
+}
+
+export function useActivitySparklines(enabled: boolean) {
+	return useQuery(dashboardQueryOptions.sparklines(enabled));
+}
+
+export function useIssueStats(enabled: boolean) {
+	return useQuery(dashboardQueryOptions.issueStats(enabled));
 }

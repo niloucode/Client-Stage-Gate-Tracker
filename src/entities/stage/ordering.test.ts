@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { generateKeyBetween } from "fractional-indexing";
 
-// The reorder functions delegate key math to fractional-indexing; this suite
-// locks the ordering contract that the entity actions rely on: a key computed
-// between two neighbors sorts strictly between them, and appending after the
-// last key yields a key that sorts after everything existing.
-describe("fractional-indexing key contract (used by reorder/create paths)", () => {
+// The phase/workflow reorder functions delegate key math to
+// fractional-indexing; this suite locks the ordering contract those entity
+// actions rely on: a key computed between two neighbors sorts strictly
+// between them, and appending after the last key yields a key that sorts
+// after everything existing. (Stages do NOT use fractional keys — they are
+// numbered sequentially, see src/entities/stage/lib/stageNumbers.ts.)
+describe("fractional-indexing key contract (used by phase/workflow reorder paths)", () => {
 	let keys: string[];
 
 	beforeEach(() => {

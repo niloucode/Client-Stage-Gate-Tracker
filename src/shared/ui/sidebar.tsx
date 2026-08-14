@@ -160,23 +160,6 @@ export const SidebarFooter = ({
 	onToggle: () => void;
 }) => (
 	<div className="px-2 py-3 border-t border-gray-100 space-y-0.5 shrink-0">
-		{/* <button
-			type="button"
-			title={collapsed ? "Settings" : undefined}
-			className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors duration-150 font-sans"
-		>
-			<span className="w-4 h-4 flex items-center justify-center shrink-0">
-				<Settings className="w-4 h-4" />
-			</span>
-			<h4
-				className={`text-sm font-medium truncate overflow-hidden transition-all duration-300 ease-in-out ${
-					collapsed ? "max-w-0 opacity-0" : "max-w-35 opacity-100"
-				}`}
-			>
-				Settings
-			</h4>
-		</button> */}
-
 		<button
 			type="button"
 			onClick={onToggle}
@@ -214,12 +197,13 @@ export default function SidebarLayout({
 }) {
 	const pathname = usePathname();
 	const [collapsed, setCollapsed] = useState(false);
-	
 
 	// Role-filtered nav items (client-side — icons must not cross RSC).
+	// Clients may see the Project Team page (read-only member list) but
+	// never the Clients registry entry.
 	const items = showClientsLink
 		? navItems
-		: navItems.filter((item) => item.href !== "/clients" && item.href !== "/team");
+		: navItems.filter((item) => item.href !== "/clients");
 
 	return (
 		<div

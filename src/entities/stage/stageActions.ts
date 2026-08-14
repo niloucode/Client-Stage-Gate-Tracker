@@ -4,56 +4,54 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import {
 	assertProjectMember,
+	assertProjectMemberNotClient,
 	resolveStageProject,
 } from "@/lib/auth/projectAccess";
-import { generateKeyBetween } from "fractional-indexing";
+import { nextStageNumber } from "./lib/stageNumbers";
 
 /**
- * Creates a stage under a project. Appends after the last sibling via a
- * fractional sort key (no renumbering); missing plan dates default to now.
+ * Creates a stage under a project. Assigns the next sequential `number`
+ * (stages are ordered by number — no fractional sort_key; stages cannot be
+ * reordered like phases/modules). Plan dates are required; actual dates are
+ * derived from contract/gate events (see shared/lib/scheduling/stageSchedule).
  *
  * @param projectId - UUID of the parent project.
  * @param stageName - Display name of the stage.
- * @param startDate - Scheduled start (defaults to now).
- * @param endDate - Scheduled end (defaults to now).
- * @param actualStart - Actual start, once the stage is in progress.
- * @param actualEnd - Actual end, once the stage is finished.
+ * @param description - Optional description (empty string stores null).
+ * @param startDate - Required scheduled start.
+ * @param endDate - Required scheduled end.
  */
 export async function createStage(
 	projectId: string,
 	stageName: string,
-	startDate?: Date | null,
-	endDate?: Date | null,
-	actualStart?: Date | null,
-	actualEnd?: Date | null,
+	description: string,
+	startDate: Date,
+	endDate: Date,
 ) {
 	z.uuid().parse(projectId);
 
-	// Authorization: caller must be a member of the project
-	const auth = await assertProjectMember(projectId);
+	// Authorization: a project member who is not a client profile may
+	// create stages (spec 5/6: team + owners edit; clients read-only).
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
-		// Fractional sort key: append after the last sibling — a single-key
-		// insert that never requires renumbering existing rows.
-		const lastStage = await prisma.stages.findFirst({
+		// Spec 4: next sequential number = max(existing) + 1. The partial
+		// unique index on (project_id, number) guards concurrent creates.
+		const existingStages = await prisma.stages.findMany({
 			where: { project_id: projectId, is_deleted: false },
-			orderBy: { sort_key: { sort: "desc", nulls: "last" } },
-			select: { sort_key: true },
+			select: { number: true },
 		});
-		const nextKey = generateKeyBetween(lastStage?.sort_key ?? null, null);
+		const number = nextStageNumber(
+			existingStages.map((s) => s.number),
+		);
 
-		// TODO(date-rules): plan_start_at/plan_end_at must be REQUIRED for
-		// stages — drop the `?? new Date()` fallbacks once the stage schema
-		// enforces them. See "Follow-up plan (TODO — future session): Date
-		// input rules" in docs/code-review-plan.md.
 		const newStage = await prisma.stages.create({
 			data: {
 				name: stageName,
-				sort_key: nextKey,
-				plan_start_at: startDate ?? new Date(),
-				plan_end_at: endDate ?? new Date(),
-				actual_start_at: actualStart ?? null,
-				actual_end_at: actualEnd ?? null,
+				description: description || null,
+				number,
+				plan_start_at: startDate,
+				plan_end_at: endDate,
 				project_id: projectId,
 			},
 		});
@@ -66,18 +64,18 @@ export async function createStage(
 
 export async function updateStage(
 	stageId: string,
-	stageName?: string,
-	startDate?: Date | null,
-	endDate?: Date | null,
-	actualStart?: Date | null,
-	actualEnd?: Date | null,
+	stageName: string,
+	description: string,
+	startDate: Date,
+	endDate: Date,
 ) {
 	z.uuid().parse(stageId);
 
-	// Authorization: caller must be a member of the parent project
+	// Authorization: caller must be a member of the parent project and not
+	// a client profile (spec 5/6).
 	const projectId = await resolveStageProject(stageId);
 	if (!projectId) return { success: false, error: "Stage not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const updatedStage = await prisma.stages.update({
@@ -86,10 +84,9 @@ export async function updateStage(
 			},
 			data: {
 				name: stageName,
-				plan_start_at: startDate ?? undefined,
-				plan_end_at: endDate ?? undefined,
-				actual_start_at: actualStart ?? undefined,
-				actual_end_at: actualEnd ?? undefined,
+				description: description || null,
+				plan_start_at: startDate,
+				plan_end_at: endDate,
 			},
 		});
 		return { success: true, data: updatedStage };
@@ -105,16 +102,37 @@ export async function cascadeSoftDeleteStage(
 ) {
 	z.uuid().parse(stageId);
 
-	// Authorization: caller must be a member of the parent project
+	// Authorization: caller must be a member of the parent project and not
+	// a client profile (spec 5/6).
 	const projectId = await resolveStageProject(stageId);
 	if (!projectId) return { success: false, error: "Stage not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
+		// Spec 7: capture the number before soft-deleting — after the delete
+		// the stage's number becomes NULL and every remaining stage with a
+		// higher number shifts down by one (see lib/stageNumbers).
+		const stageRow = await tx.stages.findUnique({
+			where: { stage_id: stageId },
+			select: { number: true },
+		});
+		const deletedNumber = stageRow?.number ?? null;
+
 		await tx.stages.update({
 			where: { stage_id: stageId },
 			data: { is_deleted: true, deleted_at: new Date(), number: null },
 		});
+
+		if (deletedNumber !== null) {
+			await tx.stages.updateMany({
+				where: {
+					project_id: projectId,
+					number: { gt: deletedNumber },
+					is_deleted: false,
+				},
+				data: { number: { decrement: 1 } },
+			});
+		}
 
 		// Batch the whole subtree: one updateMany per level instead of
 		// per-child cascade calls.
@@ -397,5 +415,60 @@ export async function getStageTree(stageId: string) {
 	} catch (error) {
 		console.error("Failed to fetch stage tree:", error);
 		throw error;
+	}
+}
+
+/**
+ * Project-structure summary: the project's stages in `number` order, each
+ * with plan/actual dates and gate-approval state. Requires project
+ * membership (clients may read; mutations are gated separately).
+ *
+ * A stage is `approved` when any of its gates has a GateSignatures row
+ * (canonical rule: exactly one client signature per gate).
+ */
+export async function getProjectStages(projectId: string) {
+	z.uuid().parse(projectId);
+
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
+
+	try {
+		const stages = await prisma.stages.findMany({
+			where: { project_id: projectId, is_deleted: false },
+			orderBy: { number: { sort: "asc", nulls: "last" } },
+			select: {
+				stage_id: true,
+				number: true,
+				name: true,
+				description: true,
+				plan_start_at: true,
+				plan_end_at: true,
+				actual_start_at: true,
+				actual_end_at: true,
+				Gates: {
+					select: { GateSignatures: { select: { signed_at: true } } },
+				},
+			},
+		});
+
+		return {
+			success: true as const,
+			data: stages.map((stage) => ({
+				stage_id: stage.stage_id,
+				number: stage.number,
+				name: stage.name,
+				description: stage.description,
+				planStart: stage.plan_start_at,
+				planEnd: stage.plan_end_at,
+				actualStart: stage.actual_start_at,
+				actualEnd: stage.actual_end_at,
+				approved: stage.Gates.some(
+					(gate) => gate.GateSignatures !== null,
+				),
+			})),
+		};
+	} catch (error) {
+		console.error("Failed to fetch project stages:", error);
+		return { success: false as const, error: "Failed to load stages." };
 	}
 }

@@ -79,6 +79,36 @@ export async function assertProjectMember(
 	return { ok: true, userId };
 }
 
+/**
+ * Project-membership check that ALSO rejects client profiles (spec 5: the
+ * project team and project owners may edit project structure; clients are
+ * read-only — their profile links to the project through the contract, not
+ * through an editable role). Use for mutating project-structure actions.
+ */
+export async function assertProjectMemberNotClient(
+	projectId: string,
+): Promise<AuthResult> {
+	const base = await assertProjectMember(projectId);
+	if (!base.ok) return base;
+
+	const profile = await prisma.profiles.findUnique({
+		where: { profile_id: base.userId },
+		select: { client_id: true },
+	});
+	// Fail closed: an unverifiable profile (missing row) or a client-linked
+	// profile gets no mutation rights (security review 2026-08-14).
+	if (!profile) {
+		return { ok: false, error: "Profile not found." };
+	}
+	if (profile.client_id) {
+		return {
+			ok: false,
+			error: "Clients cannot modify the project structure.",
+		};
+	}
+	return base;
+}
+
 // ── project_id resolvers for child entities ─────────────────────────────────
 
 export async function resolveStageProject(
@@ -146,6 +176,6 @@ export async function resolveGateProject(
 		},
 	});
 	// Gates link to a Stage; the project resolves through it. stage_id is
-	// nullable until legacy gates are re-mapped (migration 4 backfill note).
+	// NOT NULL since the 2026-08-14 Supabase edit (gates undeletable).
 	return gate?.Stages?.project_id ?? null;
 }

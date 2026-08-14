@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
 import { Search, Key } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useTeamProfiles } from "@/entities/profile/queries";
+import { useTeamProfiles } from "@/entities/profile";
 import { useDepartment } from "@/entities/department";
 import { useAuth } from "@/features/auth";
 import { TeamTable } from "./TeamTable";
-import { GenerateStaffCodeModal } from "./GenerateStaffCodeModal";
+import { GenerateStaffCodeModal } from "@/features/team-manager";
 import type { TeamMember, TeamSortField, SortDirection } from "../model/types";
 
 function TeamHeader() {
@@ -61,25 +60,18 @@ function TeamToolbar({
 }
 
 export function TeamPage() {
-	const router = useRouter();
 	const { user, isLoading: isAuthLoading } = useAuth();
-	const isClient = !!user?.client_id;
 	const { data: department } = useDepartment(user?.department_id ?? undefined);
 	const isOwner = department?.name === "Project Owner";
 
-	const { data: teamData } = useTeamProfiles({ enabled: !isClient });
+	// Clients see the same read-only member list as project team members;
+	// only the owner-only generate button is gated below.
+	const { data: teamData } = useTeamProfiles();
 
 	const [showGenerateModal, setShowGenerateModal] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sortField, setSortField] = useState<TeamSortField>("name");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-
-	// Client profiles have no access to the internal team page
-	useEffect(() => {
-		if (!isAuthLoading && isClient) {
-			router.replace("/dashboard");
-		}
-	}, [isAuthLoading, isClient, router]);
 
 	const members: TeamMember[] = useMemo(() => {
 		return (teamData ?? []).map((p) => ({
@@ -102,7 +94,7 @@ export function TeamPage() {
 				m.fullName.toLowerCase().includes(q) ||
 				m.email.toLowerCase().includes(q) ||
 				m.department.toLowerCase().includes(q) ||
-				m.jobTitle.toLowerCase().includes(q)
+				m.jobTitle.toLowerCase().includes(q),
 		);
 	}, [members, searchQuery]);
 
@@ -140,7 +132,7 @@ export function TeamPage() {
 		return sorted;
 	}, [filteredMembers, sortField, sortDirection]);
 
-	if (isAuthLoading || isClient) return null;
+	if (isAuthLoading) return null;
 
 	const handleSort = (field: TeamSortField) => {
 		if (sortField === field) {

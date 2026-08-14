@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { ChevronDown, Paperclip, Bug } from "lucide-react";
-import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/client";
 import { Ticket, Tag } from "@/entities/types";
@@ -68,12 +67,12 @@ const createTicketModalSchema = ticketCreateSchema.superRefine((data, ctx) => {
 	if (data.plan_start_at && data.plan_end_at && data.plan_start_at > data.plan_end_at) {
 		const message = "Start must be before End";
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["plan_start_at"],
 		});
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["plan_end_at"],
 		});

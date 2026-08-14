@@ -97,7 +97,7 @@
 - [x] src/shared/ui/PasswordInput.tsx
 - [x] src/shared/ui/PlannedViewPlaceholder.tsx (deleted)
 - [x] src/shared/ui/search-status.tsx
-- [x] src/shared/ui/sidebar.tsx
+- [x] src/shared/ui/sidebar.tsx (2026-08-14: client nav hides only /clients — the Project Team link stays visible, read-only)
 - [x] src/shared/ui/tagPrimitives.tsx
 
 ## 7. Shared layer — shadcn UI primitives (src/components/ui)
@@ -155,7 +155,7 @@
 
 - [x] src/entities/types.ts
 - [x] src/entities/profile/index.ts
-- [x] src/entities/profile/profileActions.ts
+- [x] src/entities/profile/profileActions.ts (2026-08-14: departmentInviteCode resolution; P2002 idempotent branch backfills missing department; selectTeamProfiles authenticated-read — clients may view the team list, anonymous denied)
 - [x] src/entities/profile/queries.ts
 - [x] src/entities/role/index.ts (deleted — slice had zero consumers)
 - [x] src/entities/role/roleActions.ts (deleted — only export was dead getRoleNameById)
@@ -164,7 +164,7 @@
 - [x] src/entities/roleAssignment/dashboardRole.ts
 - [x] src/entities/roleAssignment/dashboardRole.test.ts
 - [x] src/entities/department/index.ts
-- [x] src/entities/department/departmentActions.ts
+- [x] src/entities/department/departmentActions.ts (2026-08-14: generateStaffInviteCode owner-gated + persists HMAC hash to Department.invite_code_hash)
 - [x] src/entities/department/queries.ts
 - [x] src/entities/tag/index.ts
 - [x] src/entities/tag/tagActions.ts
@@ -231,7 +231,7 @@
 - [x] src/features/auth/context/auth_provider.tsx
 - [x] src/features/auth/ui/LoginForm.tsx
 - [x] src/features/auth/ui/ClientSignupForm.tsx
-- [x] src/features/auth/ui/StaffSignupForm.tsx
+- [x] src/features/auth/ui/StaffSignupForm.tsx (2026-08-14: department picker → department invite code; code determines department server-side)
 - [x] src/features/auth/auth-forms.interaction.test.tsx
 - [x] src/features/navigation/ui/index.ts
 - [x] src/features/navigation/ui/TopNav.tsx
@@ -281,7 +281,7 @@
 - [x] src/features/landing-dashboard/model/mappers.ts
 - [x] src/features/landing-dashboard/model/mappers.test.ts
 - [x] src/features/landing-dashboard/model/queries.ts
-- [ ] src/features/landing-dashboard/ui/ActivitySparklines.tsx (on hold — integration deferred by decision; TODO in the dashboard page)
+- [x] src/features/landing-dashboard/ui/ActivitySparklines.tsx — 2026-08-14: integrated on the landing dashboard (weekly velocity / risk / upcoming deadlines from getActivitySparklines, shadcn weekday bar chart); warnings fixed (http2 import, ReactNode UMD)
 - [x] src/features/landing-dashboard/ui/PendingContracts.tsx
 - [x] src/features/landing-dashboard/ui/PendingContracts.test.tsx
 - [x] src/features/landing-dashboard/ui/TicketsBoard.tsx
@@ -296,11 +296,16 @@
 - [x] src/features/project-dashboard/ui/modals/EditProjectModal.tsx (moved from features/project-manager — merged 2026-08-14)
 - [x] src/features/project-dashboard/ui/modals/ManageMembersModal.tsx (moved from features/project-manager — merged 2026-08-14)
 - [x] src/features/project-manager/ (deleted — merged into features/project-dashboard)
-- [ ] src/features/project-structure/index.ts
-- [ ] src/features/project-structure/ui/ProjectStructure.tsx
-- [ ] src/features/project-structure/ui/StageModal.tsx
-- [ ] src/features/project-structure/ui/StageSequence.tsx
-- [ ] src/features/project-structure/ui/StageStep.tsx
+- [x] src/features/project-structure/index.ts
+- [x] src/features/project-structure/ui/ProjectStructure.tsx
+- [x] src/features/project-structure/ui/StageModal.tsx
+- [x] src/features/project-structure/ui/StageSequence.tsx
+- [x] src/features/project-structure/ui/StageStep.tsx (deleted — dead duplicate of the internal StageStep in StageSequence.tsx)
+- [x] src/features/team-manager/index.ts (new — reviewed 2026-08-14; FSD imports fixed)
+- [x] src/features/team-manager/model/types.ts (new — reviewed 2026-08-14)
+- [x] src/features/team-manager/ui/TeamPage.tsx (new — 2026-08-14: owner-gated generate button; clients see the read-only member list, no redirect)
+- [x] src/features/team-manager/ui/TeamTable.tsx (new — reviewed 2026-08-14)
+- [x] src/features/team-manager/ui/GenerateStaffCodeModal.tsx (new — 2026-08-14: 'Generate Another' removed, code shown once)
 - [ ] src/features/stage-editor/index.ts
 - [ ] src/features/stage-editor/types.ts
 - [ ] src/features/stage-editor/defaults.ts
@@ -350,7 +355,7 @@
 - [ ] src/app/(app)/layout.tsx
 - [ ] src/app/(app)/dashboard/page.tsx
 - [ ] src/app/(app)/clients/page.tsx
-- [ ] src/app/(app)/(workspace)/layout.tsx
+- [x] src/app/(app)/team/page.tsx (new — reviewed 2026-08-14; renders TeamPage)
 - [ ] src/app/(app)/(workspace)/analytics/page.tsx
 - [ ] src/app/(app)/(workspace)/credentials/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/page.tsx
@@ -409,10 +414,11 @@
 - [ ] **DB migration** — `Tickets.plan_start_at` / `Tickets.plan_end_at` are
       currently NOT NULL; make them nullable so optional ticket dates can be
       stored. Rollback = revert the migration.
+- [x] Stage form at `src/features/project-structure/ui/StageModal.tsx` — required
+      plan dates + planEnd>=planStart — 2026-08-14
 - [ ] Stage-editor modals (`src/features/stage-editor/ui/modals/PhaseModals.tsx`,
-      `ModuleModals.tsx`, `WorkflowModals.tsx`; stage form at
-      `src/features/project-structure/ui/StageModal.tsx`) — required date UI
-      (labels, validation) for the now-required plan dates.
+      `ModuleModals.tsx`, `WorkflowModals.tsx`) — required date UI (labels,
+      validation) for the now-required plan dates.
 - [ ] Tickets form/editor (`src/features/ticket-board`) — dates must be
       omitable; remove any client-side "deadline required" enforcement.
 - [ ] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
@@ -426,21 +432,18 @@
 Accumulated during the 2026-08-14 project-dashboard / landing-dashboard work.
 All pre-existing unless noted — none block the running app except the first.
 
-- [ ] **Unblock `next build`** — `src/features/ticket-board/ui/TicketCard.tsx`
-      lines 29-30 use `parentTicket.subTickets` but the ticket type has no
-      `subTickets` field (TS2339; 3 errors). Fix the ticket include/type or
-      remove the `getDummySubtasks` helper. This is the only thing stopping a
-      green build.
-- [ ] **`src/features/landing-dashboard/ui/ActivitySparklines.tsx`** — dead
-      `import { Http2ServerRequest } from "http2"` (line 5, lint warning).
-      Remove when the component comes off hold (integration TODO lives in
-      `src/app/(app)/dashboard/page.tsx`).
-- [ ] **Server-side client guard on `createProject`**
-      (`src/entities/project/projectActions.ts`) — the UI hides "+ Add
-      Project" for client profiles, but the action itself has no
-      client-profile check (any authenticated user may create; the creator
-      becomes Project Owner). Add a `Profiles.client_id` check returning a
-      permission error.
+- [x] **Unblock `next build`** — 2026-08-14: the actual blocker was a missing
+      `mode="edit"` prop on `TicketModalEdit` in
+      `src/features/ticket-board/ui/editor/TicketEditor.tsx:211` (TS2322).
+      Fixed; `next build` is green again. (`getDummySubtasks` in TicketCard
+      remains, still worth removing per the original note.)
+- [x] **`src/features/landing-dashboard/ui/ActivitySparklines.tsx`** —
+      2026-08-14: dead `http2` import removed and the component integrated
+      (no longer on hold).
+- [x] **Server-side client guard on `createProject`**
+      (`src/entities/project/projectActions.ts`) — 2026-08-14: `Profiles.client_id`
+      check added ("Clients cannot create projects."), matching the new
+      `assertProjectMemberNotClient` helper in `src/lib/auth/projectAccess.ts`.
 - [ ] **`EditProjectModal` edit-mode `client_id` edge case**
       (`src/features/project-dashboard/ui/modals/EditProjectModal.tsx`) —
       edit submit validates via `projectCreateSchema`, which requires
@@ -466,3 +469,54 @@ All pre-existing unless noted — none block the running app except the first.
       the `<h2>` heading nested inside the collapsible toggle `<button>`
       (flow content in a button) — verify colors against the design tokens
       and use a non-heading element for the section label.
+
+- [ ] **Gate-approval persistence (`approveGate`)** — recorded 2026-08-14
+      (stage-structure feature, deferred by decision): `GateOverview.tsx` is
+      mock-only and NOTHING writes `GateSignatures` today. The action must
+      (1) create the `GateSignatures` row + set `Gates.status = APPROVED`,
+      and (2) materialize stage actual dates per specs 2-3 by calling
+      `gateApprovalDates` (`src/shared/lib/scheduling/stageSchedule.ts`,
+      already implemented + tested, marked `TODO(gate-approval)`): the
+      stage's `actual_end_at` = approval timestamp, and the next stage's
+      `actual_start_at` = the same date. Client + owner signature rules from
+      the contract flow apply.
+      
+      **Gates model state (2026-08-14 Supabase edit, synced via db pull):**
+      gates have NO `is_deleted`/`deleted_at` (undeletable), `number` is
+      nullable (`Int?`), `stage_id` is NOT NULL, and the partial unique
+      `@@unique([stage_id, number])` index was replaced by plain
+      `@@index([stage_id])`. `getProjectStages` no longer filters
+      `is_deleted` on gates.
+- [ ] **`Stages.sort_key` column cleanup** — recorded 2026-08-14: stage
+      create no longer writes `sort_key` (spec 4 — stages are ordered by
+      `number`, they cannot be reordered). Confirm nothing else reads
+      `Stages.sort_key`, then drop the column in a migration. Rollback =
+      revert the migration.
+
+- [x] **Extend the client read-only guard to all mutating entity actions** —
+      2026-08-14 security review follow-up, closed the same day: swapped to
+      `assertProjectMemberNotClient` in all 16 mutation call sites across
+      phaseActions / phase safeActions / moduleActions / workflowActions /
+      ticketActions (+ createProject fails closed on missing profile).
+- [ ] **Contract page signing-role UI** — `signContract` now verifies the
+      caller's claimed role against `roleAssignments` (2026-08-14 security
+      fix); confirm the contract page surfaces the correct role per user
+      (client vs owner) so the new error path is not reachable in normal use.
+
+- [x] **Issue charts on the landing dashboard** — 2026-08-14: new
+      `src/entities/issue/` slice (`getIssueStats` — severity counts +
+      assigned/unassigned via `_count.Tickets`, client profiles rejected
+      server-side) and `src/features/issue-reporting/ui/IssueCharts.tsx`
+      (two donuts, c-chart-21 pattern, empty state). Rendered on the
+      personal dashboard below the sparklines, staff/owner only. The legacy
+      mock issue-reporting files (IssueDashboard etc.) remain unchecked.
+
+- [ ] **Rotating department invite codes** — 2026-08-14: regenerating a code
+      via the team page overwrites Department.invite_code_hash, so the old
+      code stops working immediately (lookup is exact-hash). Confirmed
+      behavior, no further action — listed so the one-time-display UX stays
+      intentional.
+- [ ] **TeamPage owner check is department-name-based** — `isOwner =
+      department?.name === "Project Owner"` (same convention as
+      clientActions.requireProjectOwner). If the org ever adds departments
+      with other names, the owner gate must move to a role-based check.

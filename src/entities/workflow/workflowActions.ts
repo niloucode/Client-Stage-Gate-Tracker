@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import {
 	assertProjectMember,
+	assertProjectMemberNotClient,
 	resolveModuleProject,
 	resolveWorkflowProject,
 } from "@/lib/auth/projectAccess";
@@ -39,7 +40,7 @@ export async function createWorkflow(
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveModuleProject(moduleId);
 	if (!projectId) return { success: false, error: "Module not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		// Fractional sort key: append after the last sibling — a single-key
@@ -134,7 +135,7 @@ export async function updateWorkflow(
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveWorkflowProject(workflowId);
 	if (!projectId) return { success: false, error: "Workflow not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const updatedWorkflow = await prisma.workflows.update({
@@ -164,7 +165,7 @@ export async function cascadeSoftDeleteWorkflow(
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveWorkflowProject(workflowId);
 	if (!projectId) return { success: false, error: "Workflow not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
 		await tx.workflows.update({
@@ -220,7 +221,7 @@ export async function reorderWorkflow(
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveWorkflowProject(workflowId);
 	if (!projectId) return { success: false, error: "Workflow not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		await prisma.$transaction(async (tx: Prisma.TransactionClient) => {

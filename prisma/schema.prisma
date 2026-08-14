@@ -118,11 +118,12 @@ model Contracts {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Department {
-  department_id String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String     @unique
-  is_deleted    Boolean    @default(false)
-  deleted_at    DateTime?  @db.Timestamptz(6)
-  Profiles      Profiles[]
+  department_id     String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String     @unique
+  invite_code_hash  String?    @unique
+  is_deleted        Boolean    @default(false)
+  deleted_at        DateTime?  @db.Timestamptz(6)
+  Profiles          Profiles[]
 
   @@schema("public")
 }
@@ -131,15 +132,12 @@ model Department {
 model Gates {
   gate_id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   creation_date  DateTime        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  is_deleted     Boolean         @default(false)
-  deleted_at     DateTime?       @db.Timestamptz(6)
-  number         Int
-  stage_id       String?         @db.Uuid
+  number         Int?
+  stage_id       String          @db.Uuid
   status         GateStatus      @default(PENDING)
   GateSignatures GateSignatures?
-  Stages         Stages?         @relation(fields: [stage_id], references: [stage_id], onDelete: NoAction, onUpdate: NoAction)
+  Stages         Stages          @relation(fields: [stage_id], references: [stage_id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@unique([stage_id, number], where: raw("(is_deleted = false)"))
   @@index([stage_id])
   @@schema("public")
 }
@@ -282,7 +280,6 @@ model Stages {
   plan_end_at     DateTime  @db.Timestamptz(6)
   plan_start_at   DateTime  @db.Timestamptz(6)
   actual_start_at DateTime? @db.Timestamptz(6)
-  sort_key        String?
   Gates           Gates[]
   Phases          Phases[]
   Projects        Projects  @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)

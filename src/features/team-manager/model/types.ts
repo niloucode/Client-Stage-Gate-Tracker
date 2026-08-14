@@ -10,10 +10,6 @@ export interface TeamMember {
 }
 
 export type TeamSortField =
-	| "name"
-	| "email"
-	| "phone"
-	| "jobTitle"
-	| "department";
+	"name" | "email" | "phone" | "jobTitle" | "department";
 
 export type SortDirection = "asc" | "desc";

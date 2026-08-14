@@ -19,7 +19,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { generateStaffInviteCode } from "@/entities/department/departmentActions";
+import { generateStaffInviteCode } from "@/entities/department";
 
 interface GenerateStaffCodeModalProps {
 	isOpen: boolean;
@@ -30,7 +30,9 @@ export function GenerateStaffCodeModal({
 	isOpen,
 	onClose,
 }: GenerateStaffCodeModalProps) {
-	const [department, setDepartment] = useState<"Project Team" | "Project Owner">("Project Team");
+	const [department, setDepartment] = useState<
+		"Project Team" | "Project Owner"
+	>("Project Team");
 	const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [copied, setCopied] = useState(false);
@@ -114,9 +116,6 @@ export function GenerateStaffCodeModal({
 						)}
 
 						<DialogFooter className="pt-2">
-							<Button variant="ghost" onClick={() => setGeneratedCode(null)}>
-								Generate Another
-							</Button>
 							<Button onClick={handleClose}>Done</Button>
 						</DialogFooter>
 					</div>

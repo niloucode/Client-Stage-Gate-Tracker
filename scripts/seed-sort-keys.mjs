@@ -1,7 +1,11 @@
 /**
  * One-off seeding utility: backfills `sort_key` (fractional-indexing keys) for
- * existing Stages / Phases / Workflows rows, ordered by their legacy `number`
- * column. Idempotent: only rows with `sort_key IS NULL` are touched.
+ * existing Phases / Workflows rows, ordered by their legacy `number` column.
+ * Idempotent: only rows with `sort_key IS NULL` are touched.
+ *
+ * NOTE: Stages are intentionally NOT included — stages are ordered by the
+ * integer `number` column (no fractional sort_key; the column was dropped in
+ * migration 7_drop_stages_sort_key).
  *
  * Run from the repo root:  node scripts/seed-sort-keys.mjs
  */
@@ -31,24 +35,6 @@ async function assignKeys(table, idColumn, rows) {
 
 async function main() {
 	let total = 0;
-
-	const stages = await pool.query(
-		`SELECT stage_id FROM "Stages" WHERE is_deleted = false AND sort_key IS NULL ORDER BY number ASC NULLS LAST`,
-	);
-	const stagesByProject = new Map();
-	for (const s of stages.rows) {
-		const { project_id } = (
-			await pool.query(
-				`SELECT project_id FROM "Stages" WHERE stage_id = $1`,
-				[s.stage_id],
-			)
-		).rows[0];
-		if (!stagesByProject.has(project_id)) stagesByProject.set(project_id, []);
-		stagesByProject.get(project_id).push(s);
-	}
-	for (const [, group] of stagesByProject) {
-		total += await assignKeys("Stages", "stage_id", group);
-	}
 
 	const phases = await pool.query(
 		`SELECT phase_id, stage_id FROM "Phases" WHERE is_deleted = false AND sort_key IS NULL ORDER BY number ASC NULLS LAST`,

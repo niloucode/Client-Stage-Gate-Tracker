@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import {
 	assertProjectMember,
+	assertProjectMemberNotClient,
 	resolveModuleProject,
 	resolvePhaseProject,
 } from "@/lib/auth/projectAccess";
@@ -31,7 +32,7 @@ export async function createModule(phaseId: string, input: ModuleCreateInput) {
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolvePhaseProject(phaseId);
 	if (!projectId) return { success: false, error: "Phase not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const newModule = await prisma.modules.create({
@@ -68,7 +69,7 @@ export async function updateModule(moduleId: string, input: ModuleUpdateInput) {
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveModuleProject(moduleId);
 	if (!projectId) return { success: false, error: "Module not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const updatedModule = await prisma.modules.update({
@@ -106,7 +107,7 @@ export async function cascadeSoftDeleteModule(
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveModuleProject(moduleId);
 	if (!projectId) return { success: false, error: "Module not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	const executeLogic = async (tx: Prisma.TransactionClient) => {
 		await tx.modules.update({

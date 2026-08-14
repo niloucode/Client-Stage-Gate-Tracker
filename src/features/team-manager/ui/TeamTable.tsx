@@ -67,7 +67,7 @@ function TeamRow({ member }: { member: TeamMember }) {
 				{member.department ? (
 					<span
 						className={`inline-block px-2.5 py-0.5 rounded-md text-xs font-medium ${departmentBadgeStyle(
-							member.department
+							member.department,
 						)}`}
 					>
 						{member.department}
@@ -95,7 +95,9 @@ export function TeamTable({
 }: TeamTableProps) {
 	const getSortIcon = (field: TeamSortField) => {
 		if (sortField !== field) {
-			return <ArrowUpDown className="h-3 w-3 shrink-0 opacity-40 hover:opacity-100" />;
+			return (
+				<ArrowUpDown className="h-3 w-3 shrink-0 opacity-40 hover:opacity-100" />
+			);
 		}
 		return sortDirection === "asc" ? (
 			<ChevronUp className="h-3 w-3 shrink-0 text-brand-600" />
@@ -112,7 +114,10 @@ export function TeamTable({
 					<tbody className="divide-y divide-brand-100/50 bg-neutral-surface">
 						{members.length === 0 ? (
 							<tr>
-								<td colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
+								<td
+									colSpan={5}
+									className="py-12 text-center text-sm text-muted-foreground"
+								>
 									No team members found.
 								</td>
 							</tr>

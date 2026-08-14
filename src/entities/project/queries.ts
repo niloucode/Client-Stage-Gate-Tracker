@@ -6,6 +6,7 @@ import {
 	selectProjects,
 	getProjectById,
 	getProjectMembers,
+	getProjectStats,
 	searchProfilesForProject,
 	selectProjectsForMember,
 } from "./projectActions";
@@ -45,6 +46,16 @@ const projectQueryOptions = {
 				),
 			enabled: false,
 		}),
+	stats: (projectId: string | null) =>
+		queryOptions({
+			queryKey: projectKeys.stats(projectId ?? ""),
+			queryFn: async () => {
+				const result = await getProjectStats(projectId!);
+				if (!result.success) return null;
+				return result.data;
+			},
+			enabled: !!projectId,
+		}),
 };
 
 export function useProjects() {
@@ -65,4 +76,8 @@ export function useProfileSearch() {
 
 export function useProjectsForMember() {
 	return useQuery(projectQueryOptions.owned());
+}
+
+export function useProjectStats(projectId: string | null) {
+	return useQuery(projectQueryOptions.stats(projectId));
 }

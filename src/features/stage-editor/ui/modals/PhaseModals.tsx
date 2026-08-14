@@ -64,12 +64,12 @@ const phaseModalSchema = basePhaseModalSchema.superRefine((data, ctx) => {
 	if (!hasValidPlannedRange(toSchedulingDates(data))) {
 		const message = "Start must be before End";
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["planStart"],
 		});
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["planEnd"],
 		});
@@ -77,12 +77,12 @@ const phaseModalSchema = basePhaseModalSchema.superRefine((data, ctx) => {
 	if (!hasValidActualRange(toSchedulingDates(data))) {
 		const message = "Actual Start date must be before Actual End date";
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["actualStart"],
 		});
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["actualEnd"],
 		});

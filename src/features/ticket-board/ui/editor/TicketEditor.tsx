@@ -300,6 +300,7 @@ export default function TicketEditor({
 
       {state.isSubtaskViewOpen && state.selectedSubtask && (
         <TicketModalEdit
+          mode="edit"
           ticket={state.selectedSubtask}
           isOpen={state.isSubtaskViewOpen}
           onClose={() => {

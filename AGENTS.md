@@ -50,6 +50,6 @@ These skills **supplement** Reasonix's native tools: use **`task`** (run a subag
 * "This skill is overkill"
 
 ## Priority
-1. User explicit instructions (`planned-codebase-changes.md`, direct asks) win over everything.
+1. User explicit instructions (`docs/planned-codebase-changes.md`, direct asks) win over everything.
 2. Skills override default behavior where they conflict.
 3. A user request says WHAT to do, never "skip the skill."

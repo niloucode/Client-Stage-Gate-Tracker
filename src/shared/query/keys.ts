@@ -39,13 +39,13 @@ export const clientKeys = {
 
 export const departmentKeys = {
 	all: ["departments"] as const,
-	lists: () => [...departmentKeys.all, "list"] as const,
 	detail: (id: string) => [...departmentKeys.all, "detail", id] as const,
 };
 
 export const stageKeys = {
 	all: ["stages"] as const,
 	lists: () => [...stageKeys.all, "list"] as const,
+	list: (projectId: string) => [...stageKeys.lists(), projectId] as const,
 	detail: (id: string) => [...stageKeys.all, "detail", id] as const,
 	phases: (stageId: string) =>
 		[...stageKeys.detail(stageId), "phases"] as const,
@@ -71,6 +71,8 @@ export const projectKeys = {
 	detail: (id: string) => [...projectKeys.details(), id] as const,
 	members: (projectId: string) =>
 		[...projectKeys.detail(projectId), "members"] as const,
+	stats: (projectId: string) =>
+		[...projectKeys.detail(projectId), "stats"] as const,
 };
 
 export const dashboardAnalyticsKeys = {
@@ -83,11 +85,17 @@ export const dashboardAnalyticsKeys = {
 		[...dashboardAnalyticsKeys.all, "workflows", projectId] as const,
 };
 
+export const issueKeys = {
+	all: ["issues"] as const,
+	stats: () => [...issueKeys.all, "stats"] as const,
+};
+
 export const dashboardKeys = {
 	all: ["dashboard"] as const,
 	role: () => [...dashboardKeys.all, "role"] as const,
 	myTickets: () => [...dashboardKeys.all, "my-tickets"] as const,
 	watchedTickets: () => [...dashboardKeys.all, "watched-tickets"] as const,
 	myContracts: () => [...dashboardKeys.all, "my-contracts"] as const,
+	sparklines: () => [...dashboardKeys.all, "sparklines"] as const,
 };
 

@@ -1,11 +1,12 @@
 /**
  * @fileoverview Staff / internal team signup form.
  * Creates an auth user via Supabase, stores profile metadata
- * (first_name, last_name, job_title, department_id, phone), then creates
- * the Profiles row explicitly via `createProfileForCurrentUser` so the
- * signup is reproducible without an external DB trigger.
- * Department is selected from the active departments in the DB
- * (department_id is the option value — display name is the label).
+ * (first_name, last_name, job_title, phone), then creates the Profiles row
+ * explicitly via `createProfileForCurrentUser` so the signup is
+ * reproducible without an external DB trigger.
+ * The DEPARTMENT INVITE CODE (issued by the project owner via the team
+ * page) is required — the code determines the department the account joins
+ * (resolved server-side against Department.invite_code_hash).
  * All 8 fields are required — validated by `signupSchema`.
  */
 
@@ -16,8 +17,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppForm } from "@/shared/form";
-import { useDepartments } from "@/entities/department";
-import { getProfileByEmail, createProfileForCurrentUser } from "@/entities/profile";
+import {
+	getProfileByEmail,
+	createProfileForCurrentUser,
+} from "@/entities/profile";
 import { createClient } from "@/lib/supabase/client";
 import { signupSchema } from "@/shared/schemas";
 import { env } from "@/env";
@@ -27,7 +30,6 @@ export function StaffSignupForm() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const supabase = createClient();
-	const { data: departments } = useDepartments();
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
 	// Auth user id from a successful signUp — kept across submit attempts so
@@ -41,7 +43,7 @@ export function StaffSignupForm() {
 			email: "",
 			phone: "",
 			jobTitle: "",
-			department: "",
+			inviteCode: "",
 			password: "",
 			confirmPassword: "",
 		},
@@ -67,7 +69,6 @@ export function StaffSignupForm() {
 						first_name: value.firstName,
 						last_name: value.lastName,
 						job_title: value.jobTitle,
-						department_id: value.department,
 						phone: value.phone,
 					},
 					emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/login`,
@@ -88,7 +89,7 @@ export function StaffSignupForm() {
 						email: value.email,
 						phone: value.phone,
 						job_title: value.jobTitle,
-						department_id: value.department,
+						departmentInviteCode: value.inviteCode,
 						userId: lastUserIdRef.current,
 					});
 					if (recovered.success) {
@@ -105,13 +106,14 @@ export function StaffSignupForm() {
 
 			// Create the Profiles row explicitly (idempotent; verified
 			// server-side against auth.users when no session exists yet).
+			// The department comes from the invite code — never from the client.
 			const profileResult = await createProfileForCurrentUser({
 				first_name: value.firstName,
 				last_name: value.lastName,
 				email: value.email,
 				phone: value.phone,
 				job_title: value.jobTitle,
-				department_id: value.department,
+				departmentInviteCode: value.inviteCode,
 				userId: data.user?.id,
 			});
 			if (!profileResult.success) {
@@ -133,12 +135,6 @@ export function StaffSignupForm() {
 			}
 		},
 	});
-
-	// Ensure value is strictly a string so Radix/Select matching doesn't fail
-	const departmentOptions = (departments ?? []).map((d) => ({
-		value: String(d.department_id),
-		label: d.name,
-	}));
 
 	return (
 		<form
@@ -200,7 +196,7 @@ export function StaffSignupForm() {
 				)}
 			</form.AppField>
 
-			{/* Job Title + Department */}
+			{/* Job Title + Invite Code */}
 			<div className="flex gap-3">
 				<div className="flex-1">
 					<form.AppField name="jobTitle">
@@ -214,13 +210,12 @@ export function StaffSignupForm() {
 					</form.AppField>
 				</div>
 				<div className="flex-1">
-					<form.AppField name="department">
+					<form.AppField name="inviteCode">
 						{(field) => (
-							<field.SelectField
-								label="Department"
+							<field.TextField
+								label="Invite Code"
 								required
-								placeholder="Select…"
-								options={departmentOptions}
+								placeholder="e.g. ABC234XYZ789"
 							/>
 						)}
 					</form.AppField>
