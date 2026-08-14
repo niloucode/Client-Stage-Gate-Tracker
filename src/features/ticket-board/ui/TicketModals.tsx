@@ -186,7 +186,11 @@ export function TicketModalCreate({
 		const newPreviews: string[] = [];
 		for (const file of Array.from(files)) {
 			if (file.size > 5 * 1024 * 1024) {
-				alert(`Image "${file.name}" must be under 5MB.`);
+				toast.add({
+					title: "File Too Large",
+					description: `"${file.name}" must be under 5MB.`,
+					type: "error",
+				});
 				continue;
 			}
 			newFiles.push(file);
@@ -284,6 +288,7 @@ export function TicketModalCreate({
 		});
 
 		const imageUrls: string[] = [];
+		const uploadedPaths: string[] = [];
 
 		if (imageFiles.length > 0) {
 			try {
@@ -307,10 +312,25 @@ export function TicketModalCreate({
 						data: { publicUrl },
 					} = supabase.storage.from("images").getPublicUrl(filePath);
 
+					uploadedPaths.push(filePath);
 					imageUrls.push(publicUrl);
 				}
 			} catch (err) {
 				console.error("Image upload failed:", err);
+				// All-or-nothing: remove already-uploaded files and abort the
+				// ticket creation so no ticket is created without its images.
+				if (uploadedPaths.length > 0) {
+					const supabase = createClient();
+					await supabase.storage.from("images").remove(uploadedPaths);
+				}
+				toast.add({
+					title: "Upload Failed",
+					description:
+						"Your images could not be uploaded. The ticket was not created.",
+					type: "error",
+				});
+				setIsSubmitting(false);
+				return;
 			}
 		}
 

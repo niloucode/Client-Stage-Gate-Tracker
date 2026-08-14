@@ -44,8 +44,13 @@ export default function TicketEditor({
   projectId?: string;
 }) {
   const { data: profiles = [] } = useProjectMembers(projectId);
-  const { data: comments = [] } = useTicketComments(initialTicket.ticket_id);
-  const { data: ticketImages = [] } = useTicketImages(initialTicket.ticket_id);
+  const commentsQuery = useTicketComments(initialTicket.ticket_id);
+  const imagesQuery = useTicketImages(initialTicket.ticket_id);
+  const comments = commentsQuery.data ?? [];
+  const ticketImages = imagesQuery.data ?? [];
+
+  // No silent empty states: a failed read shows a retry banner instead.
+  const loadFailed = commentsQuery.isError || imagesQuery.isError;
 
   const state = useTicketEditor({
     initialTicket,
@@ -259,6 +264,22 @@ export default function TicketEditor({
           })()}
 
         {/* 8. Attachments */}
+        {loadFailed && (
+          <div className="px-5 mt-5 py-3 text-xs text-red-600 bg-red-50 border-y border-red-100">
+            Couldn&apos;t load comments or attachments.{" "}
+            <button
+              type="button"
+              className="underline font-semibold"
+              onClick={() => {
+                void commentsQuery.refetch();
+                void imagesQuery.refetch();
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {ticketImages.length > 0 && (
           <div className="px-5 mt-5">
             <p className="text-sm font-semibold text-neutral-border mb-2 uppercase tracking-wider">

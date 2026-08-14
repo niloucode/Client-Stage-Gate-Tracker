@@ -7,6 +7,7 @@ import { useCreateComment } from "@/entities/comment/mutations";
 import { createClient } from "@/lib/supabase/client";
 import { CommentParentType } from "@/lib/generated/prisma";
 import { ProfileType } from "@/shared/types";
+import { toast } from "@/components/ui/toast";
 import TicketHistoryLog from "../TicketHistoryLog";
 import { UserAvatar } from "./helpers";
 
@@ -39,7 +40,11 @@ export function TicketActivitySection({
 
     Array.from(files).forEach((file) => {
       if (file.size > 5 * 1024 * 1024) {
-        alert(`Image "${file.name}" must be under 5MB.`);
+        toast.add({
+          title: "File Too Large",
+          description: `"${file.name}" must be under 5MB.`,
+          type: "error",
+        });
         return;
       }
       validFiles.push(file);
@@ -66,9 +71,13 @@ export function TicketActivitySection({
     }
     setCommentError(null);
 
+    // Hoisted so the catch block can clean up uploaded files on failure.
+    let supabase: ReturnType<typeof createClient> | null = null;
+    const uploadedPaths: string[] = [];
+
     try {
       setIsSubmitting(true);
-      const supabase = createClient();
+      supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("You must be logged in to post a comment.");
 
@@ -82,6 +91,7 @@ export function TicketActivitySection({
         if (error) throw new Error(`Failed to upload ${file.name}: ${error.message}`);
 
         const { data: { publicUrl } } = supabase.storage.from("images").getPublicUrl(filePath);
+        uploadedPaths.push(filePath);
         imageUrls.push(publicUrl);
       }
 
@@ -98,6 +108,11 @@ export function TicketActivitySection({
       setCommentImagePreviews([]);
     } catch (error) {
       console.error("Error adding comment:", error);
+      // All-or-nothing: remove already-uploaded files so no orphaned blobs
+      // remain when the comment fails to post.
+      if (uploadedPaths.length > 0 && supabase) {
+        await supabase.storage.from("images").remove(uploadedPaths);
+      }
       setCommentError("Failed to post comment. Please try again.");
     } finally {
       setIsSubmitting(false);
