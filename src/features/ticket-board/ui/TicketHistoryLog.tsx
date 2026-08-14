@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, type ReactElement } from "react";
 import { action } from "@/lib/generated/prisma";
 import { useTicketHistory } from "../model/queries";
 import type { TicketHistoryEntry } from "../model/types";
@@ -297,17 +296,12 @@ function HistoryEntryRow({ entry }: { entry: TicketHistoryEntry }) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-const INITIAL_VISIBLE = 4;
-
 export default function TicketHistoryLog({
 	ticketId,
 }: {
 	ticketId: string | undefined;
 }) {
 	const { data: history = [], isLoading, isError, error } = useTicketHistory(ticketId);
-	const [expanded, setExpanded] = useState(false);
-
-	const hasMore = history.length > INITIAL_VISIBLE;
 
 	return (
 		<div className="px-5 pb-4 max-h-[12rem] mb-6 overflow-y-scroll border-b border-gray-100">

@@ -29,10 +29,8 @@ import {
 import { TagBadge } from "@/entities/tag/ui";
 import { Pencil, ChevronDown, Plus, Search, Bug, AlertCircle } from "lucide-react";
 
-// eslint-disable-next-line boundaries/dependencies
 import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
-// eslint-disable-next-line boundaries/dependencies
-import type { IssueItem } from "@/features/issue-reporting/ui/IssueDashboard";
+import type { IssueItem } from "@/entities/issue";
 
 import { STATUS_CONFIG, STATUSES, UserAvatar, getLinkedIssueStyle } from "./helpers";
 
@@ -355,7 +353,7 @@ export function TicketApiDetails({
         </div>
       )}
       <div className="grid grid-cols-[110px_1fr] gap-3">
-        <select value={apiMethod} onChange={(e) => setApiMethod(e.target.value as any)} className="w-full rounded-md border border-gray-200 bg-neutral-surface px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <select value={apiMethod} onChange={(e) => setApiMethod(e.target.value as "GET" | "POST" | "PUT" | "DELETE")} className="w-full rounded-md border border-gray-200 bg-neutral-surface px-2.5 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500">
           {["GET", "POST", "PUT", "DELETE"].map((m) => <option key={m}>{m}</option>)}
         </select>
         <Input placeholder="/api/v1/resource" value={apiRoute} onChange={(e) => setApiRoute(e.target.value)} />

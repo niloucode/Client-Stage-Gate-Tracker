@@ -7,6 +7,7 @@ import {
 	DragEndEvent,
 	DragOverlay,
 	DragStartEvent,
+	KeyboardSensor,
 	MouseSensor,
 	TouchSensor,
 	useSensor,
@@ -92,7 +93,8 @@ export default function TicketBoard({
 	const touchSensor = useSensor(TouchSensor, {
 		activationConstraint: { delay: 200, tolerance: 5 },
 	});
-	const sensors = useSensors(mouseSensor, touchSensor);
+	const keyboardSensor = useSensor(KeyboardSensor);
+	const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
 	// ── TanStack Query ────────────────────────────────────────────────────
 
@@ -278,8 +280,8 @@ export default function TicketBoard({
 				await createTagMutation.mutateAsync({ name, description, color });
 			}
 			return {};
-		} catch (err: any) {
-			return { error: err?.message ?? "Failed to save tag" };
+		} catch (err) {
+			return { error: err instanceof Error ? err.message : "Failed to save tag" };
 		}
 	}
 

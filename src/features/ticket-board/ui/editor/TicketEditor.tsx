@@ -7,7 +7,7 @@ import { useProjectMembers } from "@/entities/profile";
 import { useTicketImages, useTicketComments } from "@/entities/comment/queries";
 import { status as StatusEnum } from "@/lib/generated/prisma";
 import ImageLightbox from "@/shared/ui/image-lightbox";
-import { Avatar, Button, FormInput, Label } from "@/components/ui";
+import { Button, FormInput, Label } from "@/components/ui";
 
 import TicketModalEdit from "../TicketModals";
 import { useTicketEditor } from "./useTicketEditor";
@@ -19,6 +19,7 @@ import {
   SubtaskSelectionModal,
 } from "./TicketEditorSubcomponents";
 import { TicketActivitySection } from "./TicketActivitySection";
+import { ticketCode } from "./helpers";
 
 export default function TicketEditor({
   initialTicket,
@@ -66,7 +67,7 @@ export default function TicketEditor({
       {/* 1. Header */}
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
         <span className="font-mono text-sm text-brand-500">
-          {isSubtaskView ? "Subtask" : "LRN-BNN"}
+          {isSubtaskView ? "Subtask" : ticketCode(initialTicket.ticket_id)}
         </span>
         <Button variant="ghost" size="icon-sm" onClick={onClose}>
           <X className="text-neutral-border hover:text-foreground transition-all duration-300" />
@@ -186,7 +187,7 @@ export default function TicketEditor({
                           {/* Left: Code, Title, Date */}
                           <div className="flex flex-col min-w-0 flex-1 pr-3">
                             <span className="font-mono text-xs font-semibold text-brand-500">
-                              ASC-1028
+                              {ticketCode(subtask.ticket_id)}
                             </span>
                             <h4 className="text-sm font-semibold text-foreground truncate mt-0.5">
                               {subtask.name}

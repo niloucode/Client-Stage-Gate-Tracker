@@ -32,7 +32,7 @@ import {
 } from "@/components/ui";
 
 import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
-import type { IssueItem } from "@/features/issue-reporting/ui/IssueDashboard";
+import type { IssueItem } from "@/entities/issue";
 
 import TicketEditor from "./editor/TicketEditor";
 

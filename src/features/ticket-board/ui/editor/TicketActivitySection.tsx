@@ -7,6 +7,7 @@ import { useCreateComment } from "@/entities/comment/mutations";
 import { createClient } from "@/lib/supabase/client";
 import { CommentParentType } from "@/lib/generated/prisma";
 import { ProfileType } from "@/shared/types";
+import type { CommentWithImages } from "@/entities/comment/types";
 import { toast } from "@/components/ui/toast";
 import TicketHistoryLog from "../TicketHistoryLog";
 import { UserAvatar } from "./helpers";
@@ -18,7 +19,7 @@ export function TicketActivitySection({
   onImageClick,
 }: {
   ticketId: string;
-  comments: any[];
+  comments: CommentWithImages[];
   currentUser: ProfileType | null;
   onImageClick: (src: string) => void;
 }) {
@@ -153,7 +154,7 @@ export function TicketActivitySection({
                     <div className="bg-neutral-surface border-brand-100 border rounded-md px-3 py-2.5">
                       {comment.images?.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
-                          {comment.images.map((img: any) => (
+                          {comment.images.map((img) => (
                             <img key={img.image_id} src={img.image_src} alt="attachment" className="max-h-40 rounded-md object-contain cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onImageClick(img.image_src)} />
                           ))}
                         </div>

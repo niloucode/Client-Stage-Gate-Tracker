@@ -1,7 +1,11 @@
 import { status as StatusEnum } from "@/lib/generated/prisma";
 import { getInitials } from "@/shared/lib/strings";
-// eslint-disable-next-line boundaries/dependencies
-import type { IssueItem } from "@/features/issue-reporting/ui/IssueDashboard";
+import type { IssueItem } from "@/entities/issue";
+
+/** Stable short display code derived from the uuid (no fake 'LRN-BNN' strings). */
+export function ticketCode(ticketId: string): string {
+  return ticketId.slice(0, 8).toUpperCase();
+}
 
 export const STATUS_CONFIG: Record<
   StatusEnum,

@@ -7,6 +7,7 @@ import { type Ticket } from "@/entities/types";
 import { Calendar, ChevronDown, X } from "lucide-react";
 import { status } from "@/lib/generated/prisma";
 import { getInitials } from "@/shared/lib/strings";
+import { ticketCode } from "./editor/helpers";
 import { cn } from "@/lib/utils";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -99,7 +100,7 @@ export function TicketCardContent({
 					{/* Header: Code + OVERDUE/LATE Badge + Delete Button */}
 					<div className="flex items-center justify-between gap-2 min-w-0 mb-1">
 						<div className="font-mono text-brand-500 text-xs font-semibold truncate min-w-0 pr-1">
-							{isSubtask ? "SUB-TASK" : "LRN-BNN"}
+							{isSubtask ? "SUB-TASK" : ticketCode(ticket.ticket_id)}
 						</div>
 
 						<div className="flex items-center gap-1.5 shrink-0">

@@ -37,38 +37,9 @@ import {
 /* TYPES & INTERFACES                                                        */
 /* -------------------------------------------------------------------------- */
 
-export type UrgencyLevel = "low" | "medium" | "high";
+import type { UrgencyLevel, BugType, IssueItem, StepItem } from "@/entities/issue";
+export type { UrgencyLevel, BugType, StepItem, IssueItem } from "@/entities/issue";
 export type UrgencyFilterOption = UrgencyLevel | "all";
-
-export type BugType =
-  | "feature_request"
-  | "deadlinks"
-  | "missing_fields"
-  | "not_saving"
-  | "slow_loading"
-  | "other";
-
-export interface StepItem {
-  id: string;
-  description: string;
-  image?: string;
-}
-
-export interface IssueItem {
-  id: string;
-  name: string;
-  type: BugType;
-  specificType?: string;
-  urgency: UrgencyLevel;
-  status: "unlinked" | "linked" | "resolved";
-  clientName: string;
-  reportedAt: string;
-  description: string;
-  systemEnv: string;
-  timeOfError: string;
-  ticketName?: string;
-  steps: StepItem[];
-}
 
 export type SortOrder = "desc" | "asc" | "none";
 
