@@ -22,6 +22,7 @@ import { Back } from "@/components/ui/back";
 
 // TanStack Query hooks
 import { useTicketsByWorkflow } from "@/entities/ticket/queries";
+import { useCurrentUser } from "@/entities/profile/queries";
 import {
 	useCreateTicket,
 	useUpdateTicketStatus,
@@ -80,6 +81,10 @@ export default function TicketBoard({
 
 	const wasDraggingRef = useRef(false);
 	const { user } = useAuth();
+	const { data: profile } = useCurrentUser();
+	// Spec: client profiles (linked via the contract) are read-only here;
+	// project team and project owners have full edit access.
+	const isClientProfile = !!profile?.client_id;
 
 	const mouseSensor = useSensor(MouseSensor, {
 		activationConstraint: { distance: 8 },
@@ -287,6 +292,7 @@ export default function TicketBoard({
 	 * @returns {void}
 	 */
 	function handleDragStart(event: DragStartEvent) {
+		if (isClientProfile) return;
 		setActiveId(event.active.id as string);
 		wasDraggingRef.current = true;
 	}
@@ -301,6 +307,7 @@ export default function TicketBoard({
 	 * @returns {Promise<void>}
 	 */
 	function handleDragEnd(event: DragEndEvent) {
+		if (isClientProfile) return;
 		const { active, over } = event;
 		setActiveId(null);
 
@@ -340,18 +347,22 @@ export default function TicketBoard({
 				</div>
 
 				<div className="flex items-center gap-3">
-					<Button
-						onClick={() => setTagManagerOpen(true)}
-						className="flex items-center gap-1.5 bg-transparent text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
-					>
-						<Tag />
-						Tags
-					</Button>
+					{!isClientProfile && (
+						<Button
+							onClick={() => setTagManagerOpen(true)}
+							className="flex items-center gap-1.5 bg-transparent text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
+						>
+							<Tag />
+							Tags
+						</Button>
+					)}
 
-					<Button onClick={() => setModalOpen(true)}>
-						<Plus />
-						New Ticket
-					</Button>
+					{!isClientProfile && (
+						<Button onClick={() => setModalOpen(true)}>
+							<Plus />
+							New Ticket
+						</Button>
+					)}
 				</div>
 			</div>
 
@@ -403,6 +414,7 @@ export default function TicketBoard({
 				onUpdate={(updated) => setSelectedTicket(updated)}
 				tags={tags}
 				allTickets={tickets}
+				readOnly={isClientProfile}
 			/>
 
 			<TicketModalCreate

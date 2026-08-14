@@ -61,6 +61,8 @@ export interface TicketModalEditProps {
 	isSubtaskView?: boolean;
 	/** Parent ticket info to display when in subtask view */
 	parentTicket?: Ticket | null;
+	/** Clients are read-only: the editor hides all edit affordances. */
+	readOnly?: boolean;
 }
 
 const createTicketModalSchema = ticketCreateSchema.superRefine((data, ctx) => {

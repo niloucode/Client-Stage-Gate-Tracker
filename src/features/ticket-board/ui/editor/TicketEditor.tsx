@@ -28,6 +28,7 @@ export default function TicketEditor({
   allTickets = [],
   isSubtaskView = false,
   parentTicket = null,
+  readOnly = false,
 }: {
   initialTicket: Ticket;
   tags: Tag[];
@@ -36,6 +37,8 @@ export default function TicketEditor({
   allTickets?: Ticket[];
   isSubtaskView?: boolean;
   parentTicket?: Ticket | null;
+  /** Clients are read-only: hide Save and subtask management. */
+  readOnly?: boolean;
 }) {
   const { data: profiles = [] } = useProfiles();
   const { data: comments = [] } = useTicketComments(initialTicket.ticket_id);
@@ -216,17 +219,20 @@ export default function TicketEditor({
                                 : "Pending"}
                             </span>
                             {/* Remove Button on Hover */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                state.handleRemoveSubtask(subtask.ticket_id);
-                              }}
-                              className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                              title="Remove subtask"
-                            >
-                              <X size={14} />
-                            </button>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  state.handleRemoveSubtask(subtask.ticket_id);
+                                }}
+                                className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                title="Remove subtask"
+                                aria-label="Remove subtask"
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
                           </div>
                         </div>
                       );
@@ -235,14 +241,16 @@ export default function TicketEditor({
                 </div>
 
                 {/* Dashed Add Subtask Button (Outside Scroll Region) */}
-                <button
-                  type="button"
-                  onClick={() => state.setIsSubtaskSelectionOpen(true)}
-                  className="w-full border-2 border-dashed border-gray-200 hover:border-brand-300 hover:bg-brand-50/20 rounded-md py-2.5 text-center text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Plus size={14} strokeWidth={2.5} />
-                  <span>Add subtask</span>
-                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => state.setIsSubtaskSelectionOpen(true)}
+                    className="w-full border-2 border-dashed border-gray-200 hover:border-brand-300 hover:bg-brand-50/20 rounded-md py-2.5 text-center text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus size={14} strokeWidth={2.5} />
+                    <span>Add subtask</span>
+                  </button>
+                )}
               </div>
             );
           })()}
@@ -285,9 +293,11 @@ export default function TicketEditor({
         >
           Cancel
         </button>
-        <Button onClick={state.handleSave} disabled={state.isSaving}>
-          {state.isSaving ? "Saving..." : "Save Changes"}
-        </Button>
+        {!readOnly && (
+          <Button onClick={state.handleSave} disabled={state.isSaving}>
+            {state.isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        )}
       </div>
 
       {/* Modals */}
@@ -312,6 +322,7 @@ export default function TicketEditor({
           allTickets={allTickets}
           isSubtaskView={true}
           parentTicket={state.ticket}
+          readOnly={readOnly}
         />
       )}
 
