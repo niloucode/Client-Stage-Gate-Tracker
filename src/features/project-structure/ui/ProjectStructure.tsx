@@ -29,6 +29,8 @@ import {
 import { Back } from "@/components/ui/back";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/toast";
 import { ConfirmDeleteModal } from "@/shared/ui";
 import { cn } from "@/lib/utils";
 import { cascadeSoftDeleteStage, useProjectStages } from "@/entities/stage";
@@ -38,7 +40,6 @@ import { stageKeys, projectKeys } from "@/shared/query/keys";
 
 import { StageSequence, Stage } from "./StageSequence";
 import { StageModal } from "./StageModal";
-import { Label } from "@/components/ui";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -144,20 +145,12 @@ function ProjectTimelineCard({
 			<CardContent className="">
 				<div className="flex flex-row gap-5">
 					<div className="flex flex-col">
-						<Label>
-							Actual Start
-						</Label>
-						<h2>
-							{formatDate(startDate)}
-						</h2>
+						<Label>Actual Start</Label>
+						<h2>{formatDate(startDate)}</h2>
 					</div>
 					<div className="flex flex-col">
-						<Label>
-							Planned End
-						</Label>
-						<h2>
-							{formatDate(endDate)}
-						</h2>
+						<Label>Planned End</Label>
+						<h2>{formatDate(endDate)}</h2>
 					</div>
 				</div>
 			</CardContent>
@@ -166,23 +159,42 @@ function ProjectTimelineCard({
 }
 
 function ProjectAccessCard({
+	projectId,
 	onViewContract,
 	onCredentialsRepo,
 	onIssueReport,
 }: {
+	projectId?: string;
 	onViewContract?: () => void;
 	onCredentialsRepo?: () => void;
 	onIssueReport?: () => void;
 }) {
+	const router = useRouter();
+
+	const handleViewContract =
+		onViewContract ??
+		(() => {
+			if (projectId) router.push(`/projects/${projectId}/contract`);
+		});
+
+	const handleCredentials =
+		onCredentialsRepo ??
+		(() => {
+			if (projectId) router.push(`/projects/${projectId}/variables`);
+		});
+
+	const handleIssueReport =
+		onIssueReport ??
+		(() => {
+			if (projectId) router.push(`/projects/${projectId}/issues`);
+		});
+
 	return (
 		<Card className="flex h-full flex-col justify-between border border-warm-gray-200 bg-neutral-surface shadow-xs">
-			{/* <CardHeader>
-				<SectionLabel icon={Lock} label="Project Access" />
-			</CardHeader> */}
 			<CardContent className="flex h-full flex-col justify-center gap-2">
 				<Button
 					size="sm"
-					onClick={onViewContract}
+					onClick={handleViewContract}
 					variant="outline"
 					className="h-8 justify-start gap-2 text-xs"
 				>
@@ -191,7 +203,7 @@ function ProjectAccessCard({
 				</Button>
 				<Button
 					size="sm"
-					onClick={onCredentialsRepo}
+					onClick={handleCredentials}
 					variant="outline"
 					className="h-8 justify-start gap-2 text-xs"
 				>
@@ -200,7 +212,7 @@ function ProjectAccessCard({
 				</Button>
 				<Button
 					size="sm"
-					onClick={onIssueReport}
+					onClick={handleIssueReport}
 					variant="outline"
 					className="h-8 justify-start gap-2 text-xs"
 				>
@@ -279,7 +291,9 @@ function TicketCard({
 						<Workflow className="h-3 w-3 shrink-0" />
 						<span>{workflowName}</span>
 					</Badge>
-					<h4 className="text-xs font-semibold text-charcoal truncate">{name}</h4>
+					<h4 className="text-xs font-semibold text-charcoal truncate">
+						{name}
+					</h4>
 				</div>
 
 				<Badge
@@ -389,9 +403,11 @@ export function ProjectStructure({
 				)
 			: 0;
 
-	// Calculate overall project date range dynamically from stages or project metadata
+	// Calculate overall project date range dynamically
 	const overallDateRange = (() => {
-		const projObj = project as (typeof project & { start_date?: Date; end_date?: Date }) | undefined;
+		const projObj = project as
+			| (typeof project & { start_date?: Date; end_date?: Date })
+			| undefined;
 		if (projObj?.start_date || projObj?.end_date) {
 			return {
 				start: projObj.start_date ? new Date(projObj.start_date) : null,
@@ -510,11 +526,12 @@ export function ProjectStructure({
 					{project?.name ?? "Field Pilot & Rollout"}
 				</h1>
 				<p className="subtitle">
-					{(project as unknown as { description?: string })?.description ?? "Project structure & stage roadmap view"}
+					{(project as unknown as { description?: string })?.description ??
+						"Project structure & stage roadmap view"}
 				</p>
 			</div>
 
-			{/* Top Overview Cards Grid (2 : 2 : 1 Ratio with Dynamically Matched Heights) */}
+			{/* Top Overview Cards Grid */}
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-5 items-stretch">
 				<div className="md:col-span-2 flex flex-col h-full">
 					<ProjectTimelineCard
@@ -527,6 +544,7 @@ export function ProjectStructure({
 				</div>
 				<div className="md:col-span-1 flex flex-col h-full">
 					<ProjectAccessCard
+						projectId={projectId}
 						onViewContract={onViewContract}
 						onCredentialsRepo={onCredentialsRepo}
 						onIssueReport={onIssueReport}
@@ -677,7 +695,7 @@ export function ProjectStructure({
 				</CardContent>
 			</Card>
 
-			{/* Stage Modal */}
+			{/* Stage Modal (Create / Edit Stage) */}
 			<StageModal
 				isOpen={stageModalOpen}
 				stage={stageToEdit}
@@ -686,19 +704,20 @@ export function ProjectStructure({
 				onSaved={() => void refreshStageData()}
 			/>
 
-			{/* Delete Modal */}
+			{/* Stage Delete Confirmation Modal */}
 			<ConfirmDeleteModal
 				isOpen={stageToDelete !== null}
 				noun="Stage"
 				title={
-					stageToDelete ? `Delete Stage "${stageToDelete.name}"?` : undefined
+					stageToDelete ? `Delete Stage?` : undefined
 				}
 				description={
 					stageDeleteError ??
-					"This soft-deletes the stage and its entire subtree (phases, modules, workflows, tickets). This action cannot be undone."
+					"This action cannot be undone."
 				}
 				onConfirm={() => {
 					if (!stageToDelete) return;
+					const deletedName = stageToDelete.name;
 					void cascadeSoftDeleteStage(stageToDelete.id).then((result) => {
 						if (result.success) {
 							void refreshStageData();
@@ -707,12 +726,22 @@ export function ProjectStructure({
 							);
 							setStageDeleteError(null);
 							setStageToDelete(null);
+							toast.add({
+								title: "Stage Deleted",
+								description: `"${deletedName}" has been deleted successfully.`,
+								type: "delete",
+							});
 						} else {
-							setStageDeleteError(
+							const errMsg =
 								typeof result.error === "string"
 									? result.error
-									: "Failed to delete the stage.",
-							);
+									: "Failed to delete the stage.";
+							setStageDeleteError(errMsg);
+							toast.add({
+								title: "Delete Failed",
+								description: errMsg,
+								type: "error",
+							});
 						}
 					});
 				}}

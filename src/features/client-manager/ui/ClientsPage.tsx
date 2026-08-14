@@ -2,18 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Copy, Key } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogDescription,
-	DialogFooter,
-} from "@/components/ui/dialog";
 import { useClients, regenerateClientInviteCode } from "@/entities/client";
 import { useDepartment } from "@/entities/department";
 import { useAuth } from "@/features/auth";
@@ -21,6 +12,7 @@ import { ClientsTable } from "./ClientsTable";
 import type { Client, SortField, SortDirection } from "../model/types";
 import ClientFormModal from "./ClientFormModal";
 import ViewTeamMembersModal from "./ViewTeamMembersModal";
+import { ClientCodeModal } from "./ClientCodeModal";
 
 // ─── Page chrome ─────────────────────────────────────────────────────────────
 
@@ -103,7 +95,6 @@ export function ClientsPage() {
 	const [newInviteCode, setNewInviteCode] = useState<string | null>(null);
 	const [regenerateError, setRegenerateError] = useState<string | null>(null);
 	const [isRegenerating, setIsRegenerating] = useState(false);
-	const [copied, setCopied] = useState(false);
 
 	// Client profiles have no access to the clients page.
 	useEffect(() => {
@@ -173,7 +164,6 @@ export function ClientsPage() {
 		setRegenerateClient(client);
 		setNewInviteCode(null);
 		setRegenerateError(null);
-		setCopied(false);
 		setIsRegenerating(true);
 		setIsRegenerateOpen(true);
 		const result = await regenerateClientInviteCode(client.id);
@@ -186,17 +176,6 @@ export function ClientsPage() {
 			setNewInviteCode(result.inviteCode);
 			void refetch();
 		}
-	};
-
-	const handleCopy = () => {
-		if (!newInviteCode) return;
-		void navigator.clipboard?.writeText(newInviteCode);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 4000);
-	};
-
-	const closeRegenerateDialog = () => {
-		setIsRegenerateOpen(false);
 	};
 
 	const handleSort = (field: SortField) => {
@@ -242,6 +221,7 @@ export function ClientsPage() {
 					}}
 				/>
 			)}
+
 			<ViewTeamMembersModal
 				isOpen={viewMembersClient !== null}
 				members={viewMembersClient?.profiles?.map((p) => ({
@@ -253,6 +233,7 @@ export function ClientsPage() {
 				}))}
 				onClose={() => setViewMembersClient(null)}
 			/>
+
 			{isOwner && (
 				<ClientFormModal
 					isOpen={editClient !== null}
@@ -271,63 +252,14 @@ export function ClientsPage() {
 				/>
 			)}
 
-			{/* Regenerate invite code — the new code is shown exactly once */}
-			<Dialog
-			open={isRegenerateOpen}
-			onOpenChange={(open) => {
-				if (!open) closeRegenerateDialog();
-			}}
-		>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
-						<Key className="h-5 w-5 text-brand-600" />
-						<span>Generate Invite Code</span>
-					</DialogTitle>
-					<DialogDescription className="min-h-10 leading-snug">
-						{newInviteCode
-							? "This code is shown ONCE. Share it with the client's employees so they can create their accounts."
-							: regenerateError ??
-								(isRegenerating
-									? "Generating a new code… (the previous code is invalidated)"
-									: "A new code will invalidate the previous one.")}
-					</DialogDescription>
-				</DialogHeader>
-				<div className="flex min-h-40 flex-col justify-between">
-					<div className="space-y-1.5">
-						<div className="flex justify-between items-center w-full">
-							<Label>{regenerateClient?.name} Invite Code</Label>
-
-							<div className="h-4">
-								{copied && (
-									<p className="text-xs text-emerald-600 font-medium text-start ml-auto">
-										✓ Copied to clipboard!
-									</p>
-								)}
-							</div>
-						</div>
-						<div className="flex items-center justify-between gap-2 rounded-md border border-brand-100 bg-neutral-subtle px-4 py-3">
-							<span className="font-mono text-lg tracking-[0.25em] text-foreground select-all">
-								{newInviteCode ?? ""}
-							</span>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								aria-label="Copy invite code"
-								onClick={handleCopy}
-								className="shrink-0"
-							>
-								<Copy className="h-4 w-4" />
-							</Button>
-						</div>
-					</div>
-
-					<DialogFooter className="pt-2">
-						<Button onClick={closeRegenerateDialog}>Done</Button>
-					</DialogFooter>
-				</div>
-			</DialogContent>
-		</Dialog>
+			<ClientCodeModal
+				isOpen={isRegenerateOpen}
+				onClose={() => setIsRegenerateOpen(false)}
+				clientName={regenerateClient?.name}
+				newInviteCode={newInviteCode}
+				isRegenerating={isRegenerating}
+				error={regenerateError}
+			/>
 		</>
 	);
 }

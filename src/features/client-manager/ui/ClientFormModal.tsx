@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { FormInput } from "@/components/ui/forminput"; // Adjust path as needed
+import { FormInput } from "@/components/ui/forminput";
 import { Copy } from "lucide-react";
 import { clientCreate, clientUpdate } from "@/entities/client";
 import { getFieldErrors } from "@/shared/lib/zod";
 import { clientSchema, clientCreateSchema } from "@/shared/schemas";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
+import { toast } from "@/components/ui/toast";
 
 export interface ClientFormData {
 	clientName: string;
@@ -95,9 +96,23 @@ export default function ClientFormModal({
 			}
 			const result = await clientUpdate(parsed.data);
 			if (!result.success) {
-				setCreateError(result.error);
+				const errorMsg =
+					typeof result.error === "string"
+						? result.error
+						: "Failed to update client.";
+				setCreateError(errorMsg);
+				toast.add({
+					title: "Update Failed",
+					description: errorMsg,
+					type: "error",
+				});
 				return;
 			}
+			toast.add({
+				title: "Client Updated",
+				description: `"${clientName}" has been updated successfully.`,
+				type: "success",
+			});
 			onClose();
 		} else {
 			const parsed = clientCreateSchema.safeParse({
@@ -113,9 +128,23 @@ export default function ClientFormModal({
 			}
 			const result = await clientCreate(parsed.data);
 			if (!result.success) {
-				setCreateError(result.error);
+				const errorMsg =
+					typeof result.error === "string"
+						? result.error
+						: "Failed to create client.";
+				setCreateError(errorMsg);
+				toast.add({
+					title: "Creation Failed",
+					description: errorMsg,
+					type: "error",
+				});
 				return;
 			}
+			toast.add({
+				title: "Client Added",
+				description: `"${clientName}" has been created successfully.`,
+				type: "success",
+			});
 			// The invite code is returned exactly once — show it before
 			// closing so the owner can share it with the client's employees.
 			setGeneratedCode(result.inviteCode ?? null);
@@ -159,7 +188,16 @@ export default function ClientFormModal({
 								variant="ghost"
 								size="icon-sm"
 								aria-label="Copy invite code"
-								onClick={() => navigator.clipboard?.writeText(generatedCode)}
+								onClick={() => {
+									if (generatedCode) {
+										void navigator.clipboard?.writeText(generatedCode);
+										toast.add({
+											title: "Copied",
+											description: "Invite code copied to clipboard.",
+											type: "success",
+										});
+									}
+								}}
 							>
 								<Copy className="h-4 w-4" />
 							</Button>
@@ -174,99 +212,97 @@ export default function ClientFormModal({
 						</DialogFooter>
 					</div>
 				) : (
-				<>
-				<div className="flex flex-col gap-5">
-					{/* Client Name */}
-					<FormInput
-						label="Client Name"
-						required
-						maxLength={40}
-						placeholder="Acme Corp"
-						value={clientName}
-						error={fieldErrors.client_name}
-						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-							setClientName(e.target.value)
-						}
-						onClearError={() => handleClearError("client_name")}
-					/>
+					<>
+						<div className="flex flex-col gap-5">
+							{/* Client Name */}
+							<FormInput
+								label="Client Name"
+								required
+								maxLength={40}
+								placeholder="Acme Corp"
+								value={clientName}
+								error={fieldErrors.client_name}
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+									setClientName(e.target.value)
+								}
+								onClearError={() => handleClearError("client_name")}
+							/>
 
-					{/* TIN + Email */}
-					<div className="flex gap-4">
-						<FormInput
-							containerClassName="flex-1"
-							label="TIN"
-							type="tin"
-							required
-							value={tin}
-							error={fieldErrors.tin}
-							onChange={(e) => setTin(e.target.value)}
-							onClearError={() => handleClearError("tin")}
-						/>
+							{/* TIN + Email */}
+							<div className="flex gap-4">
+								<FormInput
+									containerClassName="flex-1"
+									label="TIN"
+									type="tin"
+									required
+									value={tin}
+									error={fieldErrors.tin}
+									onChange={(e) => setTin(e.target.value)}
+									onClearError={() => handleClearError("tin")}
+								/>
 
-						<FormInput
-							containerClassName="flex-1"
-							label="Email"
-							type="email"
-							required
-							placeholder="contact@client.com"
-							value={email}
-							error={fieldErrors.email}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-								setEmail(e.target.value)
-							}
-							onClearError={() => handleClearError("email")}
-						/>
-					</div>
+								<FormInput
+									containerClassName="flex-1"
+									label="Email"
+									type="email"
+									required
+									placeholder="contact@client.com"
+									value={email}
+									error={fieldErrors.email}
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+										setEmail(e.target.value)
+									}
+									onClearError={() => handleClearError("email")}
+								/>
+							</div>
 
-					<PhoneInput
-						label="Contact Number"
-						required
-						value={contactNumber}
-						onChange={(val: string) => {
-							setContactNumber(val);
-							handleClearError("phone");
-						}}
-						placeholder="+1 (555) 000-0000"
-						error={fieldErrors.phone}
-					/>
+							<PhoneInput
+								label="Contact Number"
+								required
+								value={contactNumber}
+								onChange={(val: string) => {
+									setContactNumber(val);
+									handleClearError("phone");
+								}}
+								placeholder="+1 (555) 000-0000"
+								error={fieldErrors.phone}
+							/>
 
-					{/* Billing Address */}
-					<FormInput
-						variant="textarea"
-						label="Billing Address"
-						required
-						rows={4}
-						maxLength={50}
-						placeholder="4050 Oz Street"
-						value={billingAddress}
-						error={fieldErrors.billing_address}
-						onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-							setBillingAddress(e.target.value)
-						}
-						onClearError={() => handleClearError("billing_address")}
-					/>
+							{/* Billing Address */}
+							<FormInput
+								variant="textarea"
+								label="Billing Address"
+								required
+								rows={4}
+								maxLength={50}
+								placeholder="4050 Oz Street"
+								value={billingAddress}
+								error={fieldErrors.billing_address}
+								onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+									setBillingAddress(e.target.value)
+								}
+								onClearError={() => handleClearError("billing_address")}
+							/>
 
-					{/* Create/edit failures (e.g. duplicate TIN, owner-only
-						rejection) are visible here — not only in the
-						invite-code success view. */}
-					{createError && (
-						<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
-							{createError}
-						</p>
-					)}
-				</div>
+							{/* Create/edit failures */}
+							{createError && (
+								<p className="text-sm text-destructive bg-red-50 border border-red-200 rounded-md px-3 py-2">
+									{createError}
+								</p>
+							)}
+						</div>
 
-				<DialogFooter className="bg-muted/50 border-t p-6">
-					<div className="flex items-center justify-end gap-3 w-full">
-						<Button variant="ghost" onClick={onClose}>
-							Cancel
-						</Button>
-						<Button onClick={handleSubmit}>
-							{isEdit ? "Save Changes" : "Add Client"}
-						</Button>
-					</div>
-				</DialogFooter>
-				</>
+						<DialogFooter className="bg-muted/50 border-t p-6">
+							<div className="flex items-center justify-end gap-3 w-full">
+								<Button variant="ghost" onClick={onClose}>
+									Cancel
+								</Button>
+								<Button onClick={handleSubmit}>
+									{isEdit ? "Save Changes" : "Add Client"}
+								</Button>
+							</div>
+						</DialogFooter>
+					</>
 				)}
 			</DialogContent>
 		</Dialog>
