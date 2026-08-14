@@ -648,3 +648,21 @@ All pre-existing unless noted — none block the running app except the first.
         `prisma migrate dev` is blocked by pre-existing shadow-DB drift
         (P3018 on migration 4) — the plan's migration file must be applied to
         Supabase out-of-band.
+  - [x] **WebStorm inspection pass (2026-08-15, commit 3f93451)** — re-audit
+        cleared every listed diagnostic: TS71007 serializable-props renames
+        (`onCloseAction`/`onUpdateAction`/`onImageClickAction`/`onOpenChangeAction`/
+        `onSelectSubtaskAction`/`setTicketAction`/`setSelectedTagsAction`/
+        `setApiMethodAction`/`setApiRouteAction` — WebStorm-only inspection, not
+        emitted by tsc; renamed per the Next.js-documented contract);
+        throw-in-try control flow replaced with boolean helpers/early returns in
+        model/schema.ts + both upload loops; unused `TicketHistoryEntryInput`
+        removed; `React.*` UMD globals → typed imports; stale JSDoc in
+        TicketBoard rewritten; deprecated `React.FormEvent` → `React.SyntheticEvent`;
+        ignored promises `void`-prefixed; `<img>` → `next/image` (unoptimized) for
+        attachment URLs, blob: previews kept with scoped eslint-disable.
+        **Bonus find:** tsc surfaced a LATENT bug (masked by the incremental
+        cache, unmasked by the user's edits): `IssueFormState.urgency` is
+        `UrgencyLevel | ""` and was assigned to `urgency: UrgencyLevel` in
+        IssueDashboard:630 + IssueTableModal:47 — fixed with `|| "low"` (matches
+        the existing `type || "other"` pattern). Re-verified: tsc ✓, eslint ✓
+        (0 problems incl. legacy issue-reporting), vitest 34/226 ✓, build ✓.
