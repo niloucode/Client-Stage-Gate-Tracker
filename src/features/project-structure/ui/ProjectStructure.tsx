@@ -44,6 +44,7 @@ import { StageModal } from "./StageModal";
 interface TicketItem {
 	ticket_id: string;
 	name: string;
+	workflowId: string;
 	workflowName: string;
 	daysLeft: number;
 }
@@ -181,11 +182,41 @@ function StatCard({ label, done, total, icon: Icon }: StatItem) {
 	);
 }
 
-function TicketCard({ name, workflowName, daysLeft }: TicketItem) {
+function TicketCard({
+	ticket_id,
+	name,
+	workflowId,
+	workflowName,
+	daysLeft,
+	projectId,
+}: TicketItem & { projectId?: string }) {
 	const expiring = daysLeft <= 2;
+	const router = useRouter();
+
+	const openTicket = () => {
+		if (!projectId || !workflowId) return;
+		router.push(
+			`/projects/${projectId}/workflows/${workflowId}?ticket=${ticket_id}`,
+		);
+	};
+
+	const openTicketOnKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			openTicket();
+		}
+	};
 
 	return (
-		<Card size="sm" className="border border-warm-gray-200 bg-neutral-surface">
+		<Card
+			size="sm"
+			role="button"
+			tabIndex={0}
+			className="border border-warm-gray-200 bg-neutral-surface transition-colors cursor-pointer hover:bg-neutral-subtle/60"
+			onClick={openTicket}
+			onKeyDown={openTicketOnKeyDown}
+			title={`Open ${name}`}
+		>
 			<CardContent className="flex flex-col justify-between gap-3 p-3 lg:flex-row lg:items-center">
 				{/* Left: Workflow Badge & Ticket Title */}
 				<div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -381,6 +412,7 @@ export function ProjectStructure({
 		(t) => ({
 			ticket_id: t.ticket_id,
 			name: t.name,
+			workflowId: t.workflowId,
 			workflowName: t.workflowName,
 			daysLeft: t.daysLeft,
 		}),
@@ -581,7 +613,11 @@ export function ProjectStructure({
 								<div className="grid grid-cols-1 gap-2.5">
 									{expiringTickets.length > 0 ? (
 										expiringTickets.map((ticket) => (
-											<TicketCard key={ticket.ticket_id} {...ticket} />
+											<TicketCard
+												key={ticket.ticket_id}
+												{...ticket}
+												projectId={projectId}
+											/>
 										))
 									) : (
 										<p className="text-xs text-muted-foreground">

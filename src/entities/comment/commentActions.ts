@@ -9,10 +9,42 @@ import {
 	resolveTicketProject,
 } from "@/lib/auth/projectAccess";
 
+/**
+ * Resolve the parent's project and require membership. Guards the polymorphic
+ * comment/image reads (2026-08-14 ticket deep-link audit): the ticket
+ * slide-over calls these, so non-members must not read another project's
+ * comments (which include commenter profiles).
+ */
+async function guardParentRead(
+	parentType: string,
+	parentId: string,
+): Promise<{ ok: true } | { ok: false }> {
+	if (
+		parentType === "TICKET_COMMENT" ||
+		parentType === "TICKET" // images whose parent is the ticket itself
+	) {
+		const projectId = await resolveTicketProject(parentId);
+		if (!projectId) return { ok: false };
+		const auth = await assertProjectMember(projectId);
+		return auth.ok ? { ok: true } : { ok: false };
+	}
+	if (parentType === "GATE_COMMENT") {
+		const projectId = await resolveGateProject(parentId);
+		if (!projectId) return { ok: false };
+		const auth = await assertProjectMember(projectId);
+		return auth.ok ? { ok: true } : { ok: false };
+	}
+	// PROFILE / ISSUE_STEP parents: no project resolution today — fail
+	// closed (no current callers).
+	return { ok: false };
+}
+
 export async function selectImagesByParent(
 	parentType: ImageParentType,
 	parentId: string,
 ) {
+	const guard = await guardParentRead(parentType, parentId);
+	if (!guard.ok) return [];
 	return prisma.images.findMany({
 		where: { parent_type: parentType, parent_id: parentId, is_deleted: false },
 	});
@@ -22,6 +54,8 @@ export async function selectComment(
 	parentType: CommentParentType,
 	parentId: string,
 ) {
+	const guard = await guardParentRead(parentType, parentId);
+	if (!guard.ok) return [];
 	// No catch here: a thrown error lets React Query retry (cachePolicy
 	// retry: 1) and surface isError instead of silently degrading to [].
 	// Scoped to one parent (ticket/gate) — never the whole table.

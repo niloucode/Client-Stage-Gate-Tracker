@@ -13,7 +13,6 @@ import {
 	ChevronRight,
 	ContactRound,
 	Users,
-	Key,
 } from "lucide-react";
 
 // Font configurations

@@ -7,7 +7,6 @@ import {
 	ACTION_ERROR_CODES,
 } from "@/lib/safe-action";
 import {
-	assertProjectMember,
 	assertProjectMemberNotClient,
 	resolvePhaseProject,
 	resolveStageProject,

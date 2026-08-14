@@ -18,7 +18,7 @@ const baseProject = z.object({
 		.max(160, "Description must be 160 characters or less")
 		.optional()
 		.default(""),
-	client_id: z.uuid({ message: "Client ID is required" }),
+	client_id: z.uuid({ message: "Selecting a client is required" }),
 	// Project plan dates are REQUIRED (non-nullable): the DB columns
 	// plan_start_at/plan_end_at are NOT NULL and the user must always pick
 	// them — never fill them with new Date() fallbacks (Input Rules).
