@@ -1,5 +1,6 @@
 import type { DashboardTicketRow } from "@/entities/ticket";
 import type { ContractRow } from "@/entities/contract";
+import type { IssueStats } from "@/entities/issue";
 import type {
 	TicketItem,
 	TagBadgeData,
@@ -71,5 +72,38 @@ export function mapContractRow(row: ContractRow): PendingContract {
 		documentName: row.contract_name ?? "Untitled Contract",
 		projectName: row.Projects.name,
 		status: executed ? "executed" : "pending",
+	};
+}
+
+/**
+ * Map the entity `getIssueStats` payload (`byUrgency[]` array) into the
+ * ActivitySparklines donut shapes. Fixes the 2026-08-14 re-audit finding:
+ * the dashboard previously guessed a flat `{high, medium, low}` shape that
+ * never matched the API, so the donuts always rendered zeros.
+ */
+export interface IssueSeverityCounts {
+	high: number;
+	medium: number;
+	low: number;
+}
+
+export function mapIssueStats(stats: IssueStats): {
+	issuesBySeverity: IssueSeverityCounts;
+	assignedVsUnassigned: { assigned: number; unassigned: number };
+} {
+	const byUrgency = Object.fromEntries(
+		stats.byUrgency.map((u) => [u.urgency, u.count]),
+	) as Record<"LOW" | "MEDIUM" | "HIGH", number | undefined>;
+
+	return {
+		issuesBySeverity: {
+			high: byUrgency.HIGH ?? 0,
+			medium: byUrgency.MEDIUM ?? 0,
+			low: byUrgency.LOW ?? 0,
+		},
+		assignedVsUnassigned: {
+			assigned: stats.assigned,
+			unassigned: stats.unassigned,
+		},
 	};
 }

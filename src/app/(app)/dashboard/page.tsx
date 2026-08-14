@@ -10,25 +10,9 @@ import {
 	useMyContracts,
 	useActivitySparklines,
 	useIssueStats,
+	mapIssueStats,
 } from "@/features/landing-dashboard";
 import { useAuth } from "@/features/auth";
-
-type IssueStatsShape = {
-	high?: number;
-	medium?: number;
-	low?: number;
-	assigned?: number;
-	unassigned?: number;
-	highCount?: number;
-	mediumCount?: number;
-	lowCount?: number;
-	assignedCount?: number;
-	unassignedCount?: number;
-	issuesBySeverity?: { high?: number; medium?: number; low?: number };
-	assignedVsUnassigned?: { assigned?: number; unassigned?: number };
-	bySeverity?: { high?: number; medium?: number; low?: number };
-	byAssignment?: { assigned?: number; unassigned?: number };
-};
 
 export default function DashboardPage() {
 	const { user } = useAuth();
@@ -74,48 +58,11 @@ export default function DashboardPage() {
 
 	const isClient = roleQuery.data === "client";
 
-	// Safely map IssueStats payload properties without using `any`
-	const statsData = issueStats.data as unknown as IssueStatsShape | undefined;
-
-	const issuesBySeverity = statsData
-		? {
-				high:
-					statsData.high ??
-					statsData.highCount ??
-					statsData.issuesBySeverity?.high ??
-					statsData.bySeverity?.high ??
-					0,
-				medium:
-					statsData.medium ??
-					statsData.mediumCount ??
-					statsData.issuesBySeverity?.medium ??
-					statsData.bySeverity?.medium ??
-					0,
-				low:
-					statsData.low ??
-					statsData.lowCount ??
-					statsData.issuesBySeverity?.low ??
-					statsData.bySeverity?.low ??
-					0,
-			}
-		: undefined;
-
-	const assignedVsUnassigned = statsData
-		? {
-				assigned:
-					statsData.assigned ??
-					statsData.assignedCount ??
-					statsData.assignedVsUnassigned?.assigned ??
-					statsData.byAssignment?.assigned ??
-					0,
-				unassigned:
-					statsData.unassigned ??
-					statsData.unassignedCount ??
-					statsData.assignedVsUnassigned?.unassigned ??
-					statsData.byAssignment?.unassigned ??
-					0,
-			}
-		: undefined;
+	// Map the real IssueStats payload once (re-audit fix: the previous
+	// speculative shape always produced zeros).
+	const issueStatsMapped = issueStats.data
+		? mapIssueStats(issueStats.data)
+		: null;
 
 	return (
 		<div className="mx-auto flex h-fit w-full flex-col items-center justify-center">
@@ -139,8 +86,19 @@ export default function DashboardPage() {
 							weeklyVelocity={sparklines.data.weeklyVelocity}
 							riskFactor={sparklines.data.riskFactor}
 							upcomingDeadlines={sparklines.data.upcomingDeadlines}
-							issuesBySeverity={issuesBySeverity}
-							assignedVsUnassigned={assignedVsUnassigned}
+							issuesBySeverity={
+								issueStatsMapped?.issuesBySeverity ?? {
+									high: 0,
+									medium: 0,
+									low: 0,
+								}
+							}
+							assignedVsUnassigned={
+								issueStatsMapped?.assignedVsUnassigned ?? {
+									assigned: 0,
+									unassigned: 0,
+								}
+							}
 						/>
 					</div>
 				)}

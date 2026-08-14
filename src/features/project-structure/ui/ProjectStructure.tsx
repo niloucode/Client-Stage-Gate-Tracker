@@ -13,7 +13,6 @@ import {
 	ArrowRight,
 	LayoutGrid,
 	Eye,
-	Lock,
 	Workflow,
 	Ticket,
 	LucideIcon,
