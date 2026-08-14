@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Copy, Check, Key } from "lucide-react";
+import { useState } from "react";
+import { Copy, Key } from "lucide-react";
 import {
 	Dialog,
 	DialogContent,
@@ -38,14 +38,18 @@ export function GenerateStaffCodeModal({
 	const [copied, setCopied] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	// Reset state when opening; retains content during closing transition
-	useEffect(() => {
+	// Track previous isOpen state to handle resetting state when modal opens
+	const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+	// Reset state during render when opening; retains content during closing transition
+	if (isOpen !== prevIsOpen) {
+		setPrevIsOpen(isOpen);
 		if (isOpen) {
 			setGeneratedCode(null);
 			setError(null);
 			setCopied(false);
 		}
-	}, [isOpen]);
+	}
 
 	const handleGenerate = async () => {
 		setIsGenerating(true);
@@ -90,7 +94,7 @@ export function GenerateStaffCodeModal({
 				</DialogHeader>
 
 				{generatedCode ? (
-					<div className="flex min-h-[160px] flex-col justify-between">
+					<div className="flex min-h-40 flex-col justify-between">
 						<div className="space-y-1.5">
 							<div className="flex justify-between items-center w-full">
 								<Label>
@@ -116,11 +120,7 @@ export function GenerateStaffCodeModal({
 									onClick={handleCopy}
 									className="shrink-0"
 								>
-									{/* {copied ? (
-										<Check className="h-4 w-4 text-emerald-600" />
-									) : ( */}
-										<Copy className="h-4 w-4" />
-									{/* )} */}
+									<Copy className="h-4 w-4" />
 								</Button>
 							</div>
 						</div>
@@ -130,7 +130,7 @@ export function GenerateStaffCodeModal({
 						</DialogFooter>
 					</div>
 				) : (
-					<div className="flex min-h-[160px] flex-col justify-between py-2">
+					<div className="flex min-h-40 flex-col justify-between py-2">
 						<div className="space-y-2">
 							<Label>Target Department</Label>
 							<Select

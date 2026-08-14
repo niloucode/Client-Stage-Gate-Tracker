@@ -73,8 +73,9 @@ const basePhase = z.object({
 		.min(1, "Phase name cannot be empty")
 		.max(20, "Phase name must be 20 characters or less"),
 	description: z.string().optional().default(""),
-	planStart: z.date().optional().nullable(),
-	planEnd: z.date().optional().nullable(),
+	// Date rules: plan dates REQUIRED for phases; actuals optional
+	planStart: z.date({ error: "Plan Start Date is required" }),
+	planEnd: z.date({ error: "Plan End Date is required" }),
 	actualStart: z.date().optional().nullable(),
 	actualEnd: z.date().optional().nullable(),
 });
@@ -110,8 +111,9 @@ const baseModule = z.object({
 		.string()
 		.min(1, "Module name is required")
 		.max(35, "Module name must be 35 characters or less"),
-	planStart: z.date().optional().nullable(),
-	planEnd: z.date().optional().nullable(),
+	// Date rules: plan dates REQUIRED for modules; actuals optional
+	planStart: z.date({ error: "Plan Start Date is required" }),
+	planEnd: z.date({ error: "Plan End Date is required" }),
 	actualStart: z.date().optional().nullable(),
 	actualEnd: z.date().optional().nullable(),
 });
@@ -141,8 +143,9 @@ const baseWorkflow = z.object({
 		.string()
 		.min(1, "Workflow name is required")
 		.max(35, "Workflow name must be 35 characters or less"),
-	planStart: z.date().optional().nullable(),
-	planEnd: z.date().optional().nullable(),
+	// Date rules: plan dates REQUIRED for workflows; actuals optional
+	planStart: z.date({ error: "Plan Start Date is required" }),
+	planEnd: z.date({ error: "Plan End Date is required" }),
 	actualStart: z.date().optional().nullable(),
 	actualEnd: z.date().optional().nullable(),
 	isApproved: z.boolean().optional(),

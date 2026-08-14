@@ -293,7 +293,7 @@ export function ClientsPage() {
 									: "A new code will invalidate the previous one.")}
 					</DialogDescription>
 				</DialogHeader>
-				<div className="flex min-h-[160px] flex-col justify-between">
+				<div className="flex min-h-40 flex-col justify-between">
 					<div className="space-y-1.5">
 						<div className="flex justify-between items-center w-full">
 							<Label>{regenerateClient?.name} Invite Code</Label>

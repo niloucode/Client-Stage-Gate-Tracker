@@ -4,12 +4,8 @@ import { useState } from "react";
 import type { Module, Phase } from "../types";
 import { WorkflowCard } from "./WorkflowCard";
 import { AddModule, EditModule } from "@/features/stage-editor/ui/modals/ModuleModals";
-import {
-	useCreateModule,
-	useUpdateModule,
-	useDeleteModule,
-} from "@/entities/module/mutations";
-import { ConfirmDeleteModal } from "@/components/ui/confirmation-modal"
+import { useDeleteModule } from "@/entities/module/mutations";
+import { ConfirmDeleteModal } from "@/shared/ui"
 import { Button } from "@/components/ui/button";
 import { Plus, Clock, ChevronDown, EllipsisVertical } from "lucide-react";
 import { toast } from "@/components/ui/toast"
@@ -86,6 +82,8 @@ interface ModuleCardProps {
 	phases: Phase[];
 	projectId: string;
 	stageId: string;
+	/** Clients are read-only: hide add/edit/delete controls. */
+	readOnly?: boolean;
 }
 
 export function ModuleCard({
@@ -93,6 +91,7 @@ export function ModuleCard({
 	phases,
 	projectId,
 	stageId,
+	readOnly = false,
 }: ModuleCardProps) {
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [editingModule, setEditingModule] = useState<Module | null>(null);
@@ -102,8 +101,6 @@ export function ModuleCard({
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 	const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
-	const createModuleMutation = useCreateModule();
-	const updateModuleMutation = useUpdateModule();
 	const deleteModuleMutation = useDeleteModule();
 
 	const currentPhase =
@@ -118,42 +115,6 @@ export function ModuleCard({
 	};
 
 	const openEditModuleModal = (module: Module) => setEditingModule(module);
-
-	const handleAddModule = async (data: {
-		name: string;
-		planStart: Date | null;
-		planEnd: Date | null;
-		actualEnd: Date | null;
-	}) => {
-		if (activePhase === null || !currentPhase) return;
-		await createModuleMutation.mutateAsync({
-			phaseId: currentPhase.phase_id,
-			stageId,
-			name: data.name,
-			planStart: data.planStart ?? undefined,
-			planEnd: data.planEnd ?? undefined,
-			actualEnd: data.actualEnd ?? undefined,
-		});
-		setIsAddOpen(false);
-	};
-
-	const handleSaveModule = async (data: {
-		name: string;
-		planStart: Date | null;
-		planEnd: Date | null;
-		actualEnd: Date | null;
-	}) => {
-		if (!editingModule) return;
-		await updateModuleMutation.mutateAsync({
-			moduleId: editingModule.module_id,
-			stageId,
-			name: data.name,
-			planStart: data.planStart ?? undefined,
-			planEnd: data.planEnd ?? undefined,
-			actualEnd: data.actualEnd ?? undefined,
-		});
-		setEditingModule(null);
-	};
 
 	const handleEditDeleteClick = () => {
 		if (!editingModule) return;
@@ -198,12 +159,11 @@ export function ModuleCard({
 
 	const handleDeleteModule = async () => {
 		if (!moduleToDelete || activePhase === null) return;
-		await deleteModuleMutation.mutateAsync({
-			moduleId: moduleToDelete,
-			stageId,
-		});
-		setIsDeleteConfirmOpen(false);
-		setModuleToDelete(null);
+		try {
+			await deleteModuleMutation.mutateAsync({
+				moduleId: moduleToDelete,
+				stageId,
+			});
 
 			// delete toast
 			toast.add({
@@ -211,6 +171,19 @@ export function ModuleCard({
 				description: `Module has been deleted successfully.`,
 				type: "delete",
 			});
+		} catch (error) {
+			toast.add({
+				title: "Delete Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Something went wrong deleting the module.",
+				type: "error",
+			});
+		} finally {
+			setIsDeleteConfirmOpen(false);
+			setModuleToDelete(null);
+		}
 	};
 
 	const getDeadlineColorClass = (state: string) => {
@@ -233,9 +206,11 @@ export function ModuleCard({
 			{/* Header with Add Module button */}
 			<div className="flex justify-between items-center mb-4">
 				<h3 className="text-2xl font-semibold text-slate-900">Modules</h3>
-				<Button onClick={openCreateModuleModal}>
-					<Plus className="mr-2 h-4 w-4" /> Add Module
-				</Button>
+				{!readOnly && (
+					<Button onClick={openCreateModuleModal}>
+						<Plus className="mr-2 h-4 w-4" /> Add Module
+					</Button>
+				)}
 			</div>
 
 			{/* Module Cards */}
@@ -345,15 +320,18 @@ export function ModuleCard({
 										<div className="w-px h-5 bg-slate-200 mx-1"></div>
 
 										{/* Edit button */}
-										<button
-											onClick={() => openEditModuleModal(module)}
-											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
-										>
-											<EllipsisVertical
-												size={14}
-												className="text-slate-500"
-											/>
-										</button>
+										{!readOnly && (
+											<button
+												onClick={() => openEditModuleModal(module)}
+												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
+												aria-label="Edit module"
+											>
+												<EllipsisVertical
+													size={14}
+													className="text-slate-500"
+												/>
+											</button>
+										)}
 									</div>
 								</div>
 
@@ -385,16 +363,17 @@ export function ModuleCard({
 			<AddModule
 				isOpen={isAddOpen}
 				activePhase={activePhase}
+				stageId={stageId}
+				phaseId={currentPhase?.phase_id ?? null}
 				onClose={() => setIsAddOpen(false)}
-				onSubmit={handleAddModule}
 			/>
 
 			{/* Edit Module Modal */}
 			<EditModule
 				isOpen={editingModule !== null}
 				module={editingModule}
+				stageId={stageId}
 				onClose={() => setEditingModule(null)}
-				onSave={handleSaveModule}
 				onDelete={handleEditDeleteClick}
 			/>
 

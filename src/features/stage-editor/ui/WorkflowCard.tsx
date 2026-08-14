@@ -6,20 +6,20 @@ import type { Workflow } from "../types";
 import { AddWorkflow, EditWorkflow } from "@/features/stage-editor/ui/modals/WorkflowModals";
 import { ConfirmDeleteModal } from "@/shared/ui";
 import {
-	useCreateWorkflow,
-	useUpdateWorkflow,
 	useDeleteWorkflow,
 	useReorderWorkflow,
 } from "@/entities/workflow/mutations";
 import { toast } from "@/components/ui/toast";
 
-import { Pencil, X, Plus, Clock, GripVertical, EllipsisVertical } from "lucide-react";
+import { Plus, Clock, GripVertical, EllipsisVertical } from "lucide-react";
 
 interface WorkflowCardProps {
 	workflows: Workflow[];
 	moduleId: string;
 	projectId: string;
 	stageId: string;
+	/** Clients are read-only: hide add/edit/delete controls and drag handles. */
+	readOnly?: boolean;
 }
 
 /**
@@ -32,11 +32,6 @@ interface WorkflowCardProps {
  *   - actualEnd  -> ACTUAL END (AE), set once the workflow has ended
  *   - actualStart -> ACTUAL START (AS), distinct from the planned one
  */
-type WorkflowWithActuals = Workflow & {
-	/** Actual start is now first-class on Workflow (canonical vocabulary) */
-	actualStart?: Date | null;
-};
-
 type WorkflowStatus = "not_started" | "started" | "ended";
 
 type DeadlineState =
@@ -49,7 +44,7 @@ type DeadlineState =
 const DAY_MS = 1000 * 60 * 60 * 24;
 
 /** Not Started / Started Already / Ended, derived from what dates we actually have. */
-function getWorkflowStatus(workflow: WorkflowWithActuals): WorkflowStatus {
+function getWorkflowStatus(workflow: Workflow): WorkflowStatus {
 	if (workflow.actualEnd) return "ended";
 	if (workflow.actualStart) return "started";
 	if (workflow.planStart && workflow.planStart.getTime() <= Date.now()) {
@@ -62,12 +57,12 @@ function getWorkflowStatus(workflow: WorkflowWithActuals): WorkflowStatus {
  * Returns the actual start date to display. Falls back to `planStart`
  * (i.e. assumes an on-time start) when the real field isn't populated yet.
  */
-function getActualStart(workflow: WorkflowWithActuals): Date | null {
+function getActualStart(workflow: Workflow): Date | null {
 	return workflow.actualStart ?? workflow.planStart ?? null;
 }
 
 /** Days late a workflow started, relative to its planned start. Null if not late / not started. */
-function getStartDelayDays(workflow: WorkflowWithActuals): number | null {
+function getStartDelayDays(workflow: Workflow): number | null {
 	const planned = workflow.planStart;
 	const actual = getActualStart(workflow);
 	if (!planned || !actual) return null;
@@ -107,6 +102,7 @@ export function WorkflowCard({
 	moduleId,
 	projectId,
 	stageId,
+	readOnly = false,
 }: WorkflowCardProps) {
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
@@ -116,8 +112,6 @@ export function WorkflowCard({
 	);
 	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-	const createWorkflowMutation = useCreateWorkflow();
-	const updateWorkflowMutation = useUpdateWorkflow();
 	const deleteWorkflowMutation = useDeleteWorkflow();
 	const reorderWorkflowMutation = useReorderWorkflow();
 
@@ -137,55 +131,6 @@ export function WorkflowCard({
 		});
 	};
 
-	const handleAddWorkflow = async (data: {
-		name: string;
-		planStart: Date | null;
-		planEnd: Date | null;
-		actualEnd: Date | null;
-	}) => {
-		await createWorkflowMutation.mutateAsync({
-			moduleId,
-			stageId,
-			name: data.name,
-			planStart: data.planStart ?? undefined,
-			planEnd: data.planEnd ?? undefined,
-			actualEnd: data.actualEnd ?? undefined,
-		});
-
-		toast.add({
-			title: "Workflow Created",
-			description: `"${data.name}" has been created successfully.`,
-			type: "success",
-		});
-
-		setIsAddOpen(false);
-	};
-
-	const handleSaveWorkflow = async (data: {
-		name: string;
-		planStart: Date | null;
-		planEnd: Date | null;
-		actualEnd: Date | null;
-	}) => {
-		if (!editingWorkflow) return;
-		await updateWorkflowMutation.mutateAsync({
-			workflowId: editingWorkflow.workflow_id,
-			stageId,
-			name: data.name,
-			planStart: data.planStart ?? undefined,
-			planEnd: data.planEnd ?? undefined,
-			actualEnd: data.actualEnd ?? undefined,
-		});
-
-		toast.add({
-			title: "Workflow Edited",
-			description: `"${data.name}" has been edited successfully.`,
-			type: "success",
-		});
-
-		setEditingWorkflow(null);
-	};
-
 	const confirmDelete = (workflow: Workflow) => {
 		setWorkflowToDelete(workflow);
 		setIsDeleteConfirmOpen(true);
@@ -194,23 +139,35 @@ export function WorkflowCard({
 
 	const handleDeleteWorkflow = async () => {
 		if (!workflowToDelete) return;
-		await deleteWorkflowMutation.mutateAsync({
-			workflowId: workflowToDelete.workflow_id,
-			stageId,
-		});
+		try {
+			await deleteWorkflowMutation.mutateAsync({
+				workflowId: workflowToDelete.workflow_id,
+				stageId,
+			});
 
-		toast.add({
-			title: "Workflow Deleted",
-			description: `"${workflowToDelete.name}" has been deleted successfully.`,
-			type: "delete",
-		});
-
-		setIsDeleteConfirmOpen(false);
-		setWorkflowToDelete(null);
+			toast.add({
+				title: "Workflow Deleted",
+				description: `"${workflowToDelete.name}" has been deleted successfully.`,
+				type: "delete",
+			});
+		} catch (error) {
+			toast.add({
+				title: "Delete Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Something went wrong deleting the workflow.",
+				type: "error",
+			});
+		} finally {
+			setIsDeleteConfirmOpen(false);
+			setWorkflowToDelete(null);
+		}
 	};
 
 	// Drag and Drop Handlers
 	const handleDragStart = (e: React.DragEvent, index: number) => {
+		if (readOnly) return;
 		setDraggedIndex(index);
 		e.dataTransfer.effectAllowed = "move";
 		setTimeout(() => {
@@ -228,6 +185,7 @@ export function WorkflowCard({
 
 	const handleDragOver = (e: React.DragEvent, index: number) => {
 		e.preventDefault();
+		if (readOnly) return;
 		e.dataTransfer.dropEffect = "move";
 
 		if (draggedIndex === null || draggedIndex === index) return;
@@ -246,6 +204,7 @@ export function WorkflowCard({
 
 	const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
 		e.preventDefault();
+		if (readOnly) return;
 
 		const dragIndex = draggedIndex;
 		if (dragIndex === null || dragIndex === dropIndex) {
@@ -264,13 +223,27 @@ export function WorkflowCard({
 			return;
 		}
 
-		await reorderWorkflowMutation.mutateAsync({
-			workflowId: draggedWf.workflow_id,
-			targetNumber,
-			stageId,
-		});
-
-		setDraggedIndex(null);
+		try {
+			await reorderWorkflowMutation.mutateAsync({
+				workflowId: draggedWf.workflow_id,
+				targetNumber,
+				stageId,
+			});
+		} catch (error) {
+			toast.add({
+				title: "Reorder Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Something went wrong reordering the workflows.",
+				type: "error",
+			});
+		} finally {
+			setDraggedIndex(null);
+			document.querySelectorAll(".drag-over-workflow").forEach((el) => {
+				el.classList.remove("drag-over-workflow");
+			});
+		}
 	};
 
 	return (
@@ -278,7 +251,7 @@ export function WorkflowCard({
 			{/* Workflows List */}
 			<div className="bg-neutral-surface">
 				{workflows.map((workflow, index) => {
-					const wf = workflow as WorkflowWithActuals;
+					const wf = workflow;
 					const status = getWorkflowStatus(wf);
 					const actualStart = getActualStart(wf);
 					const startDelayDays = getStartDelayDays(wf);
@@ -330,7 +303,7 @@ export function WorkflowCard({
 						<div
 							key={workflow.workflow_id}
 							className="flex items-center justify-between px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors group cursor-grab active:cursor-grabbing"
-							draggable={true}
+							draggable={!readOnly}
 							onDragStart={(e) => handleDragStart(e, index)}
 							onDragEnd={handleDragEnd}
 							onDragOver={(e) => handleDragOver(e, index)}
@@ -408,17 +381,19 @@ export function WorkflowCard({
 
 								{/* Workflow Actions — edit hidden when completed (Task 5.7) */}
 								<div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-									{getWorkflowStatus(workflow as WorkflowWithActuals) !== "ended" && (
-										<button
-											onClick={() => openEditWorkflowModal(workflow)}
-											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
-										>
-											<EllipsisVertical
-												size={14}
-												className="text-slate-500"
-											/>
-										</button>
-									)}
+									{!readOnly &&
+										getWorkflowStatus(workflow) !== "ended" && (
+											<button
+												onClick={() => openEditWorkflowModal(workflow)}
+												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
+												aria-label="Edit workflow"
+											>
+												<EllipsisVertical
+													size={14}
+													className="text-slate-500"
+												/>
+											</button>
+										)}
 								</div>
 							</div>
 						</div>
@@ -426,31 +401,35 @@ export function WorkflowCard({
 				})}
 
 				{/* Add Workflow Button */}
-				<button
-					onClick={openCreateWorkflowModal}
-					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
-					style={{ width: "calc(100% - 24px)" }}
-				>
-					<Plus size={16} className={"text-brand-200"} />
-					<span className="text-sm font-medium text-neutral-border">
-						Add Workflow
-					</span>
-				</button>
+				{!readOnly && (
+					<button
+						onClick={openCreateWorkflowModal}
+						className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
+						style={{ width: "calc(100% - 24px)" }}
+					>
+						<Plus size={16} className={"text-brand-200"} />
+						<span className="text-sm font-medium text-neutral-border">
+							Add Workflow
+						</span>
+					</button>
+				)}
 			</div>
 
 			{/* Add Workflow Modal */}
 			<AddWorkflow
 				isOpen={isAddOpen}
+				moduleId={moduleId}
+				stageId={stageId}
 				onClose={() => setIsAddOpen(false)}
-				onSubmit={handleAddWorkflow}
 			/>
 
 			{/* Edit Workflow Modal */}
 			<EditWorkflow
 				isOpen={editingWorkflow !== null}
 				workflow={editingWorkflow}
+				moduleId={moduleId}
+				stageId={stageId}
 				onClose={() => setEditingWorkflow(null)}
-				onSave={handleSaveWorkflow}
 				onDelete={() => editingWorkflow && confirmDelete(editingWorkflow)}
 			/>
 

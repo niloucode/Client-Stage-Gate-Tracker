@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { z } from "zod";
 import { Plus, Save } from "lucide-react";
-import { useStore } from "@tanstack/react-form";
+import { useSelector } from "@tanstack/react-form";
 
 import type { Phase } from "../../types";
 import { useAppForm, formErrorToMessage } from "@/shared/form";
@@ -120,8 +120,9 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 					stageId,
 					name: value.name,
 					description: value.description ?? "",
-					planStart: value.planStart ?? undefined,
-					planEnd: value.planEnd ?? undefined,
+					// non-null guaranteed by phaseModalSchema (required plan dates)
+					planStart: value.planStart!,
+					planEnd: value.planEnd!,
 					actualStart: value.actualStart ?? undefined,
 					actualEnd: value.actualEnd ?? undefined,
 				});
@@ -135,8 +136,8 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 					stageId,
 					name: value.name,
 					description: value.description ?? "",
-					planStart: value.planStart ?? undefined,
-					planEnd: value.planEnd ?? undefined,
+					planStart: value.planStart!,
+					planEnd: value.planEnd!,
 					actualStart: value.actualStart ?? undefined,
 					actualEnd: value.actualEnd ?? undefined,
 				});
@@ -150,8 +151,8 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 		},
 	});
 
-	// Correct TanStack Form store subscription
-	const isDirty = useStore(form.store, (state) => state.isDirty);
+	// Correct TanStack Form store subscription (useStore is a deprecated alias).
+	const isDirty = useSelector(form.store, (state) => state.isDirty);
 
 	// Reset form whenever modal opens or active phase changes
 	useResetOnOpen(isOpen, () => {

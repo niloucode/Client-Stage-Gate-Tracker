@@ -3,14 +3,16 @@
 import { useState, useMemo } from "react";
 import { z } from "zod";
 import { Plus, Save, Trash2 } from "lucide-react";
+import { useSelector } from "@tanstack/react-form";
 
 import type { Workflow } from "../../types";
-import { getFieldErrors } from "@/shared/lib/zod";
+import { useAppForm, formErrorToMessage } from "@/shared/form";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import {
 	hasValidPlannedRange,
 	toSchedulingDates,
 } from "@/shared/lib/scheduling";
+import { useCreateWorkflow, useUpdateWorkflow } from "@/entities/workflow/mutations";
 import {
 	Button,
 	ConfirmationModal,
@@ -22,14 +24,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 	FormInput,
+	toast,
 } from "@/components/ui";
-
-export interface WorkflowFormData {
-	name: string;
-	planStart: Date | null;
-	planEnd: Date | null;
-	actualEnd: Date | null;
-}
 
 export interface WorkflowModalProps {
 	isOpen: boolean;
@@ -38,106 +34,130 @@ export interface WorkflowModalProps {
 	 * Pass a `workflow` object for Edit mode, or `null`/`undefined` for Create mode.
 	 */
 	workflow?: Workflow | null;
-	onSave: (data: WorkflowFormData) => void;
+	moduleId: string;
+	stageId: string;
 	onDelete?: () => void;
 }
 
-function areDatesEqual(d1: Date | null, d2: Date | null): boolean {
-	if (!d1 && !d2) return true;
-	if (!d1 || !d2) return false;
-	const t1 = d1.getTime();
-	const t2 = d2.getTime();
-	if (Number.isNaN(t1) && Number.isNaN(t2)) return true;
-	return t1 === t2;
-}
+const workflowModalSchema = z
+	.object({
+		name: z
+			.string()
+			.min(1, "Workflow name is required")
+			.max(35, "Workflow name must be 35 characters or less"),
+		planStart: z
+			.date()
+			.nullable()
+			.refine((val): val is Date => val !== null, {
+				error: "Plan Start Date is required",
+			}),
+		planEnd: z
+			.date()
+			.nullable()
+			.refine((val): val is Date => val !== null, {
+				error: "Plan End Date is required",
+			}),
+		actualStart: z.date().optional().nullable(),
+		actualEnd: z.date().optional().nullable(),
+	})
+	.superRefine((data, ctx) => {
+		if (!hasValidPlannedRange(toSchedulingDates(data))) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Start must be before End",
+				path: ["planStart"],
+			});
+			ctx.addIssue({
+				code: "custom",
+				message: "End must be after Start",
+				path: ["planEnd"],
+			});
+		}
+	});
 
-const baseWorkflowModalSchema = z.object({
-	name: z
-		.string()
-		.min(1, "Workflow name is required")
-		.max(35, "Workflow name must be 35 characters or less"),
-	planStart: z
-		.date()
-		.nullable()
-		.refine((val): val is Date => val !== null, {
-			message: "Plan Start Date is required",
-		}),
-	planEnd: z
-		.date()
-		.nullable()
-		.refine((val): val is Date => val !== null, {
-			message: "Plan End Date is required",
-		}),
-	actualStart: z.date().optional().nullable(),
-	actualEnd: z.date().optional().nullable(),
-});
-
-const workflowModalSchema = baseWorkflowModalSchema.superRefine((data, ctx) => {
-	if (!hasValidPlannedRange(toSchedulingDates(data))) {
-		ctx.addIssue({
-			code: "custom",
-			message: "Start must be before End",
-			path: ["planStart"],
-		});
-		ctx.addIssue({
-			code: "custom",
-			message: "End must be after Start",
-			path: ["planEnd"],
-		});
-	}
-});
-
-const getInitialFormData = (workflow?: Workflow | null): WorkflowFormData => ({
-	name: workflow?.name ?? "",
-	planStart: workflow?.planStart ? new Date(workflow.planStart) : null,
-	planEnd: workflow?.planEnd ? new Date(workflow.planEnd) : null,
-	actualEnd: workflow?.actualEnd ? new Date(workflow.actualEnd) : null,
-});
-
-type FieldErrors = Partial<Record<keyof WorkflowFormData, string>>;
+type WorkflowFormValues = z.input<typeof workflowModalSchema>;
 
 export function WorkflowModal({
 	isOpen,
 	onClose,
 	workflow,
-	onSave,
+	moduleId,
+	stageId,
 	onDelete,
 }: WorkflowModalProps) {
-	const initialFormData = useMemo(() => getInitialFormData(workflow), [workflow]);
-
-	const [displayWorkflow, setDisplayWorkflow] = useState(workflow);
-	const [formData, setFormData] = useState<WorkflowFormData>(initialFormData);
-	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+	const isEditMode = Boolean(workflow);
 	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
-	const isEditMode = Boolean(displayWorkflow);
+	const createWorkflowMutation = useCreateWorkflow();
+	const updateWorkflowMutation = useUpdateWorkflow();
 
-	// Reset form when modal opens
+	const defaultValues: WorkflowFormValues = useMemo(
+		() => ({
+			name: workflow?.name ?? "",
+			planStart: workflow?.planStart ? new Date(workflow.planStart) : null,
+			planEnd: workflow?.planEnd ? new Date(workflow.planEnd) : null,
+			actualStart: workflow?.actualStart ? new Date(workflow.actualStart) : null,
+			actualEnd: workflow?.actualEnd ? new Date(workflow.actualEnd) : null,
+		}),
+		[workflow],
+	);
+
+	const form = useAppForm({
+		defaultValues,
+		validators: { onSubmit: workflowModalSchema },
+		onSubmit: async ({ value }) => {
+			if (isEditMode && workflow) {
+				await updateWorkflowMutation.mutateAsync({
+					workflowId: workflow.workflow_id,
+					stageId,
+					name: value.name,
+					// non-null guaranteed by workflowModalSchema (required plan dates)
+					planStart: value.planStart!,
+					planEnd: value.planEnd!,
+					actualStart: value.actualStart ?? undefined,
+					actualEnd: value.actualEnd ?? undefined,
+				});
+				toast.add({
+					title: "Workflow Edited",
+					description: `"${value.name}" has been edited successfully.`,
+					type: "success",
+				});
+			} else {
+				await createWorkflowMutation.mutateAsync({
+					moduleId,
+					stageId,
+					name: value.name,
+					// non-null guaranteed by workflowModalSchema (required plan dates)
+					planStart: value.planStart!,
+					planEnd: value.planEnd!,
+					actualStart: value.actualStart ?? undefined,
+					actualEnd: value.actualEnd ?? undefined,
+				});
+				toast.add({
+					title: "Workflow Created",
+					description: `"${value.name}" has been created successfully.`,
+					type: "success",
+				});
+			}
+			handleClose();
+		},
+	});
+
+	// Correct TanStack Form store subscription (useStore is a deprecated alias).
+	const isDirty = useSelector(form.store, (state) => state.isDirty);
+
+	// Reset form whenever modal opens
 	useResetOnOpen(isOpen, () => {
-		setDisplayWorkflow(workflow);
-		setFormData(initialFormData);
-		setFieldErrors({});
+		form.reset(defaultValues);
 		setShowDiscardConfirm(false);
 	});
 
-	// Check if user has made unsaved modifications
-	const isDirty = useMemo(() => {
-		return (
-			formData.name !== initialFormData.name ||
-			!areDatesEqual(formData.planStart, initialFormData.planStart) ||
-			!areDatesEqual(formData.planEnd, initialFormData.planEnd) ||
-			!areDatesEqual(formData.actualEnd, initialFormData.actualEnd)
-		);
-	}, [formData, initialFormData]);
-
 	const handleClose = () => {
-		setFormData(initialFormData);
-		setFieldErrors({});
+		form.reset();
 		setShowDiscardConfirm(false);
 		onClose();
 	};
 
-	// Prevents exiting if unsaved changes exist
 	const handleAttemptClose = () => {
 		if (isDirty) {
 			setShowDiscardConfirm(true);
@@ -151,23 +171,8 @@ export function WorkflowModal({
 		handleClose();
 	};
 
-	const clearFieldError = (field: keyof WorkflowFormData) => {
-		if (fieldErrors[field]) {
-			setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
-		}
-	};
-
-	const handleSubmit = () => {
-		const result = workflowModalSchema.safeParse(formData);
-		if (!result.success) {
-			const mapped = getFieldErrors(result);
-			setFieldErrors(mapped);
-			return;
-		}
-		setFieldErrors({});
-		onSave(formData);
-		handleClose();
-	};
+	const isPending =
+		createWorkflowMutation.isPending || updateWorkflowMutation.isPending;
 
 	return (
 		<>
@@ -189,86 +194,108 @@ export function WorkflowModal({
 						</DialogDescription>
 					</DialogHeader>
 
-					<div className="space-y-4">
-						<FormInput
-							variant="input"
-							label="Workflow Name"
-							required
-							maxLength={35}
-							value={formData.name}
-							placeholder="e.g., User Login Flow"
-							error={fieldErrors.name}
-							onChange={(e) => {
-								setFormData({ ...formData, name: e.target.value });
-								clearFieldError("name");
+					<form.AppForm>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								void form.handleSubmit();
 							}}
-						/>
+						>
+							<div className="flex flex-col gap-4">
+								<form.AppField name="name">
+									{(field) => (
+										<FormInput
+											label="Workflow Name"
+											required
+											maxLength={35}
+											value={field.state.value}
+											placeholder="e.g., User Login Flow"
+											error={
+												formErrorToMessage(field.state.meta.errors[0]) ??
+												undefined
+											}
+											onChange={(e) => field.handleChange(e.target.value)}
+										/>
+									)}
+								</form.AppField>
 
-						<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-							<DateTimePicker
-								label="Plan Start"
-								required
-								value={
-									formData.planStart ? new Date(formData.planStart) : undefined
-								}
-								onChange={(date) => {
-									setFormData({
-										...formData,
-										planStart: date ?? null,
-									});
-									clearFieldError("planStart");
-									clearFieldError("planEnd");
-								}}
-								placeholder="Pick Planned Start"
-								error={fieldErrors.planStart}
-							/>
+								<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+									<form.AppField name="planStart">
+										{(field) => (
+											<DateTimePicker
+												label="Plan Start"
+												required
+												value={
+													field.state.value
+														? new Date(field.state.value)
+														: undefined
+												}
+												onChange={(date) => field.handleChange(date ?? null)}
+												placeholder="Pick Planned Start"
+												error={
+													formErrorToMessage(field.state.meta.errors[0]) ??
+													undefined
+												}
+											/>
+										)}
+									</form.AppField>
 
-							<DateTimePicker
-								label="Plan End"
-								required
-								value={
-									formData.planEnd ? new Date(formData.planEnd) : undefined
-								}
-								onChange={(date) => {
-									setFormData({
-										...formData,
-										planEnd: date ?? null,
-									});
-									clearFieldError("planStart");
-									clearFieldError("planEnd");
-								}}
-								placeholder="Pick Planned End"
-								error={fieldErrors.planEnd}
-							/>
-						</div>
-					</div>
+									<form.AppField name="planEnd">
+										{(field) => (
+											<DateTimePicker
+												label="Plan End"
+												required
+												value={
+													field.state.value
+														? new Date(field.state.value)
+														: undefined
+												}
+												onChange={(date) => field.handleChange(date ?? null)}
+												placeholder="Pick Planned End"
+												error={
+													formErrorToMessage(field.state.meta.errors[0]) ??
+													undefined
+												}
+											/>
+										)}
+									</form.AppField>
+								</div>
+							</div>
 
-					<DialogFooter>
-						{isEditMode && onDelete && (
-							<Button
-								type="button"
-								className="mr-auto"
-								variant="destructive"
-								onClick={onDelete}
-							>
-								<Trash2 className="mr-2 h-4 w-4" /> Delete Workflow
-							</Button>
-						)}
-						<Button type="button" variant="ghost" onClick={handleAttemptClose}>
-							Cancel
-						</Button>
-						<Button type="button" onClick={handleSubmit}>
-							{isEditMode ? (
-								<>
-									<Save className="mr-2 h-4 w-4" /> Save Changes
-								</>
-							) : (
-								<>
-									<Plus className="mr-2 h-4 w-4" /> Create Workflow
-								</>
-							)}
-						</Button>
-					</DialogFooter>
+							<DialogFooter className="mt-6" showCloseButton={false}>
+								{isEditMode && onDelete && (
+									<Button
+										type="button"
+										className="mr-auto"
+										variant="destructive"
+										onClick={onDelete}
+									>
+										<Trash2 className="mr-2 h-4 w-4" /> Delete Workflow
+									</Button>
+								)}
+								<Button
+									type="button"
+									variant="ghost"
+									onClick={handleAttemptClose}
+									disabled={isPending}
+								>
+									Cancel
+								</Button>
+								<form.SubmitButton pendingLabel={isEditMode ? "Saving…" : "Creating…"}>
+									{isEditMode ? (
+										<>
+											<Save className="mr-2 h-4 w-4" /> Save Changes
+										</>
+									) : (
+										<>
+											<Plus className="mr-2 h-4 w-4" /> Create Workflow
+										</>
+									)}
+								</form.SubmitButton>
+							</DialogFooter>
+						</form>
+					</form.AppForm>
 				</DialogContent>
 			</Dialog>
 
@@ -289,18 +316,10 @@ export function WorkflowModal({
 
 // ── Backward-compatible Aliases ──────────────────────────────────────────────
 
-export function AddWorkflow(
-	props: Omit<WorkflowModalProps, "workflow" | "onSave"> & {
-		onSubmit: (data: WorkflowFormData) => void;
-	},
-) {
-	return <WorkflowModal {...props} workflow={null} onSave={props.onSubmit} />;
+export function AddWorkflow(props: Omit<WorkflowModalProps, "workflow">) {
+	return <WorkflowModal {...props} workflow={null} />;
 }
 
-export function EditWorkflow(
-	props: WorkflowModalProps & {
-		onDelete: () => void;
-	},
-) {
+export function EditWorkflow(props: WorkflowModalProps) {
 	return <WorkflowModal {...props} />;
 }

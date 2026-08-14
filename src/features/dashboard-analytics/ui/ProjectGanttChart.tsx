@@ -47,7 +47,7 @@ export function ProjectGanttChart({ rows, tab, level, today }: ProjectGanttChart
 	return (
 		<TooltipProvider>
 			{/* No border/bg here — this sits inside DashboardAnalyticsPage's outer card now. */}
-			<div className="h-[32rem] overflow-hidden rounded-md border-t border-border scroll-smooth">
+			<div className="h-128 overflow-hidden rounded-md border-t border-border scroll-smooth">
 				<Gantt<GanttBarEventData>
 					scale="quarter"
 					defaultDate={today}
