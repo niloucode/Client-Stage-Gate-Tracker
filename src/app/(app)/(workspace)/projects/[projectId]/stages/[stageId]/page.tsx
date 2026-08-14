@@ -85,19 +85,22 @@ function EditorContent({
 
 	return (
 		<div>
-      {/* Navigation Link */}
-			<Back link={"/projects/"} />
+			{/* Navigation Link */}
+			<Back link={`/projects/${projectId}`} />
 
 			<div className="flex justify-between items-end my-4">
 				<div>
 					<h1>
-						Stage Name Here
+						{stageTree?.name ?? "Stage Name"}
 					</h1>
-					<p className="subtitle">
-						Define project phases, modules, and workflows.
+					<p className="subtitle w-3/4">
+						{stageTree?.description || "Define project phases, modules, and workflows."}
 					</p>
 				</div>
-				<Button onClick={() => stepperRef.current?.openCreateModal()}><Plus />Add Phase</Button>
+				<Button onClick={() => stepperRef.current?.openCreateModal()}>
+					<Plus />
+					Add Phase
+				</Button>
 			</div>
 
 			<PhaseCard

@@ -26,8 +26,9 @@ import {
  * Generates 3 dummy subtasks for UI demonstration when subTickets is not provided.
  */
 function getDummySubtasks(parentTicket: Ticket): Ticket[] {
-	if (parentTicket.subTickets && parentTicket.subTickets.length > 0) {
-		return parentTicket.subTickets as Ticket[];
+	const rawSubTickets = (parentTicket as Ticket & { subTickets?: Ticket[] }).subTickets;
+	if (rawSubTickets && rawSubTickets.length > 0) {
+		return rawSubTickets;
 	}
 
 	const baseDate = parentTicket.plan_start_at
@@ -163,9 +164,9 @@ export function TicketCardContent({
 			<div
 				onClick={() => onSelect(ticket)}
 				className={cn(
-					"bg-neutral-surface flex overflow-clip rounded-md border border-brand-100 cursor-pointer relative",
+					"bg-neutral-surface flex overflow-clip rounded-md border border-brand-100 cursor-pointer relative @container",
 					"hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 select-none group",
-					isSubtask ? "h-36" : "h-45"
+					isSubtask ? "h-auto min-h-36" : "h-auto min-h-45"
 				)}
 			>
 				{isOverdue ? (
@@ -220,9 +221,9 @@ export function TicketCardContent({
 
 					{/* Bottom row: timeline + assignee avatar */}
 					<div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-brand-100/60">
-						<div className="flex items-center gap-1.5 text-xs min-w-0 font-medium">
+						<div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs min-w-0 font-medium">
 							{ticket.Profile ? (
-								<Avatar className="w-6 h-6 mr-2 text-[9px] shrink-0">
+								<Avatar className="w-6 h-6 mr-1 text-[9px] shrink-0">
 									<AvatarFallback className="bg-gray-600 text-neutral-surface text-[9px] font-bold">
 										{getInitials(
 											`${ticket.Profile?.first_name} ${ticket.Profile?.last_name}`,
@@ -230,31 +231,31 @@ export function TicketCardContent({
 									</AvatarFallback>
 								</Avatar>
 							) : (
-								<Avatar className="w-6 h-6 mr-2 border-2 border-dashed border-gray-200 shrink-0">
+								<Avatar className="w-6 h-6 mr-1 border-2 border-dashed border-gray-200 shrink-0">
 									<AvatarFallback className="bg-transparent" />
 								</Avatar>
 							)}
 
 							{startDate && (
-								<>
+								<span className="inline-flex items-center gap-1 shrink-0">
 									<Calendar size={13} className={`shrink-0 ${getDateTextColor()}`} />
-									<span className={`truncate ${getDateTextColor()}`}>
+									<span className={getDateTextColor()}>
 										{formatDate(startDate)}
 									</span>
-								</>
+								</span>
 							)}
 
 							{startDate && endDate && (
-								<span className={`${getDateTextColor()} shrink-0 mx-0.5`}>—</span>
+								<span className={`${getDateTextColor()} shrink-0 hidden @[100px]:inline`}>—</span>
 							)}
 
 							{endDate && (
-								<>
+								<span className="inline-flex items-center gap-1 shrink-0">
 									<Calendar size={13} className={`shrink-0 ${getDateTextColor()}`} />
-									<span className={`truncate ${getDateTextColor()}`}>
+									<span className={getDateTextColor()}>
 										{formatDate(endDate)}
 									</span>
-								</>
+								</span>
 							)}
 						</div>
 

@@ -140,31 +140,42 @@ function ToastClose({
 function ToastIcon({ type }: { type: string | undefined }) {
 	let icon: React.ReactNode = null;
 
-	// Default to green "success" checkmark icon when type is omitted or "success"
 	if (!type || type === "success") {
 		icon = (
-			<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-				<CircleCheckIcon className="text-emerald-600" aria-hidden="true" />
+			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+				<CircleCheckIcon className="size-4 text-emerald-600" aria-hidden="true" />
 			</span>
 		);
 	} else if (type === "info") {
-		icon = <InfoIcon aria-hidden="true" />;
+		icon = (
+			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100">
+				<InfoIcon className="size-4 text-brand-600" aria-hidden="true" />
+			</span>
+		);
 	} else if (type === "warning") {
 		icon = (
-			<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100">
-				<TriangleAlertIcon className="text-amber-600" aria-hidden="true" />
+			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100">
+				<TriangleAlertIcon className="size-4 text-amber-600" aria-hidden="true" />
 			</span>
 		);
 	} else if (type === "error") {
-		icon = <OctagonXIcon className="text-destructive" aria-hidden="true" />;
+		icon = (
+			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100">
+				<OctagonXIcon className="size-4 text-destructive" aria-hidden="true" />
+			</span>
+		);
 	} else if (type === "delete") {
 		icon = (
-			<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100">
-				<OctagonXIcon className="text-red-600" aria-hidden="true" />
+			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100">
+				<OctagonXIcon className="size-4 text-red-600" aria-hidden="true" />
 			</span>
 		);
 	} else if (type === "loading") {
-		icon = <Loader2Icon className="animate-spin" aria-hidden="true" />;
+		icon = (
+			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50">
+				<Loader2Icon className="size-4 animate-spin text-brand-600" aria-hidden="true" />
+			</span>
+		);
 	}
 
 	if (!icon) {
@@ -172,10 +183,7 @@ function ToastIcon({ type }: { type: string | undefined }) {
 	}
 
 	return (
-		<span
-			data-slot="toast-icon"
-			className="shrink-0 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4"
-		>
+		<span data-slot="toast-icon" className="shrink-0">
 			{icon}
 		</span>
 	);

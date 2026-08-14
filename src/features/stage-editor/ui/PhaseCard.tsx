@@ -13,7 +13,6 @@ import { AddPhase, EditPhase } from "@/features/stage-editor/ui/modals/PhaseModa
 import {
 	useDeletePhase,
 	useReorderPhase,
-	useUpdatePhase,
 } from "@/entities/phase/mutations";
 import { Label } from "@/components/ui/label";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
@@ -47,7 +46,6 @@ export const PhaseCard = forwardRef<
 
 	const deletePhaseMutation = useDeletePhase();
 	const reorderPhaseMutation = useReorderPhase();
-	const updatePhaseMutation = useUpdatePhase();
 
 	useImperativeHandle(ref, () => ({
 		openCreateModal: () => {
@@ -189,29 +187,6 @@ export const PhaseCard = forwardRef<
 
 	// Find the current active phase to populate the details section
 	const currentPhase = phases.find((p) => p.number === activePhase);
-
-	const handleUpdatePlannedDate = async (
-		field: "planStart" | "planEnd",
-		newDate: Date | undefined
-	) => {
-		if (!currentPhase) return;
-		await updatePhaseMutation.mutateAsync({
-			phaseId: currentPhase.phase_id,
-			stageId,
-			name: currentPhase.name,
-			description: currentPhase.description ?? undefined,
-			planStart: field === "planStart" ? newDate : (currentPhase.planStart ? new Date(currentPhase.planStart) : undefined),
-			planEnd: field === "planEnd" ? newDate : (currentPhase.planEnd ? new Date(currentPhase.planEnd) : undefined),
-			actualStart: currentPhase.actualStart ? new Date(currentPhase.actualStart) : undefined,
-			actualEnd: currentPhase.actualEnd ? new Date(currentPhase.actualEnd) : undefined,
-		});
-
-		toast.add({
-			title: "Phase Edited",
-			description: `"${currentPhase.name}" has been edited successfully.`,
-			type: "success",
-		});
-	};
 
 	return (
 		<>
@@ -406,29 +381,29 @@ export const PhaseCard = forwardRef<
 							</p>
 						</div>
 
-						{/* Right: 2x2 Date Picker Grid */}
+						{/* Right: 2x2 Disabled Date Picker Grid */}
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full lg:w-fit shrink-0">
-							{/* Planned Start */}
+							{/* Planned Start (Disabled) */}
 							<div className="space-y-1.5">
 								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
 									PLANNED START
 								</Label>
 								<DateTimePicker
 									value={currentPhase.planStart ? new Date(currentPhase.planStart) : undefined}
-									onChange={(date) => handleUpdatePlannedDate("planStart", date)}
-									placeholder="Pick planned start"
+									disabled
+									placeholder="Not set yet"
 								/>
 							</div>
 
-							{/* Planned End */}
+							{/* Planned End (Disabled) */}
 							<div className="space-y-1.5">
 								<Label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
 									PLANNED END
 								</Label>
 								<DateTimePicker
 									value={currentPhase.planEnd ? new Date(currentPhase.planEnd) : undefined}
-									onChange={(date) => handleUpdatePlannedDate("planEnd", date)}
-									placeholder="Pick planned end"
+									disabled
+									placeholder="Not set yet"
 								/>
 							</div>
 
@@ -456,7 +431,6 @@ export const PhaseCard = forwardRef<
 								/>
 							</div>
 						</div>
-						
 					</div>
 				)}
 			</div>

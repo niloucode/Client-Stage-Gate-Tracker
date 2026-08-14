@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { FormInput } from "@/components/ui/forminput";
 import { X, Plus, Calendar } from "lucide-react";
 import ImageLightbox from "@/shared/ui/ImageLightbox";
-import TicketModalEdit from "../TicketModalEdit";
+import TicketModalEdit from "../TicketModals";
 import { useTicketEditor } from "./useTicketEditor";
 import { TicketTitleAndStatus, TicketAssignees, TicketApiDetails, TicketSchedule, SubtaskSelectionModal } from "./TicketEditorSubcomponents";
 import { TicketActivitySection } from "./TicketActivitySection";
