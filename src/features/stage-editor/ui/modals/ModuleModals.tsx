@@ -44,6 +44,15 @@ export interface ModuleModalProps {
 	onDelete?: () => void;
 }
 
+function areDatesEqual(d1: Date | null, d2: Date | null): boolean {
+	if (!d1 && !d2) return true;
+	if (!d1 || !d2) return false;
+	const t1 = d1.getTime();
+	const t2 = d2.getTime();
+	if (Number.isNaN(t1) && Number.isNaN(t2)) return true;
+	return t1 === t2;
+}
+
 const baseModuleModalSchema = z.object({
 	name: z
 		.string()
@@ -67,15 +76,14 @@ const baseModuleModalSchema = z.object({
 
 const moduleModalSchema = baseModuleModalSchema.superRefine((data, ctx) => {
 	if (!hasValidPlannedRange(toSchedulingDates(data))) {
-		const message = "Start must be before End";
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "Start must be before End",
 			path: ["planStart"],
 		});
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "End must be after Start",
 			path: ["planEnd"],
 		});
 	}
@@ -119,9 +127,9 @@ export function ModuleModal({
 	const isDirty = useMemo(() => {
 		return (
 			formData.name !== initialFormData.name ||
-			formData.planStart?.getTime() !== initialFormData.planStart?.getTime() ||
-			formData.planEnd?.getTime() !== initialFormData.planEnd?.getTime() ||
-			formData.actualEnd?.getTime() !== initialFormData.actualEnd?.getTime()
+			!areDatesEqual(formData.planStart, initialFormData.planStart) ||
+			!areDatesEqual(formData.planEnd, initialFormData.planEnd) ||
+			!areDatesEqual(formData.actualEnd, initialFormData.actualEnd)
 		);
 	}, [formData, initialFormData]);
 
@@ -226,6 +234,7 @@ export function ModuleModal({
 										planStart: date ?? null,
 									});
 									clearFieldError("planStart");
+									clearFieldError("planEnd");
 								}}
 								placeholder="Pick Planned Start"
 								error={fieldErrors.planStart}
@@ -242,6 +251,7 @@ export function ModuleModal({
 										...formData,
 										planEnd: date ?? null,
 									});
+									clearFieldError("planStart");
 									clearFieldError("planEnd");
 								}}
 								placeholder="Pick Planned End"

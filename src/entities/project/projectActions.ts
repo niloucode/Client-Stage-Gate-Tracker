@@ -678,7 +678,7 @@ export async function getProjectStats(projectId: string) {
 					plan_end_at: true,
 					name: true,
 					ticket_id: true,
-					Workflows: { select: { name: true } },
+					Workflows: { select: { workflow_id: true, name: true } },
 				},
 			}),
 		]);
@@ -696,6 +696,7 @@ export async function getProjectStats(projectId: string) {
 			.map((t) => ({
 				ticket_id: t.ticket_id,
 				name: t.name,
+				workflowId: t.Workflows?.workflow_id ?? "",
 				workflowName: t.Workflows?.name ?? "",
 				planEnd: t.plan_end_at,
 				// Computed server-side: render-time Date.now() violates the

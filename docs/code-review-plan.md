@@ -520,3 +520,12 @@ All pre-existing unless noted — none block the running app except the first.
       department?.name === "Project Owner"` (same convention as
       clientActions.requireProjectOwner). If the org ever adds departments
       with other names, the owner gate must move to a role-based check.
+
+- [x] **Clickable tickets → ticket slider (2026-08-14)** — `TicketBoard`
+      deep-links `?ticket=<id>` (derived state, no effect; param stripped on
+      close/in-board selection). `getProjectStats` expiring tickets +
+      `ticketDashboardSelect` now carry `workflow_id`; landing-dashboard
+      `TicketItem` gained `projectId`/`workflowId`. ProjectStructure
+      TicketCard and TicketsBoard rows navigate to
+      `/projects/[projectId]/workflows/[workflowId]?ticket=<id>`. Test setup
+      now stubs `next/navigation` globally.

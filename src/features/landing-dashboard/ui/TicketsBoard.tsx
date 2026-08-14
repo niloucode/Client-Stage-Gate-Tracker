@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
 	Eye,
 	Ticket,
@@ -182,6 +183,22 @@ export function TicketsBoard({
 	const totalCount = count ?? tickets.length;
 	const [currentPage, setCurrentPage] = useState(1);
 	const pageSize = 10;
+	const router = useRouter();
+
+	// Deep-link a ticket row to its workflow board with the edit slider open.
+	const openTicket = (ticket: TicketItem) => {
+		if (!ticket.projectId || !ticket.workflowId) return;
+		router.push(
+			`/projects/${ticket.projectId}/workflows/${ticket.workflowId}?ticket=${ticket.id}`,
+		);
+	};
+
+	const openTicketOnKeyDown = (e: React.KeyboardEvent, ticket: TicketItem) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			openTicket(ticket);
+		}
+	};
 
 	// Sorting state (default: dueAt ascending)
 	const [sortField, setSortField] = useState<SortField>("dueAt");
@@ -301,14 +318,26 @@ export function TicketsBoard({
 
 	const renderTableRows = (items: TicketItem[], isModal = false) =>
 		items.map((ticket, index) => {
+			// The "View All" dialog is view-only and rows without ids
+			// (missing data) are not navigable — suppress the affordance.
+			const clickable = !isModal && !!ticket.projectId && !!ticket.workflowId;
 			return (
 				<div
-					key={ticket.id}
+					key={ticket.id ?? `${ticket.name}-${index}`}
+					role={clickable ? "button" : undefined}
+					tabIndex={clickable ? 0 : undefined}
+					onClick={clickable ? () => openTicket(ticket) : undefined}
+					onKeyDown={
+						clickable ? (e) => openTicketOnKeyDown(e, ticket) : undefined
+					}
+					title={clickable ? `Open ${ticket.name}` : undefined}
 					className={`grid ${gridColumns} w-full items-center justify-between ${
 						isModal ? "px-8" : "px-6"
 					} py-3.5 ${
-						index < items.length - 1 ? "border-b border-brand-100/50" : ""
-					}`}
+						clickable
+							? "cursor-pointer transition-colors hover:bg-neutral-subtle/60"
+							: ""
+					} ${index < items.length - 1 ? "border-b border-brand-100/50" : ""}`}
 				>
 					<span className="truncate text-[13px] font-normal text-foreground">
 						{ticket.name}

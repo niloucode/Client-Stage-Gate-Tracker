@@ -52,6 +52,8 @@ export function mapDashboardTicketRow(row: DashboardTicketRow): TicketItem {
 		id: row.ticket_id,
 		name: row.name,
 		project: project?.name ?? "—",
+		projectId: project?.project_id ?? "",
+		workflowId: workflow?.workflow_id ?? "",
 		module: moduleRow?.name ?? "—",
 		workflow: workflow ? { label: workflow.name } : "—",
 		status: row.status,

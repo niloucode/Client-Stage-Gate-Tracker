@@ -86,6 +86,22 @@ export async function getWorkflowById(
 		const isDeletedFilter =
 			status === "active" ? false : status === "deleted" ? true : undefined;
 
+		// Membership guard (2026-08-14, ticket deep-link audit): the
+		// workflow board is now reachable via ticket links from the
+		// dashboards — non-members (including anonymous) must not read the
+		// workflow tree. Clients pass as members (read-only).
+		const projectId = await resolveWorkflowProject(workflowId);
+		if (!projectId) {
+			return {
+				success: false,
+				error: "Workflow not found or does not match the requested status.",
+			};
+		}
+		const auth = await assertProjectMember(projectId);
+		if (!auth.ok) {
+			return { success: false, error: auth.error };
+		}
+
 		const workflowData = await prisma.workflows.findUnique({
 			where: {
 				workflow_id: workflowId,

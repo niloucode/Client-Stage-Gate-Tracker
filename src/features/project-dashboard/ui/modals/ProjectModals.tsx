@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { projectCreateSchema, type ProjectCreateInput } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
@@ -41,8 +41,8 @@ interface EditProjectModalProps {
 		name: string;
 		description?: string | null;
 		client_id?: string | null;
-		start_date?: Date | null;
-		deadline_date?: Date | null;
+		start_date?: Date | string | null;
+		deadline_date?: Date | string | null;
 	} | null; // null = "Add" mode
 	onClose: () => void;
 	onSubmit: (data: ProjectCreateInput) => void;
@@ -56,17 +56,46 @@ const emptyFormData: EditProjectFormState = {
 	deadline_date: null,
 };
 
+function parseDate(dateVal: Date | string | null | undefined): Date | null {
+	if (!dateVal) return null;
+	const d = new Date(dateVal);
+	return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function areDatesEqual(d1: Date | null, d2: Date | null): boolean {
+	if (!d1 && !d2) return true;
+	if (!d1 || !d2) return false;
+	const t1 = d1.getTime();
+	const t2 = d2.getTime();
+	if (Number.isNaN(t1) && Number.isNaN(t2)) return true;
+	return t1 === t2;
+}
+
+function getInitialFormData(
+	project: EditProjectModalProps["project"],
+): EditProjectFormState {
+	if (project) {
+		return {
+			name: project.name ?? "",
+			description: project.description ?? "",
+			client_id: project.client_id ?? "",
+			start_date: parseDate(project.start_date),
+			deadline_date: parseDate(project.deadline_date),
+		};
+	}
+	return emptyFormData;
+}
+
 const projectModalSchema = projectCreateSchema.superRefine((data, ctx) => {
 	if (data.start_date && data.deadline_date && data.start_date > data.deadline_date) {
-		const message = "Start must be before End";
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "Start must be before End",
 			path: ["start_date"],
 		});
 		ctx.addIssue({
 			code: "custom",
-			message,
+			message: "End must be after Start",
 			path: ["deadline_date"],
 		});
 	}
@@ -80,31 +109,38 @@ export function EditProjectModal({
 	onClose,
 	onSubmit,
 }: EditProjectModalProps) {
-	const isEditMode = project !== null;
+	// Preserve the active project while open so exit animations retain Edit mode UI
+	const [activeProject, setActiveProject] = useState(project);
 
-	const initialFormData = useMemo((): EditProjectFormState => {
-		if (project) {
-			return {
-				name: project.name,
-				description: project.description ?? "",
-				client_id: project.client_id ?? "",
-				start_date: project.start_date ? new Date(project.start_date) : null,
-				deadline_date: project.deadline_date
-					? new Date(project.deadline_date)
-					: null,
-			};
+	useEffect(() => {
+		if (isOpen) {
+			setActiveProject(project);
 		}
-		return emptyFormData;
-	}, [project]);
+	}, [isOpen, project]);
+
+	const isEditMode = activeProject !== null;
+
+	const initialFormData = useMemo(
+		() => getInitialFormData(activeProject),
+		[
+			activeProject?.project_id,
+			activeProject?.name,
+			activeProject?.description,
+			activeProject?.client_id,
+			activeProject?.start_date,
+			activeProject?.deadline_date,
+		],
+	);
 
 	const [formData, setFormData] = useState<EditProjectFormState>(initialFormData);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 	const { data: clients } = useClients();
 
-	// Reset form when modal opens
+	// Reset form state when modal opens
 	useResetOnOpen(isOpen, () => {
-		setFormData(initialFormData);
+		const init = getInitialFormData(project);
+		setFormData(init);
 		setFieldErrors({});
 		setShowDiscardConfirm(false);
 	});
@@ -115,15 +151,14 @@ export function EditProjectModal({
 			formData.name !== initialFormData.name ||
 			formData.description !== initialFormData.description ||
 			formData.client_id !== initialFormData.client_id ||
-			formData.start_date?.getTime() !== initialFormData.start_date?.getTime() ||
-			formData.deadline_date?.getTime() !== initialFormData.deadline_date?.getTime()
+			!areDatesEqual(formData.start_date, initialFormData.start_date) ||
+			!areDatesEqual(formData.deadline_date, initialFormData.deadline_date)
 		);
 	}, [formData, initialFormData]);
 
-	const formKey = isEditMode ? project!.name : "new";
+	const formKey = isEditMode ? activeProject!.project_id : "new";
 
 	const handleClose = () => {
-		setFormData(emptyFormData);
 		setFieldErrors({});
 		setShowDiscardConfirm(false);
 		onClose();

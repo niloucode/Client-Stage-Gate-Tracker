@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
 	DndContext,
 	DragEndEvent,
@@ -15,10 +15,10 @@ import {
 
 import TicketColumn from "./TicketColumn";
 import { TicketCardContent } from "./TicketCard";
-import {TicketModalCreate,TicketModalEdit} from "./TicketModals";
+import { TicketModalCreate, TicketModalEdit } from "./TicketModals";
 import { TagManager } from "@/features/tag-manager";
 
-import { Back } from "@/components/ui/back"
+import { Back } from "@/components/ui/back";
 
 // TanStack Query hooks
 import { useTicketsByWorkflow } from "@/entities/ticket/queries";
@@ -34,7 +34,6 @@ import {
 	useDeleteTag,
 } from "@/entities/tag/mutations";
 
-import { ChevronLeft } from "lucide-react"
 import { toast } from "@/components/ui/toast";
 
 // Types
@@ -63,15 +62,15 @@ import { Button } from "@/components/ui/button";
  * @returns {JSX.Element} The fully rendered sprint board panel or a loading skeleton.
  */
 export default function TicketBoard({
-  workflow_id,
-  workflowName = 'Current Sprint',
-  projectId,
-  stageId,
+	workflow_id,
+	workflowName = "Current Sprint",
+	projectId,
+	stageId,
 }: {
-  workflow_id: string;
-  workflowName?: string;
-  projectId?: string;
-  stageId?: string;
+	workflow_id: string;
+	workflowName?: string;
+	projectId?: string;
+	stageId?: string;
 }) {
 	const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 	const [modalOpen, setModalOpen] = useState(false);
@@ -94,17 +93,43 @@ export default function TicketBoard({
 
 	const { data: tickets = [], isLoading } = useTicketsByWorkflow(workflow_id);
 
+	// Deep link: ?ticket=<id> opens the edit slide-over for that ticket once
+	// its row is loaded. Derived state (no effect): the modal opens when the
+	// param is present AND the ticket exists in the loaded list; the param
+	// is stripped on close/in-board selection so it never fights the local
+	// state.
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
+	const requestedTicketId = searchParams.get("ticket") || null;
+
+	const deepLinkedTicket = useMemo(
+		() =>
+			requestedTicketId
+				? (tickets.find((t) => t.ticket_id === requestedTicketId) ?? null)
+				: null,
+		[tickets, requestedTicketId],
+	);
+
+	const clearTicketParam = () => {
+		if (!requestedTicketId) return;
+		const params = new URLSearchParams(searchParams.toString());
+		params.delete("ticket");
+		const qs = params.toString();
+		router.replace(qs ? `?${qs}` : pathname, { scroll: false });
+	};
+
 	// Group once per tickets change — three .filter() passes over the full
 	// list on every render become one pass.
 	const ticketsByStatus = useMemo(() => {
-		const map = new Map<Ticket["status"], Ticket[]>()
+		const map = new Map<Ticket["status"], Ticket[]>();
 		for (const t of tickets) {
-			const list = map.get(t.status) ?? []
-			list.push(t)
-			map.set(t.status, list)
+			const list = map.get(t.status) ?? [];
+			list.push(t);
+			map.set(t.status, list);
 		}
-		return map
-	}, [tickets])
+		return map;
+	}, [tickets]);
 
 	const { data: tags = [] } = useTags();
 
@@ -128,6 +153,8 @@ export default function TicketBoard({
 	 */
 	function handleSelectTicket(ticket: Ticket) {
 		if (wasDraggingRef.current) return;
+		// An in-board selection supersedes any deep-link param.
+		clearTicketParam();
 		setSelectedTicket(ticket);
 		setSlideOverOpen(true);
 	}
@@ -156,7 +183,7 @@ export default function TicketBoard({
 				status: TicketStatus.PENDING,
 				TicketAssigned: data.TicketAssigned ?? [],
 				tagIds: data.tagIds ?? [],
-			performed_by: user?.profile_id,
+				performed_by: user?.profile_id,
 			} as CreateTicketParams & { performed_by?: string });
 			setModalOpen(false);
 		} catch (error) {
@@ -212,7 +239,12 @@ export default function TicketBoard({
 	}): Promise<{ error?: string }> {
 		try {
 			if (tag_id) {
-				await updateTagMutation.mutateAsync({ tag_id, name, description, color });
+				await updateTagMutation.mutateAsync({
+					tag_id,
+					name,
+					description,
+					color,
+				});
 			} else {
 				await createTagMutation.mutateAsync({ name, description, color });
 			}
@@ -287,15 +319,13 @@ export default function TicketBoard({
 			<div className="flex items-start justify-between shrink-0">
 				<div className="flex items-center gap-2">
 					{stageId && projectId ? (
-						<Back 	link = {`/projects/${projectId}/stages/${stageId}`}
-								/>
+						<Back link={`/projects/${projectId}/stages/${stageId}`} />
 					) : (
 						<h1 className="text-xl font-bold text-gray-900">{workflowName}</h1>
 					)}
 				</div>
 
 				<div className="flex items-center gap-3">
-
 					<Button
 						onClick={() => setTagManagerOpen(true)}
 						className="flex items-center gap-1.5 bg-transparent text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
@@ -304,15 +334,12 @@ export default function TicketBoard({
 						Tags
 					</Button>
 
-					<Button
-						onClick={() => setModalOpen(true)}
-					>
+					<Button onClick={() => setModalOpen(true)}>
 						<Plus />
 						New Ticket
 					</Button>
 				</div>
 			</div>
-
 
 			<DndContext
 				id="ticket-board-dnd"
@@ -349,12 +376,18 @@ export default function TicketBoard({
 			</DndContext>
 
 			<TicketModalEdit
-				ticket={selectedTicket}
-				isOpen={slideOverOpen}
-				onClose={() => setSlideOverOpen(false)}
+				ticket={selectedTicket ?? deepLinkedTicket}
+				isOpen={
+					slideOverOpen ||
+					(requestedTicketId !== null && deepLinkedTicket !== null)
+				}
+				onClose={() => {
+					setSlideOverOpen(false);
+					clearTicketParam();
+				}}
 				onUpdate={(updated) => setSelectedTicket(updated)}
 				tags={tags}
-				allTickets={tickets} 
+				allTickets={tickets}
 			/>
 
 			<TicketModalCreate
