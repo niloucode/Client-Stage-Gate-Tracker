@@ -5,7 +5,7 @@ import { ChevronDown, Paperclip, Bug } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { Ticket, Tag } from "@/entities/types";
-import { useProfiles } from "@/entities/profile";
+import { useProjectMembers } from "@/entities/profile";
 import { TagBadge } from "@/entities/tag/ui";
 import { ticketCreateSchema, type CreateTicketParams } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
@@ -47,6 +47,8 @@ export interface CreateTicketModalProps {
 	onClose: () => void;
 	onCreateTicket: (data: CreateTicketFormData) => Promise<void>;
 	tags: Tag[];
+	/** Project scope for the assignee/watcher dropdowns. */
+	projectId?: string;
 }
 
 export interface TicketModalEditProps {
@@ -63,6 +65,8 @@ export interface TicketModalEditProps {
 	parentTicket?: Ticket | null;
 	/** Clients are read-only: the editor hides all edit affordances. */
 	readOnly?: boolean;
+	/** Project scope for the assignee/watcher dropdowns. */
+	projectId?: string;
 }
 
 const createTicketModalSchema = ticketCreateSchema.superRefine((data, ctx) => {
@@ -126,6 +130,7 @@ export function TicketModalCreate({
 	onClose,
 	onCreateTicket,
 	tags,
+	projectId,
 }: CreateTicketModalProps) {
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
@@ -136,7 +141,8 @@ export function TicketModalCreate({
 	const [linkedIssue, setLinkedIssue] = useState<IssueItem | null>(null);
 	const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
 
-	const { data: profiles = [] } = useProfiles();
+	// Only project team members + owners (roleAssignments) are assignable.
+	const { data: profiles = [] } = useProjectMembers(projectId);
 
 	const [assignedIds, setAssignedIds] = useState<string[]>([]);
 	const [watcherId, setWatcherId] = useState("");

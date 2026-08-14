@@ -414,6 +414,7 @@ export default function TicketBoard({
 				onUpdate={(updated) => setSelectedTicket(updated)}
 				tags={tags}
 				allTickets={tickets}
+				projectId={projectId}
 				readOnly={isClientProfile}
 			/>
 
@@ -422,6 +423,7 @@ export default function TicketBoard({
 				onClose={() => setModalOpen(false)}
 				onCreateTicket={handleCreateTicket}
 				tags={tags}
+				projectId={projectId}
 			/>
 
 			<TagManager

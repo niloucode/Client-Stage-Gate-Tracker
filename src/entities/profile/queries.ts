@@ -2,7 +2,7 @@
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { profileKeys } from "@/shared/query/keys";
-import { selectProfile, getCurrentUserProfile, selectTeamProfiles } from "./profileActions";
+import { selectProfile, getCurrentUserProfile, selectTeamProfiles, selectProjectMembers } from "./profileActions";
 
 const profileQueryOptions = {
 	list: () =>
@@ -14,6 +14,12 @@ const profileQueryOptions = {
 		queryOptions({
 			queryKey: profileKeys.team(),
 			queryFn: selectTeamProfiles,
+		}),
+	projectMembers: (projectId: string | undefined) =>
+		queryOptions({
+			queryKey: profileKeys.projectMembers(projectId!),
+			queryFn: () => selectProjectMembers(projectId!),
+			enabled: !!projectId,
 		}),
 	currentUser: () =>
 		queryOptions({
@@ -32,6 +38,10 @@ export function useTeamProfiles(options?: { enabled?: boolean }) {
 		...profileQueryOptions.team(),
 		enabled: options?.enabled,
 	});
+}
+
+export function useProjectMembers(projectId: string | undefined) {
+	return useQuery(profileQueryOptions.projectMembers(projectId));
 }
 
 export function useCurrentUser() {

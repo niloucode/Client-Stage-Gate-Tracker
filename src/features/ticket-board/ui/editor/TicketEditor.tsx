@@ -3,7 +3,7 @@
 import { X, Plus, Calendar } from "lucide-react";
 
 import { Ticket, Tag } from "@/entities/types";
-import { useProfiles } from "@/entities/profile";
+import { useProjectMembers } from "@/entities/profile";
 import { useTicketImages, useTicketComments } from "@/entities/comment/queries";
 import { status as StatusEnum } from "@/lib/generated/prisma";
 import ImageLightbox from "@/shared/ui/image-lightbox";
@@ -29,6 +29,7 @@ export default function TicketEditor({
   isSubtaskView = false,
   parentTicket = null,
   readOnly = false,
+  projectId,
 }: {
   initialTicket: Ticket;
   tags: Tag[];
@@ -39,8 +40,10 @@ export default function TicketEditor({
   parentTicket?: Ticket | null;
   /** Clients are read-only: hide Save and subtask management. */
   readOnly?: boolean;
+  /** Project scope for the assignee/watcher dropdowns. */
+  projectId?: string;
 }) {
-  const { data: profiles = [] } = useProfiles();
+  const { data: profiles = [] } = useProjectMembers(projectId);
   const { data: comments = [] } = useTicketComments(initialTicket.ticket_id);
   const { data: ticketImages = [] } = useTicketImages(initialTicket.ticket_id);
 
@@ -323,6 +326,7 @@ export default function TicketEditor({
           isSubtaskView={true}
           parentTicket={state.ticket}
           readOnly={readOnly}
+          projectId={projectId}
         />
       )}
 

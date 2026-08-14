@@ -18,6 +18,8 @@ export const profileKeys = {
 	details: () => [...profileKeys.all, "detail"] as const,
 	detail: (id: string | undefined) => [...profileKeys.details(), id] as const,
 	currentUser: () => [...profileKeys.all, "currentUser"] as const,
+	projectMembers: (projectId: string) =>
+		[...profileKeys.all, "projectMembers", projectId] as const,
 };
 
 export const commentKeys = {
