@@ -133,6 +133,20 @@ export default function TicketBoard({
 
 	const { data: tags = [] } = useTags();
 
+	// Real subtasks: tickets whose parent_id points at a ticket in this
+	// workflow. Derived from the flat list (one fetch, no nested include) —
+	// same source the editor uses.
+	const subtasksByParent = useMemo(() => {
+		const map = new Map<string, Ticket[]>();
+		for (const t of tickets) {
+			if (!t.parent_id) continue;
+			const list = map.get(t.parent_id) ?? [];
+			list.push(t);
+			map.set(t.parent_id, list);
+		}
+		return map;
+	}, [tickets]);
+
 	const createTicketMutation = useCreateTicket();
 	const updateStatusMutation = useUpdateTicketStatus();
 	const deleteTicketMutation = useDeleteTicket();
@@ -354,6 +368,7 @@ export default function TicketBoard({
 								key={column.id}
 								column={column}
 								tickets={ticketsByStatus.get(column.id) ?? []}
+								subtasksByParent={subtasksByParent}
 								onSelectTicket={handleSelectTicket}
 								onDeleteTicket={handleDeleteTicket}
 							/>
@@ -366,8 +381,8 @@ export default function TicketBoard({
 						<div className="rotate-2 opacity-90">
 							<TicketCardContent
 								ticket={activeTicket}
+								subtasks={subtasksByParent.get(activeTicket.ticket_id) ?? []}
 								onSelect={() => {}}
-								onEdit={() => {}}
 								onDelete={() => {}}
 							/>
 						</div>

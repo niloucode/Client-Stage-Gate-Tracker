@@ -23,111 +23,28 @@ import {
 } from "@/components/ui/alert-dialog";
 
 /**
- * Generates 3 dummy subtasks for UI demonstration when subTickets is not provided.
- */
-function getDummySubtasks(parentTicket: Ticket): Ticket[] {
-	const rawSubTickets = (parentTicket as Ticket & { subTickets?: Ticket[] }).subTickets;
-	if (rawSubTickets && rawSubTickets.length > 0) {
-		return rawSubTickets;
-	}
-
-	const baseDate = parentTicket.plan_start_at
-		? new Date(parentTicket.plan_start_at)
-		: new Date();
-	const endDate = parentTicket.plan_end_at
-		? new Date(parentTicket.plan_end_at)
-		: new Date(Date.now() + 86400000 * 3);
-
-	return [
-		{
-			ticket_id: `${parentTicket.ticket_id}-sub-1`,
-			assignment_date: baseDate,
-			actual_end_at: new Date(),
-			plan_end_at: endDate,
-			name: `${parentTicket.name} — Subtask 1: Spec & Design`,
-			description: "Requirements gathering and initial technical specification.",
-			status: status.FINISHED,
-			workflow_id: parentTicket.workflow_id,
-			is_deleted: false,
-			deleted_at: null,
-			watcher_id: parentTicket.watcher_id,
-			api_route: null,
-			api_method: null,
-			plan_start_at: baseDate,
-			actual_start_at: baseDate,
-			parent_id: parentTicket.ticket_id,
-			issue_id: null,
-			TicketTags: parentTicket.TicketTags ?? [],
-			TicketAssigned: parentTicket.TicketAssigned ?? [],
-			Profile: parentTicket.Profile ?? null,
-		},
-		{
-			ticket_id: `${parentTicket.ticket_id}-sub-2`,
-			assignment_date: baseDate,
-			actual_end_at: null,
-			plan_end_at: endDate,
-			name: `${parentTicket.name} — Subtask 2: Implementation`,
-			description: "Core logic development and component integration.",
-			status: status.IN_PROGRESS,
-			workflow_id: parentTicket.workflow_id,
-			is_deleted: false,
-			deleted_at: null,
-			watcher_id: parentTicket.watcher_id,
-			api_route: null,
-			api_method: null,
-			plan_start_at: baseDate,
-			actual_start_at: new Date(),
-			parent_id: parentTicket.ticket_id,
-			issue_id: null,
-			TicketTags: parentTicket.TicketTags ?? [],
-			TicketAssigned: parentTicket.TicketAssigned ?? [],
-			Profile: parentTicket.Profile ?? null,
-		},
-		{
-			ticket_id: `${parentTicket.ticket_id}-sub-3`,
-			assignment_date: baseDate,
-			actual_end_at: null,
-			plan_end_at: endDate,
-			name: `${parentTicket.name} — Subtask 3: Testing & Review`,
-			description: "Unit testing, peer review, and staging verification.",
-			status: status.PENDING,
-			workflow_id: parentTicket.workflow_id,
-			is_deleted: false,
-			deleted_at: null,
-			watcher_id: parentTicket.watcher_id,
-			api_route: null,
-			api_method: null,
-			plan_start_at: baseDate,
-			actual_start_at: null,
-			parent_id: parentTicket.ticket_id,
-			issue_id: null,
-			TicketTags: parentTicket.TicketTags ?? [],
-			TicketAssigned: parentTicket.TicketAssigned ?? [],
-			Profile: parentTicket.Profile ?? null,
-		},
-	];
-}
-
-/**
  * Renders the internal visual contents, layout, and contextual menus of a single ticket or subtask.
  */
 export function TicketCardContent({
 	ticket,
+	subtasks,
 	onSelect,
-	onEdit,
 	onDelete,
 	isSubtask = false,
+	readOnly = false,
 }: {
 	ticket: Ticket;
+	subtasks: Ticket[];
 	onSelect: (ticket: Ticket) => void;
-	onEdit: (ticket: Ticket) => void;
 	onDelete: (ticketId: string) => void;
 	isSubtask?: boolean;
+	/** Clients are read-only: hide the delete button. */
+	readOnly?: boolean;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-	const subtasks = isSubtask ? [] : getDummySubtasks(ticket);
+	// Real subtasks passed from the board — no dummy fallback.
 
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
@@ -195,17 +112,20 @@ export function TicketCardContent({
 									LATE
 								</span>
 							)}
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-fit w-fit shrink-0 text-slate-400 hover:text-slate-600"
-								onClick={(e) => {
-									e.stopPropagation();
-									setIsDeleteModalOpen(true);
-								}}
-							>
-								<X size={14} strokeWidth={2} />
-							</Button>
+							{!readOnly && (
+								<Button
+									variant="ghost"
+									size="icon"
+									className="h-fit w-fit shrink-0 text-slate-400 hover:text-slate-600"
+									onClick={(e) => {
+										e.stopPropagation();
+										setIsDeleteModalOpen(true);
+									}}
+									aria-label="Delete ticket"
+								>
+									<X size={14} strokeWidth={2} />
+								</Button>
+							)}
 						</div>
 					</div>
 
@@ -259,7 +179,7 @@ export function TicketCardContent({
 							)}
 						</div>
 
-						{!isSubtask && (
+						{!isSubtask && subtasks.length > 0 && (
 							<Button
 								variant="ghost"
 								size="icon"
@@ -269,6 +189,7 @@ export function TicketCardContent({
 									setIsExpanded((prev) => !prev);
 								}}
 								title={isExpanded ? "Collapse subtasks" : "Expand subtasks"}
+								aria-label={isExpanded ? "Collapse subtasks" : "Expand subtasks"}
 							>
 								<ChevronDown
 									size={14}
@@ -285,7 +206,7 @@ export function TicketCardContent({
 			</div>
 
 			{/* Subtasks Accordion Container with Animated Slide-Down & Staggered Entrance */}
-			{!isSubtask && (
+			{!isSubtask && subtasks.length > 0 && (
 				<div
 					className={cn(
 						"grid transition-[grid-template-rows,opacity,margin] duration-300 ease-in-out ml-3.5 pl-2.5 border-l-2",
@@ -309,10 +230,11 @@ export function TicketCardContent({
 							>
 								<TicketCardContent
 									ticket={subtask}
+									subtasks={[]}
 									onSelect={onSelect}
-									onEdit={onEdit}
 									onDelete={onDelete}
 									isSubtask={true}
+									readOnly={readOnly}
 								/>
 							</div>
 						))}
@@ -361,18 +283,22 @@ export function TicketCardContent({
  */
 export default function TicketCard({
 	ticket,
+	subtasks,
 	onSelect,
-	onEdit,
 	onDelete,
+	readOnly = false,
 }: {
 	ticket: Ticket;
+	subtasks: Ticket[];
 	onSelect: (ticket: Ticket) => void;
-	onEdit: (ticket: Ticket) => void;
 	onDelete: (ticketId: string) => void;
+	/** Clients are read-only: dragging is disabled. */
+	readOnly?: boolean;
 }) {
 	const { attributes, listeners, setNodeRef, transform, isDragging } =
 		useDraggable({
 			id: ticket.ticket_id,
+			disabled: readOnly,
 		});
 
 	const style = {
@@ -391,13 +317,14 @@ export default function TicketCard({
 			style={style}
 			{...attributes}
 			{...listeners}
-			className="cursor-grab active:cursor-grabbing focus:outline-none"
+			className="cursor-grab active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:rounded-md"
 		>
 			<TicketCardContent
 				ticket={ticket}
+				subtasks={subtasks}
 				onSelect={onSelect}
-				onEdit={onEdit}
 				onDelete={onDelete}
+				readOnly={readOnly}
 			/>
 		</div>
 	);

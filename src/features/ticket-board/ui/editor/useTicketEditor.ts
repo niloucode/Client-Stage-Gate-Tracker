@@ -5,97 +5,6 @@ import { useAuth } from "@/features/auth";
 import { useUpdateTicket, useUpdateTicketParent } from "@/entities/ticket/mutations";
 import { toast } from "@/components/ui/toast";
 
-const DUMMY_SUBTICKETS: Ticket[] = [
-	{
-		ticket_id: "dummy-subt123ask-1",
-		name: "Design Database Schema for Subtasks",
-		status: StatusEnum.IN_PROGRESS,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-10"),
-		plan_end_at: new Date("2026-08-15"),
-		actual_start_at: new Date("2026-08-10"),
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Create relational model and migration for nested subtasks.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "du123mmy-subtask-2",
-		name: "Implement Subtask Selection UI Component",
-		status: StatusEnum.PENDING,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-12"),
-		plan_end_at: new Date("2026-08-18"),
-		actual_start_at: null,
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Modal dialog to search and pick available tickets as subtasks.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "dummy-subt123ask-3",
-		name: "Add Subtask Invalidation & State Updates",
-		status: StatusEnum.PENDING,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-14"),
-		plan_end_at: new Date("2026-08-20"),
-		actual_start_at: null,
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Ensure TanStack query cache updates when a subtask is attached or removed.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "du123mmy-subtask-4",
-		name: "API Endpoint Integration Testing",
-		status: StatusEnum.IN_PROGRESS,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-15"),
-		plan_end_at: new Date("2026-08-22"),
-		actual_start_at: new Date("2026-08-15"),
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Verify subtask parent_id updates on database mutations.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-];
-
 export function useTicketEditor({
 	initialTicket,
 	tags,
@@ -113,18 +22,6 @@ export function useTicketEditor({
 }) {
 	const [ticket, setTicket] = useState<Ticket>(initialTicket);
 	const [submitAttempted, setSubmitAttempted] = useState(false);
-
-	const [localDummyTickets, setLocalDummyTickets] = useState<Ticket[]>(() => [
-		{
-			...DUMMY_SUBTICKETS[0],
-			parent_id: initialTicket.ticket_id,
-		},
-		...DUMMY_SUBTICKETS.slice(1),
-	]);
-
-	const combinedTickets = useMemo(() => {
-		return [...allTickets, ...localDummyTickets];
-	}, [allTickets, localDummyTickets]);
 
 	const [selectedTags, setSelectedTags] = useState<string[]>(
 		initialTicket.TicketTags?.map((t: { tag_id: string }) => t.tag_id) ?? []
@@ -144,17 +41,17 @@ export function useTicketEditor({
 	const updateTicketParentMutation = useUpdateTicketParent();
 
 	const availableTickets = useMemo(() => {
-		return combinedTickets.filter((t) => {
+		return allTickets.filter((t) => {
 			if (t.ticket_id === ticket.ticket_id) return false;
 			if (t.parent_id !== null) return false;
 			if (t.status === StatusEnum.FINISHED) return false;
 			return true;
 		});
-	}, [combinedTickets, ticket.ticket_id]);
+	}, [allTickets, ticket.ticket_id]);
 
 	const subtasks = useMemo(() => {
-		return combinedTickets.filter((t) => t.parent_id === ticket.ticket_id);
-	}, [combinedTickets, ticket.ticket_id]);
+		return allTickets.filter((t) => t.parent_id === ticket.ticket_id);
+	}, [allTickets, ticket.ticket_id]);
 
 	const isApiTagSelected = selectedTags.some(
 		(tagId) => tags.find((t) => t.tag_id === tagId)?.name?.toLowerCase() === "api"
@@ -175,17 +72,6 @@ export function useTicketEditor({
 
 	const handleAddSubtask = async (selectedTicket: Ticket) => {
 		try {
-			if (selectedTicket.ticket_id.startsWith("dummy-")) {
-				setLocalDummyTickets((prev) =>
-					prev.map((t) =>
-						t.ticket_id === selectedTicket.ticket_id
-							? { ...t, parent_id: ticket.ticket_id }
-							: t
-					)
-				);
-				setIsSubtaskSelectionOpen(false);
-				return;
-			}
 			await updateTicketParentMutation.mutateAsync({
 				ticketId: selectedTicket.ticket_id,
 				parentId: ticket.ticket_id,
@@ -193,25 +79,29 @@ export function useTicketEditor({
 			setIsSubtaskSelectionOpen(false);
 		} catch (error) {
 			console.error("Failed to add subtask:", error);
+			toast.add({
+				title: "Add Subtask Failed",
+				description:
+					error instanceof Error ? error.message : "Something went wrong.",
+				type: "error",
+			});
 		}
 	};
 
 	const handleRemoveSubtask = async (subtaskId: string) => {
 		try {
-			if (subtaskId.startsWith("dummy-")) {
-				setLocalDummyTickets((prev) =>
-					prev.map((t) =>
-						t.ticket_id === subtaskId ? { ...t, parent_id: null } : t
-					)
-				);
-				return;
-			}
 			await updateTicketParentMutation.mutateAsync({
 				ticketId: subtaskId,
 				parentId: null,
 			});
 		} catch (error) {
 			console.error("Failed to remove subtask:", error);
+			toast.add({
+				title: "Remove Subtask Failed",
+				description:
+					error instanceof Error ? error.message : "Something went wrong.",
+				type: "error",
+			});
 		}
 	};
 
