@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { AuthProvider } from "@/features/auth";
 import { QueryProvider } from "@/shared/query/client";
 import { Toaster } from "@/components/ui/toast";
@@ -7,10 +8,10 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
+	variable: "--font-inter",
+	subsets: ["latin"],
+	weight: ["400"],
+	display: "swap",
 });
 
 const hankenGrotesk = Hanken_Grotesk({
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
 	children,
 }: Readonly<{
-	children: React.ReactNode;
+	children: ReactNode;
 }>) {
 	return (
 		<html

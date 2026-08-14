@@ -10,6 +10,7 @@ export default function PS() {
 	return (
 		<>
 			<ProjectStructure
+				key={projectId}
 				projectId={projectId}
 				// Task 5.6: only "View Contract" is linked for now; the
 				// Credentials Repository and Issue Reporting buttons stay

@@ -47,13 +47,16 @@ class ResizeObserverStub {
 }
 
 if (!("ResizeObserver" in globalThis)) {
-	(globalThis as { ResizeObserver?: unknown }).ResizeObserver = ResizeObserverStub;
+	(globalThis as { ResizeObserver?: unknown }).ResizeObserver =
+		ResizeObserverStub;
 }
 if (!("scrollIntoView" in HTMLElement.prototype)) {
-	(HTMLElement.prototype as { scrollIntoView?: () => void }).scrollIntoView = () => {};
+	(HTMLElement.prototype as { scrollIntoView?: () => void }).scrollIntoView =
+		() => {};
 }
 if (!("getAnimations" in Element.prototype)) {
-	(Element.prototype as { getAnimations?: () => unknown[] }).getAnimations = () => [];
+	(Element.prototype as { getAnimations?: () => unknown[] }).getAnimations =
+		() => [];
 }
 if (!window.matchMedia) {
 	window.matchMedia = ((query: string) => ({
@@ -89,7 +92,10 @@ describe("LoginForm interactions", () => {
 		expect(screen.getByLabelText("Password *")).toHaveAttribute("type", "text");
 
 		await user.click(screen.getByRole("button", { name: "Hide password" }));
-		expect(screen.getByLabelText("Password *")).toHaveAttribute("type", "password");
+		expect(screen.getByLabelText("Password *")).toHaveAttribute(
+			"type",
+			"password",
+		);
 	});
 
 	it("submitting an empty form surfaces per-field validation warnings", async () => {
@@ -113,38 +119,39 @@ describe("LoginForm interactions", () => {
 		await user.tab();
 		await user.tab();
 
-		expect(screen.queryByText("Enter a valid email address")).not.toBeInTheDocument();
+		expect(
+			screen.queryByText("Enter a valid email address"),
+		).not.toBeInTheDocument();
 		expect(screen.queryByText("Password is required")).not.toBeInTheDocument();
 	});
 });
 
 describe("StaffSignupForm interactions", () => {
-	it("department Select trigger opens its popup without crashing", async () => {
-		const user = userEvent.setup();
+	it("renders the invite-code field without crashing", async () => {
 		renderWithQuery(<StaffSignupForm />);
 
-		const trigger = document.querySelector('[data-slot="select-trigger"]');
-		expect(trigger).not.toBeNull();
-
-		await user.click(trigger as HTMLElement);
-
-		// The popup content is portaled; at minimum the tree must survive
-		// the click (no crash) and the popup should render its listbox.
-		expect(document.querySelector('[data-slot="select-content"]')).toBeTruthy();
+		// The department picker was replaced by the invite-code field
+		// (2026-08-14: the code determines the department server-side).
+		expect(screen.getByLabelText("Invite Code *")).toBeInTheDocument();
+		expect(document.querySelector('[data-slot="select-trigger"]')).toBeNull();
 	});
 
 	it("phone country dropdown trigger does not crash the form", async () => {
 		const user = userEvent.setup();
 		renderWithQuery(<StaffSignupForm />);
 
-		const phoneTrigger = document.querySelector('[data-slot="combobox-trigger"]');
+		const phoneTrigger = document.querySelector(
+			'[data-slot="combobox-trigger"]',
+		);
 		expect(phoneTrigger).not.toBeNull();
 
 		await user.click(phoneTrigger as HTMLElement);
 		// The open is deferred via rAF (Base UI useClick), so wait for the
 		// portaled popup instead of asserting synchronously.
 		await waitFor(() => {
-			expect(document.querySelector('[data-slot="combobox-content"]')).toBeTruthy();
+			expect(
+				document.querySelector('[data-slot="combobox-content"]'),
+			).toBeTruthy();
 		});
 	});
 
@@ -169,7 +176,7 @@ describe("StaffSignupForm interactions", () => {
 			await screen.findByText("First name is required"),
 		).toBeInTheDocument();
 		expect(screen.getByText("Last name is required")).toBeInTheDocument();
-		expect(screen.getByText("Department is required")).toBeInTheDocument();
+		expect(screen.getByText("Invite code is required")).toBeInTheDocument();
 	});
 });
 

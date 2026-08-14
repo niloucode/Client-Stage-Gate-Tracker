@@ -7,4 +7,6 @@ export {
 	useMyTickets,
 	useWatchedTickets,
 	useMyContracts,
+	useActivitySparklines,
+	useIssueStats,
 } from "./model/queries";

@@ -36,7 +36,7 @@ export const ticketHistoryEntrySchema = z
 			!entry.targetName
 		) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: "custom",
 				message: `action "${entry.action}" requires targetName to be set`,
 				path: ["targetName"],
 			});
@@ -51,7 +51,7 @@ export const ticketHistoryEntrySchema = z
 			entry.targetName
 		) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: "custom",
 				message: `action "${entry.action}" should not have a targetName`,
 				path: ["targetName"],
 			});
@@ -75,7 +75,7 @@ export const ticketHistoryEntrySchema = z
 				}
 			} catch {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: "custom",
 					message: `details for "${entry.action}" must be JSON with {from, to} strings`,
 					path: ["details"],
 				});
@@ -94,7 +94,7 @@ export const ticketHistoryEntrySchema = z
 					throw new Error("invalid to");
 			} catch {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: "custom",
 					message: `details for WATCHER_CHANGED must be JSON with {from, to} as UUID strings or null`,
 					path: ["details"],
 				});
@@ -114,7 +114,7 @@ export const ticketHistoryEntrySchema = z
 				}
 			} catch {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: "custom",
 					message: `details for FINISHED must be JSON with {from} string`,
 					path: ["details"],
 				});
@@ -137,7 +137,7 @@ export const ticketHistoryEntrySchema = z
 				}
 			} catch {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: "custom",
 					message: `details for "${entry.action}" must be JSON with {ticket_name} string`,
 					path: ["details"],
 				});

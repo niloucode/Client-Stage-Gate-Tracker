@@ -10,6 +10,7 @@ import {
 } from "@/shared/schemas";
 
 import {
+	assertProjectMember,
 	getCurrentUserId,
 	requireProjectMember,
 	requireProjectOwner,
@@ -214,6 +215,27 @@ export async function createProject(data: ProjectCreateInput) {
 			};
 		}
 
+		// Client profiles (Profiles.client_id set) must never create
+		// projects — their projects come from contracts, and the creator
+		// would otherwise become Project Owner (follow-up TODO resolved).
+		// Fail closed: a missing profile row is also denied.
+		const profile = await prisma.profiles.findUnique({
+			where: { profile_id: userId },
+			select: { client_id: true },
+		});
+		if (!profile) {
+			return {
+				success: false,
+				error: "Your profile could not be verified.",
+			};
+		}
+		if (profile.client_id) {
+			return {
+				success: false,
+				error: "Clients cannot create projects.",
+			};
+		}
+
 		// Look up the "Project Owner" role
 		const ownerRole = await prisma.roles.findUnique({
 			where: { name: "Project Owner" },
@@ -249,8 +271,8 @@ export async function createProject(data: ProjectCreateInput) {
 				},
 			});
 
-			// A project always has a client (Contracts.client_id NOT NULL —
-			// REASONIX invariant): create the contract unconditionally.
+			// A project always has a client (Contracts.client_id NOT NULL):
+			// create the contract unconditionally.
 			await tx.contracts.create({
 				data: {
 					project_id: project.project_id,
@@ -581,5 +603,133 @@ export async function removeProjectMember(
 	} catch (error) {
 		console.error("Failed to remove project member:", error);
 		return { success: false, error: "Failed to remove member from project." };
+	}
+}
+
+/**
+ * Project-structure stats: done/total counts for phases, modules, workflows,
+ * and tickets (project-scoped, soft-deleted subtrees excluded), plus the
+ * soonest-expiring unfinished tickets for the project page.
+ *
+ * Done semantics:
+ *   - ticket:   status === "FINISHED"
+ *   - workflow: actual_end_at set (rollup materializes it when ALL child
+ *               tickets finish — see src/entities/ticket/lib/dateRollup.ts)
+ *   - module:   actual_end_at set (same rollup)
+ *   - phase:    every non-deleted child module has actual_end_at
+ */
+export async function getProjectStats(projectId: string) {
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
+
+	try {
+		const [phases, modules, workflows, tickets] = await Promise.all([
+			prisma.phases.findMany({
+				where: {
+					is_deleted: false,
+					Stages: { is_deleted: false, project_id: projectId },
+				},
+				select: {
+					Modules: {
+						where: { is_deleted: false },
+						select: { actual_end_at: true },
+					},
+				},
+			}),
+			prisma.modules.findMany({
+				where: {
+					is_deleted: false,
+					Phases: {
+						is_deleted: false,
+						Stages: { is_deleted: false, project_id: projectId },
+					},
+				},
+				select: { actual_end_at: true },
+			}),
+			prisma.workflows.findMany({
+				where: {
+					is_deleted: false,
+					Modules: {
+						is_deleted: false,
+						Phases: {
+							is_deleted: false,
+							Stages: { is_deleted: false, project_id: projectId },
+						},
+					},
+				},
+				select: { actual_end_at: true },
+			}),
+			prisma.tickets.findMany({
+				where: {
+					is_deleted: false,
+					Workflows: {
+						is_deleted: false,
+						Modules: {
+							is_deleted: false,
+							Phases: {
+								is_deleted: false,
+								Stages: { is_deleted: false, project_id: projectId },
+							},
+						},
+					},
+				},
+				select: {
+					status: true,
+					plan_end_at: true,
+					name: true,
+					ticket_id: true,
+					Workflows: { select: { name: true } },
+				},
+			}),
+		]);
+
+		const phasesDone = phases.filter(
+			(p) =>
+				p.Modules.length > 0 &&
+				p.Modules.every((m) => m.actual_end_at !== null),
+		).length;
+
+		const expiringTickets = tickets
+			.filter((t) => t.status !== "FINISHED")
+			.sort((a, b) => a.plan_end_at.getTime() - b.plan_end_at.getTime())
+			.slice(0, 5)
+			.map((t) => ({
+				ticket_id: t.ticket_id,
+				name: t.name,
+				workflowName: t.Workflows?.name ?? "",
+				planEnd: t.plan_end_at,
+				// Computed server-side: render-time Date.now() violates the
+				// React Compiler purity rule.
+				daysLeft: Math.max(
+					0,
+					Math.ceil((t.plan_end_at.getTime() - Date.now()) / 86_400_000),
+				),
+			}));
+
+		return {
+			success: true as const,
+			data: {
+				phases: {
+					done: phasesDone,
+					total: phases.length,
+				},
+				modules: {
+					done: modules.filter((m) => m.actual_end_at !== null).length,
+					total: modules.length,
+				},
+				workflows: {
+					done: workflows.filter((w) => w.actual_end_at !== null).length,
+					total: workflows.length,
+				},
+				tickets: {
+					done: tickets.filter((t) => t.status === "FINISHED").length,
+					total: tickets.length,
+				},
+				expiringTickets,
+			},
+		};
+	} catch (error) {
+		console.error("Failed to fetch project stats:", error);
+		return { success: false as const, error: "Failed to load project stats." };
 	}
 }

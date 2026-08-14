@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { z } from "zod";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { projectCreateSchema, type ProjectCreateInput } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
@@ -61,12 +60,12 @@ const projectModalSchema = projectCreateSchema.superRefine((data, ctx) => {
 	if (data.start_date && data.deadline_date && data.start_date > data.deadline_date) {
 		const message = "Start must be before End";
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["start_date"],
 		});
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message,
 			path: ["deadline_date"],
 		});

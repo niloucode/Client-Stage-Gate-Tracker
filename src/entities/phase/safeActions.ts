@@ -8,6 +8,7 @@ import {
 } from "@/lib/safe-action";
 import {
 	assertProjectMember,
+	assertProjectMemberNotClient,
 	resolvePhaseProject,
 	resolveStageProject,
 } from "@/lib/auth/projectAccess";
@@ -40,7 +41,7 @@ async function requirePhaseMemberOrThrow(phaseId: string): Promise<string> {
 	if (!projectId) {
 		throw new ActionError(ACTION_ERROR_CODES.NOT_FOUND, "Phase not found.");
 	}
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) {
 		throw new ActionError(ACTION_ERROR_CODES.FORBIDDEN, auth.error);
 	}
@@ -52,7 +53,7 @@ async function requireStageMemberOrThrow(stageId: string): Promise<string> {
 	if (!projectId) {
 		throw new ActionError(ACTION_ERROR_CODES.NOT_FOUND, "Stage not found.");
 	}
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) {
 		throw new ActionError(ACTION_ERROR_CODES.FORBIDDEN, auth.error);
 	}

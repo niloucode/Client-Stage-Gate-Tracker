@@ -19,6 +19,7 @@ export {
 	useProjectMembers,
 	useProfileSearch,
 	useProjectsForMember,
+	useProjectStats,
 } from "./queries";
 
 export {

@@ -94,7 +94,7 @@ Running plain `npx prisma db pull` without the prune step reintroduces all
 
 ## Definition of Done (Task 4.5)
 
-Every task in `planned-codebase-changes.md` must record, at sign-off:
+Every task in `docs/planned-codebase-changes.md` must record, at sign-off:
 
 1. **Dependencies & prerequisites** — packages added/removed; prior tasks it
    builds on.
@@ -116,4 +116,44 @@ Every task in `planned-codebase-changes.md` must record, at sign-off:
 - **Avoid list:** Redux, Zustand, Axios, Lodash, Moment.js, generic Prisma
   repository frameworks, second form/query libraries, auto-import plugins —
   unless a measured need appears that the current stack cannot meet.
+
+---
+
+## JDocMunch (docs index) — how to use it
+
+JDocMunch = the `jdocmunch-mcp` stdio server (uvx, v1.126.0). Indexes live at
+`~/.doc-index/<owner>/<repo>/`; the run log lives in `docs/jdocmunch.md`.
+
+**Rule 1 — never guess repo handles.** Models (e.g. DeepSeek) routinely guess
+names from training data that no longer match reality (`prisma/docs` → renamed
+to `prisma/web`, FSD org `feature-sliced-design` → `feature-sliced`). Bare
+repo-name resolution is a case-sensitive glob on `~/.doc-index/*/<name>.json`,
+so a wrong guess fails hard. **Call `doc_list_repos` first** (or
+`get_index_overview`) to get the exact handle.
+
+**Rule 2 — canonical handles** (renamed/moved repos are stored under the name
+models actually guess, via the `name` override at index time):
+
+| Topic | Handle | Source repo |
+|---|---|---|
+| Prisma | `prisma/prisma` | `prisma/web` (the docs repo; was `prisma/docs`) |
+| FSD v2.1 skills | `feature-sliced/feature-sliced-design` | `feature-sliced/skills` |
+| Playwright | `local/playwright` | local mirror `~/.cache/jdocmunch-mirrors/playwright` (docs/ sparse) |
+| knip | `webpro-nl/knip` | org moved from `webpro` |
+| Next.js | `vercel/next.js` | (bare `next.js` also resolves) |
+| Base UI | `mui/base-ui` | (bare `base-ui` resolves) |
+
+**Rule 3 — updating indexes.** `doc_index_repo(url=..., incremental=true,
+use_ai_summaries=false)`; skip unchanged SHAs automatically. **Stop immediately
+on a rate-limit error**: a mid-fetch 403 makes failed files look "deleted" and
+prunes them from the index (this happened to `lucide-icons/lucide` once;
+repair = full re-index with `incremental=false`). The GitHub token lives in
+`~/.reasonix/config.toml` (`GITHUB_TOKEN`); its hourly core quota is shared
+with the whole desktop app.
+
+**Sandbox note:** the Reasonix sandbox mounts `/home` read-only — only the
+workspace, `~/.cache`, and `~/.npm` are writable. Index updates must be staged
+via `DOC_INDEX_PATH=~/.cache/doc-index` and applied with
+`~/.cache/jcm-update/apply.sh` on the host (or by adding `~/.doc-index` to the
+sandbox allow-write mounts).
 

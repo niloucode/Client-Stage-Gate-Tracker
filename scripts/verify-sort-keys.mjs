@@ -1,9 +1,13 @@
 /**
  * Read-only verification of fractional sort_key integrity:
- *  - every active Stages/Phases/Workflows row has a non-null sort_key
+ *  - every active Phases/Workflows row has a non-null sort_key
  *  - no duplicate sort_key within the same parent group
  *  - ordering is consistent: rows ordered by sort_key have non-decreasing
  *    legacy `number` for groups where number is fully populated
+ *
+ * NOTE: Stages are intentionally NOT checked — stages are ordered by the
+ * integer `number` column (no fractional sort_key; the column was dropped in
+ * migration 7_drop_stages_sort_key).
  *
  * Run from the repo root:  node scripts/verify-sort-keys.mjs
  */
@@ -16,11 +20,6 @@ const pool = new pg.Pool({
 });
 
 const checks = [
-	{
-		name: "Stages (per project)",
-		sql: `SELECT project_id, COUNT(*) AS null_keys FROM "Stages"
-		      WHERE is_deleted = false AND sort_key IS NULL GROUP BY project_id`,
-	},
 	{
 		name: "Phases (per stage)",
 		sql: `SELECT stage_id, COUNT(*) AS null_keys FROM "Phases"
@@ -46,11 +45,6 @@ for (const c of checks) {
 }
 
 const dupChecks = [
-	{
-		name: "Stages",
-		sql: `SELECT project_id, sort_key, COUNT(*) AS n FROM "Stages"
-		      WHERE is_deleted = false GROUP BY project_id, sort_key HAVING COUNT(*) > 1`,
-	},
 	{
 		name: "Phases",
 		sql: `SELECT stage_id, sort_key, COUNT(*) AS n FROM "Phases"

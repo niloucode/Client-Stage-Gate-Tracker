@@ -1,17 +1,28 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ShieldCheck, AlertCircle, Clock } from "lucide-react";
+import { Bar, BarChart, XAxis } from "recharts";
 import { Card } from "@/components/ui/card";
-import { Http2ServerRequest } from "http2";
+import {
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+	type ChartConfig,
+} from "@/components/ui/chart";
 
 /* -------------------------------------------------------------------------- */
 /*                                 Interfaces                                 */
 /* -------------------------------------------------------------------------- */
 
 export interface WeeklyVelocityData {
+	/** Tickets finished in the current week by the signed-in user. */
 	value: number;
+	/** e.g. "+12%" or "—" when last week had no completions. */
 	change: string;
 	changePositive: boolean;
+	/** Finished tickets per weekday (index 0 = Monday … 6 = Sunday). */
+	daily: number[];
 }
 
 export interface RiskFactorData {
@@ -25,43 +36,10 @@ export interface UpcomingDeadlinesData {
 }
 
 export interface ActivitySparklinesProps {
-	weeklyVelocity?: WeeklyVelocityData;
-	riskFactor?: RiskFactorData;
-	upcomingDeadlines?: UpcomingDeadlinesData;
+	weeklyVelocity: WeeklyVelocityData;
+	riskFactor: RiskFactorData;
+	upcomingDeadlines: UpcomingDeadlinesData;
 }
-
-interface SparklineBar {
-	opacity: number;
-	heightPx: number;
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                 Constants                                  */
-/* -------------------------------------------------------------------------- */
-
-const SPARKLINE_BARS: SparklineBar[] = [
-	{ opacity: 0.2, heightPx: 16 },
-	{ opacity: 0.4, heightPx: 24 },
-	{ opacity: 0.2, heightPx: 20 },
-	{ opacity: 0.6, heightPx: 32 },
-	{ opacity: 1.0, heightPx: 40 },
-];
-
-const DEFAULT_VELOCITY: WeeklyVelocityData = {
-	value: 24,
-	change: "+12%",
-	changePositive: true,
-};
-
-const DEFAULT_RISK: RiskFactorData = {
-	label: "Low",
-};
-
-const DEFAULT_DEADLINES: UpcomingDeadlinesData = {
-	count: 2,
-	urgencyLabel: "Today",
-	isUrgent: true,
-};
 
 /* -------------------------------------------------------------------------- */
 /*                              Sub-Components                                */
@@ -73,9 +51,9 @@ function BaseStatCard({
 	title,
 	children,
 }: {
-	visual: React.ReactNode;
+	visual: ReactNode;
 	title: string;
-	children: React.ReactNode;
+	children: ReactNode;
 }) {
 	return (
 		<Card className="p-6 border-brand-100 border max-h-50">
@@ -90,37 +68,69 @@ function BaseStatCard({
 	);
 }
 
-/** Visual element rendering sparkline bar chart */
-function SparklineBars() {
+const WEEKDAY_LABELS = [
+	"Mon",
+	"Tue",
+	"Wed",
+	"Thu",
+	"Fri",
+	"Sat",
+	"Sun",
+] as const;
+
+const velocityChartConfig = {
+	completed: {
+		label: "Completed",
+		color: "var(--chart-1)",
+	},
+} satisfies ChartConfig;
+
+/** Weekly velocity sparkline: one bar per weekday (Mon–Sun). */
+function WeeklyVelocityChart({ daily }: { daily: number[] }) {
+	const chartData = WEEKDAY_LABELS.map((day, i) => ({
+		day,
+		completed: daily[i] ?? 0,
+	}));
+
 	return (
-		<div className="flex h-10 items-end gap-1">
-			{SPARKLINE_BARS.map((bar, i) => (
-				<div
-					key={i}
-					className="w-2.5 rounded-xs bg-brand-600"
-					style={{
-						height: `${bar.heightPx}px`,
-						opacity: bar.opacity,
-					}}
+		<ChartContainer config={velocityChartConfig} className="h-16 w-full">
+			<BarChart accessibilityLayer data={chartData}>
+				<XAxis
+					dataKey="day"
+					tickLine={false}
+					axisLine={false}
+					tickMargin={4}
+					interval={0}
+					tick={{ fontSize: 9 }}
 				/>
-			))}
-		</div>
+				<ChartTooltip
+					cursor={false}
+					content={<ChartTooltipContent indicator="dot" />}
+				/>
+				<Bar dataKey="completed" fill="var(--color-completed)" radius={2} />
+			</BarChart>
+		</ChartContainer>
 	);
 }
 
 /** Card 1: Weekly Velocity */
 function VelocityCard({ data }: { data: WeeklyVelocityData }) {
 	return (
-		<BaseStatCard visual={<SparklineBars />} title="Weekly Velocity">
+		<BaseStatCard
+			visual={<WeeklyVelocityChart daily={data.daily} />}
+			title="Weekly Velocity"
+		>
 			<div className="flex items-baseline gap-2">
 				<h2 className="text-2xl  tracking-tight text-foreground">
 					{data.value}
 				</h2>
 				<h4
 					className={`text-xs  ${
-						data.changePositive
-							? "text-emerald-600! dark:text-emerald-500!"
-							: "text-destructive"
+						data.change === "—"
+							? "text-muted-foreground"
+							: data.changePositive
+								? "text-emerald-600! dark:text-emerald-500!"
+								: "text-destructive"
 					}`}
 				>
 					{data.change}
@@ -177,9 +187,9 @@ function UpcomingDeadlinesCard({ data }: { data: UpcomingDeadlinesData }) {
 /* -------------------------------------------------------------------------- */
 
 export function ActivitySparklines({
-	weeklyVelocity = DEFAULT_VELOCITY,
-	riskFactor = DEFAULT_RISK,
-	upcomingDeadlines = DEFAULT_DEADLINES,
+	weeklyVelocity,
+	riskFactor,
+	upcomingDeadlines,
 }: ActivitySparklinesProps) {
 	return (
 		<div className="w-full grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -189,5 +199,3 @@ export function ActivitySparklines({
 		</div>
 	);
 }
-
-export default ActivitySparklines;

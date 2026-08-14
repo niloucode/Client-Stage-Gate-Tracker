@@ -18,7 +18,14 @@ export const signupSchema = z
 		email: z.email({ message: "Enter a valid email address" }),
 		phone: z.string().min(1, "Phone number is required"),
 		jobTitle: z.string().min(1, "Job title is required"),
-		department: z.string().min(1, "Department is required"),
+		// Department invite code issued by the project owner — the code
+		// determines the department the account joins. Case-insensitive,
+		// 6-12 chars (same format as the client invite codes).
+		inviteCode: z
+			.string()
+			.trim()
+			.min(1, "Invite code is required")
+			.regex(/^[a-zA-Z0-9]{6,12}$/, "Enter a valid invite code"),
 		password: z.string().min(6, "Password must be at least 6 characters"),
 		confirmPassword: z.string().min(1, "Please confirm your password"),
 	})
@@ -55,12 +62,5 @@ export const clientSignupSchema = z
 export type ClientSignupInput = z.infer<typeof clientSignupSchema>;
 
 // ── OTP verification ─────────────────────────────────────────────────────────
-
-export const otpSchema = z.object({
-	code: z
-		.string()
-		.length(6, "Code must be 6 digits")
-		.regex(/^\d{6}$/, "Code must be numeric"),
-});
-
-export type OtpInput = z.infer<typeof otpSchema>;
+// Removed 2026-08-14: staff signup is invite-code-driven; the contract-
+// signing OTP lives in src/features/contracts (its own schema).

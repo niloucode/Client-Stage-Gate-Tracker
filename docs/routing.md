@@ -9,20 +9,20 @@ recently fixed behavior.
 
 | Role | Destination | Why |
 |---|---|---|
-| Project Owner / Team | `/projects` (ProjectDashboard feature) | `DEFAULT_PROJECT_REDIRECT` in `src/features/auth/context/auth_provider.tsx` — **TEMPORARY**: flip to `/dashboard` once the Landing Dashboard is built. |
+| Project Owner / Team | `/projects` (ProjectDashboard feature) | `DEFAULT_PROJECT_REDIRECT` in `../src/features/auth/context/auth_provider.tsx` — **TEMPORARY**: flip to `/dashboard` once the Landing Dashboard is built. |
 | Client (`client_id` set) | `/contracts` | **TEMPORARY** until the Client Portal is built. |
 | Unknown-role profile | `/projects` (fallback) | Signed-in users are never left stranded on an auth page. |
-| Anonymous | `/login` | Middleware (`src/lib/supabase/proxy.ts`) + root page. |
+| Anonymous | `/login` | Middleware (`../src/lib/supabase/proxy.ts`) + root page. |
 
 Redirect implementation notes:
 
-- `src/features/auth/context/auth_provider.tsx` — post-login redirect is a
+- `../src/features/auth/context/auth_provider.tsx` — post-login redirect is a
   **state-driven effect** on `[user, pathname, isLoading]` (profile always
   resolved before the role decision). The auth listener is used for cache
   invalidation only. `router.replace` (no back-button loop). The old
   `userRef`-based listener redirect (which almost never fired due to a stale
   ref) is gone.
-- `src/app/page.tsx` — root `/` is a **role-aware server redirect**
+- `../src/app/page.tsx` — root `/` is a **role-aware server redirect**
   (`getUser()` + one profile lookup): clients → `/contracts`, everyone else
   → `/projects`. Matches the client effect exactly. Replaces the old static
   `/login` redirect that bounced signed-in users in a 3-hop chain.
@@ -51,7 +51,7 @@ Views that are planned but not built live behind a dev-only placeholder:
 - **Finance department**: `DEPARTMENT_IDS.FINANCE` and the
   `/insert-finance-page-here/` redirect branch deleted from
   `auth_provider.tsx`; `"FINANCE"` removed from the `Role` union in
-  `src/shared/types/index.ts`. Zero references remain in `src/`.
+  `../src/shared/types/index.ts`. Zero references remain in `../src`.
 
 ## Fixed: EditProjectModal client-select crash
 
@@ -68,4 +68,4 @@ Fix (in `src/features/project-manager/ui/modals/EditProjectModal.tsx`):
 - The option render loop skips `value === null` entries and uses
   `String(opt.value)` instead of the lying `!.toString()` assertion.
 - Repo-wide: zero `value: null` option sites and zero `value!.toString()`
-  sites remain in `src/features` / `src/entities`.
+  sites remain in `../src/features` / `../src/entities`.

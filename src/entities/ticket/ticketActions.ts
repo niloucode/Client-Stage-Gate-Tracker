@@ -11,9 +11,20 @@ import {
 import { ticketInclude } from "./types";
 import { rollupTicketAncestors } from "./lib/dateRollup";
 import { logHistoryEvent } from "./lib/logHistoryEvent";
+import {
+	currentWeekStart,
+	previousWeekStart,
+	nextWeekStart,
+	weekdayIndex,
+	startOfToday,
+	endOfToday,
+	riskLabel,
+	velocityChange,
+	upcomingSummary,
+} from "./lib/activityStats";
 import { z } from "zod";
 import {
-	assertProjectMember,
+	assertProjectMemberNotClient,
 	getCurrentUserId,
 	resolveTicketProject,
 	resolveWorkflowProject,
@@ -28,7 +39,7 @@ export async function createTicket(
 	if (!data.workflow_id) throw new Error("Ticket must belong to a workflow.");
 	const projectId = await resolveWorkflowProject(data.workflow_id);
 	if (!projectId) throw new Error("Workflow not found.");
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) throw new Error(auth.error);
 
 	return await prisma.$transaction(async (tx) => {
@@ -96,7 +107,7 @@ export async function updateTicket(
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveTicketProject(data.ticket_id);
 	if (!projectId) throw new Error("Ticket not found.");
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) throw new Error(auth.error);
 
 	// ── Single transaction: diff → update → one batched history write ─────
@@ -274,7 +285,7 @@ export async function updateTicketStatus(
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveTicketProject(ticketId);
 	if (!projectId) return { success: false, error: "Ticket not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) throw new Error(auth.error);
 
 	return await prisma.$transaction(async (tx) => {
@@ -334,7 +345,7 @@ export async function cascadeSoftDeleteTicket(
 	// Authorization: caller must be a member of the parent project
 	const projectId = await resolveTicketProject(ticketId);
 	if (!projectId) return { success: false, error: "Ticket not found." };
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
 		const db = _txClient ?? prisma;
@@ -417,7 +428,7 @@ export async function updateTicketParent(
 	const projectId = await resolveTicketProject(ticketId);
 	if (!projectId) return { success: false, error: "Ticket not found." };
 	
-	const auth = await assertProjectMember(projectId);
+	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) throw new Error(auth.error);
 
 	return await prisma.$transaction(async (tx) => {
@@ -508,4 +519,107 @@ export async function selectWatchedTickets() {
 		select: ticketDashboardSelect,
 		orderBy: { plan_end_at: "asc" },
 	});
+}
+
+/**
+ * Landing-dashboard activity stats for the signed-in user:
+ *  - Weekly Velocity: tickets finished in the current week (Mon–Sun) vs the
+ *    previous week, plus per-weekday counts for the sparkline bars.
+ *  - Risk Factor: ratio-based Low/Medium/High from overdue / active tickets.
+ *  - Upcoming Deadlines: unfinished tickets due within the next 7 days
+ *    (includes overdue), with a "Today" flag when any is due today.
+ *
+ * Returns null when there is no authenticated user.
+ */
+export async function getActivitySparklines() {
+	const userId = await getCurrentUserId();
+	if (!userId) return null;
+
+	const now = new Date();
+	const weekStart = currentWeekStart(now);
+	const lastWeekStart = previousWeekStart(now);
+	const nextWeekStartBound = nextWeekStart(now);
+
+	const myAssigned = {
+		is_deleted: false,
+		TicketAssigned: { some: { profile_id: userId } },
+	} satisfies Prisma.TicketsWhereInput;
+
+	const UPCOMING_WINDOW_MS = 7 * 86_400_000;
+
+	const [thisWeekTickets, lastWeekCount, activeCount, overdueCount, upcomingTickets] =
+		await Promise.all([
+			// Finished this week — full rows so daily bars can be bucketed.
+			// Upper bound guards against future-dated actual_end_at values
+			// (re-saving a finished ticket passes actual_end_at through).
+			prisma.tickets.findMany({
+				where: {
+					...myAssigned,
+					status: "FINISHED",
+					actual_end_at: { gte: weekStart, lt: nextWeekStartBound },
+				},
+				select: { actual_end_at: true },
+			}),
+			prisma.tickets.count({
+				where: {
+					...myAssigned,
+					status: "FINISHED",
+					actual_end_at: { gte: lastWeekStart, lt: weekStart },
+				},
+			}),
+			prisma.tickets.count({
+				where: { ...myAssigned, status: { not: "FINISHED" } },
+			}),
+			prisma.tickets.count({
+				where: {
+					...myAssigned,
+					status: { not: "FINISHED" },
+					plan_end_at: { lt: now },
+				},
+			}),
+			prisma.tickets.findMany({
+				where: {
+					...myAssigned,
+					status: { not: "FINISHED" },
+					plan_end_at: { lte: new Date(now.getTime() + UPCOMING_WINDOW_MS) },
+				},
+				select: { plan_end_at: true },
+			}),
+		]);
+
+	// Bucket finished tickets into weekday bars (index 0 = Monday).
+	const daily = new Array<number>(7).fill(0);
+	for (const t of thisWeekTickets) {
+		daily[weekdayIndex(t.actual_end_at!)] += 1;
+	}
+
+	const todayStart = startOfToday(now);
+	const todayEnd = endOfToday(now);
+	const dueToday = upcomingTickets.some(
+		(t) => t.plan_end_at >= todayStart && t.plan_end_at <= todayEnd,
+	);
+
+	const { change, changePositive } = velocityChange(
+		thisWeekTickets.length,
+		lastWeekCount,
+	);
+	const { urgencyLabel, isUrgent } = upcomingSummary(
+		upcomingTickets.length,
+		dueToday,
+	);
+
+	return {
+		weeklyVelocity: {
+			value: thisWeekTickets.length,
+			change,
+			changePositive,
+			daily,
+		},
+		riskFactor: { label: riskLabel(overdueCount, activeCount) },
+		upcomingDeadlines: {
+			count: upcomingTickets.length,
+			urgencyLabel,
+			isUrgent,
+		},
+	};
 }

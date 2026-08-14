@@ -3,16 +3,17 @@
 import {
 	TicketsBoard,
 	PendingContracts,
+	ActivitySparklines,
 	useDashboardRole,
 	useMyTickets,
 	useWatchedTickets,
 	useMyContracts,
+	useActivitySparklines,
+	useIssueStats,
 } from "@/features/landing-dashboard";
 import { useAuth } from "@/features/auth";
+import { IssueCharts } from "@/features/issue-reporting";
 
-// TODO(landing-dashboard): ActivitySparklines integration is on hold by
-// decision — wire weekly velocity / risk / upcoming deadlines after the
-// role-based views ship (component already exists in the feature).
 export default function DashboardPage() {
 	const { user } = useAuth();
 	const roleQuery = useDashboardRole();
@@ -24,10 +25,16 @@ export default function DashboardPage() {
 	const myTickets = useMyTickets(showTickets);
 	const watchedTickets = useWatchedTickets(showTickets);
 	const myContracts = useMyContracts(showContracts);
+	const sparklines = useActivitySparklines(showTickets);
+	const issueStats = useIssueStats(showTickets);
 
 	const loading =
 		roleQuery.isLoading ||
-		(showTickets && (myTickets.isLoading || watchedTickets.isLoading)) ||
+		(showTickets &&
+			(myTickets.isLoading ||
+				watchedTickets.isLoading ||
+				sparklines.isLoading ||
+				issueStats.isLoading)) ||
 		(showContracts && myContracts.isLoading);
 
 	if (loading) {
@@ -66,6 +73,18 @@ export default function DashboardPage() {
 			</div>
 
 			<div className="flex w-full flex-col items-center justify-center gap-10">
+				{showTickets && sparklines.data && (
+					<div className="flex w-full flex-col gap-6">
+						<ActivitySparklines
+							weeklyVelocity={sparklines.data.weeklyVelocity}
+							riskFactor={sparklines.data.riskFactor}
+							upcomingDeadlines={sparklines.data.upcomingDeadlines}
+						/>
+					</div>
+				)}
+				{showTickets && issueStats.data && (
+					<IssueCharts data={issueStats.data} />
+				)}
 				{showTickets && (
 					<>
 						<TicketsBoard tickets={myTickets.data ?? []} />

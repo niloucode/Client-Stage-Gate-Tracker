@@ -308,7 +308,7 @@ export default function TicketBoard({
 						onClick={() => setModalOpen(true)}
 					>
 						<Plus />
-						New Issue
+						New Ticket
 					</Button>
 				</div>
 			</div>

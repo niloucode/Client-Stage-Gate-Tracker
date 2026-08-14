@@ -1,15 +1,5 @@
-export {
-	loginSchema,
-	signupSchema,
-	clientSignupSchema,
-	otpSchema,
-} from "./auth";
-export type {
-	LoginInput,
-	SignupInput,
-	ClientSignupInput,
-	OtpInput,
-} from "./auth";
+export { loginSchema, signupSchema, clientSignupSchema } from "./auth";
+export type { LoginInput, SignupInput, ClientSignupInput } from "./auth";
 
 export { ticketCreateSchema, ticketUpdateSchema } from "./ticket";
 export type {
