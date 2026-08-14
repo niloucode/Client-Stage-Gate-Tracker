@@ -5,7 +5,7 @@ import type { Module, Phase } from "../types";
 import { WorkflowCard } from "./WorkflowCard";
 import { AddModule, EditModule } from "@/features/stage-editor/ui/modals/ModuleModals";
 import { useDeleteModule } from "@/entities/module/mutations";
-import { ConfirmDeleteModal } from "@/components/ui/confirmation-modal"
+import { ConfirmDeleteModal } from "@/shared/ui"
 import { Button } from "@/components/ui/button";
 import { Plus, Clock, ChevronDown, EllipsisVertical } from "lucide-react";
 import { toast } from "@/components/ui/toast"

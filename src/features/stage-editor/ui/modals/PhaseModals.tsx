@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { z } from "zod";
 import { Plus, Save } from "lucide-react";
-import { useStore } from "@tanstack/react-form";
+import { useSelector } from "@tanstack/react-form";
 
 import type { Phase } from "../../types";
 import { useAppForm, formErrorToMessage } from "@/shared/form";
@@ -151,8 +151,8 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 		},
 	});
 
-	// Correct TanStack Form store subscription
-	const isDirty = useStore(form.store, (state) => state.isDirty);
+	// Correct TanStack Form store subscription (useStore is a deprecated alias).
+	const isDirty = useSelector(form.store, (state) => state.isDirty);
 
 	// Reset form whenever modal opens or active phase changes
 	useResetOnOpen(isOpen, () => {
