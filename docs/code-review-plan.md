@@ -326,22 +326,23 @@
 - [ ] src/features/tag-manager/ui/TagFormModal.tsx
 - [ ] src/features/tag-manager/ui/TagListModal.tsx
 - [ ] src/features/tag-manager/ui/TagModals.tsx
-- [ ] src/features/ticket-board/model/columns.ts
-- [ ] src/features/ticket-board/model/queries.ts
-- [ ] src/features/ticket-board/model/schema.ts
-- [ ] src/features/ticket-board/model/types.ts
-- [ ] src/features/ticket-board/ui/index.ts
-- [ ] src/features/ticket-board/ui/TicketBoard.tsx
-- [ ] src/features/ticket-board/ui/TicketCard.tsx
-- [ ] src/features/ticket-board/ui/TicketColumn.tsx
-- [ ] src/features/ticket-board/ui/TicketHistoryLog.tsx
-- [ ] src/features/ticket-board/ui/TicketModalCreate.tsx
-- [ ] src/features/ticket-board/ui/TicketModalEdit.tsx
-- [ ] src/features/ticket-board/ui/editor/TicketEditor.tsx
-- [ ] src/features/ticket-board/ui/editor/TicketEditorSubcomponents.tsx
-- [ ] src/features/ticket-board/ui/editor/TicketActivitySection.tsx
-- [ ] src/features/ticket-board/ui/editor/useTicketEditor.ts
-- [ ] src/features/ticket-board/ui/editor/helpers.tsx
+- [x] src/features/ticket-board/model/columns.ts (2026-08-15: reviewed — COLUMNS PENDING/IN_PROGRESS/FINISHED matches the Prisma status enum)
+- [x] src/features/ticket-board/model/queries.ts (2026-08-15: reviewed — useTicketHistory fetches selectTicketHistory, maps via ticketHistoryEntrySchema; fine)
+- [x] src/features/ticket-board/model/schema.ts (2026-08-15: reviewed — ticketHistoryEntrySchema; ACTION_ENUM matches the Prisma action enum exactly (verified); z.coerce.date() valid v4 usage)
+- [x] src/features/ticket-board/model/types.ts (2026-08-15: reviewed — TicketHistoryEntry mirrors the joined server row)
+- [x] src/features/ticket-board/ui/index.ts (2026-08-15: reviewed — exports TicketBoard as the page imports)
+- [x] src/features/ticket-board/ui/TicketBoard.tsx (2026-08-15: reviewed — success toast outside try/catch (failed creates toast success, duplicates modal toast); delete fire-and-forget + unconditional success toast; DnD fire-and-forget; no client read-only gating; TagManager same-layer import)
+- [x] src/features/ticket-board/ui/TicketCard.tsx (2026-08-15: reviewed — getDummySubtasks fabricates 3 fake tickets (ids `${id}-sub-1`..3) that flow into onSelect (editor opens on a fake ticket) and onDelete (server z.uuid().parse throws); root cause ticketInclude omits subTickets; onEdit prop dead; delete button unlabeled; focus:outline-none)
+- [x] src/features/ticket-board/ui/TicketColumn.tsx (2026-08-15: reviewed — simple droppable wrapper; optional no-op callbacks; fine)
+- [x] src/features/ticket-board/ui/TicketHistoryLog.tsx (2026-08-15: reviewed — rendered inside TicketActivitySection; unused expanded/hasMore state)
+- [x] src/features/ticket-board/ui/TicketModals.tsx (2026-08-15: reviewed — consolidated create+edit modals (plan listed TicketModalCreate/TicketModalEdit as separate files — actual path is TicketModals.tsx); manual useState forms (not the form kit); image upload direct to Supabase with orphaning on failure + alert(); edit slide-over renders TicketEditor; hardcoded codes)
+- [x] src/features/ticket-board/ui/TicketModalCreate.tsx (deleted — consolidated into TicketModals.tsx)
+- [x] src/features/ticket-board/ui/TicketModalEdit.tsx (deleted — consolidated into TicketModals.tsx)
+- [x] src/features/ticket-board/ui/editor/TicketEditor.tsx (2026-08-15: reviewed — subtask list + selection modal wired to real parent_id; hardcoded 'ASC-1028'/'LRN-BNN' codes; fixed-position footer; nested edit slide-over for subtasks)
+- [x] src/features/ticket-board/ui/editor/TicketEditorSubcomponents.tsx (2026-08-15: reviewed — TicketSchedule DEADLINE required; disabled actual dates; SubtaskSelectionModal OK; eslint-disable for same-layer issue-reporting import)
+- [x] src/features/ticket-board/ui/editor/TicketActivitySection.tsx (2026-08-15: reviewed — comments + images; `comments: any[]` untyped; alert() for size; image upload orphaning; some unlabeled buttons)
+- [x] src/features/ticket-board/ui/editor/useTicketEditor.ts (2026-08-15: reviewed — DUMMY_SUBTICKETS (4 fake tickets; ids 'du123mmy-subtask-2/-4' FAIL the startsWith('dummy-') guard → picking them calls updateTicketParent with a fake uuid); handleSave `plan_end_at ?? new Date()` fallback (rule 3); add/remove subtask errors console.error only; subtasks derived from combinedTickets parent_id)
+- [x] src/features/ticket-board/ui/editor/helpers.tsx (2026-08-15: reviewed — STATUS_CONFIG/UserAvatar/getLinkedIssueStyle; eslint-disable boundaries/dependencies for IssueItem import from features/issue-reporting — same-layer FSD violation)
 
 ## 11. App layer — layouts, pages, API routes
 
@@ -367,7 +368,7 @@
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx
 - [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx (2026-08-15: reviewed with the stage-editor slice — imports bypass the slice public API (deep imports of ui/ModuleCard, ui/PhaseCard, types); `as unknown as Phase[]` cast hides the planStart/description nullability mismatch; NO client permission gating (clients see all Add/Edit/Delete/DnD controls — server actions reject them, but UI must hide them per spec; scheduled in integration plan)
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx (2026-08-15: reviewed with the ticket-board slice — server-rendered shell that fetches getWorkflowById + renders TicketBoard; no client gating (TicketBoard handles it); fine)
 - [ ] src/app/api/notifications/route.ts
 - [ ] src/app/api/webhooks/route.ts
 - [x] src/app/dev/ui/page.tsx (deleted)
@@ -411,12 +412,12 @@
       (`src/features/project-structure/ui/StageModal.tsx`) requires them. —
       2026-08-15, commit 18d5d7d (stageActions needed no change — createStage
       already required dates)
-- [ ] `src/shared/schemas/ticket.ts` — `plan_end_at` (currently
-      `z.date({ message: "Deadline is required" })`) → `z.date().optional()
-      .nullable()`; `plan_start_at` already optional nullable.
-- [ ] **DB migration** — `Tickets.plan_start_at` / `Tickets.plan_end_at` are
-      currently NOT NULL; make them nullable so optional ticket dates can be
-      stored. Rollback = revert the migration.
+- [x] `src/shared/schemas/ticket.ts` — 2026-08-15 user spec REVISED: `plan_end_at`
+      stays REQUIRED (modernize deprecated `message` → `error` param only);
+      `plan_start_at` is already `z.date().optional().nullable()`.
+- [ ] **DB migration** — `Tickets.plan_start_at` → nullable (2026-08-15 spec:
+      ONLY plan_start_at; `plan_end_at` stays NOT NULL). Rollback = revert the
+      migration. — **scheduled → `docs/reasonix/plans/2026-08-15-ticket-board-integration.md`**
 - [x] Stage form at `src/features/project-structure/ui/StageModal.tsx` — required
       plan dates + planEnd>=planStart — 2026-08-14
 - [x] Stage-editor modals (`src/features/stage-editor/ui/modals/PhaseModals.tsx`,
@@ -424,13 +425,19 @@
       validation) for the now-required plan dates — verified 2026-08-15
       (client-side required + range checks present in all three; zod v4
       refine type-guard predicates noted as runtime-only no-op)
-- [ ] Tickets form/editor (`src/features/ticket-board`) — dates must be
-      omitable; remove any client-side "deadline required" enforcement.
+- [ ] Tickets form/editor (`src/features/ticket-board`) — 2026-08-15 spec
+      REVISED: the deadline stays REQUIRED (client-side enforcement stays);
+      planned start is omitable; the editor's `plan_end_at ?? new Date()`
+      fallback (useTicketEditor.ts:236) must be replaced with deadline
+      validation; createTicket's `plan_start_at: new Date()` must store the
+      user input instead. — **scheduled →
+      `docs/reasonix/plans/2026-08-15-ticket-board-integration.md`**
 - [x] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
       keep the pure-helper pattern (`projectStatus.ts` style — pure helpers
       must NOT live in `"use server"` files). — 2026-08-15: phase/module/
       workflow rejection tests added (commit 18d5d7d, `project.test.ts`
-      14 tests); stage/ticket parts still open.
+      14 tests); ticket actual-date transition tests (new pure helper)
+      scheduled → `docs/reasonix/plans/2026-08-15-ticket-board-integration.md`.
 
 ---
 
@@ -443,7 +450,7 @@ All pre-existing unless noted — none block the running app except the first.
       `mode="edit"` prop on `TicketModalEdit` in
       `src/features/ticket-board/ui/editor/TicketEditor.tsx:211` (TS2322).
       Fixed; `next build` is green again. (`getDummySubtasks` in TicketCard
-      remains, still worth removing per the original note.)
+      removal is scheduled in the 2026-08-15 ticket-board integration plan.)
 - [x] **`src/features/landing-dashboard/ui/ActivitySparklines.tsx`** —
       2026-08-14: dead `http2` import removed and the component integrated
       (no longer on hold).
@@ -552,7 +559,14 @@ All pre-existing unless noted — none block the running app except the first.
       (inline execution, commits 859f78a → f161f7e):
   - [x] **Client read-only UI** — `stages/[stageId]/page.tsx` + the three cards
         hide Add/Edit/Delete/DnD for clients via
-        `useCurrentUser()` + `profile?.client_id` (ProjectStructure pattern) — 859f78a
+        `useCurrentUser()` + `profile?.client_id` (ProjectStructure pattern) — 859f78a.
+        **2026-08-15 re-audit (dcadeb9):** two gaps closed — (a) the branch
+        rewrite (`6d769d4 fix: vscode errors`) had reverted
+        `PhaseCard` `draggable={true}` → restored `draggable={!readOnly}`;
+        (b) `ModuleCard` never forwarded `readOnly` to `WorkflowCard`, so
+        clients still saw Add Workflow, the edit ellipsis, and workflow
+        drag-and-drop → `readOnly={readOnly}` added. Verify nothing else was
+        dropped in future rewrites.
   - [x] **Page imports bypass the slice public API** — page still deep-imports
         `ui/PhaseCard`, `ui/ModuleCard` (needed for `ref` typing on PhaseCard);
         `WorkflowCard`/`PhaseCard`/`ModuleCard` + `types` re-exported via index.ts.
@@ -579,3 +593,59 @@ All pre-existing unless noted — none block the running app except the first.
         `npm run build` ✓. NOTE: `eslint src/app` still fails on
         `projects/[projectId]/contract/page.tsx` (3× react-hooks/immutability,
         pre-existing — that file remains unchecked in section 11).
+
+- [ ] **Ticket-board integration (2026-08-15 review)** — ALL findings below are
+      scheduled in **`docs/reasonix/plans/2026-08-15-ticket-board-integration.md`**
+      (spec: clients read-only / team+owners full access; subtasks = `parent_id`
+      derivation from the flat workflow list; subtask creation = pick from
+      existing tickets; `plan_end_at` REQUIRED + `plan_start_at` nullable +
+      actual-date transition rules; parent delete = 3-option modal cascade/
+      promote/cancel; assignee+watcher dropdowns project-scoped; comments +
+      attachments must load without refresh):
+  - [ ] **Subtask integration (BLOCKING)** — remove `getDummySubtasks`
+        (`TicketCard.tsx:28-109`, fake ids `${id}-sub-1` flow into select/delete)
+        and `DUMMY_SUBTICKETS` (`useTicketEditor.ts:8-97`, ids
+        `du123mmy-subtask-2/-4` fail the `dummy-` guard → `updateTicketParent`
+        with fake uuids); derive real subtasks from the workflow list via
+        `parent_id`.
+  - [ ] **createTicket** (`ticketActions.ts:50`) — `plan_start_at: new Date()`
+        discards the user's start date → store `data.plan_start_at ?? null`
+        (column becomes nullable).
+  - [ ] **updateTicket** (`ticketActions.ts:221-256`) — never writes
+        `plan_start_at` (edits silently lost); add it.
+  - [ ] **Actual-date transitions** — new pure helper
+        (`src/entities/ticket/lib/statusTransitions.ts`, tested): PENDING →
+        IN_PROGRESS sets `actual_start_at`; → FINISHED sets `actual_end_at`
+        (PENDING → FINISHED sets both to the same timestamp); regressions
+        revert to NULL as applicable. Applied in `updateTicket` AND
+        `updateTicketStatus` (both currently skip `actual_start_at`).
+  - [ ] **Delete options (spec change)** — `cascadeSoftDeleteTicket` gains a
+        `mode: "cascade" | "promote"`; the card shows a 3-option dialog when
+        the ticket has subtasks (Cascade delete / Promote subtasks to tickets /
+        Cancel). "Promote" sets children's `parent_id = null` before deleting.
+  - [ ] **DB migration** — `Tickets.plan_start_at` → nullable (only that
+        column; `plan_end_at` stays NOT NULL).
+  - [ ] **Client read-only gating** — board buttons (New Ticket/Tags), DnD,
+        delete, and the editor must hide/disable for clients
+        (`useCurrentUser()` + `profile?.client_id`, ProjectStructure pattern).
+  - [ ] **Project-scoped assignee/watcher dropdowns (P1)** — `selectProfile()`
+        returns ALL profiles incl. clients; new `selectProjectMembers(projectId)`
+        (roleAssignments join, `Profile.client_id: null` filter) + `useProjectMembers`;
+        thread `projectId` from TicketBoard through modals/editor.
+  - [ ] **Comments not visible until refresh (P3)** — query-key mismatch:
+        `useTicketComments` key `commentKeys.list("TICKET", id)` vs
+        `useCreateComment` invalidation `commentKeys.list("TICKET_COMMENT", id)` —
+        invalidation never matches; fix the key to the enum value.
+  - [ ] **Attachments don't load (P2)** — upload failures swallowed
+        (console.error only, ticket still created); `commentKeys.images` never
+        invalidated after create/update; slide-over queries have no isError UI
+        (failures silently render []).
+  - [ ] **Error handling** — TicketBoard create success toast outside
+        try/catch (duplicates modal toast); delete fire-and-forget with
+        unconditional success toast; DnD fire-and-forget; editor subtask
+        add/remove console.error only.
+  - [ ] **Nits** — FSD same-layer `features/issue-reporting` imports with
+        `eslint-disable` (helpers.tsx, TicketEditorSubcomponents, TicketModals);
+        hardcoded `ASC-1028` / `LRN-BNN` codes; `comments: any[]`; dead `onEdit`
+        prop; unused `expanded`/`hasMore` in TicketHistoryLog; a11y (unlabeled
+        buttons, `focus:outline-none`, no KeyboardSensor for dnd-kit).
