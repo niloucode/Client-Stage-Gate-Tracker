@@ -55,11 +55,8 @@ import { Button } from "@/components/ui/button";
 /**
  * Renders the primary project workflow board workspace.
  * Uses TanStack Query for server state and dnd-kit for drag-and-drop.
- *
- * @param props.workflow_id - Workflow scope for the board's ticket list.
- * @param props.workflowName - Display name for the board header (defaults to "Current Sprint").
- * @param props.projectId - Parent project id, used for auth and project-scoped lookups.
- * @param props.stageId - Parent stage id, used for tag scope resolution.
+ * Props are typed on the destructured signature (workflow_id, workflowName,
+ * projectId, stageId).
  */
 export default function TicketBoard({
 	workflow_id,
