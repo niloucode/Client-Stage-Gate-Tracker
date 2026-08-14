@@ -82,10 +82,11 @@ export const createPhaseAction = authActionClient
 				name: parsedInput.name,
 				description: parsedInput.description ?? null,
 				sort_key: nextKey,
-				plan_start_at: parsedInput.planStart ?? new Date(),
+				// Date rules: plan dates required (schema-enforced) — no fallback
+				plan_start_at: parsedInput.planStart,
 				actual_end_at: parsedInput.actualEnd ?? null,
 				actual_start_at: parsedInput.actualStart ?? null,
-				plan_end_at: parsedInput.planEnd ?? new Date(),
+				plan_end_at: parsedInput.planEnd,
 				stage_id: parsedInput.stageId,
 			},
 		});

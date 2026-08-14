@@ -133,8 +133,9 @@ export function ModuleCard({
 			phaseId: currentPhase.phase_id,
 			stageId,
 			name: data.name,
-			planStart: data.planStart ?? undefined,
-			planEnd: data.planEnd ?? undefined,
+			// non-null guaranteed by the modal schema (required plan dates)
+			planStart: data.planStart!,
+			planEnd: data.planEnd!,
 			actualEnd: data.actualEnd ?? undefined,
 		});
 		setIsAddOpen(false);

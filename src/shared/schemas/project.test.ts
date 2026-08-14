@@ -96,7 +96,7 @@ describe("moduleCreateSchema (canonical 4-date vocabulary, Task 3.1)", () => {
 		}
 	});
 
-	it("accepts missing dates entirely", () => {
+	it("rejects missing plan dates (date rules: plan dates required)", () => {
 		const result = moduleCreateSchema.safeParse({
 			name: "Auth",
 			planStart: null,
@@ -104,7 +104,12 @@ describe("moduleCreateSchema (canonical 4-date vocabulary, Task 3.1)", () => {
 			actualStart: null,
 			actualEnd: null,
 		});
-		expect(result.success).toBe(true);
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(
+				result.error.issues.some((i) => i.path.includes("planStart")),
+			).toBe(true);
+		}
 	});
 });
 
@@ -139,8 +144,8 @@ describe("phaseCreateSchema (canonical 4-date vocabulary, Task 3.1)", () => {
 	it("rejects inverted actual range with an actualStart-path issue", () => {
 		const result = phaseCreateSchema.safeParse({
 			name: "Design",
-			planStart: null,
-			planEnd: null,
+			planStart: d("2024-01-01T00:00:00Z"),
+			planEnd: d("2024-01-10T00:00:00Z"),
 			actualStart: d("2024-01-10T00:00:00Z"),
 			actualEnd: d("2024-01-01T00:00:00Z"),
 		});
@@ -148,6 +153,22 @@ describe("phaseCreateSchema (canonical 4-date vocabulary, Task 3.1)", () => {
 		if (!result.success) {
 			expect(
 				result.error.issues.some((i) => i.path.includes("actualStart")),
+			).toBe(true);
+		}
+	});
+
+	it("rejects missing plan dates (date rules: plan dates required)", () => {
+		const result = phaseCreateSchema.safeParse({
+			name: "Design",
+			planStart: null,
+			planEnd: null,
+			actualStart: null,
+			actualEnd: null,
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(
+				result.error.issues.some((i) => i.path.includes("planStart")),
 			).toBe(true);
 		}
 	});
@@ -176,5 +197,22 @@ describe("workflowCreateSchema (canonical 4-date vocabulary, Task 3.1)", () => {
 			isApproved: true,
 		});
 		expect(result.success).toBe(true);
+	});
+
+	it("rejects missing plan dates (date rules: plan dates required)", () => {
+		const result = workflowCreateSchema.safeParse({
+			name: "Build",
+			planStart: null,
+			planEnd: null,
+			actualStart: null,
+			actualEnd: null,
+			isApproved: false,
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(
+				result.error.issues.some((i) => i.path.includes("planStart")),
+			).toBe(true);
+		}
 	});
 });

@@ -120,8 +120,9 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 					stageId,
 					name: value.name,
 					description: value.description ?? "",
-					planStart: value.planStart ?? undefined,
-					planEnd: value.planEnd ?? undefined,
+					// non-null guaranteed by phaseModalSchema (required plan dates)
+					planStart: value.planStart!,
+					planEnd: value.planEnd!,
 					actualStart: value.actualStart ?? undefined,
 					actualEnd: value.actualEnd ?? undefined,
 				});
@@ -135,8 +136,8 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 					stageId,
 					name: value.name,
 					description: value.description ?? "",
-					planStart: value.planStart ?? undefined,
-					planEnd: value.planEnd ?? undefined,
+					planStart: value.planStart!,
+					planEnd: value.planEnd!,
 					actualStart: value.actualStart ?? undefined,
 					actualEnd: value.actualEnd ?? undefined,
 				});
