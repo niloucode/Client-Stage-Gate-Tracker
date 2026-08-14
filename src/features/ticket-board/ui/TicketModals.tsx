@@ -1,40 +1,41 @@
-"use client";
+"use client"
 
 import React, { useState } from "react";
-import { Ticket, Tag } from "@/entities/types";
-import { useProfiles } from "@/entities/profile/queries";
+import { ChevronDown, Paperclip, Bug } from "lucide-react";
+import { z } from "zod";
+
 import { createClient } from "@/lib/supabase/client";
-import type { CreateTicketParams } from "@/shared/schemas";
-import { ticketCreateSchema } from "@/shared/schemas/ticket";
+import { Ticket, Tag } from "@/entities/types";
+import { useProfiles } from "@/entities/profile";
+import { TagBadge } from "@/entities/tag/ui";
+import { ticketCreateSchema, type CreateTicketParams } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
-import { FormInput } from "@/components/ui/forminput";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { TagBadge } from "@/entities/tag/ui/TagBadge";
-import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
-import type { IssueItem } from "@/features/issue-reporting/ui/IssueDashboard";
-import TicketEditor from "./editor/TicketEditor";
 
 import {
+	Button,
+	ConfirmationModal,
+	DateTimePicker,
 	Dialog,
 	DialogContent,
-	DialogHeader,
-	DialogTitle,
 	DialogDescription,
 	DialogFooter,
-} from "@/components/ui/dialog";
-
-import {
+	DialogHeader,
+	DialogTitle,
 	DropdownMenu,
-	DropdownMenuTrigger,
-	DropdownMenuContent,
 	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
 	DropdownMenuRadioGroup,
 	DropdownMenuRadioItem,
-} from "@/components/ui/dropdown-menu";
+	DropdownMenuTrigger,
+	FormInput,
+	Label,
+	toast,
+} from "@/components/ui";
 
-import { ChevronDown, Paperclip, Bug } from "lucide-react";
+import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
+import type { IssueItem } from "@/features/issue-reporting/ui/IssueDashboard";
+
+import TicketEditor from "./editor/TicketEditor";
 
 /* -------------------------------------------------------------------------- */
 /* TYPES & HELPERS                                                            */
@@ -62,6 +63,22 @@ export interface TicketModalEditProps {
 	/** Parent ticket info to display when in subtask view */
 	parentTicket?: Ticket | null;
 }
+
+const createTicketModalSchema = ticketCreateSchema.superRefine((data, ctx) => {
+	if (data.plan_start_at && data.plan_end_at && data.plan_start_at > data.plan_end_at) {
+		const message = "Start must be before End";
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message,
+			path: ["plan_start_at"],
+		});
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message,
+			path: ["plan_end_at"],
+		});
+	}
+});
 
 /** Helper to derive box colors based strictly on issue urgency */
 function getIssueUrgencyStyle(issue: IssueItem | null) {
@@ -132,6 +149,10 @@ export function TicketModalCreate({
 	);
 	const [apiRoute, setApiRoute] = useState("");
 	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	// Confirmation modal state when user attempts to close with unsaved changes
+	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
 	function toggleTag(tagId: string) {
 		setSelectedTags((prev) =>
@@ -178,6 +199,52 @@ export function TicketModalCreate({
 		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
 	}
 
+	// Check if user has entered any form data
+	const hasUnsavedChanges = Boolean(
+		title.trim() ||
+			description.trim() ||
+			startDate ||
+			deadline ||
+			selectedTags.length > 0 ||
+			assignedIds.length > 0 ||
+			watcherId ||
+			linkedIssue ||
+			imageFiles.length > 0 ||
+			apiRoute.trim(),
+	);
+
+	const resetForm = () => {
+		setTitle("");
+		setDescription("");
+		setStartDate(undefined);
+		setDeadline(undefined);
+		setWatcherId("");
+		setLinkedIssue(null);
+		setSelectedTags([]);
+		setAssignedIds([]);
+		setImageFiles([]);
+		setImagePreviews([]);
+		setApiMethod("GET");
+		setApiRoute("");
+		setFieldErrors({});
+	};
+
+	// Prevents exiting if unsaved changes exist
+	const handleAttemptClose = () => {
+		if (hasUnsavedChanges && !isSubmitting) {
+			setShowDiscardConfirm(true);
+			return; // <--- BLOCKS EXITING
+		}
+		resetForm();
+		onClose();
+	};
+
+	const handleConfirmDiscard = () => {
+		setShowDiscardConfirm(false);
+		resetForm();
+		onClose();
+	};
+
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 
@@ -193,7 +260,7 @@ export function TicketModalCreate({
 		};
 
 		// Validate with Zod schema
-		const validation = ticketCreateSchema.safeParse(rawPayload);
+		const validation = createTicketModalSchema.safeParse(rawPayload);
 		if (!validation.success) {
 			const errors = getFieldErrors(validation);
 			setFieldErrors(errors);
@@ -201,6 +268,14 @@ export function TicketModalCreate({
 		}
 
 		setFieldErrors({});
+		setIsSubmitting(true);
+
+		// Loading Toast
+		toast.add({
+			title: "Creating Ticket",
+			description: "Please wait while your ticket is being created...",
+			type: "loading",
+		});
 
 		const imageUrls: string[] = [];
 
@@ -233,45 +308,61 @@ export function TicketModalCreate({
 			}
 		}
 
-		await onCreateTicket({
-			name: validation.data.name,
-			plan_start_at: validation.data.plan_start_at ?? null,
-			plan_end_at: validation.data.plan_end_at,
-			watcher_id: validation.data.watcher_id ?? null,
-			TicketAssigned: assignedIds,
-			tagIds: validation.data.tagIds ?? [],
-			description: validation.data.description ?? null,
-			api_route: validation.data.api_route ?? null,
-			api_method: validation.data.api_method ?? null,
-			image_urls: imageUrls,
-		});
+		try {
+			await onCreateTicket({
+				name: validation.data.name,
+				plan_start_at: validation.data.plan_start_at ?? null,
+				plan_end_at: validation.data.plan_end_at,
+				watcher_id: validation.data.watcher_id ?? null,
+				TicketAssigned: assignedIds,
+				tagIds: validation.data.tagIds ?? [],
+				description: validation.data.description ?? null,
+				api_route: validation.data.api_route ?? null,
+				api_method: validation.data.api_method ?? null,
+				image_urls: imageUrls,
+			});
 
-		// Reset form state
-		setTitle("");
-		setDescription("");
-		setStartDate(undefined);
-		setDeadline(undefined);
-		setWatcherId("");
-		setLinkedIssue(null);
-		setSelectedTags([]);
-		setAssignedIds([]);
-		setImageFiles([]);
-		setImagePreviews([]);
-		setApiMethod("GET");
-		setApiRoute("");
-		setFieldErrors({});
-		onClose();
+			// Success Toast
+			toast.add({
+				title: "Ticket Created",
+				description: `"${validation.data.name}" has been created successfully.`,
+				type: "success",
+			});
+
+			resetForm();
+			onClose();
+		} catch (error) {
+			console.error("Ticket creation failed:", error);
+			toast.add({
+				title: "Creation Failed",
+				description: "Unable to create ticket. Please try again.",
+				type: "error",
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
+
+	const clearDateError = () => {
+		if (fieldErrors.plan_start_at || fieldErrors.plan_end_at) {
+			setFieldErrors((prev) => ({
+				...prev,
+				plan_start_at: "",
+				plan_end_at: "",
+			}));
+		}
+	};
 
 	return (
 		<>
 			<Dialog
 				open={isOpen}
 				onOpenChange={(open) => {
-					if (!open) onClose();
+					if (!open) handleAttemptClose();
 				}}
 			>
 				<DialogContent className="sm:max-w-2xl max-h-[70vh] flex flex-col overflow-hidden">
+					{/* Modal header */}
 					<DialogHeader>
 						<DialogTitle>New Ticket</DialogTitle>
 						<DialogDescription>
@@ -279,6 +370,7 @@ export function TicketModalCreate({
 						</DialogDescription>
 					</DialogHeader>
 
+					{/* Form */}
 					<form
 						onSubmit={handleSubmit}
 						className="flex-1 overflow-y-auto px-2 space-y-5"
@@ -314,6 +406,7 @@ export function TicketModalCreate({
 
 						{/* Assigned to + Watchers row */}
 						<div className="grid grid-cols-2 gap-4">
+							{/* Assigned To */}
 							<div>
 								<Label>Assigned To</Label>
 								<DropdownMenu>
@@ -378,6 +471,7 @@ export function TicketModalCreate({
 								</DropdownMenu>
 							</div>
 
+							{/* Watcher */}
 							<div>
 								<Label>Watcher</Label>
 								<DropdownMenu>
@@ -459,7 +553,7 @@ export function TicketModalCreate({
 									<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
 								</DropdownMenuTrigger>
 
-								<DropdownMenuContent className="w-[var(--anchor-width)] max-h-52 overflow-y-auto">
+								<DropdownMenuContent className="w-(--anchor-width) max-h-52 overflow-y-auto">
 									{tags.map((tag) => {
 										const isChecked = selectedTags.includes(tag.tag_id);
 										return (
@@ -484,7 +578,7 @@ export function TicketModalCreate({
 								value={startDate}
 								onChange={(d) => {
 									setStartDate(d);
-									if (fieldErrors.plan_start_at) setFieldErrors((prev) => ({ ...prev, plan_start_at: "" }));
+									clearDateError();
 								}}
 								placeholder="Pick Planned Start"
 								error={fieldErrors.plan_start_at}
@@ -495,7 +589,7 @@ export function TicketModalCreate({
 								value={deadline}
 								onChange={(d) => {
 									setDeadline(d);
-									if (fieldErrors.plan_end_at) setFieldErrors((prev) => ({ ...prev, plan_end_at: "" }));
+									clearDateError();
 								}}
 								placeholder="Pick Planned End"
 								error={fieldErrors.plan_end_at}
@@ -620,11 +714,11 @@ export function TicketModalCreate({
 					</form>
 
 					<DialogFooter>
-						<Button onClick={onClose} variant="ghost">
+						<Button onClick={handleAttemptClose} variant="ghost" disabled={isSubmitting}>
 							Cancel
 						</Button>
-						<Button onClick={handleSubmit}>
-							Create Ticket
+						<Button onClick={handleSubmit} disabled={isSubmitting}>
+							{isSubmitting ? "Creating..." : "Create Ticket"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -634,6 +728,18 @@ export function TicketModalCreate({
 				open={isIssueModalOpen}
 				onOpenChange={setIsIssueModalOpen}
 				onSelectIssue={(issue) => setLinkedIssue(issue)}
+			/>
+
+			{/* Discard Unsaved Changes Confirmation Modal */}
+			<ConfirmationModal
+				isOpen={showDiscardConfirm}
+				title="Discard Unsaved Ticket?"
+				description="You have unsaved information in this ticket. Are you sure you want to discard your changes?"
+				cancelLabel="Keep Editing"
+				confirmLabel="Discard Changes"
+				variant="destructive"
+				onConfirm={handleConfirmDiscard}
+				onCancel={() => setShowDiscardConfirm(false)}
 			/>
 		</>
 	);
@@ -647,6 +753,7 @@ export function TicketModalEdit({
 	ticket,
 	isOpen,
 	onClose,
+	onUpdate,
 	...rest
 }: TicketModalEditProps) {
 	// Sync props to state during render (React pattern for adjusting state based on props)
@@ -659,6 +766,15 @@ export function TicketModalEdit({
 	}
 
 	const showModal = Boolean(isOpen && ticket);
+
+	const handleTicketUpdate = (updated: Ticket) => {
+		onUpdate(updated);
+		toast.add({
+			title: "Ticket Saved",
+			description: `"${updated.name}" has been updated successfully.`,
+			type: "success",
+		});
+	};
 
 	return (
 		<>
@@ -681,6 +797,7 @@ export function TicketModalEdit({
 						key={activeTicket.ticket_id}
 						initialTicket={activeTicket}
 						onClose={onClose}
+						onUpdate={handleTicketUpdate}
 						{...rest}
 					/>
 				)}

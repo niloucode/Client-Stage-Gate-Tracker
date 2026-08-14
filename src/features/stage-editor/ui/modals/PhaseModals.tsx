@@ -1,28 +1,32 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { z } from "zod";
+import { Plus, Save } from "lucide-react";
+import { useStore } from "@tanstack/react-form";
+
+import type { Phase } from "../../types";
 import { useAppForm, formErrorToMessage } from "@/shared/form";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import {
 	hasValidActualRange,
 	hasValidPlannedRange,
 	toSchedulingDates,
 } from "@/shared/lib/scheduling";
+import { useCreatePhase, useUpdatePhase } from "@/entities/phase/mutations";
 import {
+	Button,
+	ConfirmationModal,
+	DateTimePicker,
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { FormInput } from "@/components/ui/forminput";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { useCreatePhase, useUpdatePhase } from "@/entities/phase/mutations";
-import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
-import { toast } from "@/components/ui/toast";
-import { Plus, Save } from "lucide-react";
-import type { Phase } from "../../types";
+	FormInput,
+	toast,
+} from "@/components/ui";
 
 export interface PhaseModalProps {
 	isOpen: boolean;
@@ -56,32 +60,55 @@ const basePhaseModalSchema = z.object({
 	actualEnd: z.date().optional().nullable(),
 });
 
-const phaseModalSchema = basePhaseModalSchema
-	.refine((data) => hasValidPlannedRange(toSchedulingDates(data)), {
-		message: "Plan Start must be before or equal to Plan End",
-		path: ["planStart"],
-	})
-	.refine((data) => hasValidActualRange(toSchedulingDates(data)), {
-		message: "Actual Start must be before or equal to Actual End",
-		path: ["actualStart"],
-	});
+const phaseModalSchema = basePhaseModalSchema.superRefine((data, ctx) => {
+	if (!hasValidPlannedRange(toSchedulingDates(data))) {
+		const message = "Start must be before End";
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message,
+			path: ["planStart"],
+		});
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message,
+			path: ["planEnd"],
+		});
+	}
+	if (!hasValidActualRange(toSchedulingDates(data))) {
+		const message = "Actual Start date must be before Actual End date";
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message,
+			path: ["actualStart"],
+		});
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message,
+			path: ["actualEnd"],
+		});
+	}
+});
 
 type PhaseFormValues = z.input<typeof phaseModalSchema>;
 
 export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps) {
 	const isEditMode = Boolean(phase);
+	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
 	const createPhaseMutation = useCreatePhase();
 	const updatePhaseMutation = useUpdatePhase();
 
-	const defaultValues: PhaseFormValues = {
-		name: phase?.name ?? "",
-		description: phase?.description ?? "",
-		planStart: phase?.planStart ? new Date(phase.planStart) : null,
-		planEnd: phase?.planEnd ? new Date(phase.planEnd) : null,
-		actualStart: phase?.actualStart ? new Date(phase.actualStart) : null,
-		actualEnd: phase?.actualEnd ? new Date(phase.actualEnd) : null,
-	};
+	const defaultValues: PhaseFormValues = useMemo(
+		() => ({
+			name: phase?.name ?? "",
+			description: phase?.description ?? "",
+			planStart: phase?.planStart ? new Date(phase.planStart) : null,
+			planEnd: phase?.planEnd ? new Date(phase.planEnd) : null,
+			actualStart: phase?.actualStart ? new Date(phase.actualStart) : null,
+			actualEnd: phase?.actualEnd ? new Date(phase.actualEnd) : null,
+		}),
+		[phase],
+	);
 
 	const form = useAppForm({
 		defaultValues,
@@ -125,129 +152,186 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 		},
 	});
 
+	// Correct TanStack Form store subscription
+	const isDirty = useStore(form.store, (state) => state.isDirty);
+
 	// Reset form whenever modal opens or active phase changes
-	useResetOnOpen(isOpen, () => form.reset(defaultValues));
+	useResetOnOpen(isOpen, () => {
+		form.reset(defaultValues);
+		setShowDiscardConfirm(false);
+	});
 
 	const handleClose = () => {
 		form.reset();
+		setShowDiscardConfirm(false);
 		onClose();
+	};
+
+	const handleAttemptClose = () => {
+		if (isDirty) {
+			setShowDiscardConfirm(true);
+			return;
+		}
+		handleClose();
+	};
+
+	const handleConfirmDiscard = () => {
+		setShowDiscardConfirm(false);
+		handleClose();
 	};
 
 	const isPending = createPhaseMutation.isPending || updatePhaseMutation.isPending;
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>
-						{isEditMode ? `Edit Phase ${phase?.number ?? ""}` : "Create New Phase"}
-					</DialogTitle>
-					<DialogDescription>
-						{isEditMode
-							? "Update the phase details."
-							: "Fill in the details to create a new phase."}
-					</DialogDescription>
-				</DialogHeader>
+		<>
+			<Dialog
+				open={isOpen}
+				onOpenChange={(open) => {
+					if (!open) handleAttemptClose();
+				}}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							{isEditMode ? `Edit Phase ${phase?.number ?? ""}` : "Create New Phase"}
+						</DialogTitle>
+						<DialogDescription>
+							{isEditMode
+								? "Update the phase details."
+								: "Fill in the details to create a new phase."}
+						</DialogDescription>
+					</DialogHeader>
 
-				<form.AppForm>
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							void form.handleSubmit();
-						}}
-					>
-						<div className="flex flex-col gap-4">
-							<form.AppField name="name">
-								{(field) => (
-									<FormInput
-										label="Phase Name"
-										required
-										placeholder="e.g., Discovery"
-										maxLength={20}
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										error={formErrorToMessage(field.state.meta.errors[0]) ?? undefined}
-									/>
-								)}
-							</form.AppField>
-
-							<form.AppField name="description">
-								{(field) => (
-									<FormInput
-										variant="textarea"
-										label="Description"
-										placeholder="Describe the objectives and scope of this phase..."
-										rows={3}
-										maxLength={60}
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										error={formErrorToMessage(field.state.meta.errors[0]) ?? undefined}
-									/>
-								)}
-							</form.AppField>
-
-							{/* Date selection using DateTimePicker */}
-							<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-								<form.AppField name="planStart">
-									{(field) => {
-										const error = formErrorToMessage(field.state.meta.errors[0]);
-										return (
-											<DateTimePicker
-												label="Plan Start"
-												required
-												value={field.state.value ? new Date(field.state.value) : undefined}
-												onChange={(date) => field.handleChange(date ?? null)}
-												placeholder="Pick Planned Start"
-												error={error ?? undefined}
-											/>
-										);
-									}}
+					<form.AppForm>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								void form.handleSubmit();
+							}}
+						>
+							<div className="flex flex-col gap-4">
+								<form.AppField name="name">
+									{(field) => (
+										<FormInput
+											label="Phase Name"
+											required
+											placeholder="e.g., Discovery"
+											maxLength={20}
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											error={
+												formErrorToMessage(field.state.meta.errors[0]) ??
+												undefined
+											}
+										/>
+									)}
 								</form.AppField>
 
-								<form.AppField name="planEnd">
-									{(field) => {
-										const error = formErrorToMessage(field.state.meta.errors[0]);
-										return (
-											<DateTimePicker
-												label="Plan End"
-												required
-												value={field.state.value ? new Date(field.state.value) : undefined}
-												onChange={(date) => field.handleChange(date ?? null)}
-												placeholder="Pick Planned End"
-												error={error ?? undefined}
-											/>
-										);
-									}}
+								<form.AppField name="description">
+									{(field) => (
+										<FormInput
+											variant="textarea"
+											label="Description"
+											placeholder="Describe the objectives and scope of this phase..."
+											rows={3}
+											maxLength={60}
+											value={field.state.value}
+											onChange={(e) => field.handleChange(e.target.value)}
+											error={
+												formErrorToMessage(field.state.meta.errors[0]) ??
+												undefined
+											}
+										/>
+									)}
 								</form.AppField>
+
+								{/* Date selection using DateTimePicker */}
+								<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+									<form.AppField name="planStart">
+										{(field) => {
+											const error = formErrorToMessage(
+												field.state.meta.errors[0],
+											);
+											return (
+												<DateTimePicker
+													label="Plan Start"
+													required
+													value={
+														field.state.value
+															? new Date(field.state.value)
+															: undefined
+													}
+													onChange={(date) => field.handleChange(date ?? null)}
+													placeholder="Pick Planned Start"
+													error={error ?? undefined}
+												/>
+											);
+										}}
+									</form.AppField>
+
+									<form.AppField name="planEnd">
+										{(field) => {
+											const error = formErrorToMessage(
+												field.state.meta.errors[0],
+											);
+											return (
+												<DateTimePicker
+													label="Plan End"
+													required
+													value={
+														field.state.value
+															? new Date(field.state.value)
+															: undefined
+													}
+													onChange={(date) => field.handleChange(date ?? null)}
+													placeholder="Pick Planned End"
+													error={error ?? undefined}
+												/>
+											);
+										}}
+									</form.AppField>
+								</div>
 							</div>
-						</div>
 
-						<DialogFooter className="mt-6" showCloseButton={false}>
-							<Button
-								type="button"
-								variant="ghost"
-								onClick={handleClose}
-								disabled={isPending}
-							>
-								Cancel
-							</Button>
-							<form.SubmitButton pendingLabel={isEditMode ? "Saving…" : "Adding…"}>
-								{isEditMode ? (
-									<>
-										<Save className="mr-2 h-4 w-4" /> Save Changes
-									</>
-								) : (
-									<>
-										<Plus className="mr-2 h-4 w-4" /> Add Phase
-									</>
-								)}
-							</form.SubmitButton>
-						</DialogFooter>
-					</form>
-				</form.AppForm>
-			</DialogContent>
-		</Dialog>
+							<DialogFooter className="mt-6" showCloseButton={false}>
+								<Button
+									type="button"
+									variant="ghost"
+									onClick={handleAttemptClose}
+									disabled={isPending}
+								>
+									Cancel
+								</Button>
+								<form.SubmitButton pendingLabel={isEditMode ? "Saving…" : "Adding…"}>
+									{isEditMode ? (
+										<>
+											<Save className="mr-2 h-4 w-4" /> Save Changes
+										</>
+									) : (
+										<>
+											<Plus className="mr-2 h-4 w-4" /> Add Phase
+										</>
+									)}
+								</form.SubmitButton>
+							</DialogFooter>
+						</form>
+					</form.AppForm>
+				</DialogContent>
+			</Dialog>
+
+			{/* Discard Unsaved Changes Confirmation Modal */}
+			<ConfirmationModal
+				isOpen={showDiscardConfirm}
+				title="Discard Unsaved Changes?"
+				description="You have unsaved information in this phase. Are you sure you want to discard your changes?"
+				cancelLabel="Keep Editing"
+				confirmLabel="Discard Changes"
+				variant="destructive"
+				onConfirm={handleConfirmDiscard}
+				onCancel={() => setShowDiscardConfirm(false)}
+			/>
+		</>
 	);
 }
 

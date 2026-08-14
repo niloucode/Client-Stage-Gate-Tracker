@@ -1,25 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { z } from "zod";
+import { Plus, Save, Trash2 } from "lucide-react";
+
 import type { Workflow } from "../../types";
 import { getFieldErrors } from "@/shared/lib/zod";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import {
 	hasValidPlannedRange,
 	toSchedulingDates,
 } from "@/shared/lib/scheduling";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { FormInput } from "@/components/ui/forminput";
 import {
+	Button,
+	ConfirmationModal,
+	DateTimePicker,
 	Dialog,
 	DialogContent,
-	DialogHeader,
-	DialogTitle,
 	DialogDescription,
 	DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Plus, Save, Trash2 } from "lucide-react";
+	DialogHeader,
+	DialogTitle,
+	FormInput,
+} from "@/components/ui";
 
 export interface WorkflowFormData {
 	name: string;
@@ -60,19 +63,27 @@ const baseWorkflowModalSchema = z.object({
 	actualEnd: z.date().optional().nullable(),
 });
 
-const workflowModalSchema = baseWorkflowModalSchema.refine(
-	(data) => hasValidPlannedRange(toSchedulingDates(data)),
-	{
-		message: "Plan Start must be before or equal to Deadline Date",
-		path: ["planStart"],
-	},
-);
+const workflowModalSchema = baseWorkflowModalSchema.superRefine((data, ctx) => {
+	if (!hasValidPlannedRange(toSchedulingDates(data))) {
+		const message = "Start must be before End";
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message,
+			path: ["planStart"],
+		});
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message,
+			path: ["planEnd"],
+		});
+	}
+});
 
 const getInitialFormData = (workflow?: Workflow | null): WorkflowFormData => ({
 	name: workflow?.name ?? "",
-	planStart: workflow?.planStart ?? null,
-	planEnd: workflow?.planEnd ?? null,
-	actualEnd: workflow?.actualEnd ?? null,
+	planStart: workflow?.planStart ? new Date(workflow.planStart) : null,
+	planEnd: workflow?.planEnd ? new Date(workflow.planEnd) : null,
+	actualEnd: workflow?.actualEnd ? new Date(workflow.actualEnd) : null,
 });
 
 type FieldErrors = Partial<Record<keyof WorkflowFormData, string>>;
@@ -84,31 +95,58 @@ export function WorkflowModal({
 	onSave,
 	onDelete,
 }: WorkflowModalProps) {
-	// Sync props to state during render (React pattern for adjusting state based on props)
-	const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-	const [prevWorkflow, setPrevWorkflow] = useState(workflow);
+	const initialFormData = useMemo(() => getInitialFormData(workflow), [workflow]);
 
 	const [displayWorkflow, setDisplayWorkflow] = useState(workflow);
-	const [formData, setFormData] = useState<WorkflowFormData>(() =>
-		getInitialFormData(workflow),
-	);
+	const [formData, setFormData] = useState<WorkflowFormData>(initialFormData);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-
-	// Adjust state synchronously during render when props change
-	if (isOpen && (!prevIsOpen || prevWorkflow !== workflow)) {
-		setPrevIsOpen(true);
-		setPrevWorkflow(workflow);
-		setDisplayWorkflow(workflow);
-		setFormData(getInitialFormData(workflow));
-		setFieldErrors({});
-	} else if (!isOpen && prevIsOpen) {
-		setPrevIsOpen(false);
-	}
+	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
 	const isEditMode = Boolean(displayWorkflow);
 
+	// Reset form when modal opens
+	useResetOnOpen(isOpen, () => {
+		setDisplayWorkflow(workflow);
+		setFormData(initialFormData);
+		setFieldErrors({});
+		setShowDiscardConfirm(false);
+	});
+
+	// Check if user has made unsaved modifications
+	const isDirty = useMemo(() => {
+		return (
+			formData.name !== initialFormData.name ||
+			formData.planStart?.getTime() !== initialFormData.planStart?.getTime() ||
+			formData.planEnd?.getTime() !== initialFormData.planEnd?.getTime() ||
+			formData.actualEnd?.getTime() !== initialFormData.actualEnd?.getTime()
+		);
+	}, [formData, initialFormData]);
+
 	const handleClose = () => {
+		setFormData(initialFormData);
+		setFieldErrors({});
+		setShowDiscardConfirm(false);
 		onClose();
+	};
+
+	// Prevents exiting if unsaved changes exist
+	const handleAttemptClose = () => {
+		if (isDirty) {
+			setShowDiscardConfirm(true);
+			return;
+		}
+		handleClose();
+	};
+
+	const handleConfirmDiscard = () => {
+		setShowDiscardConfirm(false);
+		handleClose();
+	};
+
+	const clearFieldError = (field: keyof WorkflowFormData) => {
+		if (fieldErrors[field]) {
+			setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+		}
 	};
 
 	const handleSubmit = () => {
@@ -124,100 +162,118 @@ export function WorkflowModal({
 	};
 
 	return (
-		<Dialog
-			open={isOpen}
-			onOpenChange={(open) => {
-				if (!open) handleClose();
-			}}
-		>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>
-						{isEditMode ? "Edit Workflow" : "Create New Workflow"}
-					</DialogTitle>
-					<DialogDescription>
-						{isEditMode
-							? "Update the workflow details below."
-							: "Fill in the details to create a new workflow."}
-					</DialogDescription>
-				</DialogHeader>
+		<>
+			<Dialog
+				open={isOpen}
+				onOpenChange={(open) => {
+					if (!open) handleAttemptClose();
+				}}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>
+							{isEditMode ? "Edit Workflow" : "Create New Workflow"}
+						</DialogTitle>
+						<DialogDescription>
+							{isEditMode
+								? "Update the workflow details below."
+								: "Fill in the details to create a new workflow."}
+						</DialogDescription>
+					</DialogHeader>
 
-				<div className="space-y-4">
-					<FormInput
-						variant="input"
-						label="Workflow Name"
-						required
-						maxLength={35}
-						value={formData.name}
-						placeholder="e.g., User Login Flow"
-						error={fieldErrors.name}
-						onChange={(e) => {
-							setFormData({ ...formData, name: e.target.value });
-							setFieldErrors((prev) => ({ ...prev, name: undefined }));
-						}}
-					/>
-
-					<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-						<DateTimePicker
-							label="Plan Start"
+					<div className="space-y-4">
+						<FormInput
+							variant="input"
+							label="Workflow Name"
 							required
-							value={formData.planStart ? new Date(formData.planStart) : undefined}
-							onChange={(date) => {
-								setFormData({
-									...formData,
-									planStart: date ?? null,
-								});
-								setFieldErrors((prev) => ({ ...prev, planStart: undefined }));
+							maxLength={35}
+							value={formData.name}
+							placeholder="e.g., User Login Flow"
+							error={fieldErrors.name}
+							onChange={(e) => {
+								setFormData({ ...formData, name: e.target.value });
+								clearFieldError("name");
 							}}
-							placeholder="Pick Planned Start"
-							error={fieldErrors.planStart}
 						/>
 
-						<DateTimePicker
-							label="Plan End"
-							required
-							value={formData.planEnd ? new Date(formData.planEnd) : undefined}
-							onChange={(date) => {
-								setFormData({
-									...formData,
-									planEnd: date ?? null,
-								});
-								setFieldErrors((prev) => ({ ...prev, planEnd: undefined }));
-							}}
-							placeholder="Pick Planned End"
-							error={fieldErrors.planEnd}
-						/>
+						<div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+							<DateTimePicker
+								label="Plan Start"
+								required
+								value={
+									formData.planStart ? new Date(formData.planStart) : undefined
+								}
+								onChange={(date) => {
+									setFormData({
+										...formData,
+										planStart: date ?? null,
+									});
+									clearFieldError("planStart");
+								}}
+								placeholder="Pick Planned Start"
+								error={fieldErrors.planStart}
+							/>
+
+							<DateTimePicker
+								label="Plan End"
+								required
+								value={
+									formData.planEnd ? new Date(formData.planEnd) : undefined
+								}
+								onChange={(date) => {
+									setFormData({
+										...formData,
+										planEnd: date ?? null,
+									});
+									clearFieldError("planEnd");
+								}}
+								placeholder="Pick Planned End"
+								error={fieldErrors.planEnd}
+							/>
+						</div>
 					</div>
-				</div>
 
-				<DialogFooter>
-					{isEditMode && onDelete && (
-						<Button
-							type="button"
-							className="mr-auto"
-							variant="destructive"
-							onClick={onDelete}
-						>
-							<Trash2 className="mr-2 h-4 w-4" /> Delete Workflow
-						</Button>
-					)}
-					<Button type="button" variant="ghost" onClick={handleClose}>
-						Cancel
-					</Button>
-					<Button type="button" onClick={handleSubmit}>
-						{isEditMode ? (
-							<>
-								<Save className="mr-2 h-4 w-4" /> Save Changes
-							</>
-						) : (
-							<>
-								<Plus className="mr-2 h-4 w-4" /> Create Workflow
-							</>
+					<DialogFooter>
+						{isEditMode && onDelete && (
+							<Button
+								type="button"
+								className="mr-auto"
+								variant="destructive"
+								onClick={onDelete}
+							>
+								<Trash2 className="mr-2 h-4 w-4" /> Delete Workflow
+							</Button>
 						)}
-					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+						<Button type="button" variant="ghost" onClick={handleAttemptClose}>
+							Cancel
+						</Button>
+						<Button type="button" onClick={handleSubmit}>
+							{isEditMode ? (
+								<>
+									<Save className="mr-2 h-4 w-4" /> Save Changes
+								</>
+							) : (
+								<>
+									<Plus className="mr-2 h-4 w-4" /> Create Workflow
+								</>
+							)}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Discard Unsaved Changes Confirmation Modal */}
+			<ConfirmationModal
+				isOpen={showDiscardConfirm}
+				title="Discard Unsaved Changes?"
+				description="You have unsaved information in this workflow. Are you sure you want to discard your changes?"
+				cancelLabel="Keep Editing"
+				confirmLabel="Discard Changes"
+				variant="destructive"
+				onConfirm={handleConfirmDiscard}
+				onCancel={() => setShowDiscardConfirm(false)}
+			/>
+		</>
 	);
 }
 

@@ -9,7 +9,7 @@ import {
 	useUpdateModule,
 	useDeleteModule,
 } from "@/entities/module/mutations";
-import { ConfirmDeleteModal } from "@/shared/ui/ConfirmDeleteModal"
+import { ConfirmDeleteModal } from "@/components/ui/confirmation-modal"
 import { Button } from "@/components/ui/button";
 import { Plus, Clock, ChevronDown, EllipsisVertical } from "lucide-react";
 import { toast } from "@/components/ui/toast"

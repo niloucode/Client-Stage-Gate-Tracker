@@ -166,8 +166,8 @@ function ToastIcon({ type }: { type: string | undefined }) {
 		);
 	} else if (type === "delete") {
 		icon = (
-			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100">
-				<OctagonXIcon className="size-4 text-red-600" aria-hidden="true" />
+			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+				<OctagonXIcon className="size-4 text-emerald-600" aria-hidden="true" />
 			</span>
 		);
 	} else if (type === "loading") {

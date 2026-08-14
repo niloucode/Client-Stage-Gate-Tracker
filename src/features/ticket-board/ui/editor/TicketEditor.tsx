@@ -1,22 +1,33 @@
 "use client";
 
-import { Ticket, Tag } from "@/entities/types";
-import { useProfiles } from "@/entities/profile/queries";
-import { useTicketImages, useTicketComments } from "@/entities/comment/queries";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { FormInput } from "@/components/ui/forminput";
 import { X, Plus, Calendar } from "lucide-react";
+
+import { Ticket, Tag } from "@/entities/types";
+import { useProfiles } from "@/entities/profile";
+import { useTicketImages, useTicketComments } from "@/entities/comment/queries";
+import { status as StatusEnum } from "@/lib/generated/prisma";
 import ImageLightbox from "@/shared/ui/ImageLightbox";
+import { Avatar, Button, FormInput, Label } from "@/components/ui";
+
 import TicketModalEdit from "../TicketModals";
 import { useTicketEditor } from "./useTicketEditor";
-import { TicketTitleAndStatus, TicketAssignees, TicketApiDetails, TicketSchedule, SubtaskSelectionModal } from "./TicketEditorSubcomponents";
+import {
+  TicketTitleAndStatus,
+  TicketAssignees,
+  TicketApiDetails,
+  TicketSchedule,
+  SubtaskSelectionModal,
+} from "./TicketEditorSubcomponents";
 import { TicketActivitySection } from "./TicketActivitySection";
-import { status as StatusEnum } from "@/lib/generated/prisma";
-import { Avatar } from "@/components/ui/avatar";
 
 export default function TicketEditor({
-  initialTicket, tags, onClose, onUpdate, allTickets = [], isSubtaskView = false, parentTicket = null
+  initialTicket,
+  tags,
+  onClose,
+  onUpdate,
+  allTickets = [],
+  isSubtaskView = false,
+  parentTicket = null,
 }: {
   initialTicket: Ticket;
   tags: Tag[];
@@ -30,8 +41,15 @@ export default function TicketEditor({
   const { data: comments = [] } = useTicketComments(initialTicket.ticket_id);
   const { data: ticketImages = [] } = useTicketImages(initialTicket.ticket_id);
 
-  const state = useTicketEditor({ initialTicket, tags, onUpdate, onClose, isSubtaskView, allTickets });
-  
+  const state = useTicketEditor({
+    initialTicket,
+    tags,
+    onUpdate,
+    onClose,
+    isSubtaskView,
+    allTickets,
+  });
+
   return (
     <div className="flex flex-col h-full bg-neutral-surface">
       {/* 1. Header */}
@@ -47,32 +65,71 @@ export default function TicketEditor({
       {/* Parent Info */}
       {isSubtaskView && parentTicket && (
         <div className="px-5 py-3 border-b border-gray-100 bg-brand-50/50">
-          <p className="text-xs text-muted-foreground">Parent: <span className="font-medium text-foreground">{parentTicket.name}</span></p>
+          <p className="text-xs text-muted-foreground">
+            Parent:{" "}
+            <span className="font-medium text-foreground">
+              {parentTicket.name}
+            </span>
+          </p>
         </div>
       )}
 
       {/* 2. Title & Status */}
-      <TicketTitleAndStatus ticket={state.ticket} tags={tags} selectedTags={state.selectedTags} setTicket={state.setTicket} setSelectedTags={state.setSelectedTags} />
+      <TicketTitleAndStatus
+        ticket={state.ticket}
+        tags={tags}
+        selectedTags={state.selectedTags}
+        setTicket={state.setTicket}
+        setSelectedTags={state.setSelectedTags}
+      />
 
       <div className="flex-1 overflow-y-auto scrollbar-gutter-stable pb-24">
         <div className="px-5 py-4 flex flex-col gap-4 border-b border-gray-100">
           {/* 3. Assignees & 4. API Details & 5. Schedule */}
-          <TicketAssignees ticket={state.ticket} profiles={profiles} setTicket={state.setTicket} />
-          {state.isApiTagSelected && <TicketApiDetails apiMethod={state.apiMethod} apiRoute={state.apiRoute} setApiMethod={state.setApiMethod} setApiRoute={state.setApiRoute} />}
-          <TicketSchedule ticket={state.ticket} setTicket={state.setTicket} />
+          <TicketAssignees
+            ticket={state.ticket}
+            profiles={profiles}
+            setTicket={state.setTicket}
+          />
+          {state.isApiTagSelected && (
+            <TicketApiDetails
+              apiMethod={state.apiMethod}
+              apiRoute={state.apiRoute}
+              setApiMethod={state.setApiMethod}
+              setApiRoute={state.setApiRoute}
+            />
+          )}
+          <TicketSchedule
+            ticket={state.ticket}
+            setTicket={state.setTicket}
+            showDateError={state.showDateError}
+          />
         </div>
 
         {/* 6. Description */}
         <div className="px-5 py-4 border-b border-gray-100">
-          <Label className="text-md -mb-4 text-neutral-border font-bold tracking-wider uppercase">DESCRIPTION</Label>
-          <FormInput variant="textarea" label="" maxLength={360} rows={4} value={state.ticket.description ?? ""} placeholder="Add a description..." onChange={(e) => state.setTicket((t) => ({ ...t, description: e.target.value }))} />
+          <Label className="text-md -mb-4 text-neutral-border font-bold tracking-wider uppercase">
+            DESCRIPTION
+          </Label>
+          <FormInput
+            variant="textarea"
+            label=""
+            maxLength={360}
+            rows={4}
+            value={state.ticket.description ?? ""}
+            placeholder="Add a description..."
+            onChange={(e) =>
+              state.setTicket((t) => ({ ...t, description: e.target.value }))
+            }
+          />
         </div>
 
         {/* 7. Subtasks */}
-        {!isSubtaskView && (() => {
+        {!isSubtaskView &&
+          (() => {
             const totalSubtasks = state.subtasks.length;
             const finishedSubtasks = state.subtasks.filter(
-              (s) => s.status === StatusEnum.FINISHED
+              (s) => s.status === StatusEnum.FINISHED,
             ).length;
             const progressPct =
               totalSubtasks > 0 ? (finishedSubtasks / totalSubtasks) * 100 : 0;
@@ -81,7 +138,9 @@ export default function TicketEditor({
               <div className="px-5 mt-5 space-y-3">
                 {/* Header: Title & Completion Count */}
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-foreground">Subtasks</h3>
+                  <h3 className="text-base font-bold text-foreground">
+                    Subtasks
+                  </h3>
                   <span className="text-xs font-medium text-muted-foreground">
                     {finishedSubtasks} of {totalSubtasks} complete
                   </span>
@@ -104,11 +163,8 @@ export default function TicketEditor({
                   ) : (
                     state.subtasks.map((subtask) => {
                       const isDone = subtask.status === StatusEnum.FINISHED;
-                      const isInProgress = subtask.status === StatusEnum.IN_PROGRESS;
-                      const assigneeName =
-                        subtask.TicketAssigned && subtask.TicketAssigned.length > 0
-                          ? `${subtask.TicketAssigned[0].Profile?.first_name ?? ""} ${subtask.TicketAssigned[0].Profile?.last_name ?? ""}`.trim()
-                          : "Unassigned";
+                      const isInProgress =
+                        subtask.status === StatusEnum.IN_PROGRESS;
 
                       return (
                         <div
@@ -125,10 +181,15 @@ export default function TicketEditor({
                               {subtask.name}
                             </h4>
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                              <Calendar size={12} className="text-muted-foreground shrink-0" />
+                              <Calendar
+                                size={12}
+                                className="text-muted-foreground shrink-0"
+                              />
                               <span>
                                 {subtask.plan_end_at
-                                  ? new Date(subtask.plan_end_at).toLocaleDateString("en-US", {
+                                  ? new Date(
+                                      subtask.plan_end_at,
+                                    ).toLocaleDateString("en-US", {
                                       month: "short",
                                       day: "numeric",
                                     })
@@ -148,7 +209,11 @@ export default function TicketEditor({
                                   : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
                               }`}
                             >
-                              {isDone ? "Done" : isInProgress ? "In Progress" : "Pending"}
+                              {isDone
+                                ? "Done"
+                                : isInProgress
+                                ? "In Progress"
+                                : "Pending"}
                             </span>
                             {/* Remove Button on Hover */}
                             <button
@@ -185,48 +250,74 @@ export default function TicketEditor({
         {/* 8. Attachments */}
         {ticketImages.length > 0 && (
           <div className="px-5 mt-5">
-            <p className="text-sm font-semibold text-neutral-border mb-2 uppercase tracking-wider">Attachments</p>
+            <p className="text-sm font-semibold text-neutral-border mb-2 uppercase tracking-wider">
+              Attachments
+            </p>
             <div className="flex flex-wrap gap-2">
               {ticketImages.map((img) => (
-                <img key={img.image_id} src={img.image_src} alt="attachment" className="h-16 w-auto rounded-md border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => state.setLightboxSrc(img.image_src)} />
+                <img
+                  key={img.image_id}
+                  src={img.image_src}
+                  alt="attachment"
+                  className="h-16 w-auto rounded-md border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => state.setLightboxSrc(img.image_src)}
+                />
               ))}
             </div>
           </div>
         )}
 
         {/* 9. Activity */}
-        <TicketActivitySection ticketId={state.ticket.ticket_id} comments={comments} currentUser={state.user} onImageClick={state.setLightboxSrc} />
+        <TicketActivitySection
+          ticketId={state.ticket.ticket_id}
+          comments={comments}
+          currentUser={state.user}
+          onImageClick={state.setLightboxSrc}
+        />
       </div>
 
       {/* 10. Footer */}
       <div className="fixed bottom-0 right-0 w-160 flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-neutral-surface z-50">
-        <button type="button" onClick={onClose} className="text-sm font-medium text-gray-500 px-4 py-2 rounded-md hover:bg-gray-100">Cancel</button>
-        <Button onClick={state.handleSave}>Save Changes</Button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-sm font-medium text-gray-500 px-4 py-2 rounded-md hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+        <Button onClick={state.handleSave} disabled={state.isSaving}>
+          {state.isSaving ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
 
       {/* Modals */}
-      {state.lightboxSrc && <ImageLightbox src={state.lightboxSrc} onClose={() => state.setLightboxSrc(null)} />}
-      
-      {state.isSubtaskViewOpen && state.selectedSubtask && (
-        <TicketModalEdit 
-          ticket={state.selectedSubtask} 
-          isOpen={state.isSubtaskViewOpen} 
-          onClose={() => { 
-            state.setIsSubtaskViewOpen(false); 
-            state.setSelectedSubtask(null); 
-          }} 
-          onUpdate={onUpdate} 
-          tags={tags} 
-          allTickets={allTickets} 
-          isSubtaskView={true} 
-          parentTicket={state.ticket} 
+      {state.lightboxSrc && (
+        <ImageLightbox
+          src={state.lightboxSrc}
+          onClose={() => state.setLightboxSrc(null)}
         />
       )}
-      
-      <SubtaskSelectionModal 
-        open={state.isSubtaskSelectionOpen} 
-        onOpenChange={state.setIsSubtaskSelectionOpen} 
-        onSelectSubtask={state.handleAddSubtask} 
+
+      {state.isSubtaskViewOpen && state.selectedSubtask && (
+        <TicketModalEdit
+          ticket={state.selectedSubtask}
+          isOpen={state.isSubtaskViewOpen}
+          onClose={() => {
+            state.setIsSubtaskViewOpen(false);
+            state.setSelectedSubtask(null);
+          }}
+          onUpdate={onUpdate}
+          tags={tags}
+          allTickets={allTickets}
+          isSubtaskView={true}
+          parentTicket={state.ticket}
+        />
+      )}
+
+      <SubtaskSelectionModal
+        open={state.isSubtaskSelectionOpen}
+        onOpenChange={state.setIsSubtaskSelectionOpen}
+        onSelectSubtask={state.handleAddSubtask}
         availableTickets={state.availableTickets}
       />
     </div>

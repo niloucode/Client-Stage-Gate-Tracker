@@ -13,33 +13,33 @@ import {
 import { useRef } from "react";
 import type { ReactNode } from "react";
 
-interface ConfirmDeleteModalProps {
+export interface ConfirmationModalProps {
 	isOpen: boolean;
-	/** The thing being deleted, e.g. "Phase" — drives default copy. */
-	noun: string;
-	/** Overrides the default title (`Delete {noun}`). */
+	noun?: string;
 	title?: string;
-	/** Overrides the default description text. */
 	description?: ReactNode;
-	/** Overrides the default confirm button label (`Delete {noun}`). */
 	confirmLabel?: string;
+	cancelLabel?: string;
+	variant?: "default" | "destructive";
 	onConfirm: () => void;
 	onCancel: () => void;
 }
 
 /**
- * Generic destructive-confirmation dialog on top of shadcn AlertDialog.
- * Replaces the hand-rolled DeletePhase / DeleteWorkflow / TagModalDelete modals.
+ * Generic confirmation dialog on top of Shadcn / Radix AlertDialog.
+ * Supports delete confirmations, unsaved changes prompts, and action confirmations.
  */
-export function ConfirmDeleteModal({
+export function ConfirmationModal({
 	isOpen,
-	noun,
+	noun = "Item",
 	title,
 	description,
 	confirmLabel,
+	cancelLabel = "Cancel",
+	variant = "destructive",
 	onConfirm,
 	onCancel,
-}: ConfirmDeleteModalProps) {
+}: ConfirmationModalProps) {
 	// Radix closes the dialog on both Cancel and Action clicks, which also
 	// fires onOpenChange(false). Track a confirmed click so onCancel is not
 	// invoked when the dialog closes because the user confirmed.
@@ -62,19 +62,28 @@ export function ConfirmDeleteModal({
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
-					{/* Cancel: no onClick — Radix closes the dialog, onOpenChange handles onCancel once. */}
-					<AlertDialogCancel>Cancel</AlertDialogCancel>
+					<AlertDialogCancel onClick={onCancel}>
+						{cancelLabel}
+					</AlertDialogCancel>
 					<AlertDialogAction
 						onClick={() => {
 							confirmedRef.current = true;
 							onConfirm();
 						}}
-						className="bg-destructive hover:bg-destructive/90"
+						className={
+							variant === "destructive"
+								? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+								: ""
+						}
 					>
-						{confirmLabel ?? `Delete ${noun}`}
+						{confirmLabel ?? (variant === "destructive" ? `Delete ${noun}` : "Confirm")}
 					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
 	);
 }
+
+// Alias for backward compatibility
+export const ConfirmDeleteModal = ConfirmationModal;
+export default ConfirmationModal;

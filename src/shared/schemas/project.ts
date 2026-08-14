@@ -32,7 +32,7 @@ export const projectCreateSchema = baseProject.refine(
 		!data.deadline_date ||
 		data.start_date <= data.deadline_date,
 	{
-		message: "Start date must be before or equal to deadline date",
+		message: "Start must be before End",
 		path: ["start_date"],
 	},
 );
