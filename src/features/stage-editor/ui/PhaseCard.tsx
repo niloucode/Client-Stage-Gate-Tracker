@@ -27,12 +27,14 @@ interface PhaseCardProps {
 	stageId: string;
 	activePhase: number | null;
 	setActivePhase: (phase: number | null) => void;
+	/** Clients are read-only: hide edit/delete controls and drag handles. */
+	readOnly?: boolean;
 }
 
 export const PhaseCard = forwardRef<
 	{ openCreateModal: () => void },
 	PhaseCardProps
->(({ phases, stageId, activePhase, setActivePhase }, ref) => {
+>(({ phases, stageId, activePhase, setActivePhase, readOnly = false }, ref) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [phaseToEdit, setPhaseToEdit] = useState<Phase | null>(null);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -121,6 +123,7 @@ export const PhaseCard = forwardRef<
 
 	// Drag and Drop Handlers
 	const handleDragStart = (e: React.DragEvent, index: number) => {
+		if (readOnly) return;
 		setDraggedIndex(index);
 		e.dataTransfer.effectAllowed = "move";
 		setTimeout(() => {
@@ -138,6 +141,7 @@ export const PhaseCard = forwardRef<
 
 	const handleDragOver = (e: React.DragEvent, index: number) => {
 		e.preventDefault();
+		if (readOnly) return;
 		e.dataTransfer.dropEffect = "move";
 
 		if (draggedIndex === null || draggedIndex === index) return;
@@ -156,6 +160,7 @@ export const PhaseCard = forwardRef<
 
 	const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
 		e.preventDefault();
+		if (readOnly) return;
 
 		const dragIndex = draggedIndex;
 		if (dragIndex === null || dragIndex === dropIndex) {
@@ -255,7 +260,7 @@ export const PhaseCard = forwardRef<
 											<div
 												key={phase.phase_id}
 												className="relative flex flex-col items-center flex-shrink-0 w-12 transition-all duration-200 cursor-grab active:cursor-grabbing"
-												draggable={true}
+												draggable={!readOnly}
 												onDragStart={(e) => handleDragStart(e, index)}
 												onDragEnd={handleDragEnd}
 												onDragOver={(e) => handleDragOver(e, index)}
@@ -268,7 +273,6 @@ export const PhaseCard = forwardRef<
 														onClick={() =>
 															phase.number !== null && setActivePhase(phase.number)
 														}
-														className="focus:outline-none"
 													>
 														{/* Node Circle — Styled to match ProjectStructure circle design */}
 														<div
@@ -288,25 +292,30 @@ export const PhaseCard = forwardRef<
 													</button>
 
 													{/* Edit Button on Group Hover */}
-													<button
-														onClick={() => openEditModal(phase)}
-														className="flex items-center justify-center h-4 w-4 absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
-														title="Edit phase"
-														aria-label={`Edit phase ${phase.number ?? ""}`}
-													>
-														<Pencil size={12} strokeWidth={3} />
-													</button>
+													{!readOnly && (
+														<button
+															onClick={() => openEditModal(phase)}
+															className="flex items-center justify-center h-4 w-4 absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
+															title="Edit phase"
+															aria-label={`Edit phase ${phase.number ?? ""}`}
+														>
+															<Pencil size={12} strokeWidth={3} />
+														</button>
+													)}
 
 													{/* Delete Button on Group Hover */}
-													<button
-														onClick={() =>
-															phase.number !== null && confirmDelete(phase.number)
-														}
-														className="flex items-center justify-center h-4 w-4 absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
-														title="Delete phase"
-													>
-														<X size={12} strokeWidth={3} />
-													</button>
+													{!readOnly && (
+														<button
+															onClick={() =>
+																phase.number !== null && confirmDelete(phase.number)
+															}
+															className="flex items-center justify-center h-4 w-4 absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
+															title="Delete phase"
+															aria-label={`Delete phase ${phase.number ?? ""}`}
+														>
+															<X size={12} strokeWidth={3} />
+														</button>
+													)}
 												</div>
 
 												{/* Phase Labels */}

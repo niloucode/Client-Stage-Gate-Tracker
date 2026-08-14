@@ -20,6 +20,8 @@ interface WorkflowCardProps {
 	moduleId: string;
 	projectId: string;
 	stageId: string;
+	/** Clients are read-only: hide add/edit/delete controls and drag handles. */
+	readOnly?: boolean;
 }
 
 /**
@@ -107,6 +109,7 @@ export function WorkflowCard({
 	moduleId,
 	projectId,
 	stageId,
+	readOnly = false,
 }: WorkflowCardProps) {
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
@@ -211,6 +214,7 @@ export function WorkflowCard({
 
 	// Drag and Drop Handlers
 	const handleDragStart = (e: React.DragEvent, index: number) => {
+		if (readOnly) return;
 		setDraggedIndex(index);
 		e.dataTransfer.effectAllowed = "move";
 		setTimeout(() => {
@@ -228,6 +232,7 @@ export function WorkflowCard({
 
 	const handleDragOver = (e: React.DragEvent, index: number) => {
 		e.preventDefault();
+		if (readOnly) return;
 		e.dataTransfer.dropEffect = "move";
 
 		if (draggedIndex === null || draggedIndex === index) return;
@@ -246,6 +251,7 @@ export function WorkflowCard({
 
 	const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
 		e.preventDefault();
+		if (readOnly) return;
 
 		const dragIndex = draggedIndex;
 		if (dragIndex === null || dragIndex === dropIndex) {
@@ -330,7 +336,7 @@ export function WorkflowCard({
 						<div
 							key={workflow.workflow_id}
 							className="flex items-center justify-between px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors group cursor-grab active:cursor-grabbing"
-							draggable={true}
+							draggable={!readOnly}
 							onDragStart={(e) => handleDragStart(e, index)}
 							onDragEnd={handleDragEnd}
 							onDragOver={(e) => handleDragOver(e, index)}
@@ -408,17 +414,19 @@ export function WorkflowCard({
 
 								{/* Workflow Actions — edit hidden when completed (Task 5.7) */}
 								<div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-									{getWorkflowStatus(workflow as WorkflowWithActuals) !== "ended" && (
-										<button
-											onClick={() => openEditWorkflowModal(workflow)}
-											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
-										>
-											<EllipsisVertical
-												size={14}
-												className="text-slate-500"
-											/>
-										</button>
-									)}
+									{!readOnly &&
+										getWorkflowStatus(workflow as WorkflowWithActuals) !== "ended" && (
+											<button
+												onClick={() => openEditWorkflowModal(workflow)}
+												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
+												aria-label="Edit workflow"
+											>
+												<EllipsisVertical
+													size={14}
+													className="text-slate-500"
+												/>
+											</button>
+										)}
 								</div>
 							</div>
 						</div>
@@ -426,16 +434,18 @@ export function WorkflowCard({
 				})}
 
 				{/* Add Workflow Button */}
-				<button
-					onClick={openCreateWorkflowModal}
-					className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
-					style={{ width: "calc(100% - 24px)" }}
-				>
-					<Plus size={16} className={"text-brand-200"} />
-					<span className="text-sm font-medium text-neutral-border">
-						Add Workflow
-					</span>
-				</button>
+				{!readOnly && (
+					<button
+						onClick={openCreateWorkflowModal}
+						className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
+						style={{ width: "calc(100% - 24px)" }}
+					>
+						<Plus size={16} className={"text-brand-200"} />
+						<span className="text-sm font-medium text-neutral-border">
+							Add Workflow
+						</span>
+					</button>
+				)}
 			</div>
 
 			{/* Add Workflow Modal */}

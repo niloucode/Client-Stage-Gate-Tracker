@@ -86,6 +86,8 @@ interface ModuleCardProps {
 	phases: Phase[];
 	projectId: string;
 	stageId: string;
+	/** Clients are read-only: hide add/edit/delete controls. */
+	readOnly?: boolean;
 }
 
 export function ModuleCard({
@@ -93,6 +95,7 @@ export function ModuleCard({
 	phases,
 	projectId,
 	stageId,
+	readOnly = false,
 }: ModuleCardProps) {
 	const [isAddOpen, setIsAddOpen] = useState(false);
 	const [editingModule, setEditingModule] = useState<Module | null>(null);
@@ -233,9 +236,11 @@ export function ModuleCard({
 			{/* Header with Add Module button */}
 			<div className="flex justify-between items-center mb-4">
 				<h3 className="text-2xl font-semibold text-slate-900">Modules</h3>
-				<Button onClick={openCreateModuleModal}>
-					<Plus className="mr-2 h-4 w-4" /> Add Module
-				</Button>
+				{!readOnly && (
+					<Button onClick={openCreateModuleModal}>
+						<Plus className="mr-2 h-4 w-4" /> Add Module
+					</Button>
+				)}
 			</div>
 
 			{/* Module Cards */}
@@ -345,15 +350,18 @@ export function ModuleCard({
 										<div className="w-px h-5 bg-slate-200 mx-1"></div>
 
 										{/* Edit button */}
-										<button
-											onClick={() => openEditModuleModal(module)}
-											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
-										>
-											<EllipsisVertical
-												size={14}
-												className="text-slate-500"
-											/>
-										</button>
+										{!readOnly && (
+											<button
+												onClick={() => openEditModuleModal(module)}
+												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
+												aria-label="Edit module"
+											>
+												<EllipsisVertical
+													size={14}
+													className="text-slate-500"
+												/>
+											</button>
+										)}
 									</div>
 								</div>
 
