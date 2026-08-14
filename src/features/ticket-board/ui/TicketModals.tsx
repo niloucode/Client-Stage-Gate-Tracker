@@ -31,7 +31,7 @@ import {
 	toast,
 } from "@/components/ui";
 
-import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
+import { IssueTableModal } from "@/entities/issue";
 import type { IssueItem } from "@/entities/issue";
 
 import TicketEditor from "./editor/TicketEditor";
@@ -267,6 +267,8 @@ export function TicketModalCreate({
 			plan_end_at: deadline ?? null,
 			api_route: isApiTagSelected ? (apiRoute.trim() || null) : null,
 			api_method: isApiTagSelected ? apiMethod : null,
+			// 1-to-1 issue link (spec): persisted via createTicket.
+			issue_id: linkedIssue?.id ?? null,
 		};
 
 		// Validate with Zod schema
@@ -354,6 +356,7 @@ export function TicketModalCreate({
 				api_route: validation.data.api_route ?? null,
 				api_method: validation.data.api_method ?? null,
 				image_urls: imageUrls,
+				issue_id: validation.data.issue_id ?? null,
 			});
 
 			// Success Toast
@@ -369,7 +372,8 @@ export function TicketModalCreate({
 			console.error("Ticket creation failed:", error);
 			toast.add({
 				title: "Creation Failed",
-				description: "Unable to create ticket. Please try again.",
+				description:
+					error instanceof Error ? error.message : "Unable to create ticket. Please try again.",
 				type: "error",
 			});
 		} finally {
@@ -763,6 +767,7 @@ export function TicketModalCreate({
 			<IssueTableModal
 				open={isIssueModalOpen}
 				onOpenChange={setIsIssueModalOpen}
+				projectId={projectId}
 				onSelectIssue={(issue) => setLinkedIssue(issue)}
 			/>
 

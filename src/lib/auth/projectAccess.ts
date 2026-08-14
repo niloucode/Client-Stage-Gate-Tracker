@@ -109,6 +109,45 @@ export async function assertProjectMemberNotClient(
 	return base;
 }
 
+/**
+ * Project-access check that ALSO accepts client profiles (issue-reporting
+ * spec 2026-08-15: both clients and project team/owners may report issues).
+ * Clients are linked to a project through their contract, not through
+ * roleAssignments, so the plain member check alone would reject them.
+ */
+export async function assertProjectMemberOrClient(
+	projectId: string,
+): Promise<AuthResult> {
+	const userId = await getCurrentUserId();
+	if (!userId) return { ok: false, error: "Authentication required." };
+
+	const isMember = await requireProjectMember(projectId, userId);
+	if (isMember) return { ok: true, userId };
+
+	// Not a role-assigned member — allow if this profile is the project's client.
+	const profile = await prisma.profiles.findUnique({
+		where: { profile_id: userId },
+		select: { client_id: true },
+	});
+	if (!profile?.client_id) {
+		return {
+			ok: false,
+			error: "You are not a member of this project.",
+		};
+	}
+	const contract = await prisma.contracts.findFirst({
+		where: { project_id: projectId, client_id: profile.client_id, is_deleted: false },
+		select: { contract_id: true },
+	});
+	if (!contract) {
+		return {
+			ok: false,
+			error: "You are not a member of this project.",
+		};
+	}
+	return { ok: true, userId };
+}
+
 // ── project_id resolvers for child entities ─────────────────────────────────
 
 export async function resolveStageProject(

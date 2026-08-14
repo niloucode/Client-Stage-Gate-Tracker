@@ -90,6 +90,8 @@ export const dashboardAnalyticsKeys = {
 export const issueKeys = {
 	all: ["issues"] as const,
 	stats: () => [...issueKeys.all, "stats"] as const,
+	lists: () => [...issueKeys.all, "list"] as const,
+	list: (projectId: string) => [...issueKeys.lists(), projectId] as const,
 };
 
 export const dashboardKeys = {

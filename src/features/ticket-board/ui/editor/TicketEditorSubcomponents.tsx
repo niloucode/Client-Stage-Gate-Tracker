@@ -29,7 +29,7 @@ import {
 import { TagBadge } from "@/entities/tag/ui";
 import { Pencil, ChevronDown, Plus, Search, Bug, AlertCircle } from "lucide-react";
 
-import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
+import { IssueTableModal, mapIssueRow } from "@/entities/issue";
 import type { IssueItem } from "@/entities/issue";
 
 import { STATUS_CONFIG, STATUSES, UserAvatar, getLinkedIssueStyle } from "./helpers";
@@ -363,14 +363,19 @@ export function TicketApiDetails({
 }
 
 export function TicketSchedule({
-  ticket, setTicketAction, showDateError,
+  ticket, setTicketAction, showDateError, projectId,
 }: {
   ticket: Ticket;
   setTicketAction: Dispatch<SetStateAction<Ticket>>;
   showDateError?: boolean;
+  projectId?: string;
 }) {
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [linkedIssue, setLinkedIssue] = useState<IssueItem | null>(null);
+  // Display the linked issue from the server ticket record (survives refresh);
+  // the picker overrides it until the next save.
+  const [linkedIssue, setLinkedIssue] = useState<IssueItem | null>(() =>
+    ticket.Issues ? mapIssueRow(ticket.Issues) : null
+  );
 
   return (
     <div className="space-y-2 pt-1">
@@ -433,7 +438,7 @@ export function TicketSchedule({
           );
         })()}
       </div>
-      <IssueTableModal open={isIssueModalOpen} onOpenChange={setIsIssueModalOpen} onSelectIssue={(issue) => { setLinkedIssue(issue); setTicketAction((t) => ({ ...t, issue_id: issue.id })); }} />
+      <IssueTableModal open={isIssueModalOpen} onOpenChange={setIsIssueModalOpen} projectId={projectId} onSelectIssue={(issue) => { setLinkedIssue(issue); setTicketAction((t) => ({ ...t, issue_id: issue.id })); }} />
     </div>
   );
 }

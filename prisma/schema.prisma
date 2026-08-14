@@ -240,6 +240,7 @@ model Projects {
   Contracts       Contracts?
   RoleAssignments RoleAssignments[]
   Stages          Stages[]
+  Issues          Issues[]
 
   @@schema("public")
 }
@@ -343,7 +344,7 @@ model Tickets {
   plan_start_at   DateTime?        @db.Timestamptz(6)
   actual_start_at DateTime?        @db.Timestamptz(6)
   parent_id       String?          @db.Uuid
-  issue_id        String?          @db.Uuid
+  issue_id        String?          @unique @db.Uuid
   HistoryEvent    HistoryEvent[]
   TicketAssigned  TicketAssigned[]
   TicketTags      TicketTags[]
@@ -356,7 +357,6 @@ model Tickets {
   @@index([workflow_id, status])
   @@index([status, is_deleted])
   @@index([workflow_id, is_deleted])
-  @@index([issue_id])
   @@index([parent_id])
   @@schema("public")
 }
@@ -387,6 +387,10 @@ model Workflows {
 /// issue reports are short-lived operational records, not domain entities.
 model Issues {
   issue_id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id         String       @db.Uuid
+  reported_by        String?      @db.Uuid
+  reported_at        DateTime     @default(now()) @db.Timestamptz(6)
+  status             IssueStatus  @default(UNLINKED)
   name               String
   type               String
   description        String?
@@ -395,7 +399,10 @@ model Issues {
   time_of_error      DateTime?    @db.Timestamptz(6)
   IssueSteps         IssueSteps[]
   Tickets            Tickets[]
+  Projects           Projects     @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
+  Profile            Profiles?    @relation(fields: [reported_by], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([project_id])
   @@schema("public")
 }
 
@@ -435,6 +442,7 @@ model Profiles {
   RoleAssignments                                  RoleAssignments[]
   TicketAssigned                                   TicketAssigned[]
   Tickets                                          Tickets[]
+  Issues                                           Issues[]
 
   @@index([email(ops: raw("gin_trgm_ops"))], map: "Profiles_email_trgm_idx", type: Gin)
   @@index([first_name(ops: raw("gin_trgm_ops"))], map: "Profiles_first_name_trgm_idx", type: Gin)
@@ -511,6 +519,14 @@ enum IssueUrgency {
   LOW
   MEDIUM
   HIGH
+
+  @@schema("public")
+}
+
+enum IssueStatus {
+  UNLINKED
+  LINKED
+  RESOLVED
 
   @@schema("public")
 }

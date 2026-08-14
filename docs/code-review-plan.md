@@ -189,6 +189,18 @@
 - [x] src/entities/contract/mutations.ts
 - [x] src/entities/contract/queries.ts
 - [x] src/entities/gate/gateActions.ts (deleted — slice had zero live consumers)
+- [x] src/entities/issue/index.ts (2026-08-15: public API — actions, types, lib/constants, lib/mappers, queries, ui)
+- [x] src/entities/issue/issueActions.ts (2026-08-15: + createIssue/listIssues — project-scoped via assertProjectMemberOrClient (clients may report), reporter from session, "other"→type mapping, issueDetailInclude)
+- [x] src/entities/issue/types.ts (2026-08-15: canonical issue types (moved from features/issue-reporting); IssueItem reworked — type: string, lowercase status, specificType removed)
+- [x] src/entities/issue/lib/constants.ts (new — URGENCY_WEIGHT, BUG_TYPE_LABELS, bugTypeLabel)
+- [x] src/entities/issue/lib/mappers.ts (new — mapIssueRow/formatIssueDateTime/IssueRow, 4 tests)
+- [x] src/entities/issue/lib/mappers.test.ts
+- [x] src/entities/issue/queries.ts (new — useProjectIssues/useCreateIssue, issueKeys.list invalidation)
+- [x] src/entities/issue/ui/index.ts
+- [x] src/entities/issue/ui/IssueCard.tsx (moved from features/issue-reporting 2026-08-15)
+- [x] src/entities/issue/ui/IssueBox.tsx (moved 2026-08-15; create-button props dropped)
+- [x] src/entities/issue/ui/IssueDetailsModal.tsx (moved 2026-08-15)
+- [x] src/entities/issue/ui/IssueTableModal.tsx (moved 2026-08-15 + real: useProjectIssues, unlinked-only for the 1-to-1 rule)
 - [x] src/entities/module/index.ts
 - [x] src/entities/module/types.ts (deleted — merged into slice files)
 - [x] src/entities/module/moduleActions.ts
@@ -272,10 +284,11 @@
 - [ ] src/features/dashboard-analytics/ui/GanttTabs.tsx
 - [ ] src/features/dashboard-analytics/ui/LevelFilterPills.tsx
 - [ ] src/features/dashboard-analytics/ui/ProjectGanttChart.tsx
-- [ ] src/features/issue-reporting/model/issues.ts
-- [ ] src/features/issue-reporting/ui/IssueDashboard.tsx
-- [ ] src/features/issue-reporting/ui/IssueReportingModal.tsx
-- [ ] src/features/issue-reporting/ui/IssueTableModal.tsx
+- [x] src/features/issue-reporting/index.ts (new — public API: IssueDashboard, IssueReportingModal, IssueFormState)
+- [x] src/features/issue-reporting/model/issues.ts (deleted — dead in-memory mock store, zero importers; types moved to entities/issue)
+- [x] src/features/issue-reporting/ui/IssueDashboard.tsx (2026-08-15: rewritten — real useProjectIssues(projectId), real counts/tabs, loading+error states, page-level New Issue button)
+- [x] src/features/issue-reporting/ui/IssueReportingModal.tsx (2026-08-15: image-remove ✕ bug fixed (cleared description, never the image); object-URL revocation on remove/close/unmount; 5MB cap; Supabase storage upload (images bucket, issues/ path, all-or-nothing + orphan cleanup); owns useCreateIssue mutation, awaits before close; form-kit migration still a follow-up. Re-audit 2026-08-15: React.FormEvent → SyntheticEvent (TS6385), upload loop restructured — no locally-caught throws, close blocked while isSubmitting)
+- [x] src/features/issue-reporting/ui/IssueTableModal.tsx (deleted — moved to entities/issue/ui and made real; ticket-board imports via @/entities/issue)
 - [x] src/features/landing-dashboard/index.ts
 - [x] src/features/landing-dashboard/model/types.ts
 - [x] src/features/landing-dashboard/model/mappers.ts
@@ -365,7 +378,7 @@
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx
 - [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx (2026-08-15: reads params.projectId (Next 15 async params), imports via the feature public API; renders the real IssueDashboard)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx (2026-08-15: reviewed with the stage-editor slice — imports bypass the slice public API (deep imports of ui/ModuleCard, ui/PhaseCard, types); `as unknown as Phase[]` cast hides the planStart/description nullability mismatch; NO client permission gating (clients see all Add/Edit/Delete/DnD controls — server actions reject them, but UI must hide them per spec; scheduled in integration plan)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx (2026-08-15: reviewed with the ticket-board slice — server-rendered shell that fetches getWorkflowById + renders TicketBoard; no client gating (TicketBoard handles it); fine)
@@ -666,3 +679,42 @@ All pre-existing unless noted — none block the running app except the first.
         IssueDashboard:630 + IssueTableModal:47 — fixed with `|| "low"` (matches
         the existing `type || "other"` pattern). Re-verified: tsc ✓, eslint ✓
         (0 problems incl. legacy issue-reporting), vitest 34/226 ✓, build ✓.
+
+- [x] **Issue-reporting integration (2026-08-15)** — ALL items below were completed and
+      verified in **`docs/reasonix/plans/2026-08-15-issue-reporting-integration.md`**
+      (inline execution with serial step sign-off; built-in review on the final diff,
+      no blockers, 2 should-fix items applied; final verification: prisma validate ✓,
+      tsc ✓, vitest 37 files / 246 tests ✓ (20 new), eslint ✓ 0 problems, build ✓):
+  - [x] **Migration 11 (hand-written, apply to Supabase out-of-band; rollback = revert)** —
+        `Issues.project_id` NOT NULL FK + `reported_by` FK + `reported_at` +
+        `IssueStatus` enum + `status` column; `Tickets.issue_id` → unique (1-to-1).
+  - [x] **Entity data layer** — `createIssue`/`listIssues` (project-scoped,
+        `assertProjectMemberOrClient` — clients report too; reporter from session),
+        `issueCreateSchema` (10 tests), `issueStatus` pure helpers (6 tests),
+        `mapIssueRow` mapper (4 tests), `useProjectIssues`/`useCreateIssue` hooks.
+  - [x] **Ticket link persistence (was pure theater)** — `issue_id` added to the ticket
+        schemas + create/update actions (previously Zod silently stripped it);
+        status auto-sync (link / FINISHED→RESOLVED / regression→LINKED /
+        soft-delete: non-FINISHED releases, FINISHED keeps); cross-project link guard;
+        P2002 checked against `Tickets_issue_id_key`; `ticketInclude` carries `issue`.
+  - [x] **UI** — picker moved to `entities/issue/ui` (real data, unlinked-only),
+        same-layer ticket-board import gone; `IssueDashboard` real data; modal fixes
+        (image-remove ✕ bug, object-URL leaks, 5MB cap, Supabase upload all-or-nothing
+        incl. orphan cleanup); feature public API; page passes projectId.
+  - [ ] Follow-ups: `IssueReportingModal` → `useAppForm` migration; DB-backed tests for
+        the transactional sync paths; `ticketInclude.issue` read weight.
+  - [x] **Re-audit + runtime fixes (2026-08-15, same plan doc)** — user-reported
+        `'use server" file can only export async functions, found object` + `Failed to
+        load issues`: root cause was `export const issueDetailInclude` (plain object)
+        in the "use server" file — made module-private; new repo-wide regression test
+        `src/shared/testing/use-server-exports.test.ts` scans all directive files.
+        WebStorm diagnostics fixed (FormEvent, throw-in-try, close-during-submit,
+        pagination aria-labels); stale-UI fix: all 4 ticket mutation hooks now
+        invalidate `issueKeys.all`; `updateTicket` syncs the linked issue on
+        status-only changes; P2002 conflict check matches `meta.target` FIELD name
+        (`issue_id`, per clientActions.ts convention) so the friendly "already linked"
+        error actually fires; create+edit toasts surface `error.message`.
+  - [x] **Migration 11 APPLIED to Supabase (2026-08-15)** — `prisma db execute --file`
+        after user approval (0 rows affected); re-verified read-only: new columns +
+        `IssueStatus` type + `Tickets_issue_id_key` unique present; generated-client
+        smoke test against the DB clean.

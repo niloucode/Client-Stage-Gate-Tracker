@@ -18,6 +18,8 @@ export const ticketCreateSchema = z.object({
 	actual_end_at: z.date().optional().nullable(),
 	api_route: z.string().optional().nullable(),
 	api_method: z.enum(["GET", "POST", "PUT", "DELETE"]).optional().nullable(),
+	// 1-to-1 issue↔ticket link (spec 2026-08-15): real issue uuid, optional.
+	issue_id: z.uuid().optional().nullable(),
 });
 
 export type TicketCreateInput = z.infer<typeof ticketCreateSchema>;

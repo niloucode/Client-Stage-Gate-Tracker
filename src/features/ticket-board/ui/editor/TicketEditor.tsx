@@ -116,6 +116,7 @@ export default function TicketEditor({
             ticket={state.ticket}
             setTicketAction={state.setTicket}
             showDateError={state.showDateError}
+            projectId={projectId}
           />
         </div>
 

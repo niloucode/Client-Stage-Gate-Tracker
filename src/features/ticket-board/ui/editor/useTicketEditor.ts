@@ -134,6 +134,8 @@ export function useTicketEditor({
 				description: ticket.description,
 				api_route: isApiTagSelected ? (apiRoute || null) : null,
 				api_method: isApiTagSelected ? (apiMethod || null) : null,
+				// 1-to-1 issue link (spec): persisted via updateTicket.
+				issue_id: ticket.issue_id ?? null,
 				performed_by: user?.profile_id,
 			});
 			onUpdate(updated);
@@ -142,7 +144,8 @@ export function useTicketEditor({
 			console.error("Failed to save ticket:", error);
 			toast.add({
 				title: "Save Failed",
-				description: "An error occurred while saving the ticket.",
+				description:
+					error instanceof Error ? error.message : "An error occurred while saving the ticket.",
 				type: "error",
 			});
 		}

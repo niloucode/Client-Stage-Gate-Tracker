@@ -12,6 +12,7 @@ import { ticketInclude } from "./types";
 import { rollupTicketAncestors } from "./lib/dateRollup";
 import { computeActualDates } from "./lib/statusTransitions";
 import { logHistoryEvent } from "./lib/logHistoryEvent";
+import { deriveIssueStatus, shouldKeepLinkOnDelete } from "@/shared/lib/issueStatus";
 import {
 	currentWeekStart,
 	previousWeekStart,
@@ -32,6 +33,77 @@ import {
 	resolveWorkflowProject,
 } from "@/lib/auth/projectAccess";
 
+type DbClient = Prisma.TransactionClient | typeof prisma;
+
+/**
+ * Recomputes Issues.status for the given issue from its (1-to-1) linked
+ * ticket: RESOLVED when the ticket is FINISHED, LINKED while pending/in
+ * progress, UNLINKED when no active ticket is linked. A soft-deleted ticket
+ * keeps the link only when FINISHED (spec rule), so the derived status is
+ * computed from the active ticket only.
+ */
+async function syncLinkedIssueStatus(issueId: string, db: DbClient = prisma) {
+	const issue = await db.issues.findUnique({
+		where: { issue_id: issueId },
+		select: {
+			Tickets: {
+				select: { status: true, is_deleted: true },
+				take: 1,
+			},
+		},
+	});
+	if (!issue) return;
+	const ticket = issue.Tickets[0] ?? null;
+	const activeTicket =
+		ticket && (!ticket.is_deleted || ticket.status === "FINISHED") ? ticket : null;
+	const next = deriveIssueStatus(activeTicket ? activeTicket.status : null);
+	await db.issues.update({
+		where: { issue_id: issueId },
+		data: { status: next },
+	});
+}
+
+/**
+ * Maps a Prisma unique-constraint error on the 1-to-1 issue link (an issue
+ * can only be linked to a ticket once) to a user-facing message. Other
+ * P2002s (join-table composite keys) are rethrown untouched.
+ */
+function rethrowIssueLinkConflict(error: unknown): never {
+	if (
+		error instanceof Prisma.PrismaClientKnownRequestError &&
+		error.code === "P2002"
+	) {
+		// Prisma reports P2002 `meta.target` as FIELD names (repo convention,
+		// see clientActions.ts invite_code_hash); keep the index name as a
+		// robustness fallback for driver variants.
+		const target = error.meta?.target;
+		const targets = Array.isArray(target) ? target : [target];
+		if (targets.includes("issue_id") || targets.includes("Tickets_issue_id_key")) {
+			throw new Error("This issue is already linked to another ticket.");
+		}
+	}
+	throw error;
+}
+
+/**
+ * Guards the 1-to-1 link against cross-project issues: a project member may
+ * only link issues belonging to the ticket's own project (defense in depth —
+ * the picker already lists project-scoped issues only).
+ */
+async function assertIssueInProject(
+	db: DbClient,
+	issueId: string,
+	projectId: string,
+) {
+	const issue = await db.issues.findUnique({
+		where: { issue_id: issueId },
+		select: { project_id: true },
+	});
+	if (!issue || issue.project_id !== projectId) {
+		throw new Error("This issue does not belong to this project.");
+	}
+}
+
 export async function createTicket(
 	data: CreateTicketParams & { performed_by?: string },
 ) {
@@ -45,33 +117,49 @@ export async function createTicket(
 	if (!auth.ok) throw new Error(auth.error);
 
 	return await prisma.$transaction(async (tx) => {
-		const created = await tx.tickets.create({
-			data: {
-				name: data.name,
-				// Spec: plan_start_at optional (nullable); plan_end_at required
-				plan_start_at: data.plan_start_at ?? null,
-				plan_end_at: data.plan_end_at,
-				status: data.status,
-				workflow_id: data.workflow_id,
-				watcher_id: data.watcher_id ?? null,
-				description: data.description ?? null,
-				actual_end_at: data.actual_end_at ?? null,
-				api_route: data.api_route ?? null,
-				api_method: data.api_method ?? null,
+		// 1-to-1 link guard: the issue must belong to the ticket's project.
+		if (data.issue_id) {
+			await assertIssueInProject(tx, data.issue_id, projectId);
+		}
 
-				TicketAssigned: {
-					create: data.TicketAssigned?.map((id: string) => ({
-						profile_id: id,
-					})),
+		let created;
+		try {
+			created = await tx.tickets.create({
+				data: {
+					name: data.name,
+					// Spec: plan_start_at optional (nullable); plan_end_at required
+					plan_start_at: data.plan_start_at ?? null,
+					plan_end_at: data.plan_end_at,
+					status: data.status,
+					workflow_id: data.workflow_id,
+					watcher_id: data.watcher_id ?? null,
+					description: data.description ?? null,
+					actual_end_at: data.actual_end_at ?? null,
+					api_route: data.api_route ?? null,
+					api_method: data.api_method ?? null,
+					issue_id: data.issue_id ?? null,
+
+					TicketAssigned: {
+						create: data.TicketAssigned?.map((id: string) => ({
+							profile_id: id,
+						})),
+					},
+					TicketTags: {
+						create: data.tagIds?.map((id: string): { tag_id: string } => ({
+							tag_id: id,
+						})),
+					},
 				},
-				TicketTags: {
-					create: data.tagIds?.map((id: string): { tag_id: string } => ({
-						tag_id: id,
-					})),
-				},
-			},
-			include: ticketInclude,
-		});
+				include: ticketInclude,
+			});
+		} catch (error) {
+			// 1-to-1: linking an issue already claimed by another ticket.
+			rethrowIssueLinkConflict(error);
+		}
+
+		if (data.issue_id) {
+			await syncLinkedIssueStatus(data.issue_id, tx);
+		}
 
 		if (data.image_urls && data.image_urls.length > 0) {
 			await tx.images.createMany({
@@ -122,6 +210,7 @@ export async function updateTicket(
 				status: true,
 				watcher_id: true,
 				workflow_id: true,
+				issue_id: true,
 				TicketAssigned: { select: { profile_id: true } },
 				TicketTags: { select: { tag_id: true } },
 			},
@@ -216,48 +305,85 @@ export async function updateTicket(
 			}
 		}
 
-		const updated = await tx.tickets.update({
-			where: { ticket_id: data.ticket_id },
-			data: {
-				name: data.name,
-				// undefined = don't touch; null = explicitly clear; Date = set
-				plan_start_at:
-					data.plan_start_at === undefined ? undefined : data.plan_start_at,
-				plan_end_at: data.plan_end_at,
-				status: data.status,
-				workflow_id: data.workflow_id,
-				watcher_id: data.watcher_id ?? null,
-				description: data.description ?? null,
-				// Spec: actual dates derive from the status transition (pure helper)
-				...actualPatch,
-				api_route: data.api_route ?? null,
-				api_method: data.api_method ?? null,
+		// 1-to-1 link guard: the issue must belong to the ticket's project.
+		if (data.issue_id) {
+			await assertIssueInProject(tx, data.issue_id, projectId);
+		}
 
-				...((assigneesToRemove.length > 0 || assigneesToAdd.length > 0) && {
-					TicketAssigned: {
-						...(assigneesToRemove.length > 0 && {
-							deleteMany: { profile_id: { in: assigneesToRemove } },
-						}),
-						...(assigneesToAdd.length > 0 && {
-							create: assigneesToAdd.map((profile_id: string) => ({
-								profile_id,
-							})),
-						}),
-					},
-				}),
-				...((tagsToRemove.length > 0 || tagsToAdd.length > 0) && {
-					TicketTags: {
-						...(tagsToRemove.length > 0 && {
-							deleteMany: { tag_id: { in: tagsToRemove } },
-						}),
-						...(tagsToAdd.length > 0 && {
-							create: tagsToAdd.map((tag_id: string) => ({ tag_id })),
-						}),
-					},
-				}),
-			},
-			include: ticketInclude,
-		});
+		let updated;
+		try {
+			updated = await tx.tickets.update({
+				where: { ticket_id: data.ticket_id },
+				data: {
+					name: data.name,
+					// undefined = don't touch; null = explicitly clear; Date = set
+					plan_start_at:
+						data.plan_start_at === undefined ? undefined : data.plan_start_at,
+					plan_end_at: data.plan_end_at,
+					status: data.status,
+					workflow_id: data.workflow_id,
+					watcher_id: data.watcher_id ?? null,
+					description: data.description ?? null,
+					// Spec: actual dates derive from the status transition (pure helper)
+					...actualPatch,
+					api_route: data.api_route ?? null,
+					api_method: data.api_method ?? null,
+					// 1-to-1 issue link: undefined = don't touch; null = unlink;
+					// uuid = link (P2002 when the issue is already claimed).
+					issue_id:
+						data.issue_id === undefined ? undefined : data.issue_id,
+
+					...((assigneesToRemove.length > 0 || assigneesToAdd.length > 0) && {
+						TicketAssigned: {
+							...(assigneesToRemove.length > 0 && {
+								deleteMany: { profile_id: { in: assigneesToRemove } },
+							}),
+							...(assigneesToAdd.length > 0 && {
+								create: assigneesToAdd.map((profile_id: string) => ({
+									profile_id,
+								})),
+							}),
+						},
+					}),
+					...((tagsToRemove.length > 0 || tagsToAdd.length > 0) && {
+						TicketTags: {
+							...(tagsToRemove.length > 0 && {
+								deleteMany: { tag_id: { in: tagsToRemove } },
+							}),
+							...(tagsToAdd.length > 0 && {
+								create: tagsToAdd.map((tag_id: string) => ({ tag_id })),
+							}),
+						},
+					}),
+				},
+				include: ticketInclude,
+			});
+		} catch (error) {
+			// 1-to-1: linking an issue already claimed by another ticket.
+			rethrowIssueLinkConflict(error);
+		}
+
+		// Issue-status sync (spec): link/unlink recomputes the issue status
+		// (UNLINKED when unlinked; RESOLVED immediately if the ticket is
+		// FINISHED, otherwise LINKED). Sync both the previous and the new
+		// issue when the link moved.
+		if (data.issue_id !== undefined) {
+			if (existing?.issue_id && existing.issue_id !== data.issue_id) {
+				await syncLinkedIssueStatus(existing.issue_id, tx);
+			}
+			if (data.issue_id) {
+				await syncLinkedIssueStatus(data.issue_id, tx);
+			}
+		} else if (
+			existing?.issue_id &&
+			data.status !== undefined &&
+			data.status !== existing.status
+		) {
+			// Status-only change through updateTicket (the editor always sends
+			// issue_id, but direct callers may not): a FINISHED transition
+			// resolves the linked issue, a regression re-links it.
+			await syncLinkedIssueStatus(existing.issue_id, tx);
+		}
 
 		if (historyRows.length > 0) {
 			await tx.historyEvent.createMany({ data: historyRows });
@@ -295,7 +421,7 @@ export async function updateTicketStatus(
 		// Fetch old status inside the transaction for consistency
 		const existing = await tx.tickets.findUnique({
 			where: { ticket_id: ticketId },
-			select: { status: true, workflow_id: true },
+			select: { status: true, workflow_id: true, issue_id: true },
 		});
 
 		const updated = await tx.tickets.update({
@@ -307,6 +433,12 @@ export async function updateTicketStatus(
 			},
 			include: ticketInclude,
 		});
+
+		// Issue-status sync (spec): a FINISHED transition resolves the linked
+		// issue; a regression back to PENDING/IN_PROGRESS re-links it.
+		if (existing?.issue_id && existing.status !== status) {
+			await syncLinkedIssueStatus(existing.issue_id, tx);
+		}
 
 		if (performed_by && existing && existing.status !== status) {
 			await logHistoryEvent(tx, {
@@ -357,21 +489,54 @@ export async function cascadeSoftDeleteTicket(
 		// Fetch ticket name before soft-deleting so we can record it in history
 		const ticket = await db.tickets.findUnique({
 			where: { ticket_id: ticketId },
-			select: { name: true, workflow_id: true },
+			select: { name: true, workflow_id: true, issue_id: true, status: true },
 		});
+
+		// Spec: a non-FINISHED ticket releases its issue link when soft-deleted
+		// (the issue goes back to UNLINKED); a FINISHED ticket keeps the link
+		// (the issue stays resolved).
+		const linkReleasePairs: { ticket_id: string; issue_id: string }[] = [];
+		const collectReleases = (
+			rows: { ticket_id: string; issue_id: string | null; status: status }[],
+		) => {
+			for (const row of rows) {
+				if (row.issue_id && !shouldKeepLinkOnDelete(row.status)) {
+					linkReleasePairs.push({ ticket_id: row.ticket_id, issue_id: row.issue_id });
+				}
+			}
+		};
 
 		if (mode === "cascade") {
 			// Spec: deleting a parent cascades to the whole parent_id subtree.
 			const idsToDelete = [ticketId];
 			let frontier = [ticketId];
+			const subtreeRows: {
+				ticket_id: string;
+				issue_id: string | null;
+				status: status;
+			}[] = [];
 			while (frontier.length > 0) {
 				const children = await db.tickets.findMany({
 					where: { parent_id: { in: frontier }, is_deleted: false },
-					select: { ticket_id: true },
+					select: { ticket_id: true, issue_id: true, status: true },
 				});
+				subtreeRows.push(...children);
 				frontier = children.map((c) => c.ticket_id);
 				idsToDelete.push(...frontier);
 			}
+
+			collectReleases(
+				ticket
+					? [
+							{
+								ticket_id: ticketId,
+								issue_id: ticket.issue_id,
+								status: ticket.status,
+							},
+						]
+					: [],
+			);
+			collectReleases(subtreeRows);
 
 			await db.tickets.updateMany({
 				where: { ticket_id: { in: idsToDelete } },
@@ -391,6 +556,29 @@ export async function cascadeSoftDeleteTicket(
 					deleted_at: new Date(),
 				},
 			});
+
+			collectReleases(
+				ticket
+					? [
+							{
+								ticket_id: ticketId,
+								issue_id: ticket.issue_id,
+								status: ticket.status,
+							},
+						]
+					: [],
+			);
+		}
+
+		// Release the links, then recompute each affected issue's status.
+		if (linkReleasePairs.length > 0) {
+			await db.tickets.updateMany({
+				where: { ticket_id: { in: linkReleasePairs.map((p) => p.ticket_id) } },
+				data: { issue_id: null },
+			});
+			for (const pair of linkReleasePairs) {
+				await syncLinkedIssueStatus(pair.issue_id, db);
+			}
 		}
 
 		if (performed_by) {
