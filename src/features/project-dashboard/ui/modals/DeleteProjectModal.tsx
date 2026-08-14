@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import {
 	Dialog,
@@ -52,7 +52,7 @@ export function DeleteProjectModal({
 		<Dialog
 			open={isOpen}
 			onOpenChange={(open) => {
-				if (!open) onClose();
+				if (!open) handleClose();
 			}}
 		>
 			<DialogContent>
@@ -62,8 +62,8 @@ export function DeleteProjectModal({
 				<div className="space-y-4">
 					<p className="text-sm text-neutral-border">
 						This action cannot be undone. Please type{" "}
-						<span className="font-bold text-foreground">{projectName}</span>
-						{" "}to confirm.
+						<span className="font-bold text-foreground">{projectName}</span> to
+						confirm.
 					</p>
 					<div>
 						<input

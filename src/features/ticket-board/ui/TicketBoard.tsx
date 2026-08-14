@@ -15,8 +15,7 @@ import {
 
 import TicketColumn from "./TicketColumn";
 import { TicketCardContent } from "./TicketCard";
-import TicketModalCreate from "./TicketModalCreate";
-import TicketModalEdit from "./TicketModalEdit";
+import {TicketModalCreate,TicketModalEdit} from "./TicketModals";
 import { TagManager } from "@/features/tag-manager";
 
 import { Back } from "@/components/ui/back"

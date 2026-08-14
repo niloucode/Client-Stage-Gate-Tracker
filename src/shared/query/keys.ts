@@ -81,3 +81,11 @@ export const dashboardAnalyticsKeys = {
 	workflows: (projectId: string) =>
 		[...dashboardAnalyticsKeys.all, "workflows", projectId] as const,
 };
+
+export const dashboardKeys = {
+	all: ["dashboard"] as const,
+	role: () => [...dashboardKeys.all, "role"] as const,
+	myTickets: () => [...dashboardKeys.all, "my-tickets"] as const,
+	watchedTickets: () => [...dashboardKeys.all, "watched-tickets"] as const,
+	myContracts: () => [...dashboardKeys.all, "my-contracts"] as const,
+};

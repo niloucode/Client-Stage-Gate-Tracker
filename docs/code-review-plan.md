@@ -161,6 +161,8 @@
 - [x] src/entities/role/roleActions.ts (deleted — only export was dead getRoleNameById)
 - [x] src/entities/roleAssignment/index.ts
 - [x] src/entities/roleAssignment/roleAssignmentActions.ts
+- [x] src/entities/roleAssignment/dashboardRole.ts
+- [x] src/entities/roleAssignment/dashboardRole.test.ts
 - [x] src/entities/department/index.ts
 - [x] src/entities/department/departmentActions.ts
 - [x] src/entities/department/queries.ts
@@ -203,6 +205,7 @@
 - [x] src/entities/project/projectActions.ts
 - [x] src/entities/project/mutations.ts
 - [x] src/entities/project/queries.ts
+- [x] src/entities/project/projectStatus.test.ts
 - [x] src/entities/stage/index.ts
 - [x] src/entities/stage/stageActions.ts
 - [x] src/entities/stage/queries.ts
@@ -215,6 +218,7 @@
 - [x] src/entities/ticket/lib/dateRollup.ts
 - [x] src/entities/ticket/lib/dateRollup.test.ts
 - [x] src/entities/ticket/lib/logHistoryEvent.ts
+- [x] src/entities/ticket/lib/statusConfig.ts
 - [x] src/entities/workflow/index.ts
 - [x] src/entities/workflow/types.ts (deleted — merged into slice files)
 - [x] src/entities/workflow/workflowActions.ts
@@ -272,18 +276,26 @@
 - [ ] src/features/issue-reporting/ui/IssueDashboard.tsx
 - [ ] src/features/issue-reporting/ui/IssueReportingModal.tsx
 - [ ] src/features/issue-reporting/ui/IssueTableModal.tsx
-- [ ] src/features/landing-dashboard/index.ts
-- [ ] src/features/landing-dashboard/ui/ActivitySparklines.tsx
-- [ ] src/features/landing-dashboard/ui/PendingContracts.tsx
-- [ ] src/features/landing-dashboard/ui/TicketsBoard.tsx
-- [ ] src/features/project-dashboard/index.ts
-- [ ] src/features/project-dashboard/ui/ProjectCard.tsx
-- [ ] src/features/project-dashboard/ui/ProjectDashboard.tsx
-- [ ] src/features/project-dashboard/ui/ProjectSection.tsx
-- [ ] src/features/project-manager/ui/modals/index.ts
-- [ ] src/features/project-manager/ui/modals/DeleteProjectModal.tsx
-- [ ] src/features/project-manager/ui/modals/EditProjectModal.tsx
-- [ ] src/features/project-manager/ui/modals/ManageMembersModal.tsx
+- [x] src/features/landing-dashboard/index.ts
+- [x] src/features/landing-dashboard/model/types.ts
+- [x] src/features/landing-dashboard/model/mappers.ts
+- [x] src/features/landing-dashboard/model/mappers.test.ts
+- [x] src/features/landing-dashboard/model/queries.ts
+- [ ] src/features/landing-dashboard/ui/ActivitySparklines.tsx (on hold — integration deferred by decision; TODO in the dashboard page)
+- [x] src/features/landing-dashboard/ui/PendingContracts.tsx
+- [x] src/features/landing-dashboard/ui/PendingContracts.test.tsx
+- [x] src/features/landing-dashboard/ui/TicketsBoard.tsx
+- [x] src/features/landing-dashboard/ui/TicketsBoard.test.tsx
+- [x] src/features/project-dashboard/index.ts
+- [x] src/features/project-dashboard/ui/ProjectCard.tsx
+- [x] src/features/project-dashboard/ui/ProjectCard.test.tsx
+- [x] src/features/project-dashboard/ui/ProjectDashboard.tsx
+- [x] src/features/project-dashboard/ui/ProjectSection.tsx
+- [x] src/features/project-dashboard/ui/modals/index.ts (moved from features/project-manager — merged 2026-08-14)
+- [x] src/features/project-dashboard/ui/modals/DeleteProjectModal.tsx (moved from features/project-manager — merged 2026-08-14)
+- [x] src/features/project-dashboard/ui/modals/EditProjectModal.tsx (moved from features/project-manager — merged 2026-08-14)
+- [x] src/features/project-dashboard/ui/modals/ManageMembersModal.tsx (moved from features/project-manager — merged 2026-08-14)
+- [x] src/features/project-manager/ (deleted — merged into features/project-dashboard)
 - [ ] src/features/project-structure/index.ts
 - [ ] src/features/project-structure/ui/ProjectStructure.tsx
 - [ ] src/features/project-structure/ui/StageModal.tsx
@@ -363,3 +375,94 @@
 - [ ] scripts/seed-sort-keys.mjs
 - [ ] scripts/tokenize-colors.mjs
 - [ ] scripts/verify-sort-keys.mjs
+
+---
+
+## Follow-up plan (TODO — future session): Date input rules
+
+> Deferred by decision on 2026-08-14 (project-dashboard integration shipped
+> without it). Do NOT let these rot — they are the canonical input rules.
+
+**Rules:**
+1. `plan_start_at` / `plan_end_at` are **REQUIRED (non-nullable)** for
+   Projects, Stages, Phases, Modules, Workflow.
+2. `plan_start_at` / `plan_end_at` are **OPTIONAL (nullable)** for Tickets.
+3. Never instantiate `new Date()` to satisfy a Zod requirement (no
+   `.default(() => new Date())`, no `?? new Date()` fallbacks).
+
+**Work items:**
+- [ ] `src/shared/schemas/project.ts` — Phases/Modules/Workflows: `planStart`/
+      `planEnd` from `z.date().optional().nullable()` → required `z.date()`
+      (keep `actualStart`/`actualEnd` optional nullable). Update
+      `src/shared/schemas/project.test.ts` (the "accepts missing dates
+      entirely" case must flip to a rejection case).
+- [ ] Entity actions — remove EVERY `?? new Date()` plan-date fallback
+      (rule 3) and make the date params required:
+      `src/entities/stage/stageActions.ts:53-54` (`TODO(date-rules)` comment
+      already present), `src/entities/module/moduleActions.ts:40,43`,
+      `src/entities/phase/safeActions.ts:85,88`,
+      `src/entities/workflow/workflowActions.ts:58,63`; the StageModal form
+      (`src/features/project-structure/ui/StageModal.tsx`) requires them.
+- [ ] `src/shared/schemas/ticket.ts` — `plan_end_at` (currently
+      `z.date({ message: "Deadline is required" })`) → `z.date().optional()
+      .nullable()`; `plan_start_at` already optional nullable.
+- [ ] **DB migration** — `Tickets.plan_start_at` / `Tickets.plan_end_at` are
+      currently NOT NULL; make them nullable so optional ticket dates can be
+      stored. Rollback = revert the migration.
+- [ ] Stage-editor modals (`src/features/stage-editor/ui/modals/PhaseModals.tsx`,
+      `ModuleModals.tsx`, `WorkflowModals.tsx`; stage form at
+      `src/features/project-structure/ui/StageModal.tsx`) — required date UI
+      (labels, validation) for the now-required plan dates.
+- [ ] Tickets form/editor (`src/features/ticket-board`) — dates must be
+      omitable; remove any client-side "deadline required" enforcement.
+- [ ] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
+      keep the pure-helper pattern (`projectStatus.ts` style — pure helpers
+      must NOT live in `"use server"` files).
+
+---
+
+## Other follow-ups (TODO — future session)
+
+Accumulated during the 2026-08-14 project-dashboard / landing-dashboard work.
+All pre-existing unless noted — none block the running app except the first.
+
+- [ ] **Unblock `next build`** — `src/features/ticket-board/ui/TicketCard.tsx`
+      lines 29-30 use `parentTicket.subTickets` but the ticket type has no
+      `subTickets` field (TS2339; 3 errors). Fix the ticket include/type or
+      remove the `getDummySubtasks` helper. This is the only thing stopping a
+      green build.
+- [ ] **`src/features/landing-dashboard/ui/ActivitySparklines.tsx`** — dead
+      `import { Http2ServerRequest } from "http2"` (line 5, lint warning).
+      Remove when the component comes off hold (integration TODO lives in
+      `src/app/(app)/dashboard/page.tsx`).
+- [ ] **Server-side client guard on `createProject`**
+      (`src/entities/project/projectActions.ts`) — the UI hides "+ Add
+      Project" for client profiles, but the action itself has no
+      client-profile check (any authenticated user may create; the creator
+      becomes Project Owner). Add a `Profiles.client_id` check returning a
+      permission error.
+- [ ] **`EditProjectModal` edit-mode `client_id` edge case**
+      (`src/features/project-dashboard/ui/modals/EditProjectModal.tsx`) —
+      edit submit validates via `projectCreateSchema`, which requires
+      `client_id`; if a project's contract row were missing or deleted the
+      edit could never save. Unreachable today (contracts are created
+      atomically with `client_id` NOT NULL), but the edit path should
+      validate with `projectUpdateSchema` instead.
+- [ ] **A11y: nested interactive in `ProjectCard`** — the ellipsis
+      `DropdownMenuTrigger` button sits inside the card's `<Link>`. It works
+      via stopPropagation but is invalid interactive nesting; restructure
+      (e.g. place the menu outside the link, or use the Link as the trigger's
+      render target).
+- [ ] **Project date-field naming consistency** — `src/shared/schemas/
+      project.ts` uses `start_date`/`deadline_date` while Phase/Module/
+      Workflow use the canonical `planStart`/`planEnd` (Task 1.5
+      vocabulary). Align the project schema/UI/actions in a dedicated pass.
+- [ ] **knip cleanup** — `npx knip` reports ~313 findings (unused default
+      exports, dead exports across features), all pre-existing. Triage and
+      remove; then gate `knip` in CI.
+- [ ] **`ProjectSection` status-config cleanup**
+      (`src/features/project-dashboard/ui/ProjectSection.tsx`) — `icolor`
+      typo, the suspicious `ACTIVE.color: "text-brand-100"` badge value, and
+      the `<h2>` heading nested inside the collapsible toggle `<button>`
+      (flow content in a button) — verify colors against the design tokens
+      and use a non-heading element for the section label.

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronsUpDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
 	Popover,
 	PopoverContent,
@@ -50,63 +51,55 @@ export function ClientsDropdown({
 
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger>
+			<PopoverTrigger className="w-full">
 				<div
 					role="combobox"
 					aria-expanded={open}
-					className="relative flex w-full items-center rounded-md px-4 py-0 text-left transition-colors hover:brightness-95"
-					style={{
-						backgroundColor: "#faf8ff",
-						border: "1px solid #c7c4d8",
-						minHeight: "78px",
-					}}
+					className="relative flex w-full min-h-[48px] items-center rounded-md border border-neutral-border/40 bg-[#FAF8FF] px-4 py-2.5 text-left transition-colors hover:brightness-95 cursor-pointer"
 				>
 					{/* Left: placeholder or selected client */}
-					<div className="flex-1 pr-10">
-						{selected ? (
-							<div className="flex items-center gap-3">
-								<Avatar className="h-9 w-9">
-									<AvatarFallback
-										className="text-sm font-semibold"
-										style={{ backgroundColor: "#eaedff", color: "#131b2e" }}
-									>
-										{initialsFor(selected.name)}
-									</AvatarFallback>
-								</Avatar>
-								<div className="flex flex-col">
-									<span className="text-[13px] font-semibold text-[#131b2e]">
-										{selected.name}
-									</span>
-									<span className="text-[12px] text-[#464555]">
-										{selected.email}
-									</span>
-								</div>
-							</div>
-						) : (
-							<span
-								className="text-[12px] font-semibold"
-								style={{ color: "#151c27", letterSpacing: "0.6px" }}
+					<div className="flex-1 pr-8">
+					{selected ? (
+						<div className="flex items-center gap-3">
+						<Avatar className="h-8 w-8">
+							<AvatarFallback
+							className="text-xs  bg-[#EAEDFF] text-[#131B2E]"
 							>
-								{placeholder}
+							{initialsFor(selected.name)}
+							</AvatarFallback>
+						</Avatar>
+						<div className="flex flex-col min-w-0">
+							<span className="text-xs  text-foreground truncate">
+							{selected.name}
 							</span>
-						)}
+							<span className="text-[11px] text-muted-foreground truncate">
+							{selected.email}
+							</span>
+						</div>
+						</div>
+					) : (
+						<span className="text-xs text-foreground tracking-wide">
+						{placeholder}
+						</span>
+					)}
 					</div>
 
-					{/* Right: chevron — absolutely positioned to match Figma */}
-					<div className="absolute right-0 top-0 flex h-full w-11 items-center justify-center">
-						<ChevronsUpDown
-							className={`transition-transform ${open ? "rotate-180" : ""}`}
-							style={{ color: "#464555", width: "12px", height: "7.4px" }}
-						/>
+					{/* Right: chevron */}
+					<div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none text-muted-foreground">
+					<ChevronsUpDown
+						className={cn("h-4 w-4 transition-transform duration-200", open && "rotate-180")}
+					/>
 					</div>
 				</div>
-			</PopoverTrigger>
+				</PopoverTrigger>
 
-			<PopoverContent>
-				<Command>
-					<CommandList>
-						<CommandEmpty>No clients found.</CommandEmpty>
-						<CommandGroup>
+			<PopoverContent align="start" className="w-(--anchor-width) p-0">
+				<Command className="w-full">
+					<CommandList className="max-h-56">
+						<CommandEmpty className="flex min-h-[48px] items-center justify-center py-3 text-center text-xs text-muted-foreground">
+							No clients found.
+						</CommandEmpty>
+						<CommandGroup className="p-1">
 							{clients.map((client) => (
 								<CommandItem
 									key={client.id}
@@ -115,22 +108,19 @@ export function ClientsDropdown({
 										onSelect(client);
 										setOpen(false);
 									}}
-									className="px-4 py-3 w-full bg-transparent! hover:bg-[#F3F0FF]! focus:bg-[#FFFFFF] data-[selected]:bg-[#FFFFFF]"
+									className="px-3 py-2 cursor-pointer hover:bg-muted/80 rounded-sm transition-colors"
 								>
-									<div className="flex items-center gap-3">
-										<Avatar className="h-9 w-9">
-											<AvatarFallback
-												className="text-sm font-semibold"
-												style={{ backgroundColor: "#eaedff", color: "#131b2e" }}
-											>
+									<div className="flex items-center gap-3 w-full min-w-0">
+										<Avatar className="h-7 w-7 shrink-0">
+											<AvatarFallback className="text-xs font-semibold bg-[#EAEDFF] text-[#131B2E]">
 												{initialsFor(client.name)}
 											</AvatarFallback>
 										</Avatar>
-										<div className="flex flex-col">
-											<span className="text-[13px] font-semibold text-[#131b2e]">
+										<div className="flex flex-col min-w-0 flex-1 text-left">
+											<span className="text-xs font-semibold text-foreground truncate">
 												{client.name}
 											</span>
-											<span className="text-[12px] text-[#464555]">
+											<span className="text-[11px] text-muted-foreground truncate">
 												{client.email}
 											</span>
 										</div>

@@ -14,6 +14,7 @@ import {
 	requireProjectMember,
 	requireProjectOwner,
 } from "@/lib/auth/projectAccess";
+import { computeProjectStatus, isProjectOwnerRole } from "./projectStatus";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,8 +29,8 @@ export interface ProjectWithStatus {
 	deadline_date: Date | null;
 	is_deleted: boolean;
 	deleted_at: Date | null;
-	status: ProjectStatus;
 	project_status: ProjectStatus;
+	is_owner: boolean;
 	client_name: string | null;
 	client_id: string | null;
 }
@@ -50,42 +51,40 @@ export async function selectProjects() {
 }
 
 /**
- * Fetches projects owned by the current user with computed status.
+ * Fetches projects the current user is a member of (any role), with
+ * per-project `is_owner` and computed status.
  *
  * Reads the existing Projects.status column, computes the correct status
  * from Contracts + Stages data, and updates the DB if they differ.
  *
- * Status rules:
+ * Status rules (see computeProjectStatus):
  * - PENDING:   project exists but the associated contract is not fully signed
  * - ACTIVE:    contract fully signed, but not all stages are finished
  * - COMPLETED: contract fully signed AND all stages are finished
  */
-export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
+export async function selectProjectsForMember(): Promise<ProjectWithStatus[]> {
 	try {
 		const userId = await getCurrentUserId();
 		if (!userId) return [];
 
-		const ownerRole = await prisma.roles.findUnique({
-			where: { name: "Project Owner" },
-			select: { role_id: true },
-		});
-		if (!ownerRole) return [];
-
-		// Fetch project IDs where this user is Project Owner
+		// Fetch every project the user belongs to (owner, team, or client
+		// viewer) together with the role name for the is_owner flag.
 		const assignments = await prisma.roleAssignments.findMany({
-			where: {
-				user_id: userId,
-				role_id: ownerRole.role_id,
-				Projects: { is_deleted: false },
+			where: { user_id: userId, Projects: { is_deleted: false } },
+			select: {
+				project_id: true,
+				Roles: { select: { name: true } },
 			},
-			select: { project_id: true },
 		});
 
 		if (assignments.length === 0) return [];
 
 		const projectIds = assignments.map((a) => a.project_id);
+		const roleByProject = new Map(
+			assignments.map((a) => [a.project_id, a.Roles?.name ?? null]),
+		);
 
-		// Fetch all owned projects (includes existing status column)
+		// Fetch all member projects (includes existing status column)
 		const projects = await prisma.projects.findMany({
 			where: { project_id: { in: projectIds }, is_deleted: false },
 			take: 200, // bound the list; paginate when callers need more
@@ -141,18 +140,11 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 			const contractSigned =
 				!!contract?.client_signature && !!contract?.project_owner_signature;
 
-			const totalStages = stagesOfProject?.total ?? 0;
-			const finishedStages = stagesOfProject?.finished ?? 0;
-			const hasStages = totalStages > 0;
-			const allStagesFinished = hasStages && finishedStages === totalStages;
-
-			// Compute expected status
-			let computedStatus: ProjectStatus = "PENDING";
-			if (contractSigned && allStagesFinished) {
-				computedStatus = "COMPLETED";
-			} else if (contractSigned) {
-				computedStatus = "ACTIVE";
-			}
+			const computedStatus = computeProjectStatus({
+				contractSigned,
+				totalStages: stagesOfProject?.total ?? 0,
+				finishedStages: stagesOfProject?.finished ?? 0,
+			});
 
 			// Reconcile the stored status column when it drifted (idempotent:
 			// only writes when different, so steady-state reads are read-only).
@@ -179,8 +171,8 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 				deadline_date: p.plan_end_at,
 				is_deleted: p.is_deleted,
 				deleted_at: p.deleted_at,
-				status: computedStatus,
 				project_status: computedStatus,
+				is_owner: isProjectOwnerRole(roleByProject.get(p.project_id)),
 				client_name: contract?.Clients?.client_name ?? null,
 				client_id: contract?.client_id ?? null,
 			});
@@ -188,7 +180,7 @@ export async function selectProjectsByOwner(): Promise<ProjectWithStatus[]> {
 
 		return results;
 	} catch (error) {
-		console.error("Failed to fetch owned projects:", error);
+		console.error("Failed to fetch member projects:", error);
 		return [];
 	}
 }
@@ -241,8 +233,10 @@ export async function createProject(data: ProjectCreateInput) {
 				data: {
 					name: data.name,
 					description: data.description ?? null,
-					plan_start_at: data.start_date ?? new Date(),
-					plan_end_at: data.deadline_date ?? new Date(),
+					// plan dates are Zod-required (non-nullable) — never
+					// fall back to new Date() to fill the requirement.
+					plan_start_at: data.start_date,
+					plan_end_at: data.deadline_date,
 				},
 			});
 
@@ -304,20 +298,26 @@ export async function updateProject(data: ProjectUpdateInput) {
 		const userId = await getCurrentUserId();
 		if (!userId) return { success: false, error: "Authentication required." };
 
-		const isMember = await requireProjectMember(data.project_id, userId);
-		if (!isMember)
-			return { success: false, error: "You are not a member of this project." };
+		// Editing project details is owner-only (matches the UI: the
+		// ellipsis menu is rendered solely for Project Owners).
+		const isOwner = await requireProjectOwner(data.project_id, userId);
+		if (!isOwner)
+			return {
+				success: false,
+				error: "Only the Project Owner can edit this project.",
+			};
 
 		const updateData: Prisma.ProjectsUpdateInput = {};
 		if (data.name !== undefined) updateData.name = data.name;
 		if (data.description !== undefined)
 			updateData.description = data.description;
-		// plan_start_at/plan_end_at are NOT NULL: a cleared form date (null)
-		// means "leave unchanged" — never send null to the DB.
+		// plan_start_at/plan_end_at are NOT NULL; update dates are
+		// non-nullable in the schema, so only absent (undefined) means
+		// "leave unchanged" — never send null to the DB.
 		if (data.start_date !== undefined)
-			updateData.plan_start_at = data.start_date ?? undefined;
+			updateData.plan_start_at = data.start_date;
 		if (data.deadline_date !== undefined)
-			updateData.plan_end_at = data.deadline_date ?? undefined;
+			updateData.plan_end_at = data.deadline_date;
 
 		// The client linkage lives on the Contracts row (NOT NULL invariant);
 		// update it atomically with the project fields.

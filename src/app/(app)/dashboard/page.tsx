@@ -1,55 +1,83 @@
 "use client";
-// import { redirect } from "next/navigation";
+
 import {
-	ActivitySparklines,
 	TicketsBoard,
 	PendingContracts,
+	useDashboardRole,
+	useMyTickets,
+	useWatchedTickets,
+	useMyContracts,
 } from "@/features/landing-dashboard";
 import { useAuth } from "@/features/auth";
-import { useState, useEffect } from "react";
 
-type USER_ROLE_TYPES = "product team" | "product owner" | "client";
-
-// The landing dashboard is not built yet — route to /projects until it is
-// (see the previous planned-view description for this intent).
+// TODO(landing-dashboard): ActivitySparklines integration is on hold by
+// decision — wire weekly velocity / risk / upcoming deadlines after the
+// role-based views ship (component already exists in the feature).
 export default function DashboardPage() {
 	const { user } = useAuth();
-	const [userRole, setUserRole] = useState<USER_ROLE_TYPES | null>(null);
-	const [loading, setLoading] = useState(false);
+	const roleQuery = useDashboardRole();
 
-	useEffect(() => {
-		//TODO: fetch user role here
-		setLoading(true);
-		setLoading(false);
-	}, []);
+	const showTickets = roleQuery.data === "staff" || roleQuery.data === "owner";
+	const showContracts =
+		roleQuery.data === "client" || roleQuery.data === "owner";
 
-	return loading ? (
-		<div className="w-full h-full mx-auto flex flex-col items-center justify-center">
-			<div>Loading...</div>
-		</div>
-	) : (
-		<div className="w-full h-fit mx-auto flex flex-col items-center justify-center">
-			<div className="w-full h-fit pb-4 mb-6 flex flex-col gap-4">
-				<div className="w-full h-fit text-3xl">
-					<h1>
-						{true ? `Personal Dashboard` : `Welcome Back, ${user?.first_name}`}
-					</h1>
+	const myTickets = useMyTickets(showTickets);
+	const watchedTickets = useWatchedTickets(showTickets);
+	const myContracts = useMyContracts(showContracts);
+
+	const loading =
+		roleQuery.isLoading ||
+		(showTickets && (myTickets.isLoading || watchedTickets.isLoading)) ||
+		(showContracts && myContracts.isLoading);
+
+	if (loading) {
+		return (
+			<div className="flex h-full w-full items-center justify-center">
+				<div>Loading...</div>
+			</div>
+		);
+	}
+
+	if (roleQuery.isError) {
+		return (
+			<div className="flex h-full w-full items-center justify-center">
+				<div className="text-sm text-destructive">
+					Failed to load your dashboard. Please try again.
 				</div>
+			</div>
+		);
+	}
+
+	const isClient = roleQuery.data === "client";
+
+	return (
+		<div className="mx-auto flex h-fit w-full flex-col items-center justify-center">
+			<div className="mb-6 flex h-fit w-full flex-col gap-4 pb-4">
+				<h1 className="h-fit w-full text-3xl">
+					{isClient
+						? `Welcome Back, ${user?.first_name ?? ""}`
+						: "Personal Dashboard"}
+				</h1>
 				<div className="subtitle">
-					{true
-						? `Review your active workload and watched developments.`
-						: `Review your active contracts.`}
+					{isClient
+						? "Review your active contracts."
+						: "Review your active workload and watched developments."}
 				</div>
 			</div>
-			<div>
-			</div>
-			<div className="flex flex-col items-center justify-center gap-10 w-full">
-			<ActivitySparklines/>
-			<TicketsBoard />
-			<TicketsBoard variant="watched" />
-			<div className="flex w-full justify-between gap-5">
-			<PendingContracts />
-			</div>
+
+			<div className="flex w-full flex-col items-center justify-center gap-10">
+				{showTickets && (
+					<>
+						<TicketsBoard tickets={myTickets.data ?? []} />
+						<TicketsBoard
+							variant="watched"
+							tickets={watchedTickets.data ?? []}
+						/>
+					</>
+				)}
+				{showContracts && (
+					<PendingContracts contracts={myContracts.data ?? []} />
+				)}
 			</div>
 		</div>
 	);

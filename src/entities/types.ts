@@ -18,3 +18,6 @@ export interface TicketAssigned {
 	assigned_date: Date;
 	Profiles?: Profile | null;
 }
+
+// Landing dashboard view modes (role-resolution output, entities/roleAssignment).
+export type DashboardRole = "client" | "owner" | "staff";

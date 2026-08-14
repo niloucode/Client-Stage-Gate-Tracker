@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import {
   History,
   FileText,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Back } from "@/components/ui/back";
 import { cn } from "@/lib/utils";
 import { GateFeedbackModal, type GateFeedbackEntry } from "./GateFeedbackModal";
 import { GateFeedbackGiveModal } from "./GateFeedbackGiveModal";
@@ -120,52 +122,63 @@ function PhaseCell({ phase }: { phase: (typeof phases)[number] }) {
       {/* Phase Header */}
       <div
         onClick={() => setIsExpanded((prev) => !prev)}
-        className="flex items-center justify-between gap-3 cursor-pointer select-none group/phase hover:opacity-90 transition-opacity"
+        className="flex items-start sm:items-center justify-between gap-3 cursor-pointer select-none group/phase hover:opacity-90 transition-opacity"
       >
-        <div className="relative z-10 flex shrink-0 items-center justify-center rounded-full border-y-[10px] border-neutral-surface bg-neutral-surface">
-          <ArrowRight className="size-4 text-primary" />
-        </div>
-        <div className="flex w-full items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <h2 className={cn(phase.completed && "line-through text-muted-foreground font-normal")}>
+        {/* Left: Node Arrow + Title & Dates Column */}
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="relative z-10 flex shrink-0 items-center justify-center rounded-full border-y-[6px] border-neutral-surface bg-neutral-surface mt-1 sm:mt-0">
+            <ArrowRight className="size-4 text-primary" />
+          </div>
+
+          <div className="flex flex-col min-w-0 flex-1 gap-1">
+            <h2 className={cn("truncate min-w-0", phase.completed && "line-through text-muted-foreground font-normal")}>
               {phase.title}
             </h2>
-            {phase.completed && (
-              <Badge variant="outline" className="bg-emerald-100/80 text-emerald-800 text-[10px] py-0.5 px-2 font-semibold">
-                Completed
-              </Badge>
+
+            {/* Sub Line: Planned & Actual Dates */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+              <span>PLANNED: {phase.dateRange}</span>
+              <span className="hidden sm:inline text-neutral-border/40">•</span>
+              <span>ACTUAL: {phase.dateRange}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Completed Badge + Chevron Toggle */}
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center mt-1 sm:mt-0">
+          {phase.completed && (
+            <Badge variant="outline" className="bg-emerald-100/80 text-emerald-800 text-[10px] py-0.5 px-2 font-semibold">
+              Completed
+            </Badge>
+          )}
+          <ChevronDown
+            className={cn(
+              "size-5 text-muted-foreground transition-transform duration-300 ease-in-out shrink-0",
+              !isExpanded && "-rotate-90"
             )}
-            <ChevronDown
-              className={cn(
-                "size-5 text-muted-foreground transition-transform duration-300 ease-in-out",
-                !isExpanded && "-rotate-90"
-              )}
-            />
-          </div>
-          <div className="my-auto ml-auto flex flex-col whitespace-nowrap text-sm text-muted-foreground">
-            <div className="ml-auto">PLANNED: {phase.dateRange}</div>
-            <div className="ml-auto">ACTUAL: {phase.dateRange}</div>
-          </div>
+          />
         </div>
       </div>
 
       {/* Smooth Grid Accordion Container */}
       <div
         className={cn(
-          "grid transition-[grid-template-rows,opacity] duration-300 ease-in-out pl-6",
+          "grid transition-[grid-template-rows,opacity] duration-300 ease-in-out pl-4 sm:pl-7",
           isExpanded
             ? "grid-rows-[1fr] opacity-100"
             : "grid-rows-[0fr] opacity-0 pointer-events-none"
         )}
       >
         <div className="overflow-hidden flex flex-col gap-4 pt-2">
-          {phase.description && (
-            <p className="subtitle">
-              {phase.description}
-            </p>
-          )}
+          <div className="pl-1">
+            {phase.description && (
+              <p className="subtitle">
+                {phase.description}
+              </p>
+            )}
+          </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             {phase.modules.map((mod) => (
               <ModuleCell key={mod.title} {...mod} />
             ))}
@@ -176,8 +189,6 @@ function PhaseCell({ phase }: { phase: (typeof phases)[number] }) {
   );
 }
 
-// --- Sub-Components using Shadcn Card UI ---
-
 function ModuleCell({
   title,
   dateRange,
@@ -187,30 +198,42 @@ function ModuleCell({
   const [isExpanded, setIsExpanded] = useState(!completed);
 
   return (
-    <Card className={cn("bg-neutral-subtle transition-all overflow-hidden", completed && "opacity-75")}>
+    <Card
+      className={cn(
+        "bg-neutral-subtle transition-all overflow-hidden border border-border gap-0 py-0",
+        completed && "opacity-75"
+      )}
+    >
       <CardHeader
         onClick={() => setIsExpanded((prev) => !prev)}
-        className="flex-row items-center justify-between cursor-pointer select-none group/mod hover:opacity-90 transition-opacity"
+        className="flex items-start sm:items-center justify-between gap-3 cursor-pointer select-none px-4 py-3.5 sm:px-5 sm:py-3.5 hover:opacity-90 transition-opacity"
       >
-        <CardTitle className="flex items-center gap-2">
+        {/* Left: Title on top, Date range below */}
+        <div className="flex flex-col min-w-0 flex-1 gap-0.5">
+          <CardTitle className="p-0">
+            <h3 className={cn("truncate min-w-0 leading-snug", completed && "line-through text-muted-foreground font-normal")}>
+              {title}
+            </h3>
+          </CardTitle>
+          <span className="text-xs text-muted-foreground leading-tight">
+            {dateRange}
+          </span>
+        </div>
+
+        {/* Right: Completed Badge + Chevron Toggle */}
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center">
+          {completed && (
+            <Badge variant="outline" className="bg-emerald-100/80 text-emerald-800 text-[10px] py-0.5 px-2 font-semibold">
+              Completed
+            </Badge>
+          )}
           <ChevronDown
             className={cn(
               "size-4 text-muted-foreground transition-transform duration-300 ease-in-out shrink-0",
               !isExpanded && "-rotate-90"
             )}
           />
-          <h3 className={cn(completed && "line-through text-muted-foreground font-normal")}>
-            {title}
-          </h3>
-          {completed && (
-            <Badge variant="outline" className="bg-emerald-100/80 text-emerald-800 text-[10px] py-0 px-2 font-semibold">
-              Completed
-            </Badge>
-          )}
-        </CardTitle>
-        <span className="whitespace-nowrap text-xs text-muted-foreground">
-          {dateRange}
-        </span>
+        </div>
       </CardHeader>
 
       <div
@@ -222,7 +245,7 @@ function ModuleCell({
         )}
       >
         <div className="overflow-hidden">
-          <CardContent className="flex flex-col gap-2 pt-0 pb-4">
+          <CardContent className="flex flex-col gap-2 px-4 pb-4 sm:px-5 sm:pb-4 pt-1">
             {workflows.map((wf) => (
               <WorkflowCell key={wf.title} {...wf} />
             ))}
@@ -243,9 +266,9 @@ function WorkflowCell({
   completed?: boolean;
 }) {
   return (
-    <Card size="sm" className={cn("bg-neutral-surface transition-all", completed && "opacity-65 bg-neutral-surface/60")}>
-      <CardContent className="flex items-center justify-between gap-3 py-2 text-sm">
-        <div className="flex items-center gap-2.5 text-foreground">
+    <Card size="sm" className={cn("bg-neutral-surface border border-border/80 transition-all", completed && "opacity-65 bg-neutral-surface/60")}>
+      <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 py-2 px-3 text-sm">
+        <div className="flex items-center gap-2.5 text-foreground min-w-0">
           {completed ? (
             <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
           ) : (
@@ -255,7 +278,7 @@ function WorkflowCell({
             {title}
           </span>
         </div>
-        <span className="whitespace-nowrap text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground shrink-0 pl-6 sm:pl-0">
           {dateRange}
         </span>
       </CardContent>
@@ -263,9 +286,10 @@ function WorkflowCell({
   );
 }
 
-// --- Main Gate Overview Page ---
-
 export function GateOverview() {
+  const params = useParams<{ projectId?: string }>();
+  const projectId = params?.projectId;
+
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isGiveModalOpen, setIsGiveModalOpen] = useState(false);
   const [decisionVariant, setDecisionVariant] = useState<"approved" | "rejected">("approved");
@@ -304,10 +328,8 @@ export function GateOverview() {
     imageFiles: File[];
     skipFeedback: boolean;
   }) => {
-    // 1. Update current gate status
     setGateStatus(decisionVariant === "approved" ? "APPROVED" : "REJECTED");
 
-    // 2. Append new entry to the feedback history
     const newEntry: GateFeedbackEntry = {
       id: `fb-${Date.now()}`,
       number: feedbackHistory.length + 1,
@@ -325,8 +347,11 @@ export function GateOverview() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-background px-10 py-8">
-      <div className="mx-auto flex flex-col gap-8">
+    <main className="min-h-screen w-full bg-background">
+      <div className="flex flex-col gap-6">
+        {/* Navigation Link */}
+        <Back link={projectId ? `/projects/${projectId}` : "/projects"} />
+
         <div>
           <h1>Strategy and Identity</h1>
           <p className="subtitle">
@@ -334,12 +359,12 @@ export function GateOverview() {
           </p>
         </div>
 
-        <div className="flex flex-col-reverse items-start gap-8 lg:flex-row lg:items-start">
+        <div className="flex flex-col-reverse items-start gap-6 lg:flex-row lg:items-start w-full">
           {/* Left Column: Project Hierarchy Card */}
-          <Card className="relative flex-1 bg-neutral-surface p-6">
-            <div className="absolute left-8 top-8 bottom-8 z-0 w-0.5 -translate-x-1/2 bg-neutral-subtle" />
+          <Card className="relative flex-1 bg-neutral-surface p-4 sm:p-6 w-full min-w-0 border border-border shadow-xs">
+            <div className="absolute left-6 sm:left-8 top-6 sm:top-8 bottom-6 sm:bottom-8 z-0 w-0.5 -translate-x-1/2 bg-neutral-subtle" />
 
-            <CardContent className="flex flex-col gap-8 p-0">
+            <CardContent className="flex flex-col gap-6 sm:gap-8 p-0">
               {phases.map((phase) => (
                 <PhaseCell key={phase.title} phase={phase} />
               ))}
@@ -347,20 +372,20 @@ export function GateOverview() {
           </Card>
 
           {/* Right Column: Approval Panel Card */}
-          <Card className="h-fit w-full max-w-75 bg-neutral-surface self-start shrink-0">
-            <CardHeader>
+          <Card className="h-fit w-full lg:w-80 bg-neutral-surface shrink-0 border border-border shadow-xs gap-0 p-5 sm:p-6">
+            <CardHeader className="p-0 pb-4">
               <CardTitle>
                 <h3>Approval Panel</h3>
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="flex flex-col gap-5">
-              {/* Approve & Decline Action Buttons -> Opens GateFeedbackGiveModal */}
-              <div className="flex flex-col gap-2.5">
+            <CardContent className="p-0 flex flex-col gap-4">
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2">
                 <Button
                   variant="default"
                   onClick={() => handleDecisionClick("approved")}
-                  className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                  className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm h-10 shadow-xs"
                 >
                   <CheckCircle2 className="size-4" />
                   Approve Stage Gate
@@ -369,71 +394,81 @@ export function GateOverview() {
                 <Button
                   variant="destructive"
                   onClick={() => handleDecisionClick("rejected")}
-                  className="w-full gap-2 font-semibold"
+                  className="w-full gap-2 font-semibold text-xs sm:text-sm h-10"
                 >
                   <XCircle className="size-4" />
                   Decline Stage Gate
                 </Button>
+
+                {/* View History Button */}
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsHistoryOpen(true)}
+                  className="w-full gap-2 text-xs font-semibold h-10 border border-border"
+                >
+                  <History className="size-4" />
+                  View Gate Feedback
+                </Button>
               </div>
 
-              {/* View History Button -> Opens GateFeedbackModal */}
-              <Button
-                variant="secondary"
-                onClick={() => setIsHistoryOpen(true)}
-              >
-                <History className="size-[15px]" />
-                View Gate Feedback
-              </Button>
-
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">
+              {/* Current Status Section */}
+              <div className="flex flex-col gap-1.5 pt-1">
+                <span className="text-sm font-bold text-neutral-border tracking-wider uppercase">
                   CURRENT STATUS
-                </p>
-                <Badge
-                  variant="outline"
+                </span>
+                <div
                   className={cn(
-                    "w-full py-2.5 text-sm font-semibold justify-center border",
-                    gateStatus === "APPROVED" && "bg-emerald-100 text-emerald-800 border-emerald-300",
-                    gateStatus === "REJECTED" && "bg-red-100 text-red-800 border-red-300",
-                    gateStatus === "PENDING" && "bg-yellow-100 text-yellow-800 border-yellow-300"
+                    "flex items-center justify-center gap-2 w-full h-9 rounded-md border text-xs font-semibold transition-colors",
+                    gateStatus === "APPROVED" && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    gateStatus === "REJECTED" && "bg-red-50 text-red-700 border-red-200",
+                    gateStatus === "PENDING" && "bg-amber-50 text-amber-800 border-amber-200"
                   )}
                 >
-                  {gateStatus === "APPROVED"
-                    ? "Approved"
-                    : gateStatus === "REJECTED"
-                    ? "Rejected"
-                    : "Pending Review"}
-                </Badge>
+                  <span
+                    className={cn(
+                      "h-2 w-2 rounded-full shrink-0",
+                      gateStatus === "APPROVED" && "bg-emerald-500",
+                      gateStatus === "REJECTED" && "bg-red-500",
+                      gateStatus === "PENDING" && "bg-amber-500"
+                    )}
+                  />
+                  <span>
+                    {gateStatus === "APPROVED"
+                      ? "Approved"
+                      : gateStatus === "REJECTED"
+                      ? "Rejected"
+                      : "Pending Review"}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">
+              {/* Client Reviewer Section */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-bold text-neutral-border tracking-wider uppercase">
                   CLIENT REVIEWER
-                </p>
-                <Card size="sm" className="bg-neutral-surface border-border">
-                  <CardContent className="flex items-center gap-3 p-3">
-                    <Avatar size="lg">
-                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                        SJ
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-semibold text-foreground truncate">
-                        Sarah J. Miller
-                      </span>
-                      <span className="text-xs text-muted-foreground truncate">
-                        VP of Creative Operations
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
+                </span>
+                <div className="flex items-center gap-3 p-3 rounded-md bg-neutral-surface border border-border">
+                  <Avatar className="h-9 w-9 shrink-0">
+                    <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-xs">
+                      SJ
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      Sarah J. Miller
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      VP of Creative Operations
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Modal 1: Dedicated Gate Feedback Placement Modal (Approve / Decline) */}
+      {/* Modal 1: Dedicated Gate Feedback Modal */}
       <GateFeedbackGiveModal
         isOpen={isGiveModalOpen}
         onClose={() => setIsGiveModalOpen(false)}
@@ -441,7 +476,7 @@ export function GateOverview() {
         onSubmitFeedback={handleFeedbackSubmitted}
       />
 
-      {/* Modal 2: Gate Feedback History List Modal (View Gate Feedback) */}
+      {/* Modal 2: Gate Feedback History Modal */}
       <GateFeedbackModal
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}

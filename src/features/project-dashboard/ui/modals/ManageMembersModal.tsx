@@ -7,8 +7,8 @@ import {
 	useProjectMembers,
 	useAddProjectMember,
 	useRemoveProjectMember,
+	searchProfilesForProject,
 } from "@/entities/project";
-import { searchProfilesForProject } from "@/entities/project/projectActions";
 import { departmentBadgeStyle } from "@/shared/lib/colors";
 import { LucideSearch, X, UserPlus, Check } from "lucide-react";
 import { toast } from "@/components/ui/toast";
@@ -83,16 +83,8 @@ export function ManageMembersModal({
 		};
 	}, []);
 
-	// Automatically open dropdown when searchQuery is non-empty
-	useEffect(() => {
-		if (searchQuery.trim().length > 0) {
-			setIsDropdownOpen(true);
-		} else {
-			setIsDropdownOpen(false);
-		}
-	}, [searchQuery]);
-
-	// Close search results when clicking outside
+	// Dropdown visibility follows the query, except when the user clicks
+	// outside (handleClickOutside closes it while the query stays).
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
 			if (
@@ -143,7 +135,11 @@ export function ManageMembersModal({
 			roleName,
 		});
 		if (!result.success) {
-			alert(result.error ?? "Failed to add member");
+			toast.add({
+				title: "Failed to add member",
+				description: result.error ?? "Failed to add member",
+				type: "error",
+			});
 			return;
 		}
 		// Retain search input, results list, and open state.
@@ -153,8 +149,19 @@ export function ManageMembersModal({
 		});
 	};
 
-	const handleRemoveMember = (profileId: string, firstName: string) => {
-		removeMemberMutation.mutate({ projectId, profileId });
+	const handleRemoveMember = async (profileId: string, firstName: string) => {
+		const result = await removeMemberMutation.mutateAsync({
+			projectId,
+			profileId,
+		});
+		if (!result.success) {
+			toast.add({
+				title: "Failed to remove member",
+				description: result.error ?? "Failed to remove member",
+				type: "error",
+			});
+			return;
+		}
 		toast.add({
 			title: "Removed Access",
 			description: firstName + " successfully removed",
@@ -208,6 +215,7 @@ export function ManageMembersModal({
 								}}
 								onChange={(e) => {
 									setSearchQuery(e.target.value);
+									setIsDropdownOpen(e.target.value.trim().length > 0);
 									debouncedSearch(e.target.value);
 								}}
 								placeholder="Search for people to add"
@@ -304,14 +312,14 @@ export function ManageMembersModal({
 					) : nonClientMembers.length === 0 ? (
 						<Lacking />
 					) : (
-						<div className="w-full bg-neutral-surface overflow-x-auto rounded h-80 overflow-y-scroll border-1 border-brand-100">
+						<div className="w-full bg-neutral-surface overflow-x-auto rounded h-80 overflow-y-scroll border border-brand-100">
 							<table className="w-full border-collapse text-left">
 								<thead className="sticky top-0 z-10 bg-brand-50 border-b border-brand-100 text-xs font-semibold text-neutral-border">
 									<tr>
 										<th scope="col" className="px-3 py-2.5">
 											NAME
 										</th>
-										<th scope="col" className="px-3 py-2.5 w-[140px]">
+										<th scope="col" className="px-3 py-2.5 w-35">
 											DEPARTMENT
 										</th>
 										<th scope="col" className="px-3 py-2.5 w-12 text-right">

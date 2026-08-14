@@ -5,26 +5,28 @@ import { Ticket, Tag } from "@/entities/types";
 import { status as StatusEnum } from "@/lib/generated/prisma";
 import type { ProfileSelect } from "@/entities/profile";
 
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { TagBadge } from "@/entities/tag/ui/TagBadge";
-import { Badge } from "@/components/ui/badge";
-
 import {
+  Badge,
+  Button,
+  DateTimePicker,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DropdownMenu,
-  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuTrigger,
+  Input,
+  Label,
+} from "@/components/ui";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TagBadge } from "@/entities/tag/ui";
 import { Pencil, ChevronDown, Plus, Search, Bug, AlertCircle } from "lucide-react";
 
 // eslint-disable-next-line boundaries/dependencies
@@ -65,17 +67,13 @@ export function SubtaskSelectionModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* Added flex flex-col to ensure the scrollable list doesn't collapse */}
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0 border-none bg-card rounded-md overflow-hidden shadow-2xl">
-        
-        {/* Hidden DialogHeader for accessibility (Radix UI expectation) */}
         <DialogHeader className="sr-only">
           <DialogTitle>Add Subtask</DialogTitle>
         </DialogHeader>
 
-        {/* Box Header - Tight padding level with the search bar */}
+        {/* Box Header */}
         <div className="px-5 py-3 pr-12 border-b border-border flex items-center justify-between flex-wrap gap-3 bg-card shrink-0">
-          {/* Left side: Title and Badge */}
           <div className="flex items-center gap-2.5 flex-wrap">
             <h3 className="text-base font-bold capitalize text-foreground">
               Add Subtask
@@ -88,7 +86,6 @@ export function SubtaskSelectionModal({
             </Badge>
           </div>
 
-          {/* Right side: Search Bar */}
           <div className="flex-1 min-w-50 max-w-sm flex items-center gap-1.5 border border-border bg-card rounded-md px-2.5 h-8 text-xs font-medium text-foreground hover:bg-neutral-subtle transition-colors focus-within:ring-1 focus-within:ring-brand-500">
             <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <input
@@ -368,10 +365,11 @@ export function TicketApiDetails({
 }
 
 export function TicketSchedule({
-  ticket, setTicket,
+  ticket, setTicket, showDateError,
 }: {
   ticket: Ticket;
   setTicket: React.Dispatch<React.SetStateAction<Ticket>>;
+  showDateError?: boolean;
 }) {
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [linkedIssue, setLinkedIssue] = useState<IssueItem | null>(null);
@@ -381,20 +379,43 @@ export function TicketSchedule({
       <Label className="text-xs text-neutral-border font-bold tracking-wider uppercase">SCHEDULE & TIMELINE DATES</Label>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label className="text-xs text-neutral-border/75">PLANNED START</Label>
-          <DateTimePicker value={ticket.plan_start_at ? new Date(ticket.plan_start_at) : undefined} onChange={(date) => setTicket((t) => ({ ...t, plan_start_at: date ?? t.plan_start_at }))} placeholder="Pick planned start date" className="h-9 text-xs" />
+          <DateTimePicker
+            label="PLANNED START"
+            value={ticket.plan_start_at ? new Date(ticket.plan_start_at) : undefined}
+            onChange={(date) => setTicket((t) => ({ ...t, plan_start_at: date ?? t.plan_start_at }))}
+            placeholder="Pick planned start date"
+            className="h-9 text-xs"
+            error={showDateError ? "Start must be before End" : undefined}
+          />
         </div>
         <div>
-          <Label className="text-xs text-neutral-border/75">DEADLINE</Label>
-          <DateTimePicker value={ticket.plan_end_at ? new Date(ticket.plan_end_at) : undefined} onChange={(date) => setTicket((t) => ({ ...t, plan_end_at: date ?? t.plan_end_at }))} placeholder="Pick deadline" className="h-9 text-xs" />
+          <DateTimePicker
+            label="DEADLINE"
+            required
+            value={ticket.plan_end_at ? new Date(ticket.plan_end_at) : undefined}
+            onChange={(date) => setTicket((t) => ({ ...t, plan_end_at: date ?? t.plan_end_at }))}
+            placeholder="Pick deadline"
+            className="h-9 text-xs"
+            error={showDateError ? "Start must be before End" : undefined}
+          />
         </div>
         <div>
-          <Label className="text-xs text-neutral-border/75">ACTUAL START</Label>
-          <DateTimePicker value={ticket.actual_start_at ? new Date(ticket.actual_start_at) : undefined} disabled placeholder="Not started yet" className="h-9 text-xs" />
+          <DateTimePicker
+            label="ACTUAL START"
+            value={ticket.actual_start_at ? new Date(ticket.actual_start_at) : undefined}
+            disabled
+            placeholder="Not started yet"
+            className="h-9 text-xs"
+          />
         </div>
         <div>
-          <Label className="text-xs text-neutral-border/75">FINISH</Label>
-          <DateTimePicker value={ticket.actual_end_at ? new Date(ticket.actual_end_at) : undefined} disabled placeholder="Not finished yet" className="h-9 text-xs" />
+          <DateTimePicker
+            label="FINISH"
+            value={ticket.actual_end_at ? new Date(ticket.actual_end_at) : undefined}
+            disabled
+            placeholder="Not finished yet"
+            className="h-9 text-xs"
+          />
         </div>
       </div>
       <div>

@@ -3,6 +3,7 @@ import { Ticket, Tag } from "@/entities/types";
 import { status as StatusEnum } from "@/lib/generated/prisma";
 import { useAuth } from "@/features/auth";
 import { useUpdateTicket, useUpdateTicketParent } from "@/entities/ticket/mutations";
+import { toast } from "@/components/ui/toast";
 
 const DUMMY_SUBTICKETS: Ticket[] = [
 	{
@@ -93,182 +94,6 @@ const DUMMY_SUBTICKETS: Ticket[] = [
 		TicketAssigned: [],
 		Profile: null,
 	},
-	{
-		ticket_id: "dummy-sub123task-1",
-		name: "Design Database Schema for Subtasks",
-		status: StatusEnum.IN_PROGRESS,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-10"),
-		plan_end_at: new Date("2026-08-15"),
-		actual_start_at: new Date("2026-08-10"),
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Create relational model and migration for nested subtasks.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "dumm123y-subtask-2",
-		name: "Implement Subtask Selection UI Component",
-		status: StatusEnum.PENDING,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-12"),
-		plan_end_at: new Date("2026-08-18"),
-		actual_start_at: null,
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Modal dialog to search and pick available tickets as subtasks.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "dummy321-subtask-3",
-		name: "Add Subtask Invalidation & State Updates",
-		status: StatusEnum.PENDING,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-14"),
-		plan_end_at: new Date("2026-08-20"),
-		actual_start_at: null,
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Ensure TanStack query cache updates when a subtask is attached or removed.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "dummy-subt123ask-4",
-		name: "API Endpoint Integration Testing",
-		status: StatusEnum.IN_PROGRESS,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-15"),
-		plan_end_at: new Date("2026-08-22"),
-		actual_start_at: new Date("2026-08-15"),
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Verify subtask parent_id updates on database mutations.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "dumm32y-subtask-1",
-		name: "Design Database Schema for Subtasks",
-		status: StatusEnum.IN_PROGRESS,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-10"),
-		plan_end_at: new Date("2026-08-15"),
-		actual_start_at: new Date("2026-08-10"),
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Create relational model and migration for nested subtasks.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "dummy-s123ubtask-2",
-		name: "Implement Subtask Selection UI Component",
-		status: StatusEnum.PENDING,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-12"),
-		plan_end_at: new Date("2026-08-18"),
-		actual_start_at: null,
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Modal dialog to search and pick available tickets as subtasks.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "dum3213my-subtask-3",
-		name: "Add Subtask Invalidation & State Updates",
-		status: StatusEnum.PENDING,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-14"),
-		plan_end_at: new Date("2026-08-20"),
-		actual_start_at: null,
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Ensure TanStack query cache updates when a subtask is attached or removed.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
-	{
-		ticket_id: "dum123my-subtask-4",
-		name: "API Endpoint Integration Testing",
-		status: StatusEnum.IN_PROGRESS,
-		workflow_id: "dummy-workflow",
-		parent_id: null,
-		assignment_date: new Date(),
-		plan_start_at: new Date("2026-08-15"),
-		plan_end_at: new Date("2026-08-22"),
-		actual_start_at: new Date("2026-08-15"),
-		actual_end_at: null,
-		is_deleted: false,
-		deleted_at: null,
-		description: "Verify subtask parent_id updates on database mutations.",
-		watcher_id: null,
-		api_route: null,
-		api_method: null,
-		issue_id: null,
-		TicketTags: [],
-		TicketAssigned: [],
-		Profile: null,
-	},
 ];
 
 export function useTicketEditor({
@@ -287,6 +112,7 @@ export function useTicketEditor({
 	allTickets?: Ticket[];
 }) {
 	const [ticket, setTicket] = useState<Ticket>(initialTicket);
+	const [submitAttempted, setSubmitAttempted] = useState(false);
 
 	const [localDummyTickets, setLocalDummyTickets] = useState<Ticket[]>(() => [
 		{
@@ -333,6 +159,19 @@ export function useTicketEditor({
 	const isApiTagSelected = selectedTags.some(
 		(tagId) => tags.find((t) => t.tag_id === tagId)?.name?.toLowerCase() === "api"
 	);
+
+	// Validation conditions
+	const isNameInvalid = !ticket.name || !ticket.name.trim() || ticket.name.trim().length > 50;
+
+	const isDateInverted = Boolean(
+		ticket.plan_start_at &&
+			ticket.plan_end_at &&
+			new Date(ticket.plan_start_at) > new Date(ticket.plan_end_at)
+	);
+
+	const showDateError = submitAttempted && isDateInverted;
+	const showNameError = submitAttempted && isNameInvalid;
+	const hasErrors = isNameInvalid || isDateInverted;
 
 	const handleAddSubtask = async (selectedTicket: Ticket) => {
 		try {
@@ -382,25 +221,40 @@ export function useTicketEditor({
 	};
 
 	async function handleSave() {
-		const updated = await updateTicketMutation.mutateAsync({
-			ticket_id: ticket.ticket_id,
-			workflow_id: ticket.workflow_id,
-			name: ticket.name,
-			plan_start_at: ticket.plan_start_at ? new Date(ticket.plan_start_at) : null,
-			plan_end_at: ticket.plan_end_at ? new Date(ticket.plan_end_at) : new Date(),
-			actual_start_at: ticket.actual_start_at ? new Date(ticket.actual_start_at) : null,
-			actual_end_at: ticket.actual_end_at ? new Date(ticket.actual_end_at) : null,
-			status: ticket.status,
-			watcher_id: ticket.watcher_id,
-			TicketAssigned: ticket.TicketAssigned?.map((a) => a.profile_id) ?? [],
-			tagIds: selectedTags,
-			description: ticket.description,
-			api_route: isApiTagSelected ? (apiRoute || null) : null,
-			api_method: isApiTagSelected ? (apiMethod || null) : null,
-			performed_by: user?.profile_id,
-		});
-		onUpdate(updated);
-		if (!isSubtaskView) onClose();
+		setSubmitAttempted(true);
+
+		if (hasErrors) {
+			return;
+		}
+
+		try {
+			const updated = await updateTicketMutation.mutateAsync({
+				ticket_id: ticket.ticket_id,
+				workflow_id: ticket.workflow_id,
+				name: ticket.name.trim(),
+				plan_start_at: ticket.plan_start_at ? new Date(ticket.plan_start_at) : null,
+				plan_end_at: ticket.plan_end_at ? new Date(ticket.plan_end_at) : new Date(),
+				actual_start_at: ticket.actual_start_at ? new Date(ticket.actual_start_at) : null,
+				actual_end_at: ticket.actual_end_at ? new Date(ticket.actual_end_at) : null,
+				status: ticket.status,
+				watcher_id: ticket.watcher_id,
+				TicketAssigned: ticket.TicketAssigned?.map((a) => a.profile_id) ?? [],
+				tagIds: selectedTags,
+				description: ticket.description,
+				api_route: isApiTagSelected ? (apiRoute || null) : null,
+				api_method: isApiTagSelected ? (apiMethod || null) : null,
+				performed_by: user?.profile_id,
+			});
+			onUpdate(updated);
+			if (!isSubtaskView) onClose();
+		} catch (error) {
+			console.error("Failed to save ticket:", error);
+			toast.add({
+				title: "Save Failed",
+				description: "An error occurred while saving the ticket.",
+				type: "error",
+			});
+		}
 	}
 
 	return {
@@ -425,6 +279,9 @@ export function useTicketEditor({
 		subtasks,
 		availableTickets,
 		isApiTagSelected,
+		showDateError,
+		showNameError,
+		isSaving: updateTicketMutation.isPending,
 		handleAddSubtask,
 		handleRemoveSubtask,
 		handleSubtaskClick,

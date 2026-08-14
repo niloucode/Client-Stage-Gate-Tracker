@@ -19,8 +19,11 @@ const baseProject = z.object({
 		.optional()
 		.default(""),
 	client_id: z.uuid({ message: "Client ID is required" }),
-	start_date: z.date().optional().nullable(),
-	deadline_date: z.date().optional().nullable(),
+	// Project plan dates are REQUIRED (non-nullable): the DB columns
+	// plan_start_at/plan_end_at are NOT NULL and the user must always pick
+	// them — never fill them with new Date() fallbacks (Input Rules).
+	start_date: z.date({ message: "Plan Start Date is required" }),
+	deadline_date: z.date({ message: "Plan End Date is required" }),
 });
 
 export const projectCreateSchema = baseProject.refine(
@@ -29,7 +32,7 @@ export const projectCreateSchema = baseProject.refine(
 		!data.deadline_date ||
 		data.start_date <= data.deadline_date,
 	{
-		message: "Start date must be before or equal to deadline date",
+		message: "Start must be before End",
 		path: ["start_date"],
 	},
 );

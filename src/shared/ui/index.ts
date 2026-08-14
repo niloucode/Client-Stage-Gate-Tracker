@@ -1,5 +1,5 @@
 export type { SelectOption } from "@/components/ui/forminput"
-export { ConfirmDeleteModal } from "./ConfirmDeleteModal"
+export { ConfirmDeleteModal } from "../../components/ui/confirmation-modal"
 export { ColorPicker, Backdrop } from "./tagPrimitives"
 export { default as ImageLightbox } from "./ImageLightbox"
 export { PasswordInput } from "./PasswordInput"

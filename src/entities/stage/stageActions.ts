@@ -42,6 +42,10 @@ export async function createStage(
 		});
 		const nextKey = generateKeyBetween(lastStage?.sort_key ?? null, null);
 
+		// TODO(date-rules): plan_start_at/plan_end_at must be REQUIRED for
+		// stages — drop the `?? new Date()` fallbacks once the stage schema
+		// enforces them. See "Follow-up plan (TODO — future session): Date
+		// input rules" in docs/code-review-plan.md.
 		const newStage = await prisma.stages.create({
 			data: {
 				name: stageName,

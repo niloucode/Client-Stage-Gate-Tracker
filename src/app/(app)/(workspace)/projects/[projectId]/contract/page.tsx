@@ -243,7 +243,7 @@ export default function ContractPage() {
 				)} */}
 
 				<header className="mb-6">
-					<h1 className="text-xl font-semibold text-ink">
+					<h1 className="text-xl text-ink">
 						{contract?.contract_name ?? "Untitled contract"}{" "}
 						{/* INPUT contract_name HERE */}
 					</h1>
@@ -269,7 +269,6 @@ export default function ContractPage() {
 
 					<div className="flex flex-col gap-6">
 						<SignatoriesCard
-							className={"px-5 py-10 gap-7"}
 							signatories={signatories}
 							clientState={get_client_state()}
 							availableClients={clients}

@@ -21,11 +21,10 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
 							</span>
 						)}
 						{item.href && !isLast ? (
-							<Link
-								href={item.href}
-								className="text-gray-700 hover:text-brand-500 transition-colors"
-							>
-								{item.label}
+							<Link href={item.href}>
+								<h4 className="text-gray-700! hover:text-brand-500! transition-colors!">
+									{item.label}
+								</h4>
 							</Link>
 						) : (
 							<h4
