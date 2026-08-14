@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { CheckCircle2, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -62,7 +63,7 @@ function SignatoryRow({ person, index }: { person: Signatory; index: number }) {
 		<div className="flex items-start gap-3 w-full">
 			<Avatar className="h-10 w-10">
 				<AvatarFallback
-					className="text-sm font-semibold"
+					className="text-sm "
 					style={{ backgroundColor: "#EAEDFF", color: "#131B2E" }}
 				>
 					{initialsFor(person.name)}
@@ -70,7 +71,7 @@ function SignatoryRow({ person, index }: { person: Signatory; index: number }) {
 			</Avatar>
 
 			<div className="min-w-0 flex-1">
-				<p className="truncate text-sm font-medium text-[#181724]">
+				<p className="truncate text-sm  text-[#181724]">
 					{person.name}
 				</p>
 				<p className="truncate text-xs text-[#6E6B82]">{person.role}</p>
@@ -82,7 +83,7 @@ function SignatoryRow({ person, index }: { person: Signatory; index: number }) {
 			</div>
 
 			<span
-				className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium ${
+				className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px]  ${
 					isSigned
 						? "bg-[#ECFDF3] text-[#15803D]"
 						: "bg-[#FFFBEB] text-[#B45309]"
@@ -237,90 +238,88 @@ export function SignatoriesCard({
 	// };
 
 	return (
-		<>
-			<Card className={className}>
-				<CardHeader className="flex flex-row items-center justify-between">
-					<CardTitle >Signatories</CardTitle>
-					{/* <Badge variant="secondary">
-						{completed} / {signatories.length} completed
-					</Badge> */}
-				</CardHeader>
-				{showClientDropdown && <Separator />}
+	<>
+		<Card className={cn("p-6 gap-0 bg-neutral-surface border border-border rounded-md shadow-xs", className)}>
+		<CardHeader className="p-0 pb-4 border-b border-border">
+			<CardTitle className="text-base  text-foreground">
+			Signatories
+			</CardTitle>
+		</CardHeader>
 
-				<CardContent className="flex flex-col gap-7 items-center">
-					<ul className="flex flex-col gap-4 w-full">
-						{signatories.map((person, i) => (
-							<li key={person.id} className="flex flex-col gap-3">
-								<SignatoryRow person={person} index={i} />
-								{/* Signature box in all_signed state */}
-								{<SignatureBox person={person} />}
-								{/* Divider between signatories */}
-								{i < signatories.length - 1 && <Separator />}
-							</li>
-						))}
-					</ul>
+		<CardContent className="p-0 pt-4 flex flex-col gap-4">
+			{/* Render existing signatories only if present */}
+			{signatories.length > 0 && (
+			<ul className="flex flex-col gap-3 w-full">
+				{signatories.map((person, i) => (
+				<li key={person.id} className="flex flex-col gap-3">
+					<SignatoryRow person={person} index={i} />
+					<SignatureBox person={person} />
+					{i < signatories.length - 1 && <Separator />}
+				</li>
+				))}
+			</ul>
+			)}
 
-					{/* no_client / with_client: dropdown + confirm button */}
-					{showClientDropdown && (
-						<div className="w-full flex flex-col gap-6">
-							<ClientsDropdown
-								clients={availableClients}
-								selected={selectedClient}
-								onSelect={(client) => setSelectedClient(client)}
-							/>
-							<Button
-								disabled={clientState === "no_client" && !selectedClient}
-								onClick={handleConfirmClick}
-								className="w-full"
-								style={{
-									backgroundColor: selectedClient ? "#6b1fa8" : undefined,
-								}}
-							>
-								Confirm Client Signatory
-							</Button>
-						</div>
-					)}
+			{/* Client selection & action */}
+			{showClientDropdown && (
+			<div className="flex flex-col gap-3 w-full">
+				<ClientsDropdown
+				clients={availableClients}
+				selected={selectedClient}
+				onSelect={(client) => setSelectedClient(client)}
+				/>
+				<Button
+				disabled={clientState === "no_client" && !selectedClient}
+				onClick={handleConfirmClick}
+				className="w-full h-10 text-xs "
+				>
+				Confirm Client Signatory
+				</Button>
+			</div>
+			)}
 
-					{/* client_decided: change signatory link */}
-					{showChangeLink && (
-						<button
-							onClick={handleClientChange}
-							className="w-fit text-xs text-center font-medium underline underline-offset-2 transition-opacity hover:opacity-70"
-							style={{ color: "#3525cd" }}
-						>
-							Change Client Signatory?
-						</button>
-					)}
-				</CardContent>
-			</Card>
+			{/* Change signatory option */}
+			{showChangeLink && (
+			<div className="pt-1 text-center">
+				<button
+				type="button"
+				onClick={handleClientChange}
+				className="text-xs  text-brand-600 underline underline-offset-4 hover:opacity-80 transition-opacity cursor-pointer"
+				>
+				Change Client Signatory?
+				</button>
+			</div>
+			)}
+		</CardContent>
+		</Card>
 
-			<ConfirmTextModal
-				open={createModalOpen}
-				onClose={() => setCreateModalOpen(false)}
-				twoParamFunc={createClientRoleAssignment}
-				client={selectedClient}
-				contractDetails={contractDetails}
-				confirmPhrase={confirm_client_phrase}
-				displayText={confirm_client_text}
-				displayTitle="Confirm Client Signatory"
-				buttonText="Confirm Signatory"
-				onSuccess={onSuccess}
-			/>
+		<ConfirmTextModal
+		open={createModalOpen}
+		onClose={() => setCreateModalOpen(false)}
+		twoParamFunc={createClientRoleAssignment}
+		client={selectedClient}
+		contractDetails={contractDetails}
+		confirmPhrase={confirm_client_phrase}
+		displayText={confirm_client_text}
+		displayTitle="Confirm Client Signatory"
+		buttonText="Confirm Signatory"
+		onSuccess={onSuccess}
+		/>
 
-			<ConfirmTextModal
-				open={changeModalOpen}
-				onClose={() => setChangeModalOpen(false)}
-				twoParamFunc={deleteClientRoleAssignment}
-				client={selectedClient}
-				contractDetails={contractDetails}
-				confirmPhrase={change_client_phrase}
-				displayText={change_client_text}
-				displayTitle="Confirm Client Signatory"
-				buttonText="Re-assign Signatory"
-				onSuccess={onSuccess}
-				setSelectedClient={setSelectedClient}
-			/>
-		</>
+		<ConfirmTextModal
+		open={changeModalOpen}
+		onClose={() => setChangeModalOpen(false)}
+		twoParamFunc={deleteClientRoleAssignment}
+		client={selectedClient}
+		contractDetails={contractDetails}
+		confirmPhrase={change_client_phrase}
+		displayText={change_client_text}
+		displayTitle="Confirm Client Signatory"
+		buttonText="Re-assign Signatory"
+		onSuccess={onSuccess}
+		setSelectedClient={setSelectedClient}
+		/>
+	</>
 	);
 }
 
