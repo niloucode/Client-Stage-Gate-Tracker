@@ -1,5 +1,15 @@
 # Ticket Board Integration Plan
 
+> **STATUS: EXECUTED 2026-08-15** — implemented inline (superpowers-executing-plans),
+> commits `7460eb6` (Task 1), `7b386fb` (Task 2), `2905831` (Task 3), `9630efe`
+> (Task 4), `35f9aa9` (Task 5), `794f219` (Task 6), `2d839f8` (Task 7), `105c02b`
+> (Task 8), `c85efd2` (Task 9), docs sign-off (Task 10).
+> Verification: `prisma validate` ✓ · `tsc --noEmit` ✓ · `vitest run` 34 files /
+> 226 tests ✓ · `eslint` on touched dirs ✓ · `npm run build` ✓.
+> NOTE: `prisma migrate dev` is blocked by pre-existing shadow-DB drift (P3018);
+> the `20260815000000_10_tickets_plan_start_nullable` migration must be applied
+> to Supabase out-of-band.
+
 > **For agentic workers:** implement this plan task-by-task — dispatch a fresh subagent per task with the native `task` tool (recommended for quality), or use the superpowers-executing-plans skill to work through it inline. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Integrate the newly committed `src/features/ticket-board` slice: replace ALL fake subtask data with real `parent_id`-based subtasks (the most important part), give clients a read-only view (team/owners full access), scope assignee/watcher dropdowns to the project's members, fix comments + attachments visibility (query-key bug), complete the ticket date-rules (plan_start_at nullable, plan_end_at required, actual-date transitions), offer cascade-vs-promote on parent delete, and fix the review findings (error handling, FSD, a11y).

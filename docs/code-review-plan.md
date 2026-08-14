@@ -415,9 +415,12 @@
 - [x] `src/shared/schemas/ticket.ts` — 2026-08-15 user spec REVISED: `plan_end_at`
       stays REQUIRED (modernize deprecated `message` → `error` param only);
       `plan_start_at` is already `z.date().optional().nullable()`.
-- [ ] **DB migration** — `Tickets.plan_start_at` → nullable (2026-08-15 spec:
+- [x] **DB migration** — `Tickets.plan_start_at` → nullable (2026-08-15 spec:
       ONLY plan_start_at; `plan_end_at` stays NOT NULL). Rollback = revert the
-      migration. — **scheduled → `docs/reasonix/plans/2026-08-15-ticket-board-integration.md`**
+      migration. — 2026-08-15, commit 9630efe
+      (`prisma/migrations/20260815000000_10_tickets_plan_start_nullable/`;
+      hand-written because `migrate dev` is blocked by pre-existing shadow-DB
+      drift — apply to Supabase out-of-band)
 - [x] Stage form at `src/features/project-structure/ui/StageModal.tsx` — required
       plan dates + planEnd>=planStart — 2026-08-14
 - [x] Stage-editor modals (`src/features/stage-editor/ui/modals/PhaseModals.tsx`,
@@ -425,19 +428,19 @@
       validation) for the now-required plan dates — verified 2026-08-15
       (client-side required + range checks present in all three; zod v4
       refine type-guard predicates noted as runtime-only no-op)
-- [ ] Tickets form/editor (`src/features/ticket-board`) — 2026-08-15 spec
+- [x] Tickets form/editor (`src/features/ticket-board`) — 2026-08-15 spec
       REVISED: the deadline stays REQUIRED (client-side enforcement stays);
       planned start is omitable; the editor's `plan_end_at ?? new Date()`
-      fallback (useTicketEditor.ts:236) must be replaced with deadline
-      validation; createTicket's `plan_start_at: new Date()` must store the
-      user input instead. — **scheduled →
-      `docs/reasonix/plans/2026-08-15-ticket-board-integration.md`**
+      fallback replaced with required-deadline direct use; createTicket
+      stores the user's `plan_start_at`. — 2026-08-15, commits 9630efe +
+      105c02b
 - [x] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
       keep the pure-helper pattern (`projectStatus.ts` style — pure helpers
       must NOT live in `"use server"` files). — 2026-08-15: phase/module/
       workflow rejection tests added (commit 18d5d7d, `project.test.ts`
-      14 tests); ticket actual-date transition tests (new pure helper)
-      scheduled → `docs/reasonix/plans/2026-08-15-ticket-board-integration.md`.
+      14 tests); ticket actual-date transitions covered by 7 new tests in
+      `src/entities/ticket/lib/statusTransitions.test.ts` (commit 35f9aa9);
+      stage date-rule tests still open.
 
 ---
 
@@ -594,58 +597,54 @@ All pre-existing unless noted — none block the running app except the first.
         `projects/[projectId]/contract/page.tsx` (3× react-hooks/immutability,
         pre-existing — that file remains unchecked in section 11).
 
-- [ ] **Ticket-board integration (2026-08-15 review)** — ALL findings below are
-      scheduled in **`docs/reasonix/plans/2026-08-15-ticket-board-integration.md`**
-      (spec: clients read-only / team+owners full access; subtasks = `parent_id`
-      derivation from the flat workflow list; subtask creation = pick from
-      existing tickets; `plan_end_at` REQUIRED + `plan_start_at` nullable +
-      actual-date transition rules; parent delete = 3-option modal cascade/
-      promote/cancel; assignee+watcher dropdowns project-scoped; comments +
-      attachments must load without refresh):
-  - [ ] **Subtask integration (BLOCKING)** — remove `getDummySubtasks`
-        (`TicketCard.tsx:28-109`, fake ids `${id}-sub-1` flow into select/delete)
-        and `DUMMY_SUBTICKETS` (`useTicketEditor.ts:8-97`, ids
-        `du123mmy-subtask-2/-4` fail the `dummy-` guard → `updateTicketParent`
-        with fake uuids); derive real subtasks from the workflow list via
-        `parent_id`.
-  - [ ] **createTicket** (`ticketActions.ts:50`) — `plan_start_at: new Date()`
-        discards the user's start date → store `data.plan_start_at ?? null`
-        (column becomes nullable).
-  - [ ] **updateTicket** (`ticketActions.ts:221-256`) — never writes
-        `plan_start_at` (edits silently lost); add it.
-  - [ ] **Actual-date transitions** — new pure helper
-        (`src/entities/ticket/lib/statusTransitions.ts`, tested): PENDING →
-        IN_PROGRESS sets `actual_start_at`; → FINISHED sets `actual_end_at`
-        (PENDING → FINISHED sets both to the same timestamp); regressions
-        revert to NULL as applicable. Applied in `updateTicket` AND
-        `updateTicketStatus` (both currently skip `actual_start_at`).
-  - [ ] **Delete options (spec change)** — `cascadeSoftDeleteTicket` gains a
-        `mode: "cascade" | "promote"`; the card shows a 3-option dialog when
-        the ticket has subtasks (Cascade delete / Promote subtasks to tickets /
-        Cancel). "Promote" sets children's `parent_id = null` before deleting.
-  - [ ] **DB migration** — `Tickets.plan_start_at` → nullable (only that
-        column; `plan_end_at` stays NOT NULL).
-  - [ ] **Client read-only gating** — board buttons (New Ticket/Tags), DnD,
-        delete, and the editor must hide/disable for clients
-        (`useCurrentUser()` + `profile?.client_id`, ProjectStructure pattern).
-  - [ ] **Project-scoped assignee/watcher dropdowns (P1)** — `selectProfile()`
-        returns ALL profiles incl. clients; new `selectProjectMembers(projectId)`
-        (roleAssignments join, `Profile.client_id: null` filter) + `useProjectMembers`;
-        thread `projectId` from TicketBoard through modals/editor.
-  - [ ] **Comments not visible until refresh (P3)** — query-key mismatch:
-        `useTicketComments` key `commentKeys.list("TICKET", id)` vs
-        `useCreateComment` invalidation `commentKeys.list("TICKET_COMMENT", id)` —
-        invalidation never matches; fix the key to the enum value.
-  - [ ] **Attachments don't load (P2)** — upload failures swallowed
-        (console.error only, ticket still created); `commentKeys.images` never
-        invalidated after create/update; slide-over queries have no isError UI
-        (failures silently render []).
-  - [ ] **Error handling** — TicketBoard create success toast outside
-        try/catch (duplicates modal toast); delete fire-and-forget with
-        unconditional success toast; DnD fire-and-forget; editor subtask
-        add/remove console.error only.
-  - [ ] **Nits** — FSD same-layer `features/issue-reporting` imports with
-        `eslint-disable` (helpers.tsx, TicketEditorSubcomponents, TicketModals);
-        hardcoded `ASC-1028` / `LRN-BNN` codes; `comments: any[]`; dead `onEdit`
-        prop; unused `expanded`/`hasMore` in TicketHistoryLog; a11y (unlabeled
-        buttons, `focus:outline-none`, no KeyboardSensor for dnd-kit).
+- [x] **Ticket-board integration (2026-08-15)** — ALL items below were completed and
+      verified in **`docs/reasonix/plans/2026-08-15-ticket-board-integration.md`**
+      (inline execution, commits 7460eb6 → c85efd2; spec: clients read-only /
+      team+owners full access; subtasks = `parent_id` derivation; pick-from-existing
+      creation; `plan_end_at` REQUIRED + `plan_start_at` nullable + actual-date
+      transitions; 3-option delete modal; project-scoped dropdowns; comments +
+      attachments without refresh):
+  - [x] **Subtask integration (BLOCKING)** — `getDummySubtasks` + `DUMMY_SUBTICKETS`
+        removed; board derives real subtasks from the flat workflow list via
+        `parent_id` (subtasksByParent map) — 7460eb6
+  - [x] **createTicket** — stores `data.plan_start_at ?? null` (was `new Date()`)
+        — 9630efe
+  - [x] **updateTicket** — writes `plan_start_at` (undefined=skip, null=clear)
+        — 9630efe
+  - [x] **Actual-date transitions** — `computeActualDates` pure helper + 7 tests
+        (PENDING→IN_PROGRESS start; PENDING→FINISHED same ts; regressions revert),
+        wired into `updateTicket` + `updateTicketStatus` — 35f9aa9
+  - [x] **Delete options (spec)** — `cascadeSoftDeleteTicket(ticketId, performed_by,
+        mode)` with cascade (subtree BFS) vs promote (children `parent_id = null`);
+        TicketCard shows the 3-option dialog (Cascade / Promote / Cancel) when
+        subtasks exist — 794f219
+  - [x] **DB migration** — `Tickets.plan_start_at` → nullable via
+        `prisma/migrations/20260815000000_10_tickets_plan_start_nullable/migration.sql`
+        (hand-written: `migrate dev` is blocked by pre-existing shadow-DB drift;
+        apply to Supabase out-of-band); rollback = revert — 9630efe
+  - [x] **Client read-only gating** — board buttons (New Ticket/Tags), DnD
+        (handlers + useDraggable disabled), delete, and editor (Save, add/remove
+        subtask) hidden for clients — 7b386fb
+  - [x] **Project-scoped assignee/watcher dropdowns (P1)** — new
+        `selectProjectMembers(projectId)` (roleAssignments join, `client_id: null`)
+        + `useProjectMembers`; projectId threaded board → modals → editor — 2905831
+  - [x] **Comments not visible until refresh (P3)** — query-key fixed:
+        `commentKeys.list(CommentParentType.TICKET_COMMENT, id)` now matches the
+        invalidation key — 105c02b
+  - [x] **Attachments don't load (P2)** — images keys invalidated on create/update;
+        slide-over shows a Retry banner instead of silent []; uploads are
+        all-or-nothing with storage cleanup + toast errors (alert() removed) —
+        105c02b
+  - [x] **Error handling** — create toast pass-through (modal owns toasts);
+        delete + drag-move awaited with error toasts — 794f219 + 2d839f8
+  - [x] **Nits** — `IssueItem`/`BugType`/`UrgencyLevel`/`StepItem` moved to
+        `entities/issue` (IssueDashboard re-exports; same-layer eslint-disable
+        imports gone); `ticketCode()` replaces `LRN-BNN`/`ASC-1028`;
+        `KeyboardSensor` added; `comments: any[]` → `CommentWithImages[]`;
+        dead `expanded`/`hasMore`/`ReactElement` removed — c85efd2
+  - [x] **Verification (Task 10)** — `prisma validate` ✓, `tsc --noEmit` ✓,
+        `vitest run` 34 files / 226 tests ✓ (incl. 7 new statusTransitions tests),
+        `eslint` on all touched dirs ✓ (0 errors), `npm run build` ✓. NOTE:
+        `prisma migrate dev` is blocked by pre-existing shadow-DB drift
+        (P3018 on migration 4) — the plan's migration file must be applied to
+        Supabase out-of-band.
