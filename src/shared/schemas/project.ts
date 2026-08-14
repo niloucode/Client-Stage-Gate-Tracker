@@ -22,8 +22,8 @@ const baseProject = z.object({
 	// Project plan dates are REQUIRED (non-nullable): the DB columns
 	// plan_start_at/plan_end_at are NOT NULL and the user must always pick
 	// them — never fill them with new Date() fallbacks (Input Rules).
-	start_date: z.date({ message: "Start date is required" }),
-	deadline_date: z.date({ message: "Deadline date is required" }),
+	start_date: z.date({ message: "Plan Start Date is required" }),
+	deadline_date: z.date({ message: "Plan End Date is required" }),
 });
 
 export const projectCreateSchema = baseProject.refine(

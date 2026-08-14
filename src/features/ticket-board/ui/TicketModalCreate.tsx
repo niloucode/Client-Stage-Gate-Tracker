@@ -462,31 +462,28 @@ export default function TicketModalCreate({
 					</div>
 
 					{/* Start Date + Deadline row */}
-					<div className="grid grid-cols-2 gap-4">
-						<div className="space-y-1.5">
-							<Label>Planned Start</Label>
-							<DateTimePicker
-								value={startDate}
-								onChange={(d) => {
-									setStartDate(d);
-									if (fieldErrors.plan_start_at) setFieldErrors((prev) => ({ ...prev, plan_start_at: "" }));
-								}}
-								placeholder="Pick planned start date"
-								error={fieldErrors.plan_start_at}
-							/>
-						</div>
-						<div className="space-y-1.5">
-							<Label required>Deadline</Label>
-							<DateTimePicker
-								value={deadline}
-								onChange={(d) => {
-									setDeadline(d);
-									if (fieldErrors.plan_end_at) setFieldErrors((prev) => ({ ...prev, plan_end_at: "" }));
-								}}
-								placeholder="Pick deadline"
-								error={fieldErrors.plan_end_at}
-							/>
-						</div>
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<DateTimePicker
+							label="Planned Start"
+							value={startDate}
+							onChange={(d) => {
+								setStartDate(d);
+								if (fieldErrors.plan_start_at) setFieldErrors((prev) => ({ ...prev, plan_start_at: "" }));
+							}}
+							placeholder="Pick Planned Start"
+							error={fieldErrors.plan_start_at}
+						/>
+						<DateTimePicker
+							label="Plan End"
+							required
+							value={deadline}
+							onChange={(d) => {
+								setDeadline(d);
+								if (fieldErrors.plan_end_at) setFieldErrors((prev) => ({ ...prev, plan_end_at: "" }));
+							}}
+							placeholder="Pick Planned End"
+							error={fieldErrors.plan_end_at}
+						/>
 					</div>
 
 					{/* Linked Issue Box */}

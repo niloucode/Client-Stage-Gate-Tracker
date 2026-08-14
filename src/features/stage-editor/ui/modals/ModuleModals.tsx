@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import type { Module } from "../../types";
 import { getFieldErrors } from "@/shared/lib/zod";
@@ -8,8 +8,6 @@ import {
 	hasValidPlannedRange,
 	toSchedulingDates,
 } from "@/shared/lib/scheduling";
-import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
-import { Label } from "@/components/ui/label";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { FormInput } from "@/components/ui/forminput";
 import {
@@ -22,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash2 } from "lucide-react";
-import { toast } from "@/components/ui/toast"
+import { toast } from "@/components/ui/toast";
 
 export interface ModuleFormData {
 	name: string;
@@ -52,13 +50,13 @@ const baseModuleModalSchema = z.object({
 		.date()
 		.nullable()
 		.refine((val): val is Date => val !== null, {
-			message: "Plan Start date is required",
+			message: "Plan Start Date is required",
 		}),
 	planEnd: z
 		.date()
 		.nullable()
 		.refine((val): val is Date => val !== null, {
-			message: "Plan End date is required",
+			message: "Plan End Date is required",
 		}),
 	actualStart: z.date().optional().nullable(),
 	actualEnd: z.date().optional().nullable(),
@@ -71,13 +69,6 @@ const moduleModalSchema = baseModuleModalSchema.refine(
 		path: ["planStart"],
 	},
 );
-
-const emptyFormData: ModuleFormData = {
-	name: "",
-	planStart: null,
-	planEnd: null,
-	actualEnd: null,
-};
 
 const getInitialFormData = (module?: Module | null): ModuleFormData => ({
 	name: module?.name ?? "",
@@ -96,35 +87,28 @@ export function ModuleModal({
 	onSave,
 	onDelete,
 }: ModuleModalProps) {
-	// Preserve the active module during exit animations so closing the modal
-	// doesn't flash "Create New Module" while fading out.
+	// Sync props to state during render (React pattern for adjusting state based on props)
+	const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+	const [prevModule, setPrevModule] = useState(module);
+
 	const [displayModule, setDisplayModule] = useState(module);
-
-	useEffect(() => {
-		if (isOpen) {
-			setDisplayModule(module);
-		}
-	}, [isOpen, module]);
-
-	const isEditMode = Boolean(displayModule);
-
 	const [formData, setFormData] = useState<ModuleFormData>(() =>
-		getInitialFormData(displayModule),
+		getInitialFormData(module),
 	);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-	// Reset form when modal opens or active module changes
-	useEffect(() => {
-		if (isOpen) {
-			setFormData(getInitialFormData(displayModule));
-			setFieldErrors({});
-		}
-	}, [isOpen, displayModule]);
-
-	useResetOnOpen(isOpen && !displayModule, () => {
-		setFormData(emptyFormData);
+	// Adjust state synchronously during render when props change
+	if (isOpen && (!prevIsOpen || prevModule !== module)) {
+		setPrevIsOpen(true);
+		setPrevModule(module);
+		setDisplayModule(module);
+		setFormData(getInitialFormData(module));
 		setFieldErrors({});
-	});
+	} else if (!isOpen && prevIsOpen) {
+		setPrevIsOpen(false);
+	}
+
+	const isEditMode = Boolean(displayModule);
 
 	const handleClose = () => {
 		onClose();
@@ -141,23 +125,19 @@ export function ModuleModal({
 		onSave(formData);
 		handleClose();
 
-		if (isEditMode)
-		{
+		if (isEditMode) {
 			toast.add({
 				title: "Module Edited",
 				description: `Module has been edited successfully.`,
 				type: "success",
 			});
-		}
-		else
-		{
+		} else {
 			toast.add({
 				title: "Module Added",
 				description: `Module has been added successfully.`,
 				type: "success",
 			});
 		}
-		
 	};
 
 	return (
@@ -206,7 +186,7 @@ export function ModuleModal({
 								});
 								setFieldErrors((prev) => ({ ...prev, planStart: undefined }));
 							}}
-							placeholder="Pick plan start date"
+							placeholder="Pick Planned Start"
 							error={fieldErrors.planStart}
 						/>
 
@@ -221,7 +201,7 @@ export function ModuleModal({
 								});
 								setFieldErrors((prev) => ({ ...prev, planEnd: undefined }));
 							}}
-							placeholder="Pick plan end date"
+							placeholder="Pick Planned End"
 							error={fieldErrors.planEnd}
 						/>
 					</div>

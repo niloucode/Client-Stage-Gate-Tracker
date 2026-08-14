@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import type { Workflow } from "../../types";
 import { getFieldErrors } from "@/shared/lib/zod";
@@ -8,7 +8,6 @@ import {
 	hasValidPlannedRange,
 	toSchedulingDates,
 } from "@/shared/lib/scheduling";
-import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { FormInput } from "@/components/ui/forminput";
 import {
@@ -49,13 +48,13 @@ const baseWorkflowModalSchema = z.object({
 		.date()
 		.nullable()
 		.refine((val): val is Date => val !== null, {
-			message: "Plan Start date is required",
+			message: "Plan Start Date is required",
 		}),
 	planEnd: z
 		.date()
 		.nullable()
 		.refine((val): val is Date => val !== null, {
-			message: "Deadline date is required",
+			message: "Plan End Date is required",
 		}),
 	actualStart: z.date().optional().nullable(),
 	actualEnd: z.date().optional().nullable(),
@@ -68,13 +67,6 @@ const workflowModalSchema = baseWorkflowModalSchema.refine(
 		path: ["planStart"],
 	},
 );
-
-const emptyFormData: WorkflowFormData = {
-	name: "",
-	planStart: null,
-	planEnd: null,
-	actualEnd: null,
-};
 
 const getInitialFormData = (workflow?: Workflow | null): WorkflowFormData => ({
 	name: workflow?.name ?? "",
@@ -92,35 +84,28 @@ export function WorkflowModal({
 	onSave,
 	onDelete,
 }: WorkflowModalProps) {
-	// Preserve the active workflow during exit animations so closing the modal
-	// doesn't flash "Create New Workflow" while fading out.
+	// Sync props to state during render (React pattern for adjusting state based on props)
+	const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+	const [prevWorkflow, setPrevWorkflow] = useState(workflow);
+
 	const [displayWorkflow, setDisplayWorkflow] = useState(workflow);
-
-	useEffect(() => {
-		if (isOpen) {
-			setDisplayWorkflow(workflow);
-		}
-	}, [isOpen, workflow]);
-
-	const isEditMode = Boolean(displayWorkflow);
-
 	const [formData, setFormData] = useState<WorkflowFormData>(() =>
-		getInitialFormData(displayWorkflow),
+		getInitialFormData(workflow),
 	);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-	// Reset form when modal opens or active workflow changes
-	useEffect(() => {
-		if (isOpen) {
-			setFormData(getInitialFormData(displayWorkflow));
-			setFieldErrors({});
-		}
-	}, [isOpen, displayWorkflow]);
-
-	useResetOnOpen(isOpen && !displayWorkflow, () => {
-		setFormData(emptyFormData);
+	// Adjust state synchronously during render when props change
+	if (isOpen && (!prevIsOpen || prevWorkflow !== workflow)) {
+		setPrevIsOpen(true);
+		setPrevWorkflow(workflow);
+		setDisplayWorkflow(workflow);
+		setFormData(getInitialFormData(workflow));
 		setFieldErrors({});
-	});
+	} else if (!isOpen && prevIsOpen) {
+		setPrevIsOpen(false);
+	}
+
+	const isEditMode = Boolean(displayWorkflow);
 
 	const handleClose = () => {
 		onClose();
@@ -184,12 +169,12 @@ export function WorkflowModal({
 								});
 								setFieldErrors((prev) => ({ ...prev, planStart: undefined }));
 							}}
-							placeholder="Pick plan start date"
+							placeholder="Pick Planned Start"
 							error={fieldErrors.planStart}
 						/>
 
 						<DateTimePicker
-							label="Deadline Date"
+							label="Plan End"
 							required
 							value={formData.planEnd ? new Date(formData.planEnd) : undefined}
 							onChange={(date) => {
@@ -199,7 +184,7 @@ export function WorkflowModal({
 								});
 								setFieldErrors((prev) => ({ ...prev, planEnd: undefined }));
 							}}
-							placeholder="Pick deadline date"
+							placeholder="Pick Planned End"
 							error={fieldErrors.planEnd}
 						/>
 					</div>

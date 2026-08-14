@@ -228,7 +228,7 @@ export function EditProjectModal({
 					{/* Dates Section */}
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<DateTimePicker
-							label="Start Date"
+							label="Plan Start"
 							required
 							value={
 								formData.start_date ? new Date(formData.start_date) : undefined
@@ -240,12 +240,12 @@ export function EditProjectModal({
 								});
 								clearFieldError("start_date");
 							}}
-							placeholder="Pick start date"
+							placeholder="Pick Planned Start"
 							error={fieldErrors.start_date}
 						/>
 
 						<DateTimePicker
-							label="Deadline Date"
+							label="Plan End"
 							required
 							value={
 								formData.deadline_date
@@ -259,7 +259,7 @@ export function EditProjectModal({
 								});
 								clearFieldError("deadline_date");
 							}}
-							placeholder="Pick deadline date"
+							placeholder="Pick Planned End"
 							error={fieldErrors.deadline_date}
 						/>
 					</div>

@@ -18,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/forminput";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { Label } from "@/components/ui/label";
 import { useCreatePhase, useUpdatePhase } from "@/entities/phase/mutations";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { toast } from "@/components/ui/toast";
@@ -45,13 +44,13 @@ const basePhaseModalSchema = z.object({
 		.date()
 		.nullable()
 		.refine((val): val is Date => val !== null, {
-			message: "Plan start date is required",
+			message: "Plan Start Date is required",
 		}),
 	planEnd: z
 		.date()
 		.nullable()
 		.refine((val): val is Date => val !== null, {
-			message: "Plan end date is required",
+			message: "Plan End Date is required",
 		}),
 	actualStart: z.date().optional().nullable(),
 	actualEnd: z.date().optional().nullable(),
@@ -199,7 +198,7 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 												required
 												value={field.state.value ? new Date(field.state.value) : undefined}
 												onChange={(date) => field.handleChange(date ?? null)}
-												placeholder="Pick planned start"
+												placeholder="Pick Planned Start"
 												error={error ?? undefined}
 											/>
 										);
@@ -215,7 +214,7 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 												required
 												value={field.state.value ? new Date(field.state.value) : undefined}
 												onChange={(date) => field.handleChange(date ?? null)}
-												placeholder="Pick planned end"
+												placeholder="Pick Planned End"
 												error={error ?? undefined}
 											/>
 										);
