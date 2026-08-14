@@ -40,7 +40,7 @@ export function GanttTabs({
 							 */}
 							<span
 								aria-hidden
-								className="absolute inset-x-0 -bottom-[5px] h-0.5"
+								className="absolute inset-x-0 -bottom-1.25 h-0.5"
 								style={{ backgroundColor: isActive ? "var(--primary)" : "transparent" }}
 							/>
 						</TabsTrigger>

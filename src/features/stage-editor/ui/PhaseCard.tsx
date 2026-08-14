@@ -274,7 +274,7 @@ export const PhaseCard = forwardRef<
 									}}
 								>
 									{/* Connecting Line through Node Centers */}
-									<div className="z-0 absolute left-[56px] right-[56px] top-[36px] h-0.5 bg-brand-100 pointer-events-none" />
+									<div className="z-0 absolute left-14 right-14 top-9 h-0.5 bg-brand-100 pointer-events-none" />
 
 									{phases.map((phase, index) => {
 										const num = phase.number ?? 0;
@@ -284,8 +284,8 @@ export const PhaseCard = forwardRef<
 										return (
 											<div
 												key={phase.phase_id}
-												className="relative flex flex-col items-center flex-shrink-0 w-12 transition-all duration-200 cursor-grab active:cursor-grabbing"
-												draggable={!readOnly}
+												className="relative flex flex-col items-center shrink-0 w-12 transition-all duration-200 cursor-grab active:cursor-grabbing"
+												draggable={true}
 												onDragStart={(e) => handleDragStart(e, index)}
 												onDragEnd={handleDragEnd}
 												onDragOver={(e) => handleDragOver(e, index)}
