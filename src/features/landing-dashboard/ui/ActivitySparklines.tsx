@@ -1,7 +1,8 @@
 "use client";
 
 import { ShieldCheck, AlertCircle, Clock } from "lucide-react";
-import { Bar, BarChart, XAxis, PieChart, Pie, Cell } from "recharts";
+import { Bar, BarChart, XAxis, PieChart, Pie, Sector } from "recharts";
+import type { PieSectorShapeProps } from "recharts";
 import { Card } from "@/components/ui/card";
 import {
 	ChartContainer,
@@ -238,15 +239,20 @@ function IssuesBySeverityCard({ data }: { data?: IssuesBySeverityData }) {
 							outerRadius={70}
 							strokeWidth={2}
 							stroke="var(--background)"
-						>
-							{displayData.map((entry, index) => (
-								<Cell
-									key={`cell-${index}`}
-									fill={entry.color}
-									className={entry.fillClass}
-								/>
-							))}
-						</Pie>
+							// Recharts 3 deprecates Cell — color each slice via the shape prop.
+							shape={(props: PieSectorShapeProps) => {
+								const entry = props.payload as
+									| { color?: string; fillClass?: string }
+									| undefined;
+								return (
+									<Sector
+										{...props}
+										fill={entry?.color}
+										className={entry?.fillClass}
+									/>
+								);
+							}}
+						/>
 					</PieChart>
 				</ChartContainer>
 
@@ -336,15 +342,20 @@ function AssignedVsUnassignedCard({
 							outerRadius={70}
 							strokeWidth={2}
 							stroke="var(--background)"
-						>
-							{displayData.map((entry, index) => (
-								<Cell
-									key={`cell-${index}`}
-									fill={entry.color}
-									className={entry.fillClass}
-								/>
-							))}
-						</Pie>
+							// Recharts 3 deprecates Cell — color each slice via the shape prop.
+							shape={(props: PieSectorShapeProps) => {
+								const entry = props.payload as
+									| { color?: string; fillClass?: string }
+									| undefined;
+								return (
+									<Sector
+										{...props}
+										fill={entry?.color}
+										className={entry?.fillClass}
+									/>
+								);
+							}}
+						/>
 					</PieChart>
 				</ChartContainer>
 
