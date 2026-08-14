@@ -44,8 +44,8 @@ export function useTicketEditor({
 		return allTickets.filter((t) => {
 			if (t.ticket_id === ticket.ticket_id) return false;
 			if (t.parent_id !== null) return false;
-			if (t.status === StatusEnum.FINISHED) return false;
-			return true;
+			return t.status !== StatusEnum.FINISHED;
+
 		});
 	}, [allTickets, ticket.ticket_id]);
 

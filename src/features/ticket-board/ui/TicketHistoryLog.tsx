@@ -16,7 +16,7 @@ import {
   LucideIcon
 } from "lucide-react";
 
-// ── Icon + colour mapping per action ─────────────────────────────────────────
+// ── Icon + color mapping per action ─────────────────────────────────────────
 
 const ACTION_META: Record<
 	action,
@@ -73,7 +73,7 @@ const ACTION_META: Record<
 	},
 };
 
-// ── Status colour helpers ────────────────────────────────────────────────────
+// ── Status color helpers ────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
 	PENDING: "text-gray-500",
@@ -304,7 +304,7 @@ export default function TicketHistoryLog({
 	const { data: history = [], isLoading, isError, error } = useTicketHistory(ticketId);
 
 	return (
-		<div className="px-5 pb-4 max-h-[12rem] mb-6 overflow-y-scroll border-b border-gray-100">
+		<div className="px-5 pb-4 max-h-48 mb-6 overflow-y-scroll border-b border-gray-100">
 
 			{isLoading ? (
 				<p className="text-sm text-gray-400">Loading activity…</p>
