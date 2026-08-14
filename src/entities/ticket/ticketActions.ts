@@ -10,6 +10,7 @@ import {
 } from "@/shared/schemas";
 import { ticketInclude } from "./types";
 import { rollupTicketAncestors } from "./lib/dateRollup";
+import { computeActualDates } from "./lib/statusTransitions";
 import { logHistoryEvent } from "./lib/logHistoryEvent";
 import {
 	currentWeekStart,
@@ -146,15 +147,11 @@ export async function updateTicket(
 			(id: string) => !data.tagIds.includes(id),
 		);
 
-		// Auto-manage actual_end_at based on status transition
+		// Spec: actual dates derive from the status transition (pure helper).
 		const oldStatus = existing?.status;
-		const newStatus = data.status;
-		const finishDate =
-			newStatus === "FINISHED" && oldStatus !== "FINISHED"
-				? new Date()
-				: newStatus !== "FINISHED"
-					? null
-					: data.actual_end_at;
+		const newStatus = data.status ?? oldStatus ?? "PENDING";
+		const now = new Date();
+		const actualPatch = computeActualDates(oldStatus!, newStatus, now);
 
 		// Collect all history rows first, write them once with createMany.
 		const historyRows: Prisma.HistoryEventUncheckedCreateInput[] = [];
@@ -231,7 +228,8 @@ export async function updateTicket(
 				workflow_id: data.workflow_id,
 				watcher_id: data.watcher_id ?? null,
 				description: data.description ?? null,
-				actual_end_at: finishDate,
+				// Spec: actual dates derive from the status transition (pure helper)
+				...actualPatch,
 				api_route: data.api_route ?? null,
 				api_method: data.api_method ?? null,
 
@@ -304,7 +302,8 @@ export async function updateTicketStatus(
 			where: { ticket_id: ticketId },
 			data: {
 				status,
-				actual_end_at: status === "FINISHED" ? new Date() : null,
+				// Spec: actual dates derive from the status transition (pure helper)
+				...computeActualDates(existing?.status ?? "PENDING", status, new Date()),
 			},
 			include: ticketInclude,
 		});
