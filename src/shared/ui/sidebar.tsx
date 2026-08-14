@@ -40,7 +40,7 @@ export const navItems: NavItem[] = [
 	// { label: "Contracts", icon: FileText, href: "/contracts" }, // TODO(contracts): route not built yet
 	{ label: "Project Team", icon: Users, href: "/team" },
 	{ label: "Clients", icon: ContactRound, href: "/clients" },
-	{ label: "Variables", icon: Key, href: "/variables" },
+	// { label: "Variables", icon: Key, href: "/variables" },
 ];
 
 export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
