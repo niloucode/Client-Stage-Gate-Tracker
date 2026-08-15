@@ -82,7 +82,7 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 p-6 md:p-10 space-y-6 mx-auto w-full max-w-7xl">
+        <main className="flex-1 space-y-6 mx-auto w-full max-w-7xl">
           {/* Back Button */}
           <Back link={`/projects/${projectId}`} />
 
