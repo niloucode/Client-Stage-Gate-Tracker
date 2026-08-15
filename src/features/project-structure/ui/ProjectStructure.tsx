@@ -15,6 +15,7 @@ import {
 	Eye,
 	Workflow,
 	Ticket,
+	ChartGantt,
 	LucideIcon,
 	Clock,
 } from "lucide-react";
@@ -71,6 +72,7 @@ interface ProjectStructureProps {
 	onViewContract?: () => void;
 	onCredentialsRepo?: () => void;
 	onIssueReport?: () => void;
+	onGanttChart?: () => void;
 }
 
 // ─── Date Formatting Helpers ──────────────────────────────────────────────────
@@ -163,11 +165,13 @@ function ProjectAccessCard({
 	onViewContract,
 	onCredentialsRepo,
 	onIssueReport,
+	onGanttChart,
 }: {
 	projectId?: string;
 	onViewContract?: () => void;
 	onCredentialsRepo?: () => void;
 	onIssueReport?: () => void;
+	onGanttChart?: () => void;
 }) {
 	const router = useRouter();
 
@@ -187,6 +191,12 @@ function ProjectAccessCard({
 		onIssueReport ??
 		(() => {
 			if (projectId) router.push(`/projects/${projectId}/issues`);
+		});
+
+	const handleGanttChart =
+		onGanttChart ??
+		(() => {
+			if (projectId) router.push(`/projects/${projectId}/dashboard-analytics`);
 		});
 
 	return (
@@ -218,6 +228,15 @@ function ProjectAccessCard({
 				>
 					<Bug className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 					Issue Reporting
+				</Button>
+				<Button
+					size="sm"
+					onClick={handleGanttChart}
+					variant="outline"
+					className="h-8 justify-start gap-2 text-xs"
+				>
+					<ChartGantt className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+					Gantt Chart
 				</Button>
 			</CardContent>
 		</Card>
@@ -359,6 +378,7 @@ export function ProjectStructure({
 	onViewContract,
 	onCredentialsRepo,
 	onIssueReport,
+	onGanttChart,
 }: ProjectStructureProps) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -554,6 +574,7 @@ export function ProjectStructure({
 						onViewContract={onViewContract}
 						onCredentialsRepo={onCredentialsRepo}
 						onIssueReport={onIssueReport}
+						onGanttChart={onGanttChart}
 					/>
 				</div>
 			</div>

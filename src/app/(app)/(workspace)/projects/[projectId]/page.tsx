@@ -18,6 +18,7 @@ export default function PS() {
 				onViewContract={() => router.push(`/projects/${projectId}/contract`)}
 				onCredentialsRepo={() => router.push(`/projects/${projectId}/variables`)}
 				onIssueReport={() => router.push(`/projects/${projectId}/issues`)}
+				onGanttChart={() => router.push(`/projects/${projectId}/dashboard-analytics`)}
 			/>
 		</>
 	);
