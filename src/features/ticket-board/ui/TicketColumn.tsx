@@ -47,13 +47,14 @@ export default function TicketColumn({
 				}`}
 			>
 				{tickets.map((ticket) => (
+					!ticket.parent_id ?
 					<TicketCard
 						key={ticket.ticket_id}
 						ticket={ticket}
 						subtasks={subtasksByParent.get(ticket.ticket_id) ?? []}
 						onSelect={onSelectTicket}
 						onDelete={onDeleteTicket}
-					/>
+					/> :""
 				))}
 
 						{tickets.length === 0 && (
