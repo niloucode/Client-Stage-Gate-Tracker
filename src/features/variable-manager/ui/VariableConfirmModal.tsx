@@ -63,12 +63,6 @@ export function VariableConfirmModal({
 						{description}
 					</p>
 
-					{/* <div className="rounded-md border border-brand-100 bg-neutral-subtle p-3 text-center">
-						<span className=" text-foreground text-sm">
-							{confirmName}
-						</span>
-					</div> */}
-
 					<div className="space-y-1.5">
 						<label htmlFor="confirm-variable-name" className="text-xs text-foreground">
 							Type the variable name to confirm:

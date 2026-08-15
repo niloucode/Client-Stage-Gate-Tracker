@@ -17,6 +17,7 @@ import {
 import type { VariableItem } from "@/entities/variable";
 import type { VariableCreateInput } from "@/shared/schemas/variable";
 import { VariablesTable } from "./VariablesTable";
+import type { VariableSortField, SortDirection } from "./VariablesTable";
 import { VariableFormModal } from "./VariableFormModal";
 import { VariableConfirmModal } from "./VariableConfirmModal";
 import { VariableNotesModal } from "./VariableNotesModal";
@@ -68,9 +69,6 @@ function VariablesToolbar({
 		</div>
 	);
 }
-
-type VariableSortField = "name" | "type" | "clientVisibility";
-type SortDirection = "asc" | "desc";
 
 export function VariablesPage({ projectId }: { projectId: string }) {
 	const {

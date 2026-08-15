@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Link2, Key, Code2 } from "lucide-react";
 import {
 	Dialog,
@@ -14,13 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { VariableItem, VariableFormData, VariableType } from "../model/types";
+import type { VariableItem, VariableType } from "@/entities/variable";
+import type { VariableCreateInput } from "@/shared/schemas/variable";
 
 interface VariableFormModalProps {
 	isOpen: boolean;
 	variable?: VariableItem | null;
 	onClose: () => void;
-	onSubmit: (data: VariableFormData) => void;
+	/** Resolves true only after the mutation succeeded; the modal closes itself. */
+	onSubmit: (data: VariableCreateInput) => Promise<boolean>;
 }
 
 const TYPE_OPTIONS: {
@@ -63,6 +65,7 @@ export function VariableFormModal({
 	const [notesTeam, setNotesTeam] = useState("");
 	const [notesClient, setNotesClient] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	useEffect(() => {
 		if (isOpen) {
@@ -99,18 +102,20 @@ export function VariableFormModal({
 		return Object.keys(newErrors).length === 0;
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = async (e: FormEvent) => {
 		e.preventDefault();
 		if (!validate()) return;
 
-		onSubmit({
+		setIsSubmitting(true);
+		const ok = await onSubmit({
 			name: name.trim(),
 			type,
 			value: value.trim(),
 			notesTeam: notesTeam.trim(),
 			notesClient: notesClient.trim(),
 		});
-		handleClose();
+		setIsSubmitting(false);
+		if (ok) handleClose();
 	};
 
 	return (
@@ -236,11 +241,15 @@ export function VariableFormModal({
 					</div>
 
 					<DialogFooter className="pt-3 border-t border-border">
-						<Button type="button" variant="ghost" onClick={handleClose}>
+						<Button type="button" variant="ghost" onClick={handleClose} disabled={isSubmitting}>
 							Cancel
 						</Button>
-						<Button type="submit">
-							{isEdit ? "Save Changes" : "Add Variable Details"}
+						<Button type="submit" disabled={isSubmitting}>
+							{isSubmitting
+								? "Saving…"
+								: isEdit
+									? "Save Changes"
+									: "Add Variable Details"}
 						</Button>
 					</DialogFooter>
 				</form>
