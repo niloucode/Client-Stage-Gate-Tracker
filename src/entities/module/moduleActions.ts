@@ -151,7 +151,7 @@ export async function cascadeSoftDeleteModule(
 export async function getProjectModulesGantt(projectId: string) {
 	z.uuid().parse(projectId);
 	const auth = await assertProjectMemberOrClient(projectId);
-	if (!auth.ok) return { success: false, error: auth.error };
+	if (!auth.ok) return { success: false as const, error: auth.error };
 	try {
 		const modules = await prisma.modules.findMany({
 			where: {
@@ -164,9 +164,9 @@ export async function getProjectModulesGantt(projectId: string) {
 			orderBy: { plan_start_at: "asc" },
 			select: moduleGanttSelect,
 		});
-		return { success: true, data: modules };
+		return { success: true as const, data: modules };
 	} catch (error) {
 		console.error("Failed to fetch project modules for gantt:", error);
-		return { success: false, error: "Failed to load modules." };
+		return { success: false as const, error: "Failed to load modules." };
 	}
 }

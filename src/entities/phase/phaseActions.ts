@@ -142,7 +142,7 @@ export async function reorderPhase(phaseId: string, targetNumber: number) {
 export async function getProjectPhasesGantt(projectId: string) {
 	z.uuid().parse(projectId);
 	const auth = await assertProjectMemberOrClient(projectId);
-	if (!auth.ok) return { success: false, error: auth.error };
+	if (!auth.ok) return { success: false as const, error: auth.error };
 	try {
 		const phases = await prisma.phases.findMany({
 			where: {
@@ -155,9 +155,9 @@ export async function getProjectPhasesGantt(projectId: string) {
 			],
 			select: phaseGanttSelect,
 		});
-		return { success: true, data: phases };
+		return { success: true as const, data: phases };
 	} catch (error) {
 		console.error("Failed to fetch project phases for gantt:", error);
-		return { success: false, error: "Failed to load phases." };
+		return { success: false as const, error: "Failed to load phases." };
 	}
 }

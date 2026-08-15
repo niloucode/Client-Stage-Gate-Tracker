@@ -296,7 +296,7 @@ export async function reorderWorkflow(
 export async function getProjectWorkflowsGantt(projectId: string) {
 	z.uuid().parse(projectId);
 	const auth = await assertProjectMemberOrClient(projectId);
-	if (!auth.ok) return { success: false, error: auth.error };
+	if (!auth.ok) return { success: false as const, error: auth.error };
 	try {
 		const workflows = await prisma.workflows.findMany({
 			where: {
@@ -315,9 +315,9 @@ export async function getProjectWorkflowsGantt(projectId: string) {
 			],
 			select: workflowGanttSelect,
 		});
-		return { success: true, data: workflows };
+		return { success: true as const, data: workflows };
 	} catch (error) {
 		console.error("Failed to fetch project workflows for gantt:", error);
-		return { success: false, error: "Failed to load workflows." };
+		return { success: false as const, error: "Failed to load workflows." };
 	}
 }
