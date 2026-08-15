@@ -21,10 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getContractUrl } from "@/entities/contract";
-import {
-	useUploadContract,
-	useDeleteContract,
-} from "@/entities/contract";
+import { useUploadContract, useDeleteContract } from "@/entities/contract";
 import { ConfirmTextModal } from "./ConfirmTextModal";
 
 interface PDFViewerProps {
@@ -67,31 +64,39 @@ export function ContractViewer({
 	useEffect(() => {
 		if (initialFilePath) {
 			let revoked = false;
+			let objectUrl: string | null = null;
 			getContractUrl(initialFilePath)
 				.then(async (result) => {
-					if (!revoked && result.success && result.data) {
-						setFileUrl(result.data);
-
-						// Reconstruct File from the public URL
-						const response = await fetch(result.data);
-						// Defense in depth: a non-OK fetch (e.g. bucket made
-						// private, object missing) must surface an error
-						// instead of building a broken "PDF" from the body.
-						if (!response.ok) {
-							throw new Error(`Failed to load contract (HTTP ${response.status}).`);
-						}
-						const blob = await response.blob();
-						const fileName =
-							initialFilePath.split("/").pop() ?? "contract.pdf";
-						setFile(
-							new File([blob], fileName, { type: "application/pdf" }),
-						);
-					} else if (!revoked && !result.success) {
+					if (revoked) return;
+					if (!result.success || !result.data) {
 						setFileError(
 							typeof result.error === "string"
 								? result.error
 								: "Failed to load contract",
 						);
+						return;
+					}
+
+					// Defense in depth: a non-OK fetch (e.g. bucket made
+					// private, object missing) must surface an error instead
+					// of building a broken "PDF" from the body.
+					const response = await fetch(result.data);
+					if (!response.ok) {
+						throw new Error(
+							`Failed to load contract (HTTP ${response.status}).`,
+						);
+					}
+					const blob = await response.blob();
+					const fileName = initialFilePath.split("/").pop() ?? "contract.pdf";
+					setFile(new File([blob], fileName, { type: "application/pdf" }));
+
+					// Render the fetched blob (blob: URL) rather than the raw
+					// public URL — Chromium enforces frame-src/object-src on
+					// cross-origin PDF embeds, and blob: resolves against
+					// 'self', so the embed never depends on host allowlists.
+					if (!revoked) {
+						objectUrl = URL.createObjectURL(blob);
+						setFileUrl(objectUrl);
 					}
 				})
 				.catch((err) => {
@@ -102,6 +107,7 @@ export function ContractViewer({
 				});
 			return () => {
 				revoked = true;
+				if (objectUrl) URL.revokeObjectURL(objectUrl);
 			};
 		}
 	}, [initialFilePath]);
@@ -114,9 +120,7 @@ export function ContractViewer({
 	const selectFile = (next: File | null | undefined) => {
 		if (!next) return;
 		if (!isPdfFile(next)) {
-			setFileError(
-				"That doesn't look like a PDF. Please choose a .pdf file.",
-			);
+			setFileError("That doesn't look like a PDF. Please choose a .pdf file.");
 			return;
 		}
 		setFileError(null);
@@ -298,19 +302,17 @@ export function ContractViewer({
 							<div
 								style={{
 									width: `${10000 / zoom}%`,
+									height: "100%",
 									transform: `scale(${zoom / 100})`,
 									transformOrigin: "top left",
 								}}
 							>
 								<embed
-									// #toolbar=0 is a Chrome PDF-viewer parameter —
-									// but appending it to a blob: URL breaks the
-									// viewer (gray embed). Blob URLs skip it.
-									src={
-										fileUrl.startsWith("blob:")
-											? fileUrl
-											: `${fileUrl}#toolbar=0`
-									}
+									// fileUrl is always a blob: URL (see the
+									// load effect / confirmUpload) — appending
+									// #toolbar=0 to a blob: URL breaks the
+									// Chrome viewer (gray embed), so skip it.
+									src={`${fileUrl}#toolbar=0&navpanes=0 `}
 									type="application/pdf"
 									className="aspect-8.5/11 w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
 								/>
@@ -352,9 +354,7 @@ export function ContractViewer({
 										: "Only the Project Owner can upload the contract."}
 								</p>
 								{fileError && (
-									<p className="mt-2 text-xs  text-red-600">
-										{fileError}
-									</p>
+									<p className="mt-2 text-xs  text-red-600">{fileError}</p>
 								)}
 							</div>
 						</div>
@@ -375,14 +375,12 @@ export function ContractViewer({
 							Upload this as the contract?
 						</DialogTitle>
 						<DialogDescription className="pt-2">
-							<span className=" text-ink">{contractName}</span>{" "}
-							will become the active contract between you and the client.
-							The client will be able to see this document right away.
+							<span className=" text-ink">{contractName}</span> will become the
+							active contract between you and the client. The client will be
+							able to see this document right away.
 						</DialogDescription>
 					</DialogHeader>
-					<label className="block text-xs  text-plum-400">
-						Contract name
-					</label>
+					<label className="block text-xs  text-plum-400">Contract name</label>
 					<Input
 						value={contractName}
 						onChange={(e) => setContractName(e.target.value)}
@@ -426,4 +424,3 @@ export function ContractViewer({
 		</>
 	);
 }
-
