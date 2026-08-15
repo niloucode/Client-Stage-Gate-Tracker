@@ -1,16 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { z } from "zod";
+import type { z } from "zod";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useSelector } from "@tanstack/react-form";
 
 import { useAppForm, formErrorToMessage } from "@/shared/form";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
-import {
-	hasValidPlannedRange,
-	toSchedulingDates,
-} from "@/shared/lib/scheduling";
+import { stageCreateSchema } from "@/shared/schemas";
 import { createStage, updateStage } from "@/entities/stage";
 import {
 	Button,
@@ -50,44 +47,7 @@ export interface StageModalProps {
 	onDelete?: () => void;
 }
 
-const stageModalSchema = z
-	.object({
-		name: z
-			.string()
-			.min(1, "Stage name is required")
-			.max(20, "Stage name must be 20 characters or less"),
-		description: z
-			.string()
-			.max(160, "Description must be 160 characters or less")
-			.optional()
-			.default(""),
-		planStart: z
-			.date()
-			.nullable()
-			.refine((val): val is Date => val !== null, {
-				error: "Plan Start Date is required",
-			}),
-		planEnd: z
-			.date()
-			.nullable()
-			.refine((val): val is Date => val !== null, {
-				error: "Plan End Date is required",
-			}),
-	})
-	.superRefine((data, ctx) => {
-		if (!hasValidPlannedRange(toSchedulingDates(data))) {
-			ctx.addIssue({
-				code: "custom",
-				message: "Start must be before End",
-				path: ["planStart"],
-			});
-			ctx.addIssue({
-				code: "custom",
-				message: "End must be after Start",
-				path: ["planEnd"],
-			});
-		}
-	});
+const stageModalSchema = stageCreateSchema;
 
 type StageFormValues = z.input<typeof stageModalSchema>;
 
@@ -390,14 +350,4 @@ export function StageModal({
 			/>
 		</>
 	);
-}
-
-// ── Backward-compatible Aliases ──────────────────────────────────────────────
-
-export function AddStage(props: Omit<StageModalProps, "stage">) {
-	return <StageModal {...props} stage={null} />;
-}
-
-export function EditStage(props: StageModalProps) {
-	return <StageModal {...props} />;
 }

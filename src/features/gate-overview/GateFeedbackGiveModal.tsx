@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ChangeEvent, type SyntheticEvent } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/toast";
 import { MessageSquare, Paperclip, X, CheckCircle2, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { collectImages, revokeImagePreviews, uploadImages } from "@/shared/lib/imageUpload";
 import { useDecideGate } from "@/entities/gate";
 
 export interface GateFeedbackGiveModalProps {
@@ -42,41 +43,30 @@ export function GateFeedbackGiveModal({
 	const decideGateMutation = useDecideGate(stageId);
 	const isApproved = decisionVariant === "approved";
 
-	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-		const files = e.target.files;
-		if (!files || files.length === 0) return;
-
-		const newFiles: File[] = [];
-		const newPreviews: string[] = [];
-
-		for (const file of Array.from(files)) {
-			if (file.size > 5 * 1024 * 1024) {
-				toast.add({
-					title: "File Too Large",
-					description: `"${file.name}" must be under 5MB.`,
-					type: "error",
-				});
-				continue;
-			}
-			newFiles.push(file);
-			newPreviews.push(URL.createObjectURL(file));
+	function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
+		const { images, tooLarge } = collectImages(e.target.files);
+		for (const name of tooLarge) {
+			toast.add({
+				title: "File Too Large",
+				description: `"${name}" must be under 5MB.`,
+				type: "error",
+			});
 		}
-
-		if (newFiles.length > 0) {
-			setImageFiles((prev) => [...prev, ...newFiles]);
-			setImagePreviews((prev) => [...prev, ...newPreviews]);
+		if (images.length > 0) {
+			setImageFiles((prev) => [...prev, ...images.map((i) => i.file)]);
+			setImagePreviews((prev) => [...prev, ...images.map((i) => i.preview)]);
 		}
 		e.target.value = "";
 	}
 
 	function removeImage(index: number) {
-		URL.revokeObjectURL(imagePreviews[index]);
+		revokeImagePreviews([imagePreviews[index]]);
 		setImageFiles((prev) => prev.filter((_, i) => i !== index));
 		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
 	}
 
 	function handleClose() {
-		imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+		revokeImagePreviews(imagePreviews);
 		setFeedbackText("");
 		setSkipFeedback(false);
 		setImageFiles([]);
@@ -84,7 +74,7 @@ export function GateFeedbackGiveModal({
 		onClose();
 	}
 
-	async function handleSubmit(e: React.SyntheticEvent) {
+	async function handleSubmit(e: SyntheticEvent) {
 		e.preventDefault();
 		if (isSubmitting) return;
 
@@ -92,33 +82,12 @@ export function GateFeedbackGiveModal({
 		if (!skipFeedback && !finalFeedback && imageFiles.length === 0) return;
 		setIsSubmitting(true);
 
-		// All-or-nothing image upload (ticket-board pattern), then decide.
-		const uploadedPaths: string[] = [];
-		const imageUrls: string[] = [];
-		let uploadError: string | null = null;
+		// All-or-nothing image upload (shared helper), then decide.
+		const { imageUrls, uploadedPaths, error: uploadError } = await uploadImages(
+			skipFeedback ? [] : imageFiles,
+			"gates",
+		);
 		const supabase = createClient();
-		for (const file of skipFeedback ? [] : imageFiles) {
-			try {
-				const fileExt = file.name.split(".").pop();
-				const fileName = `${crypto.randomUUID()}.${fileExt}`;
-				const filePath = `gates/${fileName}`;
-				const { error } = await supabase.storage
-					.from("images")
-					.upload(filePath, file, { cacheControl: "3600", upsert: false });
-				if (error) {
-					uploadError = `Failed to upload image: ${error.message}`;
-					break;
-				}
-				uploadedPaths.push(filePath);
-				const { data: publicUrl } = supabase.storage
-					.from("images")
-					.getPublicUrl(filePath);
-				imageUrls.push(publicUrl.publicUrl);
-			} catch (err) {
-				uploadError = err instanceof Error ? err.message : "Failed to upload images.";
-				break;
-			}
-		}
 
 		if (uploadError) {
 			if (uploadedPaths.length > 0) {

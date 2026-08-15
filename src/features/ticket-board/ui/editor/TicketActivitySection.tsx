@@ -4,11 +4,16 @@ import { useState, type ChangeEvent } from "react";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { Paperclip } from "lucide-react";
-import { useCreateComment } from "@/entities/comment/mutations";
+import { useCreateComment } from "@/entities/comment";
 import { createClient } from "@/lib/supabase/client";
+import {
+	collectImages,
+	revokeImagePreviews,
+	uploadImages,
+} from "@/shared/lib/imageUpload";
 import { CommentParentType } from "@/lib/generated/prisma";
 import { ProfileType } from "@/shared/types";
-import type { CommentWithImages } from "@/entities/comment/types";
+import type { CommentWithImages } from "@/entities/comment";
 import { toast } from "@/components/ui/toast";
 import TicketHistoryLog from "../TicketHistoryLog";
 import { UserAvatar } from "./helpers";
@@ -34,34 +39,23 @@ export function TicketActivitySection({
   const createCommentMutation = useCreateComment();
 
   function handleCommentImageChange(e: ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files) return;
-
-    const validFiles: File[] = [];
-    const validPreviews: string[] = [];
-
-    Array.from(files).forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.add({
-          title: "File Too Large",
-          description: `"${file.name}" must be under 5MB.`,
-          type: "error",
-        });
-        return;
-      }
-      validFiles.push(file);
-      validPreviews.push(URL.createObjectURL(file));
-    });
-
-    if (validFiles.length > 0) {
-      setCommentImages((prev) => [...prev, ...validFiles]);
-      setCommentImagePreviews((prev) => [...prev, ...validPreviews]);
+    const { images, tooLarge } = collectImages(e.target.files);
+    for (const name of tooLarge) {
+      toast.add({
+        title: "File Too Large",
+        description: `"${name}" must be under 5MB.`,
+        type: "error",
+      });
+    }
+    if (images.length > 0) {
+      setCommentImages((prev) => [...prev, ...images.map((i) => i.file)]);
+      setCommentImagePreviews((prev) => [...prev, ...images.map((i) => i.preview)]);
     }
     e.target.value = "";
   }
 
   function removeImage(index: number) {
-    URL.revokeObjectURL(commentImagePreviews[index]);
+    revokeImagePreviews([commentImagePreviews[index]]);
     setCommentImages((prev) => prev.filter((_, i) => i !== index));
     setCommentImagePreviews((prev) => prev.filter((_, i) => i !== index));
   }
@@ -86,23 +80,11 @@ export function TicketActivitySection({
         return;
       }
 
-      const imageUrls: string[] = [];
-      let uploadError: string | null = null;
-      for (const file of commentImages) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `comments/${fileName}`;
-
-        const { error } = await supabase.storage.from("images").upload(filePath, file, { cacheControl: "3600", upsert: false });
-        if (error) {
-          uploadError = `Failed to upload ${file.name}: ${error.message}`;
-          break;
-        }
-
-        const { data: { publicUrl } } = supabase.storage.from("images").getPublicUrl(filePath);
-        uploadedPaths.push(filePath);
-        imageUrls.push(publicUrl);
-      }
+      const { imageUrls, uploadedPaths: paths, error: uploadError } = await uploadImages(
+        commentImages,
+        "comments",
+      );
+      uploadedPaths.push(...paths);
 
       if (uploadError) {
         if (uploadedPaths.length > 0) {

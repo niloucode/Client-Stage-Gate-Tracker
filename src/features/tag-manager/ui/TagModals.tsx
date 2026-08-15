@@ -1,15 +1,14 @@
-"use client"
+"use client";
 
-import type { Tag } from "@/entities/types"
-import { useState } from "react"
-import { ConfirmDeleteModal } from "@/shared/ui"
-import { TagBadge } from "@/entities/tag/ui"
-import TagListModal from "@/features/tag-manager/ui/TagListModal"
-import TagFormModal from "@/features/tag-manager/ui/TagFormModal"
-import{ Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
-import { Label } from "@/components/ui/label"
+import type { Tag } from "@/entities/types";
+import { useState } from "react";
+import { ConfirmDeleteModal } from "@/shared/ui";
+import { TagBadge } from "@/entities/tag";
+import TagListModal from "@/features/tag-manager/ui/TagListModal";
+import TagFormModal from "@/features/tag-manager/ui/TagFormModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 // ── Tag List Modal ────────────────────────────────────────────────────────────
 
@@ -20,37 +19,37 @@ export function TagManager({
 	onDelete,
 	tags,
 }: {
-	isOpen: boolean
-	onClose: () => void
+	isOpen: boolean;
+	onClose: () => void;
 	onSave: ({
 		name,
 		tag_id,
 		description,
 		color,
 	}: {
-		name: string
-		tag_id?: string
-		description?: string
-		color?: string
-	}) => Promise<{ error?: string }>
-	onDelete: (tag_id: string) => void
-	tags: Tag[]
+		name: string;
+		tag_id?: string;
+		description?: string;
+		color?: string;
+	}) => Promise<{ error?: string }>;
+	onDelete: (tag_id: string) => void;
+	tags: Tag[];
 }) {
 	const [view, setView] = useState<"list" | "create" | "edit" | "delete" | null>(
 		"list",
-	)
-	const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
-	const [formError, setFormError] = useState<string | null>(null)
+	);
+	const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+	const [formError, setFormError] = useState<string | null>(null);
 
 	function handleClose() {
-		setView("list")
-		setSelectedTag(null)
-		onClose()
+		setView("list");
+		setSelectedTag(null);
+		onClose();
 	}
 
 	function handleEditTag(tag: Tag) {
-		setSelectedTag(tag)
-		setView("edit")
+		setSelectedTag(tag);
+		setView("edit");
 	}
 
 	async function handleSaveTag({
@@ -59,37 +58,36 @@ export function TagManager({
 		description,
 		color,
 	}: {
-		name: string
-		tag_id?: string
-		description?: string
-		color?: string
+		name: string;
+		tag_id?: string;
+		description?: string;
+		color?: string;
 	}): Promise<{ error?: string }> {
-		if (!name.trim()) return {}
 		const result = await onSave({
 			name: name.trim(),
 			description: description?.trim() ?? "",
 			color: color,
 			tag_id: tag_id ?? "",
-		})
+		});
 		if (result?.error) {
-			setFormError(result.error)
-			return result
+			setFormError(result.error);
+			return result;
 		}
-		setFormError(null)
-		setView("list")
-		setSelectedTag(null)
-		return {}
+		setFormError(null);
+		setView("list");
+		setSelectedTag(null);
+		return {};
 	}
 
 	function handleConfirmDelete(tag_id: string) {
-		onDelete(tag_id)
-		setView("list")
-		setSelectedTag(null)
+		onDelete(tag_id);
+		setView("list");
+		setSelectedTag(null);
 	}
 
 	function handleRequestDelete(tag: Tag) {
-		setSelectedTag(tag)
-		setView("delete")
+		setSelectedTag(tag);
+		setView("delete");
 	}
 
 	if (view === "list") {
@@ -110,11 +108,11 @@ export function TagManager({
 					/>
 					<DialogFooter>
 						<Button onClick={handleClose} variant="ghost">Cancel</Button>
-						<Button onClick={()=> setView("create")}><Plus />Create Tag</Button>
+						<Button onClick={() => setView("create")}><Plus />Create Tag</Button>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-		)
+		);
 	}
 
 	if (view === "create") {
@@ -122,13 +120,13 @@ export function TagManager({
 			<TagFormModal
 				mode="create"
 				error={formError}
-				onClose={() => { 
-					setView("list") 
-					setFormError(null) 
+				onClose={() => {
+					setView("list");
+					setFormError(null);
 				}}
 				onSubmit={handleSaveTag}
 			/>
-		)
+		);
 	}
 
 	if (view === "edit" && selectedTag) {
@@ -137,13 +135,13 @@ export function TagManager({
 				mode="edit"
 				initial={selectedTag}
 				error={formError}
-				onClose={() => { 
-					setView("list") 
-					setFormError(null) 
+				onClose={() => {
+					setView("list");
+					setFormError(null);
 				}}
 				onSubmit={handleSaveTag}
 			/>
-		)
+		);
 	}
 
 	if (view === "delete" && selectedTag) {
@@ -160,8 +158,8 @@ export function TagManager({
 				onCancel={() => setView("list")}
 				onConfirm={() => handleConfirmDelete(selectedTag.tag_id)}
 			/>
-		)
+		);
 	}
 
-	return null
+	return null;
 }

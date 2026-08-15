@@ -41,4 +41,3 @@ export function ExecutedBanner({
 	);
 }
 
-export default ExecutedBanner;

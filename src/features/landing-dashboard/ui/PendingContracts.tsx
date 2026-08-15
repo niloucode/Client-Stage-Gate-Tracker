@@ -220,4 +220,3 @@ export function PendingContracts({ contracts = [] }: PendingContractsProps) {
 	);
 }
 
-export default PendingContracts;

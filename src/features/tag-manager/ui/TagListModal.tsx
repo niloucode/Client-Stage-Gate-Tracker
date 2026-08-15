@@ -3,10 +3,9 @@
 import { useState, useMemo } from "react";
 import type { Tag } from "@/entities/types";
 import { Pencil, Trash2, LucideSearch } from "lucide-react";
-import { TagBadge } from "@/entities/tag/ui/TagBadge";
+import { TagBadge } from "@/entities/tag";
 import { Lacking } from "@/shared/ui/search-status";
-
-const PINNED_TAGS = ["API", "Bugs", "Integration", "Production"] as const;
+import { matchesTagSearch, sortTagsForDisplay } from "../model/tagOrdering";
 
 export default function TagListModal({
 	tags,
@@ -20,53 +19,13 @@ export default function TagListModal({
 }) {
 	const [searchQuery, setSearchQuery] = useState("");
 
-	// 1. Filter by search query, 2. Keep the 4 hardcoded tags at top, 3. Sort remainder alphabetically
-	const displayedTags = useMemo(() => {
-		const q = searchQuery.toLowerCase().trim();
-
-		const matchesSearch = (tag: Tag) => {
-			if (!q) return true;
-			return (
-				tag.name.toLowerCase().includes(q) ||
-				(tag.description && tag.description.toLowerCase().includes(q))
-			);
-		};
-
-		const pinned: Tag[] = [];
-		const others: Tag[] = [];
-
-		tags.forEach((tag) => {
-			if (!matchesSearch(tag)) return;
-
-			const isPinned = PINNED_TAGS.some(
-				(p) => p.toLowerCase() === tag.name.toLowerCase(),
-			);
-
-			if (isPinned) {
-				pinned.push(tag);
-			} else {
-				others.push(tag);
-			}
-		});
-
-		// Sort pinned according to the PINNED_TAGS array order
-		pinned.sort((a, b) => {
-			const idxA = PINNED_TAGS.findIndex(
-				(p) => p.toLowerCase() === a.name.toLowerCase(),
-			);
-			const idxB = PINNED_TAGS.findIndex(
-				(p) => p.toLowerCase() === b.name.toLowerCase(),
-			);
-			return idxA - idxB;
-		});
-
-		// Sort all other tags alphabetically by name
-		others.sort((a, b) =>
-			a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-		);
-
-		return [...pinned, ...others];
-	}, [tags, searchQuery]);
+	// Filter by search, then sort: protected (system) tags first, then
+	// alphabetical — protection comes from Tags.is_protected, never from
+	// hardcoded names (2026-08-15 spec).
+	const displayedTags = useMemo(
+		() => sortTagsForDisplay(tags.filter((tag) => matchesTagSearch(tag, searchQuery))),
+		[tags, searchQuery],
+	);
 
 	return (
 		<div className="px-6 w-full flex flex-col gap-3">
@@ -128,7 +87,7 @@ export default function TagListModal({
 										)}
 									</td>
 
-									{/* Actions Column */}
+									{/* Actions Column — delete hidden for protected tags */}
 									<td className="px-4 py-3 align-middle text-right">
 										<div className="flex items-center justify-end gap-1">
 											<button
@@ -141,12 +100,7 @@ export default function TagListModal({
 												<Pencil size={15} />
 											</button>
 
-											{/* SIR SKY I AM SO SORRY FOR THIS WARCRIME... DEADLINES WERE IMMINENT */}
-
-											{!(tag.name === "API" ||
-											tag.name === "Bugs" ||
-											tag.name === "Integration" ||
-											tag.name === "Production") ? (
+											{tag.is_protected ? null : (
 												<button
 													type="button"
 													onClick={() => onRequestDeleteTag(tag)}
@@ -156,8 +110,6 @@ export default function TagListModal({
 												>
 													<Trash2 size={15} />
 												</button>
-											) : (
-												""
 											)}
 										</div>
 									</td>

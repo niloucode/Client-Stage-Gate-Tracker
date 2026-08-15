@@ -1,7 +1,0 @@
-name - text (60)
-type - text
-description - text
-urgency - enum (low | medium | high)
-system description - text (60)
-time of error - timedatetz
-steps to reproduce per step you need action (text), and image

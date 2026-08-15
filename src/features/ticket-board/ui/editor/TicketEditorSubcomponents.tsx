@@ -26,7 +26,7 @@ import {
   Label,
 } from "@/components/ui";
 
-import { TagBadge } from "@/entities/tag/ui";
+import { TagBadge } from "@/entities/tag";
 import { Pencil, ChevronDown, Plus, Search, Bug, AlertCircle } from "lucide-react";
 
 import { IssueTableModal, mapIssueRow } from "@/entities/issue";
@@ -34,7 +34,7 @@ import type { IssueItem } from "@/entities/issue";
 
 import { STATUS_CONFIG, STATUSES, UserAvatar, getLinkedIssueStyle } from "./helpers";
 
-export function StatusBadge({ status }: { status: StatusEnum }) {
+function StatusBadge({ status }: { status: StatusEnum }) {
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING;
   return (
     <span className={`inline-flex items-center gap-1 text-xs ${config.textClass}`}>

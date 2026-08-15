@@ -58,20 +58,12 @@ const projectQueryOptions = {
 		}),
 };
 
-export function useProjects() {
-	return useQuery(projectQueryOptions.list());
-}
-
 export function useProject(projectId: string | null) {
 	return useQuery(projectQueryOptions.detail(projectId));
 }
 
 export function useProjectMembers(projectId: string | null) {
 	return useQuery(projectQueryOptions.members(projectId));
-}
-
-export function useProfileSearch() {
-	return useQuery(projectQueryOptions.profileSearch());
 }
 
 export function useProjectsForMember() {

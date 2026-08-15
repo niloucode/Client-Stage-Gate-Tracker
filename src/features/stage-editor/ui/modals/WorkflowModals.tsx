@@ -77,7 +77,7 @@ const workflowModalSchema = z
 
 type WorkflowFormValues = z.input<typeof workflowModalSchema>;
 
-export function WorkflowModal({
+function WorkflowModal({
 	isOpen,
 	onClose,
 	workflow,

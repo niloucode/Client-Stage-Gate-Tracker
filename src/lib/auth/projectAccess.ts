@@ -252,3 +252,13 @@ export async function resolveGateProject(
 	// NOT NULL since the 2026-08-14 Supabase edit (gates undeletable).
 	return gate?.Stages?.project_id ?? null;
 }
+
+export async function resolveVariableProject(
+	variableId: string,
+): Promise<string | null> {
+	const row = await prisma.variables.findUnique({
+		where: { variable_id: variableId, is_deleted: false },
+		select: { project_id: true },
+	});
+	return row?.project_id ?? null;
+}

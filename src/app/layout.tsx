@@ -40,16 +40,16 @@ export default function RootLayout({
 		<html
 			lang="en"
 			className={cn(
-        inter.variable,
-        hankenGrotesk.variable,
-        jetbrainsMono.variable
-      )}
+				inter.variable,
+				hankenGrotesk.variable,
+				jetbrainsMono.variable
+			)}
 		>
 			<body className="min-h-full flex flex-col">
 				<QueryProvider>
 					<AuthProvider>
-					<Toaster />
-								{children}
+						<Toaster />
+						{children}
 					</AuthProvider>
 				</QueryProvider>
 			</body>

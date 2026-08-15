@@ -368,6 +368,7 @@ export default function TicketBoard({
 								subtasksByParent={subtasksByParent}
 								onSelectTicket={handleSelectTicket}
 								onDeleteTicket={handleDeleteTicket}
+								readOnly={isClientProfile}
 							/>
 						))}
 					</div>

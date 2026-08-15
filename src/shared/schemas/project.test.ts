@@ -3,19 +3,20 @@ import {
 	moduleCreateSchema,
 	phaseCreateSchema,
 	projectCreateSchema,
+	stageCreateSchema,
 	workflowCreateSchema,
 } from "./project";
 
 const d = (iso: string) => new Date(iso);
 
 describe("projectCreateSchema (required plan dates, Input Rules)", () => {
-	it("accepts valid start_date and deadline_date", () => {
+	it("accepts valid planStart and planEnd", () => {
 		const result = projectCreateSchema.safeParse({
 			name: "Portal",
 			description: "",
 			client_id: "123e4567-e89b-12d3-a456-426614174000",
-			start_date: d("2024-01-01T00:00:00Z"),
-			deadline_date: d("2024-06-30T00:00:00Z"),
+			planStart: d("2024-01-01T00:00:00Z"),
+			planEnd: d("2024-06-30T00:00:00Z"),
 		});
 		if (!result.success) {
 			expect(result.error.issues).toEqual([]);
@@ -23,46 +24,46 @@ describe("projectCreateSchema (required plan dates, Input Rules)", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("rejects a missing start_date (undefined)", () => {
+	it("rejects a missing planStart (undefined)", () => {
 		const result = projectCreateSchema.safeParse({
 			name: "Portal",
 			client_id: "123e4567-e89b-12d3-a456-426614174000",
-			deadline_date: d("2024-06-30T00:00:00Z"),
+			planEnd: d("2024-06-30T00:00:00Z"),
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
 			expect(
-				result.error.issues.some((i) => i.path.includes("start_date")),
+				result.error.issues.some((i) => i.path.includes("planStart")),
 			).toBe(true);
 		}
 	});
 
-	it("rejects a null deadline_date", () => {
+	it("rejects a null planEnd", () => {
 		const result = projectCreateSchema.safeParse({
 			name: "Portal",
 			client_id: "123e4567-e89b-12d3-a456-426614174000",
-			start_date: d("2024-01-01T00:00:00Z"),
-			deadline_date: null,
+			planStart: d("2024-01-01T00:00:00Z"),
+			planEnd: null,
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
 			expect(
-				result.error.issues.some((i) => i.path.includes("deadline_date")),
+				result.error.issues.some((i) => i.path.includes("planEnd")),
 			).toBe(true);
 		}
 	});
 
-	it("rejects start_date after deadline_date", () => {
+	it("rejects planStart after planEnd", () => {
 		const result = projectCreateSchema.safeParse({
 			name: "Portal",
 			client_id: "123e4567-e89b-12d3-a456-426614174000",
-			start_date: d("2024-06-30T00:00:00Z"),
-			deadline_date: d("2024-01-01T00:00:00Z"),
+			planStart: d("2024-06-30T00:00:00Z"),
+			planEnd: d("2024-01-01T00:00:00Z"),
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
 			expect(
-				result.error.issues.some((i) => i.path.includes("start_date")),
+				result.error.issues.some((i) => i.path.includes("planStart")),
 			).toBe(true);
 		}
 	});
@@ -215,4 +216,62 @@ describe("workflowCreateSchema (canonical 4-date vocabulary, Task 3.1)", () => {
 			).toBe(true);
 		}
 	});
+});
+
+describe("stageCreateSchema (date rules: plan dates required for stages)", () => {
+	const validStage = {
+		name: "Discovery",
+		description: "Requirements gathering",
+		planStart: new Date("2026-06-16T09:00:00Z"),
+		planEnd: new Date("2026-07-11T17:00:00Z"),
+	};
+
+	it("accepts valid plan dates", () => {
+		const result = stageCreateSchema.safeParse(validStage);
+		expect(result.success).toBe(true);
+	});
+
+	it("accepts equal plan start and end", () => {
+		const result = stageCreateSchema.safeParse({
+			...validStage,
+			planEnd: new Date("2026-06-16T09:00:00Z"),
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it("rejects a null planStart", () => {
+		const result = stageCreateSchema.safeParse({
+			...validStage,
+			planStart: null,
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error.issues.some((i) => i.path.includes("planStart"))).toBe(true);
+		}
+	});
+
+	it("rejects a null planEnd", () => {
+		const result = stageCreateSchema.safeParse({ ...validStage, planEnd: null });
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error.issues.some((i) => i.path.includes("planEnd"))).toBe(true);
+		}
+	});
+
+	it("rejects planStart after planEnd", () => {
+		const result = stageCreateSchema.safeParse({
+			...validStage,
+			planStart: new Date("2026-07-12T09:00:00Z"),
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error.issues.some((i) => i.path.includes("planStart"))).toBe(true);
+		}
+	});
+
+	it("rejects an empty name", () => {
+		const result = stageCreateSchema.safeParse({ ...validStage, name: "  " });
+		expect(result.success).toBe(false);
+	});
+
 });

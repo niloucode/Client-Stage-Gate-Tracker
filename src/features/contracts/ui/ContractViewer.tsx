@@ -74,6 +74,12 @@ export function ContractViewer({
 
 						// Reconstruct File from the public URL
 						const response = await fetch(result.data);
+						// Defense in depth: a non-OK fetch (e.g. bucket made
+						// private, object missing) must surface an error
+						// instead of building a broken "PDF" from the body.
+						if (!response.ok) {
+							throw new Error(`Failed to load contract (HTTP ${response.status}).`);
+						}
 						const blob = await response.blob();
 						const fileName =
 							initialFilePath.split("/").pop() ?? "contract.pdf";
@@ -103,7 +109,7 @@ export function ContractViewer({
 	const isPdfFile = (f: File) =>
 		f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
 
-	// Selecting a file (via picker or drag-drop) just stages it — it isn't
+	// Selecting a file (via picker or drag-and-drop) just stages it — it isn't
 	// loaded as the active contract until the user confirms in the modal.
 	const selectFile = (next: File | null | undefined) => {
 		if (!next) return;
@@ -237,7 +243,7 @@ export function ContractViewer({
 										variant="ghost"
 										size="sm"
 										onClick={() => setZoom(100)}
-										className="min-w-[3.25rem]"
+										className="min-w-13"
 									>
 										{zoom}%
 									</Button>
@@ -268,7 +274,7 @@ export function ContractViewer({
 										variant="default"
 										size="sm"
 										onClick={() => inputRef.current?.click()}
-										className={"px-4 py-5 bg-[#500086]"}
+										className={"px-4 py-5 bg-brand-600"}
 									>
 										<Upload size={14} />
 										Upload Contract
@@ -297,9 +303,16 @@ export function ContractViewer({
 								}}
 							>
 								<embed
-									src={`${fileUrl}#toolbar=0`}
+									// #toolbar=0 is a Chrome PDF-viewer parameter —
+									// but appending it to a blob: URL breaks the
+									// viewer (gray embed). Blob URLs skip it.
+									src={
+										fileUrl.startsWith("blob:")
+											? fileUrl
+											: `${fileUrl}#toolbar=0`
+									}
 									type="application/pdf"
-									className="aspect-[8.5/11] w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
+									className="aspect-8.5/11 w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
 								/>
 							</div>
 						</div>
@@ -325,7 +338,7 @@ export function ContractViewer({
 									isDragging ? "bg-[#E0B9FF]" : "bg-[#F1DAFF]"
 								}`}
 							>
-								<Upload className="h-5 w-5 text-[#500086]" />
+								<Upload className="h-5 w-5 text-brand-600" />
 							</div>
 							<div>
 								<p className="text-sm text-ink w-[250px]">
@@ -333,7 +346,7 @@ export function ContractViewer({
 										? "Click to upload or drag and drop a PDF"
 										: "No contract document has been uploaded yet."}
 								</p>
-								<p className="mt-1 text-xs text-plum-400 w-[250px]">
+								<p className="mt-1 text-xs text-plum-400 w-62.5">
 									{canManage
 										? "Select a document from your computer to preview and prepare for signing here."
 										: "Only the Project Owner can upload the contract."}
@@ -414,4 +427,3 @@ export function ContractViewer({
 	);
 }
 
-export default ContractViewer;

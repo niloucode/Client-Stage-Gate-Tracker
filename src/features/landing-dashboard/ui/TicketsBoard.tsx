@@ -489,4 +489,3 @@ export function TicketsBoard({
 	);
 }
 
-export default TicketsBoard;

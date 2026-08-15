@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 
 interface VariableConfirmModalProps {
 	isOpen: boolean;
@@ -35,12 +36,10 @@ export function VariableConfirmModal({
 	const [typedName, setTypedName] = useState("");
 	const [hasAttempted, setHasAttempted] = useState(false);
 
-	useEffect(() => {
-		if (isOpen) {
-			setTypedName("");
-			setHasAttempted(false);
-		}
-	}, [isOpen]);
+	useResetOnOpen(isOpen, () => {
+		setTypedName("");
+		setHasAttempted(false);
+	});
 
 	const isMatch = typedName.trim() === confirmName.trim();
 
@@ -62,12 +61,6 @@ export function VariableConfirmModal({
 					<p className="text-xs text-muted-foreground leading-relaxed">
 						{description}
 					</p>
-
-					{/* <div className="rounded-md border border-brand-100 bg-neutral-subtle p-3 text-center">
-						<span className=" text-foreground text-sm">
-							{confirmName}
-						</span>
-					</div> */}
 
 					<div className="space-y-1.5">
 						<label htmlFor="confirm-variable-name" className="text-xs text-foreground">

@@ -6,7 +6,7 @@ import { ChevronDown, Paperclip, Bug } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Ticket, Tag } from "@/entities/types";
 import { useProjectMembers } from "@/entities/profile";
-import { TagBadge } from "@/entities/tag/ui";
+import { TagBadge } from "@/entities/tag";
 import { ticketCreateSchema, type CreateTicketParams } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
 

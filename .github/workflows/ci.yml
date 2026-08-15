@@ -44,3 +44,9 @@ jobs:
       - name: Lint (non-blocking)
         run: npm run lint
         continue-on-error: true
+
+      # Dead-code gate (2026-08-15): knip is clean under knip.json —
+      # vendored surfaces (reui gantt, shadcn kit) and config-referenced
+      # stubs are ignored; type-only reports stay informational.
+      - name: Dead-code check
+        run: npx knip --include files,dependencies,exports

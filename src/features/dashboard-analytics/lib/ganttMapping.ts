@@ -50,14 +50,19 @@ export function getPlannedRange(row: GanttRowData): { start: Date; end: Date } {
 /**
  * Actual range is null until the row has actually started. An in-progress
  * row (actual_end_at not yet set) draws through `now` so the bar visibly
- * keeps growing until it's marked done.
+ * keeps growing until it's marked done. Degenerate ranges (end <= start —
+ * e.g. an in-progress row whose start is in the future) are skipped: reui
+ * requires end > start.
  */
 export function getActualRange(
 	row: GanttRowData,
 	now: Date,
 ): { start: Date; end: Date } | null {
 	if (!row.actual_start_at) return null;
-	return { start: row.actual_start_at, end: row.actual_end_at ?? now };
+	const start = row.actual_start_at;
+	const end = row.actual_end_at ?? now;
+	if (end <= start) return null;
+	return { start, end };
 }
 
 /**

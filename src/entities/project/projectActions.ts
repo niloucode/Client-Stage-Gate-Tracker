@@ -25,9 +25,9 @@ export interface ProjectWithStatus {
 	project_id: string;
 	name: string;
 	description: string | null;
-	start_date: Date | null;
-	finish_date: Date | null;
-	deadline_date: Date | null;
+	planStart: Date | null;
+	actualEnd: Date | null;
+	planEnd: Date | null;
 	is_deleted: boolean;
 	deleted_at: Date | null;
 	project_status: ProjectStatus;
@@ -167,9 +167,9 @@ export async function selectProjectsForMember(): Promise<ProjectWithStatus[]> {
 				project_id: p.project_id,
 				name: p.name,
 				description: p.description,
-				start_date: p.plan_start_at,
-				finish_date: p.actual_end_at,
-				deadline_date: p.plan_end_at,
+				planStart: p.plan_start_at,
+				actualEnd: p.actual_end_at,
+				planEnd: p.plan_end_at,
 				is_deleted: p.is_deleted,
 				deleted_at: p.deleted_at,
 				project_status: computedStatus,
@@ -217,8 +217,8 @@ export async function createProject(data: ProjectCreateInput) {
 
 		// Client profiles (Profiles.client_id set) must never create
 		// projects — their projects come from contracts, and the creator
-		// would otherwise become Project Owner (follow-up TODO resolved).
-		// Fail closed: a missing profile row is also denied.
+		// would otherwise become Project Owner. Fail closed: a missing
+		// profile row is also denied.
 		const profile = await prisma.profiles.findUnique({
 			where: { profile_id: userId },
 			select: { client_id: true },
@@ -257,8 +257,8 @@ export async function createProject(data: ProjectCreateInput) {
 					description: data.description ?? null,
 					// plan dates are Zod-required (non-nullable) — never
 					// fall back to new Date() to fill the requirement.
-					plan_start_at: data.start_date,
-					plan_end_at: data.deadline_date,
+					plan_start_at: data.planStart,
+					plan_end_at: data.planEnd,
 				},
 			});
 
@@ -336,10 +336,10 @@ export async function updateProject(data: ProjectUpdateInput) {
 		// plan_start_at/plan_end_at are NOT NULL; update dates are
 		// non-nullable in the schema, so only absent (undefined) means
 		// "leave unchanged" — never send null to the DB.
-		if (data.start_date !== undefined)
-			updateData.plan_start_at = data.start_date;
-		if (data.deadline_date !== undefined)
-			updateData.plan_end_at = data.deadline_date;
+		if (data.planStart !== undefined)
+			updateData.plan_start_at = data.planStart;
+		if (data.planEnd !== undefined)
+			updateData.plan_end_at = data.planEnd;
 
 		// The client linkage lives on the Contracts row (NOT NULL invariant);
 		// update it atomically with the project fields.

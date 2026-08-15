@@ -22,10 +22,11 @@ import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import type {
 	VariableItem,
-	VariableSortField,
-	SortDirection,
 	VariableType,
-} from "../model/types";
+} from "@/entities/variable";
+
+export type VariableSortField = "name" | "type" | "clientVisibility";
+export type SortDirection = "asc" | "desc";
 
 function TypeBadge({ type }: { type: VariableType }) {
 	if (type === "link") {
@@ -57,14 +58,25 @@ function ValueCell({ value }: { value: string }) {
 	const [copied, setCopied] = useState(false);
 
 	const handleCopy = () => {
-		void navigator.clipboard.writeText(value);
-		setCopied(true);
-		toast.add({
-			title: "Copied",
-			description: "Value copied to clipboard.",
-			type: "success",
-		});
-		setTimeout(() => setCopied(false), 2000);
+		if (!navigator.clipboard) return;
+		navigator.clipboard
+			.writeText(value)
+			.then(() => {
+				setCopied(true);
+				toast.add({
+					title: "Copied",
+					description: "Value copied to clipboard.",
+					type: "success",
+				});
+				setTimeout(() => setCopied(false), 2000);
+			})
+			.catch(() => {
+				toast.add({
+					title: "Copy Failed",
+					description: "Clipboard access was denied.",
+					type: "error",
+				});
+			});
 	};
 
 	const displayString = revealed
@@ -115,6 +127,8 @@ interface VariablesTableProps {
 	onViewNotes: (variable: VariableItem) => void;
 	onEdit: (variable: VariableItem) => void;
 	onDeleteRequest: (variable: VariableItem) => void;
+	/** Clients are read-only: no toggle/edit/delete (server-enforced too). */
+	readOnly?: boolean;
 }
 
 export function VariablesTable({
@@ -126,6 +140,7 @@ export function VariablesTable({
 	onViewNotes,
 	onEdit,
 	onDeleteRequest,
+	readOnly = false,
 }: VariablesTableProps) {
 	const getSortIcon = (field: VariableSortField): ReactNode => {
 		if (sortField !== field) {
@@ -137,12 +152,6 @@ export function VariablesTable({
 			<ChevronDown className="h-3 w-3 shrink-0 text-brand-600" />
 		);
 	};
-
-	const columns: { key: VariableSortField; label: string; width: string }[] = [
-		{ key: "name", label: "VARIABLE NAME", width: "w-[24%]" },
-		{ key: "type", label: "TYPE", width: "w-[16%]" },
-		{ key: "clientVisibility", label: "CLIENT VISIBILITY", width: "w-[16%]" },
-	];
 
 	return (
 		<div className="flex flex-col overflow-hidden rounded-md border border-brand-100 bg-neutral-surface">
@@ -227,10 +236,15 @@ export function VariablesTable({
 									<td className="px-6 py-3.5 align-middle">
 										<button
 											type="button"
+											role="switch"
+											aria-checked={v.clientVisibility}
+											aria-label={`Client visibility for ${v.name}`}
+											disabled={readOnly}
 											onClick={() => onToggleVisibilityRequest(v)}
 											className={cn(
-												"relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-												v.clientVisibility ? "bg-brand-600" : "bg-neutral-border/40"
+												"relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
+												v.clientVisibility ? "bg-brand-600" : "bg-neutral-border/40",
+												readOnly && "cursor-default opacity-70"
 											)}
 										>
 											<span
@@ -254,24 +268,28 @@ export function VariablesTable({
 											>
 												<FileText className="h-3.5 w-3.5" />
 											</Button>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onClick={() => onEdit(v)}
-												title="Edit Variable"
-												className="rounded-full"
-											>
-												<Pencil className="h-3.5 w-3.5" />
-											</Button>
-											<Button
-												variant="ghost"
-												size="icon-sm"
-												onClick={() => onDeleteRequest(v)}
-												title="Delete Variable"
-												className="rounded-full text-destructive hover:text-destructive hover:bg-red-50"
-											>
-												<Trash2 className="h-3.5 w-3.5" />
-											</Button>
+											{!readOnly && (
+												<>
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => onEdit(v)}
+														title="Edit Variable"
+														className="rounded-full"
+													>
+														<Pencil className="h-3.5 w-3.5" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="icon-sm"
+														onClick={() => onDeleteRequest(v)}
+														title="Delete Variable"
+														className="rounded-full text-destructive hover:text-destructive hover:bg-red-50"
+													>
+														<Trash2 className="h-3.5 w-3.5" />
+													</Button>
+												</>
+											)}
 										</div>
 									</td>
 								</tr>

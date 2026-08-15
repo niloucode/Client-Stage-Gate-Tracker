@@ -1,56 +1,9 @@
-import type { Prisma } from "@/lib/generated/prisma";
+import type { GanttTab } from "./lib/schema";
 
-// ── Prisma-derived payloads (client-side Gantt only needs the scheduling
-// columns, never the full row) ──────────────────────────────────────────────
-
-export const phaseGanttSelect = {
-	phase_id: true,
-	name: true,
-	number: true,
-	plan_start_at: true,
-	plan_end_at: true,
-	actual_start_at: true,
-	actual_end_at: true,
-} as const;
-
-export type PhaseGanttPayload = Prisma.PhasesGetPayload<{
-	select: typeof phaseGanttSelect;
-}>;
-
-export const moduleGanttSelect = {
-	module_id: true,
-	name: true,
-	plan_start_at: true,
-	plan_end_at: true,
-	actual_start_at: true,
-	actual_end_at: true,
-} as const;
-
-export type ModuleGanttPayload = Prisma.ModulesGetPayload<{
-	select: typeof moduleGanttSelect;
-}>;
-
-export const workflowGanttSelect = {
-	workflow_id: true,
-	name: true,
-	number: true,
-	plan_start_at: true,
-	plan_end_at: true,
-	actual_start_at: true,
-	actual_end_at: true,
-} as const;
-
-export type WorkflowGanttPayload = Prisma.WorkflowsGetPayload<{
-	select: typeof workflowGanttSelect;
-}>;
-
-// ── UI-facing unions ─────────────────────────────────────────────────────────
-
-/** Which date pair the Gantt bars are drawn from. */
-export type GanttTab = "planned" | "actual";
-
-/** Which hierarchy level the sub-filter pills request. */
-export type GanttLevel = "phases" | "modules" | "workflows";
+export type { GanttLevel, GanttTab } from "./lib/schema";
+export type { ModuleGanttPayload } from "@/entities/module";
+export type { PhaseGanttPayload } from "@/entities/phase";
+export type { WorkflowGanttPayload } from "@/entities/workflow";
 
 export type GanttRowStatus = "completed" | "in_progress" | "upcoming";
 

@@ -90,7 +90,7 @@ const phaseModalSchema = basePhaseModalSchema.superRefine((data, ctx) => {
 
 type PhaseFormValues = z.input<typeof phaseModalSchema>;
 
-export function PhaseModal({
+function PhaseModal({
 	isOpen,
 	onClose,
 	stageId,

@@ -4,7 +4,7 @@ import { X, Plus, Calendar } from "lucide-react";
 
 import { Ticket, Tag } from "@/entities/types";
 import { useProjectMembers } from "@/entities/profile";
-import { useTicketImages, useTicketComments } from "@/entities/comment/queries";
+import { useTicketImages, useTicketComments } from "@/entities/comment";
 import { status as StatusEnum } from "@/lib/generated/prisma";
 import Image from "next/image";
 import ImageLightbox from "@/shared/ui/image-lightbox";

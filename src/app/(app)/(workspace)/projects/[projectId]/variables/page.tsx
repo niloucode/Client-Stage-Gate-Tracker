@@ -1,5 +1,14 @@
 import { VariablesPage } from "@/features/variable-manager";
 
-export default function VariablesRoute() {
-	return <VariablesPage />;
+interface PageParams {
+	projectId: string;
+}
+
+export default async function VariablesRoute({
+	params,
+}: {
+	params: Promise<PageParams>;
+}) {
+	const { projectId } = await params;
+	return <VariablesPage projectId={projectId} />;
 }

@@ -37,10 +37,3 @@ export function ColorPicker({
 	);
 }
 
-// ── Modal backdrop ────────────────────────────────────────────────────────────
-
-export function Backdrop({ onClick }: { onClick: () => void }) {
-	return (
-		<div className="fixed inset-0 bg-foreground/40 z-40" onClick={onClick} />
-	);
-}
