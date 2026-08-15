@@ -63,7 +63,7 @@
 - [x] src/shared/schemas/ticket.ts
 - [x] src/shared/schemas/variable.ts (new 2026-08-15 — VARIABLE_TYPES + variableCreateSchema, 10 tests)
 - [x] src/shared/schemas/variable.test.ts (new 2026-08-15)
-- [ ] src/shared/schemas/tag.test.ts (new — planned 2026-08-15: tagCreateSchema, 4 tests)
+- [x] src/shared/schemas/tag.test.ts (new 2026-08-15 — tagCreateSchema, 4 tests)
 
 ## 4. Shared layer — query infrastructure
 
@@ -360,12 +360,12 @@
 - [x] src/features/stage-editor/ui/modals/ModuleModals.tsx (2026-08-15: reviewed — manual useState form (not the form kit); handleSubmit closes + toasts success BEFORE async onSave resolves; delete-in-edit-modal OK; migration to useAppForm scheduled)
 - [x] src/features/stage-editor/ui/modals/PhaseModals.tsx (2026-08-15: reviewed — form-kit pattern (useAppForm); awaits mutation before close; zod v4 refine type-guard predicates are a runtime-only no-op (types stay Date|null); useStore is a deprecated alias of useSelector; required plan-date UI confirmed present)
 - [x] src/features/stage-editor/ui/modals/WorkflowModals.tsx (2026-08-15: reviewed — same findings as ModuleModals: manual form, closes before async onSave resolves)
-- [ ] src/features/tag-manager/index.ts (new — reviewed 2026-08-15: public API OK — exports TagManager only)
-- [ ] src/features/tag-manager/ui/TagFormModal.tsx (new — reviewed 2026-08-15: render-phase setState sync (prevIsOpen/prevInitial identity check — parent re-render while open wipes edits); plan: useResetOnOpen; trailing newline missing)
-- [ ] src/features/tag-manager/ui/TagListModal.tsx (new — reviewed 2026-08-15: BLOCKING — 'not deletable' tags are UI-only hardcoding, duplicated (PINNED_TAGS :9 + inline name check :146) with a case-sensitivity inconsistency (pin check lowercases, delete guard is case-sensitive → 'api' is pinned yet deletable); 'warcrime' apology comment; plan: Tags.is_protected DB flag drives pinning + delete visibility; ordering/search extracted to tested helpers)
-- [ ] src/features/tag-manager/ui/TagModals.tsx (new — reviewed 2026-08-15: `import{` spacing; dead empty-name guard returning {} (form already validates); formatting; plan: cleanup + normalize)
-- [ ] src/features/tag-manager/model/tagOrdering.ts (new — planned 2026-08-15: sortTagsForDisplay/matchesTagSearch pure helpers, 7 tests)
-- [ ] src/features/tag-manager/model/tagOrdering.test.ts (new — planned)
+- [x] src/features/tag-manager/index.ts (2026-08-15: public API OK — exports TagManager only; verified in the integration)
+- [x] src/features/tag-manager/ui/TagFormModal.tsx (2026-08-15: render-phase setState replaced with useResetOnOpen; trailing newline added; verified in the integration)
+- [x] src/features/tag-manager/ui/TagListModal.tsx (2026-08-15: BLOCKING fixed — 'not deletable' tags now Tags.is_protected DB flag; PINNED_TAGS + inline name check + warcrime comment deleted; sorting/search via tested helpers; delete button keyed on tag.is_protected)
+- [x] src/features/tag-manager/ui/TagModals.tsx (2026-08-15: import{ spacing fixed; dead empty-name guard removed; formatting normalized)
+- [x] src/features/tag-manager/model/tagOrdering.ts (new 2026-08-15 — sortTagsForDisplay/matchesTagSearch, 7 tests)
+- [x] src/features/tag-manager/model/tagOrdering.test.ts (new 2026-08-15)
 - [x] src/features/variable-manager/index.ts (2026-08-15: public API OK — page/modals re-exported; VariableItem/VariableType re-exported from @/entities/variable; verified in the integration)
 - [x] src/features/variable-manager/model/mockData.ts (deleted 2026-08-15 by the integration — mock secret material removed)
 - [x] src/features/variable-manager/model/types.ts (deleted 2026-08-15 — canonical types moved to entities/variable)
@@ -556,15 +556,18 @@ All pre-existing unless noted — none block the running app except the first.
       Migration 13 NOT yet applied to Supabase (pending user approval —
       apply via `npx prisma db execute --file
       prisma/migrations/20260815030000_13_variables/migration.sql`).
-- [ ] **Tag-manager integration** — analysis + review + plan complete 2026-08-15;
-      execution pending user go-ahead.
+- [x] **Tag-manager integration** — completed 2026-08-15.
       **`docs/reasonix/plans/2026-08-15-tag-manager-integration.md`**
       (Tags.is_protected + migration 14; softDeleteTag refuses protected
       rows server-side; UI derives pinning/deletability from the flag —
       hardcoded PINNED_TAGS/warcrime block deleted; TagFormModal →
       useResetOnOpen; updateTag is_deleted guard; ordering/search pure
       helpers + 11 new tests). Spec decision: protected tags = DB flag
-      (user answer — hardcoding in code felt wrong).
+      (user answer — hardcoding in code felt wrong). Verified: prisma
+      validate ✓, tsc ✓, vitest 47/317 ✓, eslint 0/0 ✓, knip ✓,
+      `npm run build` ✓. Migration 14 NOT yet applied to Supabase (pending
+      user approval — apply via `npx prisma db execute --file
+      prisma/migrations/20260815040000_14_tags_is_protected/migration.sql`).
 - [x] **`ProjectSection` status-config cleanup** — 2026-08-15: `icolor` typo → `iconColor`/`badgeText`/`badgeBg`; ACTIVE badge `text-brand-100` → `text-brand-50` (contrast on brand-500, token-verified); `<h2>` inside the toggle `<button>` → `<span>` (phrasing-content rule).
       (`src/features/project-dashboard/ui/ProjectSection.tsx`) — `icolor`
       typo, the suspicious `ACTIVE.color: "text-brand-100"` badge value, and
