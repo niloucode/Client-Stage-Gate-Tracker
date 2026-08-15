@@ -1,6 +1,7 @@
 "use client";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ganttTabSchema } from "../lib/schema";
 import type { GanttTab } from "../types";
 
 const TAB_LABEL: Record<GanttTab, string> = {
@@ -18,7 +19,10 @@ export function GanttTabs({
 	return (
 		<Tabs
 			value={value}
-			onValueChange={(next) => onValueChange(next as GanttTab)}
+			onValueChange={(next) => {
+				const parsed = ganttTabSchema.safeParse(next);
+				if (parsed.success) onValueChange(parsed.data);
+			}}
 		>
 			<TabsList variant="line" className="h-auto gap-6 p-0">
 				{(Object.keys(TAB_LABEL) as GanttTab[]).map((tab) => {
