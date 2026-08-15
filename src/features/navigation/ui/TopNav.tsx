@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useProject } from "@/entities/project";
@@ -222,12 +223,17 @@ function useRealBreadcrumbs(): BreadcrumbItem[] {
 	});
 }
 
-export default function TopNav() {
+function TopNavBreadcrumbs() {
 	const breadcrumbs = useRealBreadcrumbs();
+	return <Breadcrumbs items={breadcrumbs} />;
+}
 
+export default function TopNav() {
 	return (
 		<header className="bg-neutral-surface relative flex items-center justify-between px-8 py-3 border-b border-brand-100 shrink-0">
-			<Breadcrumbs items={breadcrumbs} />
+			<Suspense fallback={<nav aria-label="Breadcrumb" className="h-5" />}>
+				<TopNavBreadcrumbs />
+			</Suspense>
 
 			<div className="flex items-center gap-3">
 				<div className="w-px h-5 bg-gray-200" />
