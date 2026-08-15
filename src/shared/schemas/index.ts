@@ -51,3 +51,6 @@ export type {
 	ContractUploadInput,
 	ContractApproveInput,
 } from "./contract";
+
+export { variableCreateSchema } from "./variable";
+export type { VariableCreateInput } from "./variable";
