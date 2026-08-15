@@ -5,6 +5,7 @@ import { Prisma } from "@/lib/generated/prisma";
 import {
 	assertProjectMember,
 	assertProjectMemberNotClient,
+	assertProjectMemberOrClient,
 	resolveModuleProject,
 	resolveWorkflowProject,
 } from "@/lib/auth/projectAccess";
@@ -17,6 +18,7 @@ import {
 	type WorkflowUpdateInput,
 } from "@/shared/schemas";
 import type { EntityFilterStatus } from "@/entities/types";
+import { workflowGanttSelect } from "./ganttTypes";
 
 /**
  * Creates a workflow under a module. Appends after the last sibling via a
@@ -284,5 +286,38 @@ export async function reorderWorkflow(
 	} catch (error) {
 		console.error("Failed to reorder workflow:", error);
 		return { success: false, error: "Failed to reorder workflows." };
+	}
+}
+
+/**
+ * Project-scoped workflow rows for the gantt chart (read-only). Any project
+ * profile — team, owners AND clients — may view (2026-08-15 spec).
+ */
+export async function getProjectWorkflowsGantt(projectId: string) {
+	z.uuid().parse(projectId);
+	const auth = await assertProjectMemberOrClient(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
+	try {
+		const workflows = await prisma.workflows.findMany({
+			where: {
+				is_deleted: false,
+				Modules: {
+					is_deleted: false,
+					Phases: {
+						is_deleted: false,
+						Stages: { is_deleted: false, project_id: projectId },
+					},
+				},
+			},
+			orderBy: [
+				{ sort_key: { sort: "asc", nulls: "last" } },
+				{ plan_start_at: "asc" },
+			],
+			select: workflowGanttSelect,
+		});
+		return { success: true, data: workflows };
+	} catch (error) {
+		console.error("Failed to fetch project workflows for gantt:", error);
+		return { success: false, error: "Failed to load workflows." };
 	}
 }

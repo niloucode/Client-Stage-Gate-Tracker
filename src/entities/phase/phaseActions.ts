@@ -1,12 +1,15 @@
 "use server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import {
 	assertProjectMemberNotClient,
+	assertProjectMemberOrClient,
 	resolvePhaseProject,
 } from "@/lib/auth/projectAccess";
 import { reorderBySortKey } from "@/shared/lib/fractionalSort";
 import { softDeleteWorkflowSubtree } from "@/entities/ticket/lib/softDelete";
+import { phaseGanttSelect } from "./ganttTypes";
 
 /**
  * Cascading soft delete: phase + its modules + workflows + tickets, batched
@@ -129,5 +132,32 @@ export async function reorderPhase(phaseId: string, targetNumber: number) {
 	} catch (error) {
 		console.error("Failed to reorder phase:", error);
 		return { success: false, error: "Failed to reorder phases." };
+	}
+}
+
+/**
+ * Project-scoped phase rows for the gantt chart (read-only). Any project
+ * profile — team, owners AND clients — may view (2026-08-15 spec).
+ */
+export async function getProjectPhasesGantt(projectId: string) {
+	z.uuid().parse(projectId);
+	const auth = await assertProjectMemberOrClient(projectId);
+	if (!auth.ok) return { success: false, error: auth.error };
+	try {
+		const phases = await prisma.phases.findMany({
+			where: {
+				is_deleted: false,
+				Stages: { is_deleted: false, project_id: projectId },
+			},
+			orderBy: [
+				{ sort_key: { sort: "asc", nulls: "last" } },
+				{ plan_start_at: "asc" },
+			],
+			select: phaseGanttSelect,
+		});
+		return { success: true, data: phases };
+	} catch (error) {
+		console.error("Failed to fetch project phases for gantt:", error);
+		return { success: false, error: "Failed to load phases." };
 	}
 }
