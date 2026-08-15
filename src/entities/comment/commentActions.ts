@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 import { commentCreateSchema, type CommentCreateInput } from "@/shared/schemas";
+import { imageParentTypeFor } from "@/shared/lib/gateRules";
 import {
 	assertProjectMember,
 	resolveGateProject,
@@ -77,11 +78,12 @@ export async function selectComment(
 
 	// Images are polymorphically linked (app-level integrity), so fetch
 	// them in one scoped query (bounded by commentIds — never the whole
-	// table) and join with a Map.
+	// table) and join with a Map. The image parent type follows the
+	// comment's parent type (gate comments carry GATE_COMMENT images).
 	const images = await prisma.images.findMany({
 		where: {
 			parent_id: { in: commentIds },
-			parent_type: ImageParentType.TICKET_COMMENT,
+			parent_type: imageParentTypeFor(parentType),
 			is_deleted: false,
 		},
 	});
@@ -127,7 +129,8 @@ export async function createCommentWithImages(data: CommentCreateInput) {
 			const imageData = data.imageUrls.map((url: string) => ({
 				image_src: url,
 				parent_id: comment.comment_id,
-				parent_type: ImageParentType.TICKET_COMMENT,
+				// The image parent type follows the comment's parent type.
+				parent_type: imageParentTypeFor(data.parent_type),
 			}));
 
 			await tx.images.createMany({

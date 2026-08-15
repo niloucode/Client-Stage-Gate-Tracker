@@ -56,6 +56,17 @@ export async function createStage(
 				project_id: projectId,
 			},
 		});
+
+		// Gate-overview spec: a new stage auto-creates gate #1 (PENDING,
+		// number 1) so the client always has a decidable gate.
+		await prisma.gates.create({
+			data: {
+				stage_id: newStage.stage_id,
+				number: 1,
+				status: "PENDING",
+			},
+		});
+
 		return { success: true, data: newStage };
 	} catch (error) {
 		console.error("Failed to create stage:", error);
@@ -407,8 +418,8 @@ export async function getStageTree(stageId: string) {
  * with plan/actual dates and gate-approval state. Requires project
  * membership (clients may read; mutations are gated separately).
  *
- * A stage is `approved` when any of its gates has a GateSignatures row
- * (canonical rule: exactly one client signature per gate).
+ * A stage is `approved` when any of its gates has status APPROVED
+ * (2026-08-15 gate-overview spec: status-based approval; GateSignatures dropped).
  */
 export async function getProjectStages(projectId: string) {
 	z.uuid().parse(projectId);
@@ -430,7 +441,7 @@ export async function getProjectStages(projectId: string) {
 				actual_start_at: true,
 				actual_end_at: true,
 				Gates: {
-					select: { GateSignatures: { select: { signed_at: true } } },
+					select: { status: true },
 				},
 			},
 		});
@@ -447,7 +458,7 @@ export async function getProjectStages(projectId: string) {
 				actualStart: stage.actual_start_at,
 				actualEnd: stage.actual_end_at,
 				approved: stage.Gates.some(
-					(gate) => gate.GateSignatures !== null,
+					(gate) => gate.status === "APPROVED",
 				),
 			})),
 		};

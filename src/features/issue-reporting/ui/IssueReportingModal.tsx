@@ -255,7 +255,7 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
   };
 
   const handleAttemptClose = () => {
-    // A submit in flight cannot be cancelled — the upload + create finish
+    // A submit in flight cannot be canceled — the upload + create finish
     // regardless, so keep the modal open until they resolve.
     if (isSubmitting) return;
     if (isDirty) {

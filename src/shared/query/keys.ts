@@ -94,6 +94,13 @@ export const issueKeys = {
 	list: (projectId: string) => [...issueKeys.lists(), projectId] as const,
 };
 
+export const gateKeys = {
+	all: ["gates"] as const,
+	lists: () => [...gateKeys.all, "list"] as const,
+	list: (stageId: string) => [...gateKeys.lists(), stageId] as const,
+	comments: (gateId: string) => [...gateKeys.all, "comments", gateId] as const,
+};
+
 export const dashboardKeys = {
 	all: ["dashboard"] as const,
 	role: () => [...dashboardKeys.all, "role"] as const,

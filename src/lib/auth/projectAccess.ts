@@ -148,6 +148,40 @@ export async function assertProjectMemberOrClient(
 	return { ok: true, userId };
 }
 
+/**
+ * Client-only project gate (gate-overview spec 2026-08-15): ONLY the client
+ * connected to the project (via a non-deleted contract) may approve or
+ * decline stage gates. Role-assigned staff are explicitly rejected.
+ */
+export async function assertProjectClient(
+	projectId: string,
+): Promise<AuthResult> {
+	const userId = await getCurrentUserId();
+	if (!userId) return { ok: false, error: "Authentication required." };
+
+	const profile = await prisma.profiles.findUnique({
+		where: { profile_id: userId },
+		select: { client_id: true },
+	});
+	if (!profile?.client_id) {
+		return {
+			ok: false,
+			error: "Only the project's client can approve or decline stage gates.",
+		};
+	}
+	const contract = await prisma.contracts.findFirst({
+		where: { project_id: projectId, client_id: profile.client_id, is_deleted: false },
+		select: { contract_id: true },
+	});
+	if (!contract) {
+		return {
+			ok: false,
+			error: "Only the project's client can approve or decline stage gates.",
+		};
+	}
+	return { ok: true, userId };
+}
+
 // ── project_id resolvers for child entities ─────────────────────────────────
 
 export async function resolveStageProject(

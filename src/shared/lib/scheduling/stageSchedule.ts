@@ -28,10 +28,9 @@ export function contractSignedStart(
  * The stage's actual end is the approval timestamp; the NEXT stage (if any)
  * starts on the same day.
  *
- * TODO(gate-approval): wire this into the future `approveGate` server action
- * (records a GateSignatures row + sets Gates.status = APPROVED, then calls
- * this helper inside the same transaction). The gate feature is currently
- * mock-only — see docs/code-review-plan.md follow-ups.
+ * Wired into `decideGate` (src/entities/gate/gateActions.ts, 2026-08-15):
+ * the approval is status-based (Gates.status = APPROVED + a feedback comment)
+ * — the old GateSignatures row model was dropped.
  */
 export function gateApprovalDates(
 	approvedAt: Date,

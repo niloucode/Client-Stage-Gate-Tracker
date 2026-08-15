@@ -175,12 +175,14 @@
 - [x] src/entities/client/index.ts
 - [x] src/entities/client/clientActions.ts
 - [ ] src/entities/client/clientActions.test.ts
-- [ ] src/shared/lib/inviteCode.ts
+- [x] src/shared/lib/gateRules.ts (new 2026-08-15 — deriveNextGateNumber, imageParentTypeFor, allPhasesFinished; 9 tests)
+- [x] src/shared/lib/gateRules.test.ts
+- [x] src/shared/lib/inviteCode.ts
 - [ ] src/shared/lib/inviteCode.test.ts
 - [x] src/entities/client/queries.ts
 - [x] src/entities/comment/index.ts
 - [x] src/entities/comment/types.ts
-- [x] src/entities/comment/commentActions.ts
+- [x] src/entities/comment/commentActions.ts (2026-08-15: image parent type derived via imageParentTypeFor — gate comments store/load GATE_COMMENT images instead of the TICKET_COMMENT hardcode)
 - [x] src/entities/comment/mutations.ts
 - [x] src/entities/comment/queries.ts
 - [x] src/entities/contract/index.ts
@@ -201,6 +203,10 @@
 - [x] src/entities/issue/ui/IssueBox.tsx (moved 2026-08-15; create-button props dropped)
 - [x] src/entities/issue/ui/IssueDetailsModal.tsx (moved 2026-08-15)
 - [x] src/entities/issue/ui/IssueTableModal.tsx (moved 2026-08-15 + real: useProjectIssues, unlinked-only for the 1-to-1 rule)
+- [x] src/entities/gate/index.ts (new 2026-08-15 — actions, types, queries)
+- [x] src/entities/gate/types.ts (new 2026-08-15 — GateFeedbackEntry server shape)
+- [x] src/entities/gate/gateActions.ts (new 2026-08-15 — getStageGates (+canDecide), decideGate (client-only, phases-finished, CAS, deleted-stage guard, APPROVED→dates / REJECTED→gate N+1), createGateComment (latest-gate-only), getGateComments; entity isolation — no cross-entity imports)
+- [x] src/entities/gate/queries.ts (new 2026-08-15 — useStageGates/useGateComments/useDecideGate/useCreateGateComment, gateKeys+stageKeys invalidation)
 - [x] src/entities/module/index.ts
 - [x] src/entities/module/types.ts (deleted — merged into slice files)
 - [x] src/entities/module/moduleActions.ts
@@ -219,7 +225,7 @@
 - [x] src/entities/project/queries.ts
 - [x] src/entities/project/projectStatus.test.ts
 - [x] src/entities/stage/index.ts
-- [x] src/entities/stage/stageActions.ts
+- [x] src/entities/stage/stageActions.ts (2026-08-15: createStage auto-creates gate #1; getProjectStages approved rule → status === "APPROVED")
 - [x] src/entities/stage/queries.ts
 - [x] src/entities/stage/ordering.test.ts
 - [x] src/entities/ticket/index.ts
@@ -269,8 +275,11 @@
 - [ ] src/features/contracts/ui/ConfirmTextModal.tsx
 - [ ] src/features/contracts/ui/ExecuteAgreementCard.tsx
 - [ ] src/features/contracts/ui/ExecutedBanner.tsx
-- [ ] src/features/gate-overview/GateOverview.tsx
-- [ ] src/features/gate-overview/GateFeedbackModal.tsx
+- [x] src/features/gate-overview/index.ts (new 2026-08-15 — public API: GateOverview, the three modals)
+- [x] src/features/gate-overview/GateOverview.tsx (2026-08-15: rewritten — real stage tree + gates, client-only Approve/Decline gated on all phases finished, canDecide from the payload, error states, keyboard-accessible accordions)
+- [x] src/features/gate-overview/GateFeedbackModal.tsx (2026-08-15: rewritten — real GateFeedbackEntry[], gates number DESC, status badges, clickable feedback images via ImageLightbox, per-gate Comment button + further-comments count)
+- [x] src/features/gate-overview/GateFeedbackGiveModal.tsx (2026-08-15: rewritten — real decideGate submit with Supabase uploads (gates/ path, all-or-nothing + cleanup), error.message toasts, close blocked while submitting, FormEvent → SyntheticEvent, alert() → toast)
+- [x] src/features/gate-overview/GateDiscussionModal.tsx (new 2026-08-15 — per-gate discussion popup, latest-gate-only posting (spec 8), storage uploads, lightbox, error state)
 - [ ] src/features/dashboard-analytics/index.ts
 - [ ] src/features/dashboard-analytics/types.ts
 - [ ] src/features/dashboard-analytics/queries.ts
@@ -380,6 +389,7 @@
 - [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx (2026-08-15: reads params.projectId (Next 15 async params), imports via the feature public API; renders the real IssueDashboard)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
+- [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/gate/page.tsx (2026-08-15: params fixed to {projectId, stageId}, public-API import, renders the real GateOverview)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx (2026-08-15: reviewed with the stage-editor slice — imports bypass the slice public API (deep imports of ui/ModuleCard, ui/PhaseCard, types); `as unknown as Phase[]` cast hides the planStart/description nullability mismatch; NO client permission gating (clients see all Add/Edit/Delete/DnD controls — server actions reject them, but UI must hide them per spec; scheduled in integration plan)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx (2026-08-15: reviewed with the ticket-board slice — server-rendered shell that fetches getWorkflowById + renders TicketBoard; no client gating (TicketBoard handles it); fine)
 - [ ] src/app/api/notifications/route.ts
@@ -500,22 +510,21 @@ All pre-existing unless noted — none block the running app except the first.
       (flow content in a button) — verify colors against the design tokens
       and use a non-heading element for the section label.
 
-- [ ] **Gate-approval persistence (`approveGate`)** — recorded 2026-08-14
-      (stage-structure feature, deferred by decision): `GateOverview.tsx` is
-      mock-only and NOTHING writes `GateSignatures` today. The action must
-      (1) create the `GateSignatures` row + set `Gates.status = APPROVED`,
-      and (2) materialize stage actual dates per specs 2-3 by calling
-      `gateApprovalDates` (`src/shared/lib/scheduling/stageSchedule.ts`,
-      already implemented + tested, marked `TODO(gate-approval)`): the
-      stage's `actual_end_at` = approval timestamp, and the next stage's
-      `actual_start_at` = the same date. Client + owner signature rules from
-      the contract flow apply.
+- [x] **Gate-approval persistence** — RESOLVED 2026-08-15 by the
+      **gate-overview integration** (`docs/reasonix/plans/2026-08-15-gate-overview-integration.md`):
+      `decideGate` (entities/gate) is client-only, gated on all phases finished,
+      creates the feedback comment + sets `Gates.status` + `comment_id`, and
+      materializes stage dates via `gateApprovalDates` (stage `actual_end_at` =
+      approval timestamp; next stage `actual_start_at` = same date). Rejection
+      auto-creates gate N+1. **The GateSignatures model was DROPPED** (migration
+      12 — status-based approval per user decision), `Gates.creation_date`
+      dropped, `Gates.comment_id` (unique FK → Comments) added. `getProjectStages`
+      approved rule is now `status === "APPROVED"`.
       
-      **Gates model state (2026-08-14 Supabase edit, synced via db pull):**
-      gates have NO `is_deleted`/`deleted_at` (undeletable), `number` is
-      nullable (`Int?`), `stage_id` is NOT NULL, and the partial unique
-      `@@unique([stage_id, number])` index was replaced by plain
-      `@@index([stage_id])`. `getProjectStages` no longer filters
+      **Gates model state (2026-08-15, migration 12):** gates have NO
+      `is_deleted`/`deleted_at` (undeletable), `number` is nullable (`Int?`),
+      `stage_id` is NOT NULL, plain `@@index([stage_id])`, `status` GateStatus,
+      `comment_id` (unique FK to Comments). `getProjectStages` no longer filters
       `is_deleted` on gates.
 - [ ] **`Stages.sort_key` column cleanup** — recorded 2026-08-14: stage
       create no longer writes `sort_key` (spec 4 — stages are ordered by

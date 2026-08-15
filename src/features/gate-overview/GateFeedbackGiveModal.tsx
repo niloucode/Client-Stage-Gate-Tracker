@@ -1,233 +1,313 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/toast";
-import { MessageSquare, Send, Paperclip, X, CheckCircle2, XCircle } from "lucide-react";
+import { MessageSquare, Paperclip, X, CheckCircle2, XCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useDecideGate } from "@/entities/gate";
 
 export interface GateFeedbackGiveModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  decisionVariant?: "approved" | "rejected";
-  onSubmitFeedback?: (data: {
-    feedback: string;
-    imageFiles: File[];
-    skipFeedback: boolean;
-  }) => void;
+	isOpen: boolean;
+	onClose: () => void;
+	decisionVariant?: "approved" | "rejected";
+	gateId: string;
+	stageId: string;
 }
 
 export function GateFeedbackGiveModal({
-  isOpen,
-  onClose,
-  decisionVariant = "approved",
-  onSubmitFeedback,
+	isOpen,
+	onClose,
+	decisionVariant = "approved",
+	gateId,
+	stageId,
 }: GateFeedbackGiveModalProps) {
-  const [feedbackText, setFeedbackText] = useState("");
-  const [skipFeedback, setSkipFeedback] = useState(false);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+	const [feedbackText, setFeedbackText] = useState("");
+	const [skipFeedback, setSkipFeedback] = useState(false);
+	const [imageFiles, setImageFiles] = useState<File[]>([]);
+	const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isApproved = decisionVariant === "approved";
+	const decideGateMutation = useDecideGate(stageId);
+	const isApproved = decisionVariant === "approved";
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const files = e.target.files;
+		if (!files || files.length === 0) return;
 
-    const newFiles: File[] = [];
-    const newPreviews: string[] = [];
+		const newFiles: File[] = [];
+		const newPreviews: string[] = [];
 
-    for (const file of Array.from(files)) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`Image "${file.name}" must be under 5MB.`);
-        continue;
-      }
-      newFiles.push(file);
-      newPreviews.push(URL.createObjectURL(file));
-    }
+		for (const file of Array.from(files)) {
+			if (file.size > 5 * 1024 * 1024) {
+				toast.add({
+					title: "File Too Large",
+					description: `"${file.name}" must be under 5MB.`,
+					type: "error",
+				});
+				continue;
+			}
+			newFiles.push(file);
+			newPreviews.push(URL.createObjectURL(file));
+		}
 
-    if (newFiles.length > 0) {
-      setImageFiles((prev) => [...prev, ...newFiles]);
-      setImagePreviews((prev) => [...prev, ...newPreviews]);
-    }
-    e.target.value = "";
-  }
+		if (newFiles.length > 0) {
+			setImageFiles((prev) => [...prev, ...newFiles]);
+			setImagePreviews((prev) => [...prev, ...newPreviews]);
+		}
+		e.target.value = "";
+	}
 
-  function removeImage(index: number) {
-    URL.revokeObjectURL(imagePreviews[index]);
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  }
+	function removeImage(index: number) {
+		URL.revokeObjectURL(imagePreviews[index]);
+		setImageFiles((prev) => prev.filter((_, i) => i !== index));
+		setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+	}
 
-  function handleClose() {
-    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-    setFeedbackText("");
-    setSkipFeedback(false);
-    setImageFiles([]);
-    setImagePreviews([]);
-    onClose();
-  }
+	function handleClose() {
+		imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+		setFeedbackText("");
+		setSkipFeedback(false);
+		setImageFiles([]);
+		setImagePreviews([]);
+		onClose();
+	}
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+	async function handleSubmit(e: React.SyntheticEvent) {
+		e.preventDefault();
+		if (isSubmitting) return;
 
-    const finalFeedback = skipFeedback
-      ? "No feedback provided."
-      : feedbackText.trim();
+		const finalFeedback = skipFeedback ? "No feedback provided." : feedbackText.trim();
+		if (!skipFeedback && !finalFeedback && imageFiles.length === 0) return;
+		setIsSubmitting(true);
 
-    if (!skipFeedback && !finalFeedback && imageFiles.length === 0) return;
+		// All-or-nothing image upload (ticket-board pattern), then decide.
+		const uploadedPaths: string[] = [];
+		const imageUrls: string[] = [];
+		let uploadError: string | null = null;
+		const supabase = createClient();
+		for (const file of skipFeedback ? [] : imageFiles) {
+			try {
+				const fileExt = file.name.split(".").pop();
+				const fileName = `${crypto.randomUUID()}.${fileExt}`;
+				const filePath = `gates/${fileName}`;
+				const { error } = await supabase.storage
+					.from("images")
+					.upload(filePath, file, { cacheControl: "3600", upsert: false });
+				if (error) {
+					uploadError = `Failed to upload image: ${error.message}`;
+					break;
+				}
+				uploadedPaths.push(filePath);
+				const { data: publicUrl } = supabase.storage
+					.from("images")
+					.getPublicUrl(filePath);
+				imageUrls.push(publicUrl.publicUrl);
+			} catch (err) {
+				uploadError = err instanceof Error ? err.message : "Failed to upload images.";
+				break;
+			}
+		}
 
-    onSubmitFeedback?.({
-      feedback: finalFeedback,
-      imageFiles: skipFeedback ? [] : imageFiles,
-      skipFeedback,
-    });
+		if (uploadError) {
+			if (uploadedPaths.length > 0) {
+				await supabase.storage.from("images").remove(uploadedPaths);
+			}
+			toast.add({
+				title: "Upload Failed",
+				description: uploadError,
+				type: "error",
+			});
+			setIsSubmitting(false);
+			return;
+		}
 
-    toast.add({
-      title: isApproved ? "Gate Approved" : "Gate Rejected",
-      description: skipFeedback
-        ? `Stage Gate ${decisionVariant} without feedback.`
-        : `Feedback and decision submitted successfully.`,
-      type: isApproved ? "success" : "delete",
-    });
+		try {
+			await decideGateMutation.mutateAsync({
+				gateId,
+				decision: isApproved ? "APPROVED" : "REJECTED",
+				feedback: finalFeedback,
+				imageUrls,
+			});
+			toast.add({
+				title: isApproved ? "Gate Approved" : "Gate Rejected",
+				description: skipFeedback
+					? `Stage Gate ${decisionVariant} without feedback.`
+					: "Feedback and decision submitted successfully.",
+				type: isApproved ? "success" : "error",
+			});
+			handleClose();
+		} catch (error) {
+			if (uploadedPaths.length > 0) {
+				await supabase.storage.from("images").remove(uploadedPaths);
+			}
+			toast.add({
+				title: isApproved ? "Approval Failed" : "Rejection Failed",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
+				type: "error",
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
 
-    handleClose();
-  };
+	return (
+		<Dialog
+			open={isOpen}
+			onOpenChange={(open) => {
+				if (!open && !isSubmitting) handleClose();
+			}}
+		>
+			<DialogContent className="max-w-xl">
+				<DialogHeader>
+					<DialogTitle className="flex items-center gap-2">
+						{isApproved ? (
+							<CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
+						) : (
+							<XCircle className="size-5 text-red-600 shrink-0" />
+						)}
+						<span>{isApproved ? "Approve" : "Decline"} Gate Feedback</span>
+					</DialogTitle>
+					<DialogDescription>
+						Place your feedback comment and optional image attachments.
+					</DialogDescription>
+				</DialogHeader>
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {isApproved ? (
-              <CheckCircle2 className="size-5 text-emerald-600 shrink-0" />
-            ) : (
-              <XCircle className="size-5 text-red-600 shrink-0" />
-            )}
-            <span>{isApproved ? "Approve" : "Decline"} Gate Feedback </span>
-          </DialogTitle>
-          <DialogDescription>
-            Place your feedback comment and optional image attachments.
-          </DialogDescription>
-        </DialogHeader>
+				{/* Feedback Form */}
+				<form onSubmit={handleSubmit} className="space-y-4 py-2">
+					<div className="space-y-2">
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-2">
+								<MessageSquare className="w-4 h-4 text-brand-600 shrink-0" />
+								<span className="text-xs font-bold tracking-wider text-foreground uppercase">
+									{isApproved ? "Approval Comment" : "Rejection Feedback"}
+								</span>
+							</div>
+							{imageFiles.length > 0 && (
+								<span className="text-xs text-muted-foreground font-medium">
+									{imageFiles.length} image(s) attached
+								</span>
+							)}
+						</div>
 
-        {/* Feedback Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-brand-600 shrink-0" />
-                <span className="text-xs font-bold tracking-wider text-foreground uppercase">
-                  {isApproved ? "Approval Comment" : "Rejection Feedback"}
-                </span>
-              </div>
-              {imageFiles.length > 0 && (
-                <span className="text-xs text-muted-foreground font-medium">
-                  {imageFiles.length} image(s) attached
-                </span>
-              )}
-            </div>
+						<Textarea
+							value={skipFeedback ? "" : feedbackText}
+							onChange={(e) => setFeedbackText(e.target.value)}
+							disabled={skipFeedback}
+							placeholder={
+								skipFeedback
+									? 'Feedback skipped ("I don\'t want to give feedback" is checked)'
+									: `Write your feedback or review for ${isApproved ? "approving" : "declining"} this gate...`
+							}
+							rows={4}
+							className="resize-none text-xs"
+						/>
+					</div>
 
-            {/* Comment Textarea */}
-            <Textarea
-              value={skipFeedback ? "" : feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-              disabled={skipFeedback}
-              placeholder={
-                skipFeedback
-                  ? 'Feedback skipped ("I don\'t want to give feedback" is checked)'
-                  : `Write your feedback or review for ${isApproved ? "approving" : "declining"} this gate...`
-              }
-              rows={4}
-              className="resize-none text-xs"
-            />
-          </div>
+					{/* Image Attachment Section */}
+					{!skipFeedback && (
+						<div className="space-y-2">
+							<div className="flex items-center justify-between">
+								<button
+									type="button"
+									onClick={() => fileInputRef.current?.click()}
+									className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 cursor-pointer"
+								>
+									<Paperclip className="w-3.5 h-3.5" />
+									<span>Attach Images</span>
+								</button>
+								<span className="text-[11px] text-muted-foreground">
+									(JPG, PNG, WebP · Max 5MB)
+								</span>
+								<input
+									ref={fileInputRef}
+									type="file"
+									accept="image/jpeg,image/png,image/webp"
+									multiple
+									onChange={handleImageChange}
+									className="sr-only"
+								/>
+							</div>
 
-          {/* Image Attachment Section */}
-          {!skipFeedback && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 cursor-pointer"
-                >
-                  <Paperclip className="w-3.5 h-3.5" />
-                  <span>Attach Images</span>
-                </button>
-                <span className="text-[11px] text-muted-foreground">
-                  (JPG, PNG, WebP · Max 5MB)
-                </span>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  onChange={handleImageChange}
-                  className="sr-only"
-                />
-              </div>
+							{imagePreviews.length > 0 && (
+								<div className="flex flex-wrap gap-2 pt-1">
+									{imagePreviews.map((preview, idx) => (
+										<div key={idx} className="relative inline-block group">
+											{/* eslint-disable-next-line @next/next/no-img-element -- object-URL preview; upload happens on submit */}
+											<img
+												src={preview}
+												alt={`Attachment ${idx + 1}`}
+												className="h-16 w-16 rounded-md border border-border object-cover"
+											/>
+											<button
+												type="button"
+												onClick={() => removeImage(idx)}
+												className="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] hover:bg-red-600 transition-colors"
+												aria-label="Remove image"
+											>
+												<X className="size-3" />
+											</button>
+										</div>
+									))}
+								</div>
+							)}
+						</div>
+					)}
 
-              {/* Image Previews Grid */}
-              {imagePreviews.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {imagePreviews.map((preview, idx) => (
-                    <div key={idx} className="relative inline-block group">
-                      <img
-                        src={preview}
-                        alt={`Attachment ${idx + 1}`}
-                        className="h-16 w-16 rounded-md border border-border object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="absolute -top-1.5 -right-1.5 size-4 rounded-full bg-slate-800 text-white flex items-center justify-center text-[10px] hover:bg-red-600 transition-colors"
-                        title="Remove image"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+					{/* Skip Feedback Option */}
+					<label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+						<Checkbox
+							checked={skipFeedback}
+							onCheckedChange={(checked) => setSkipFeedback(checked)}
+						/>
+						I don&rsquo;t want to give feedback
+					</label>
 
-
-          {/* Footer Actions */}
-          <DialogFooter className="pt-2 gap-2" showCloseButton={false}>
-            <Button type="button" variant="ghost" onClick={handleClose}>
-              Cancel
-            </Button>
-            {isApproved ?
-            <Button
-              variant="default"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <CheckCircle2 className="size-4" />
-              Approve Stage Gate
-            </Button>
-:
-            <Button
-              variant="destructive"
-              className=""
-            >
-              <XCircle className="size-4" />
-              Decline Stage Gate
-            </Button>}
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+					{/* Footer Actions */}
+					<DialogFooter className="pt-2 gap-2" showCloseButton={false}>
+						<Button
+							type="button"
+							variant="ghost"
+							onClick={handleClose}
+							disabled={isSubmitting}
+						>
+							Cancel
+						</Button>
+						{isApproved ? (
+							<Button
+								type="submit"
+								variant="default"
+								className="bg-emerald-600 hover:bg-emerald-700 text-white"
+								disabled={isSubmitting}
+							>
+								<CheckCircle2 className="size-4" />
+								{isSubmitting ? "Submitting…" : "Approve Stage Gate"}
+							</Button>
+						) : (
+							<Button
+								type="submit"
+								variant="destructive"
+								disabled={isSubmitting}
+							>
+								<XCircle className="size-4" />
+								{isSubmitting ? "Submitting…" : "Decline Stage Gate"}
+							</Button>
+						)}
+					</DialogFooter>
+				</form>
+			</DialogContent>
+		</Dialog>
+	);
 }

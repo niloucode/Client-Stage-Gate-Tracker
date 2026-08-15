@@ -1,16 +1,16 @@
-import { notFound } from "next/navigation";
-import { GateOverview } from "@/features/gate-overview/GateOverview";
+import { GateOverview } from "@/features/gate-overview";
+
+interface PageParams {
+	projectId: string;
+	stageId: string;
+}
 
 export default async function GatePage({
-  params,
+	params,
 }: {
-  params: Promise<{ projectId: string; gateId: string }>;
+	params: Promise<PageParams>;
 }) {
-  const { projectId, gateId } = await params;
+	const { projectId, stageId } = await params;
 
-  return (
-    <div>
-      <GateOverview />
-    </div>
-  );
+	return <GateOverview projectId={projectId} stageId={stageId} />;
 }
