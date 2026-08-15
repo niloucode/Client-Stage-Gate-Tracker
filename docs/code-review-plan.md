@@ -61,6 +61,8 @@
 - [x] src/shared/schemas/project.test.ts
 - [x] src/shared/schemas/tag.ts
 - [x] src/shared/schemas/ticket.ts
+- [ ] src/shared/schemas/variable.ts (new — planned 2026-08-15: VARIABLE_TYPES + variableCreateSchema, 10 tests)
+- [ ] src/shared/schemas/variable.test.ts (new — planned)
 
 ## 4. Shared layer — query infrastructure
 
@@ -245,6 +247,12 @@
 - [x] src/entities/workflow/workflowActions.ts
 - [x] src/entities/workflow/mutations.ts
 - [x] src/entities/workflow/queries.ts (deleted — merged into slice files)
+- [ ] src/entities/variable/index.ts (new — planned 2026-08-15 by the variable-manager integration: actions, queries, types, lib/mappers)
+- [ ] src/entities/variable/types.ts (new — planned: variableSelect/variableClientSelect payloads + VariableItem)
+- [ ] src/entities/variable/variableActions.ts (new — planned: getProjectVariables (client-shaped: visible rows only, no notes_team) / createVariable / updateVariable / toggleVariableVisibility / softDeleteVariable — assertProjectMemberOrClient read, assertProjectMemberNotClient writes)
+- [ ] src/entities/variable/queries.ts (new — planned: useProjectVariables + 4 mutation hooks, variableKeys.list invalidation)
+- [ ] src/entities/variable/lib/mappers.ts (new — planned: mapVariableRow/mapClientVariableRow/uiTypeToDbType, 6 tests)
+- [ ] src/entities/variable/lib/mappers.test.ts (new — planned)
 
 ## 10. Features layer
 
@@ -355,6 +363,14 @@
 - [ ] src/features/tag-manager/ui/TagFormModal.tsx
 - [ ] src/features/tag-manager/ui/TagListModal.tsx
 - [ ] src/features/tag-manager/ui/TagModals.tsx
+- [ ] src/features/variable-manager/index.ts (new — reviewed 2026-08-15: public API OK; plan: re-export VariableItem/VariableType from @/entities/variable)
+- [ ] src/features/variable-manager/model/mockData.ts (new — reviewed 2026-08-15: BLOCKING — realistic secret-shaped mock data committed (Stripe sk_live key, postgres URI with password); deleted by the integration plan)
+- [ ] src/features/variable-manager/model/types.ts (new — reviewed 2026-08-15: moved to entities/variable by the integration plan — canonical types belong in the entity slice)
+- [ ] src/features/variable-manager/ui/VariablesPage.tsx (new — reviewed 2026-08-15: BLOCKING — zero authz (any signed-in user incl. clients can read/edit credentials); no persistence (local useState seeded from mock, unconditional success toasts, reload wipes); clientVisibility decorative; plan: real useProjectVariables + client gating + loading/error + async mutation handlers)
+- [ ] src/features/variable-manager/ui/VariablesTable.tsx (new — reviewed 2026-08-15: dead `columns` array; toggle a11y (no role="switch"/aria-checked/focus ring); navigator.clipboard unhandled rejection; plan: readOnly prop, a11y, clipboard catch, dead code removed)
+- [ ] src/features/variable-manager/ui/VariableConfirmModal.tsx (new — reviewed 2026-08-15: type-the-name confirm OK; commented block to remove; double-close idempotent)
+- [ ] src/features/variable-manager/ui/VariableFormModal.tsx (new — reviewed 2026-08-15: close-before-save (no error path once async); React.FormEvent UMD global; plan: async onSubmit returning success, isSubmitting, FormEvent import)
+- [ ] src/features/variable-manager/ui/VariableNotesModal.tsx (new — reviewed 2026-08-15: BLOCKING — notesTeam renders for any viewer; plan: clientView prop (clients see only notesClient), commented blocks removed)
 - [x] src/features/ticket-board/model/columns.ts (2026-08-15: reviewed — COLUMNS PENDING/IN_PROGRESS/FINISHED matches the Prisma status enum)
 - [x] src/features/ticket-board/model/queries.ts (2026-08-15: reviewed — useTicketHistory fetches selectTicketHistory, maps via ticketHistoryEntrySchema; fine)
 - [x] src/features/ticket-board/model/schema.ts (2026-08-15: reviewed — ticketHistoryEntrySchema; ACTION_ENUM matches the Prisma action enum exactly (verified); z.coerce.date() valid v4 usage)
@@ -390,6 +406,7 @@
 - [ ] src/app/(app)/(workspace)/credentials/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/page.tsx
+- [ ] src/app/(app)/(workspace)/projects/[projectId]/variables/page.tsx (2026-08-15: reviewed — plain client page, no gating; plan: convert to thin async-params server page passing projectId; access enforced by the gated entity actions)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/contract/page.tsx (2026-08-15: FSD — thin async server page reading params, renders ContractPage via the feature public API; the old inline page logic moved to features/contracts/ui/ContractPage.tsx)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
 - [x] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx (2026-08-15: converted to a thin async-params server page (issues-page pattern); access enforced by the gated entity actions)
@@ -522,6 +539,15 @@ All pre-existing unless noted — none block the running app except the first.
       tab Actual; button label "Gantt Chart" + `ChartGantt` icon.
       Verified: prisma validate ✓, tsc ✓, vitest 43/285 ✓, eslint 0/0 ✓,
       `npm run build` ✓ (see layout fix below).
+- [ ] **Variable-manager integration** — analysis + review + plan complete
+      2026-08-15; execution pending user go-ahead.
+      **`docs/reasonix/plans/2026-08-15-variable-manager-integration.md`**
+      (Variables model + migration 13; entities/variable slice with gated
+      actions; real queries; client read-only gating — hidden rows never
+      sent, notes_team never sent; role-aware notes modal; a11y toggle;
+      async submit; 16 new tests; route page → async params). Spec
+      decisions: hidden variables hidden entirely from clients; no
+      created_by; team + owners see/manage everything.
 - [ ] **`ProjectSection` status-config cleanup**
       (`src/features/project-dashboard/ui/ProjectSection.tsx`) — `icolor`
       typo, the suspicious `ACTIVE.color: "text-brand-100"` badge value, and
