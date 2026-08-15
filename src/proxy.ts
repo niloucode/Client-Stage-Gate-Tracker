@@ -1,6 +1,5 @@
-// noinspection JSUnusedGlobalSymbols
-
-import { NextRequest } from "next/server";
+// src/proxy.ts
+import { NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -15,12 +14,7 @@ function toOrigin(value: string): string | null {
 }
 
 /**
- * Build the connect-src allowlist from the environment (called once at
- * module load; the result is captured in CONNECT_SRC below):
- * - 'self' always;
- * - the Supabase project origin derived from NEXT_PUBLIC_SUPABASE_URL
- *   (falls back to the wildcard https://*.supabase.co when unset/invalid);
- * - extra origins from the comma-separated NEXT_PUBLIC_ALLOWED_CONNECT_ORIGINS.
+ * Build the connect-src allowlist from the environment.
  */
 function buildConnectSrc(): string {
 	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -31,31 +25,33 @@ function buildConnectSrc(): string {
 		.filter(Boolean)
 		.map(toOrigin)
 		.filter((origin): origin is string => origin !== null);
+
 	return [
 		"'self'",
 		supabaseOrigin ?? "https://*.supabase.co",
+		"wss://*.supabase.co",
 		...extraOrigins,
 	].join(" ");
 }
 
-/**
- * connect-src allowlist, resolved once at server startup (see buildConnectSrc).
- */
 const CONNECT_SRC = buildConnectSrc();
 
 /**
- * Per-request Content-Security-Policy.
- * - script-src uses a fresh nonce + 'strict-dynamic' instead of 'unsafe-inline';
- *   in dev, 'unsafe-eval' is required by React's dev-mode error tooling.
- * - style-src keeps 'unsafe-inline': React sets inline style attributes.
+ * Next.js-compatible Content-Security-Policy:
+ * - 'self' allows Next.js chunk files (_next/static/chunks/*).
+ * - 'unsafe-inline' & 'unsafe-eval' allow Next.js hydration and React Compiler bootstrap scripts.
+ * - Google Fonts and Supabase Storage domains are permitted for styles, fonts, and images.
  */
-function buildCsp(nonce: string): string {
+function buildCsp(): string {
+	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+	const supabaseOrigin = supabaseUrl ? toOrigin(supabaseUrl) : "https://*.supabase.co";
+
 	return [
 		"default-src 'self'",
-		`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-		"style-src 'self' 'unsafe-inline'",
-		"img-src 'self' data: blob:",
-		"font-src 'self' data:",
+		"script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+		`img-src 'self' data: blob: ${supabaseOrigin} https://*.supabase.co`,
+		"font-src 'self' data: https://fonts.gstatic.com",
 		`connect-src ${CONNECT_SRC}`,
 		"object-src 'none'",
 		"base-uri 'self'",
@@ -65,29 +61,14 @@ function buildCsp(nonce: string): string {
 }
 
 export async function proxy(request: NextRequest) {
-	// Fresh nonce per request; forward it via x-nonce so Next.js applies it to
-	// its inline bootstrap scripts, and attach the matching CSP to the response.
-	const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-	const requestHeaders = new Headers(request.headers);
-	requestHeaders.set("x-nonce", nonce);
-	const requestWithNonce = new NextRequest(request.url, {
-		headers: requestHeaders,
-	});
-
-	// update user's auth session
-	const response = await updateSession(requestWithNonce);
-	response.headers.set("Content-Security-Policy", buildCsp(nonce));
+	const response = await updateSession(request);
+	response.headers.set("Content-Security-Policy", buildCsp());
 	return response;
 }
 
 export const config = {
 	matcher: [
 		{
-			/*
-			 * Match all request paths except:
-			 * - api routes, _next/static, _next/image, favicon.ico and static assets
-			 * - prefetch requests (their cached HTML would carry a stale nonce)
-			 */
 			source:
 				"/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
 			missing: [
