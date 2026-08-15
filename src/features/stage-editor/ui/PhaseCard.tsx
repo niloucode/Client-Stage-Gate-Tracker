@@ -16,10 +16,11 @@ import {
 } from "@/entities/phase/mutations";
 import { toast } from "@/components/ui/toast";
 import {
+	Check,
 	Pencil,
-	X,
 	ChevronLeft,
 	ChevronRight,
+	Workflow,
 } from "lucide-react";
 
 interface PhaseCardProps {
@@ -30,6 +31,103 @@ interface PhaseCardProps {
 	/** Clients are read-only: hide edit/delete controls and drag handles. */
 	readOnly?: boolean;
 }
+
+// ─── Sub-Component: Phase Step Node (Exact match to StageStep) ───────────────
+
+function PhaseStepNode({
+	phaseNumber,
+	phaseName,
+	isCompleted,
+	selected,
+	badge,
+	onClick,
+	onEdit,
+}: {
+	phaseNumber: number;
+	phaseName: string;
+	isCompleted: boolean;
+	selected?: boolean;
+	badge?: "completed" | "current" | null;
+	onClick?: () => void;
+	onEdit?: () => void;
+}) {
+	const isCurrent = badge === "current";
+
+	return (
+		<div className="group relative flex flex-col items-center shrink-0 text-center transition-all duration-200">
+			{/* Node Circle & Action Button Wrapper */}
+			<div className="relative z-10 flex flex-col items-center">
+				<button
+					type="button"
+					onClick={onClick}
+					className="cursor-pointer focus:outline-none"
+				>
+					{/* Node Circle — Exact h-13 w-13 size */}
+					<div
+						className={`
+							relative flex h-13 w-13 items-center justify-center rounded-full text-sm font-bold transition-all shadow-xs
+							${
+								selected
+									? "border-4 border-brand-100 bg-brand-600 text-white ring-4 ring-brand-100"
+									: isCompleted
+										? "border-4 border-brand-100 bg-brand-500 text-white hover:bg-brand-600"
+										: isCurrent
+											? "border-4 border-brand-100 bg-brand-50 text-brand-600 hover:bg-brand-100"
+											: "border-4 border-brand-100 bg-neutral-surface text-brand-600 hover:bg-brand-50"
+							}
+						`}
+					>
+						{isCompleted ? (
+							<Check className="h-5 w-5" />
+						) : (
+							<span>{phaseNumber}</span>
+						)}
+					</div>
+				</button>
+
+				{/* Pencil Button on Group Hover */}
+				{onEdit && (
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							onEdit();
+						}}
+						className="flex items-center justify-center h-6 w-6 absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 bg-brand-100 rounded-full z-20 hover:bg-brand-600 hover:text-brand-10 transition-all cursor-pointer shadow-xs"
+						title={`Edit phase ${phaseName}`}
+						aria-label={`Edit phase ${phaseName}`}
+					>
+						<Pencil size={12} strokeWidth={3} />
+					</button>
+				)}
+			</div>
+
+			{/* Badge Tag */}
+			{badge && (
+				<span
+					className={`mt-2 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+						badge === "completed"
+							? "border-green-600/30 bg-green-100 text-green-600"
+							: "border-brand-500/30 bg-brand-50 text-brand-600"
+					}`}
+				>
+					{badge === "completed" ? "Completed" : "In Progress"}
+				</span>
+			)}
+
+			{/* Title */}
+			<span
+				className={`max-w-25 text-xs font-semibold leading-tight line-clamp-2 ${badge ? "mt-1.5" : "mt-2"} ${
+					selected || isCurrent ? "text-brand-600" : "text-neutral-muted"
+				}`}
+			>
+				{phaseName}
+			</span>
+		</div>
+	);
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export const PhaseCard = forwardRef<
 	{ openCreateModal: () => void },
@@ -88,6 +186,13 @@ export const PhaseCard = forwardRef<
 	const confirmDelete = (phaseNumber: number) => {
 		setPhaseToDelete(phaseNumber);
 		setIsDeleteConfirmOpen(true);
+	};
+
+	const handleEditDeleteClick = () => {
+		if (!phaseToEdit || phaseToEdit.number === null) return;
+		confirmDelete(phaseToEdit.number);
+		setIsModalOpen(false);
+		setPhaseToEdit(null);
 	};
 
 	const closeDeleteModal = () => {
@@ -213,19 +318,31 @@ export const PhaseCard = forwardRef<
 		}
 	};
 
-	// Find the current active phase to populate the details section
+	// Find the current active phase to populate the details section below
 	const currentPhase = phases.find((p) => p.number === activePhase);
+
+	// Calculate connector progress from completed phases
+	const lastCompletedIdx = phases.reduce(
+		(acc, p, i) => (p.actualEnd !== null ? i : acc),
+		-1,
+	);
+	const progressPct =
+		phases.length > 1 ? (lastCompletedIdx / (phases.length - 1)) * 100 : 0;
+
+	const NODE_SLOT = 130;
+	const CIRCLE_CENTER_Y = 26; // Exact Center of h-13 (52px)
 
 	return (
 		<>
 			<div className="relative bg-neutral-surface border border-slate-200 rounded-md shadow-sm mb-8">
-				<div className="px-8 py-6 relative">
+				<div className="px-4 py-6 relative">
 					{/* Empty State */}
 					{phases.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-6 text-center">
-							<p className="text-sm text-neutral-subtle">No phases yet</p>
-							<p className="text-xs text-slate-400 mt-1">
-								Click Add Phase to create your first phase
+						<div className="flex flex-col items-center justify-center py-8 text-center bg-neutral-subtle/30 rounded-md border border-dashed border-warm-gray-200 my-2">
+							<Workflow className="h-8 w-8 text-muted-foreground/40 mb-2" />
+							<p className="text-sm font-medium text-charcoal">No phases yet</p>
+							<p className="text-xs text-muted-foreground mt-1 max-w-sm">
+								Click Add Phase above to create your first phase.
 							</p>
 						</div>
 					) : (
@@ -233,8 +350,9 @@ export const PhaseCard = forwardRef<
 							{/* Left Scroll Arrow */}
 							{showLeftArrow && (
 								<button
+									type="button"
 									onClick={() => scroll("left")}
-									className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-slate-200 rounded-full shadow-md hover:bg-slate-50 hover:border-brand-500 transition-all flex items-center justify-center"
+									className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-slate-200 rounded-full shadow-md hover:bg-slate-50 hover:border-brand-500 transition-all flex items-center justify-center cursor-pointer"
 								>
 									<ChevronLeft
 										size={16}
@@ -247,8 +365,9 @@ export const PhaseCard = forwardRef<
 							{/* Right Scroll Arrow */}
 							{showRightArrow && (
 								<button
+									type="button"
 									onClick={() => scroll("right")}
-									className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-slate-200 rounded-full shadow-md hover:bg-slate-50 hover:border-brand-500 transition-all flex items-center justify-center"
+									className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-neutral-surface border border-slate-200 rounded-full shadow-md hover:bg-slate-50 hover:border-brand-500 transition-all flex items-center justify-center cursor-pointer"
 								>
 									<ChevronRight
 										size={16}
@@ -258,33 +377,52 @@ export const PhaseCard = forwardRef<
 								</button>
 							)}
 
-							{/* Scrollable Container */}
+							{/* Scrollable Stepper Container */}
 							<div
 								ref={scrollContainerRef}
 								onScroll={checkScroll}
-								className="relative z-10 overflow-x-auto scroll-smooth hide-scrollbar p-1"
-								style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+								className="hide-scrollbar overflow-x-auto py-2"
 							>
-								{/* Dynamic Width Container */}
 								<div
-									className="relative flex items-start justify-between pt-3 pb-3 px-8 transition-all duration-300"
-									style={{
-										minWidth: phases.length > 5 ? `${phases.length * 160}px` : "100%",
-										width: "100%",
-									}}
+									className="relative flex items-start justify-between min-w-full px-4"
+									style={{ minWidth: `${phases.length * NODE_SLOT}px` }}
 								>
-									{/* Connecting Line through Node Centers */}
-									<div className="z-0 absolute left-14 right-14 top-9 h-0.5 bg-brand-100 pointer-events-none" />
+									{/* Progress Connector Line — Centered behind h-13 circles */}
+									{phases.length > 1 && (
+										<div
+											className="absolute -translate-y-1/2 rounded-full"
+											style={{
+												top: CIRCLE_CENTER_Y,
+												left: NODE_SLOT / 2,
+												width: `calc(100% - ${NODE_SLOT}px)`,
+												height: 3,
+												backgroundColor: "#E5E3E0",
+											}}
+										>
+											<div
+												className="h-full rounded-full bg-brand-600 transition-all duration-300"
+												style={{ width: `${progressPct}%` }}
+											/>
+										</div>
+									)}
 
+									{/* Node Items */}
 									{phases.map((phase, index) => {
 										const num = phase.number ?? 0;
 										const isActive = phase.number === activePhase;
-										const isCompleted = activePhase !== null && num < activePhase;
+										const isCompleted = phase.actualEnd !== null;
+
+										const badge = isCompleted
+											? "completed"
+											: isActive
+												? "current"
+												: null;
 
 										return (
 											<div
 												key={phase.phase_id}
-												className="relative flex flex-col items-center shrink-0 w-12 transition-all duration-200 cursor-grab active:cursor-grabbing"
+												className="relative z-10 flex flex-col items-center cursor-grab active:cursor-grabbing"
+												style={{ width: NODE_SLOT }}
 												draggable={!readOnly}
 												onDragStart={(e) => handleDragStart(e, index)}
 												onDragEnd={handleDragEnd}
@@ -292,104 +430,19 @@ export const PhaseCard = forwardRef<
 												onDragLeave={handleDragLeave}
 												onDrop={(e) => handleDrop(e, index)}
 											>
-												{/* Node Circle & Action Buttons */}
-												<div className="relative z-10 flex flex-col items-center group">
-													<button
-														onClick={() =>
-															phase.number !== null && setActivePhase(phase.number)
-														}
-													>
-														{/* Node Circle — Styled to match ProjectStructure circle design */}
-														<div
-															className={`
-																relative flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold transition-all shadow-xs
-																${
-																	isActive
-																		? "border-4 border-brand-100 bg-brand-600 text-white"
-																		: isCompleted
-																			? "border-4 border-brand-100 bg-brand-500 text-white group-hover:bg-brand-600"
-																			: "border-4 border-brand-100 bg-neutral-surface text-brand-600 group-hover:bg-brand-50"
-																}
-															`}
-														>
-															<span>{phase.number ?? ""}</span>
-														</div>
-													</button>
-
-													{/* Edit Button on Group Hover */}
-													{!readOnly && (
-														<button
-															onClick={() => openEditModal(phase)}
-															className="flex items-center justify-center h-4 w-4 absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
-															title="Edit phase"
-															aria-label={`Edit phase ${phase.number ?? ""}`}
-														>
-															<Pencil size={12} strokeWidth={3} />
-														</button>
-													)}
-
-													{/* Delete Button on Group Hover */}
-													{!readOnly && (
-														<button
-															onClick={() =>
-																phase.number !== null && confirmDelete(phase.number)
-															}
-															className="flex items-center justify-center h-4 w-4 absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 bg-background border border-slate-200 shadow-xs rounded-full transition-all hover:scale-110 z-20"
-															title="Delete phase"
-															aria-label={`Delete phase ${phase.number ?? ""}`}
-														>
-															<X size={12} strokeWidth={3} />
-														</button>
-													)}
-												</div>
-
-												{/* Phase Labels */}
-												<div className="mt-2.5 flex flex-col items-center text-center w-28 -ml-8 -mr-8 pointer-events-none">
-													<div
-														className={`
-															text-xs font-semibold tracking-wide truncate w-full pointer-events-auto
-															${isActive ? "text-brand-600" : "text-neutral-muted"}
-														`}
-														title={phase.name}
-													>
-														{phase.name}
-													</div>
-
-													{/* Clean 2-Line Dates Display */}
-													{phase.planStart && phase.planEnd && (
-														<div className="text-[10px] text-muted-foreground mt-1 flex flex-col gap-0.5 w-full pointer-events-auto">
-															<span className="truncate">
-																{new Date(phase.planStart).toLocaleDateString("en-US", {
-																	month: "short",
-																	day: "numeric",
-																})}{" "}
-																–{" "}
-																{new Date(phase.planEnd).toLocaleDateString("en-US", {
-																	month: "short",
-																	day: "numeric",
-																})}
-															</span>
-															{(phase.actualStart || phase.actualEnd) && (
-																<span className="text-neutral-400 truncate">
-																	Act:{" "}
-																	{new Date(
-																		phase.actualStart ?? phase.planStart,
-																	).toLocaleDateString("en-US", {
-																		month: "short",
-																		day: "numeric",
-																	})}
-																	–
-																	{new Date(
-																		phase.actualEnd ?? phase.planEnd,
-																	).toLocaleDateString("en-US", {
-																		month: "short",
-																		day: "numeric",
-																	})}
-																</span>
-															)}
-														</div>
-													)}
-												</div>
+												<PhaseStepNode
+													phaseNumber={num}
+													phaseName={phase.name}
+													isCompleted={isCompleted}
+													selected={isActive}
+													badge={badge}
+													onClick={() =>
+														phase.number !== null && setActivePhase(phase.number)
+													}
+													onEdit={
+														!readOnly ? () => openEditModal(phase) : undefined
+													}
+												/>
 											</div>
 										);
 									})}
@@ -491,6 +544,7 @@ export const PhaseCard = forwardRef<
 						setIsModalOpen(false);
 						setPhaseToEdit(null);
 					}}
+					onDelete={handleEditDeleteClick}
 				/>
 			) : (
 				<AddPhase

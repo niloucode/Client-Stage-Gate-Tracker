@@ -19,25 +19,23 @@ export function ExecutedBanner({
 
 	return (
 		<div
-			className={`flex items-center gap-4 rounded-md border border-[#BBF7D0] bg-[#F0FDF4] px-6 py-4 shadow-sm ${className}`}
+			className={`flex h-44 items-center gap-4 rounded-md border border-[#BBF7D0] bg-[#F0FDF4] px-6 py-4 shadow-sm ${className}`}
 		>
-			<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DCFCE7]">
-				<CheckCircle2 className="h-5 w-5 text-green-700" />
-			</div>
-			<div className="min-w-0 flex-1">
-				<p className="text-sm font-semibold text-green-700">
+			<CheckCircle2 className="h-20 w-20 text-green-700" />
+			<div className="min-w-0 flex flex-col gap-3">
+				<h3>
 					Agreement Fully Executed
-				</p>
-				<p className="mt-0.5 text-xs text-plum-400">
+				</h3>
+				<h4 className="text-xs text-plum-400">
 					All parties have signed. This agreement is now legally binding.
 					{formatted && (
 						<>
 							{" "}
 							Executed on{" "}
-							<span className="font-medium text-ink">{formatted}</span>.
+							<span className="text-foreground">{formatted}</span>.
 						</>
 					)}
-				</p>
+				</h4>
 			</div>
 		</div>
 	);

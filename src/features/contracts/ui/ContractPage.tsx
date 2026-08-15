@@ -123,7 +123,7 @@ export function ContractPage({ projectId }: ContractPageProps) {
 
 	if (isLoading) {
 		return (
-			<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
+			<div className="min-h-screen sm:px-8 sm:py-10">
 				<div className="mx-auto max-w-6xl">
 					<div className="flex items-center justify-center py-20">
 						<p className="text-muted-foreground">Loading contract...</p>
@@ -135,7 +135,7 @@ export function ContractPage({ projectId }: ContractPageProps) {
 
 	if (error) {
 		return (
-			<div className="min-h-screen bg-[#F6F5FB] px-4 py-6 sm:px-8 sm:py-10">
+			<div className="min-h-screen sm:px-8 sm:py-10">
 				<div className="mx-auto max-w-6xl">
 					<div className="flex items-center justify-center py-20">
 						<p className="text-destructive">
@@ -177,11 +177,11 @@ export function ContractPage({ projectId }: ContractPageProps) {
 				</p>
 			</header>
 
-			{allSigned && executedAt && <ExecutedBanner executedAt={executedAt} />}
+			
 
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
 				<ContractViewer
-					className="h-[80vh] min-h-[600px] py-0 bg-[#F9F9F7]"
+					className="h-fit py-0 bg-[#F9F9F7]"
 					projectId={projectId}
 					canManage={role === "owner"}
 					initialFilePath={contract?.file_path ?? null}
@@ -190,6 +190,7 @@ export function ContractPage({ projectId }: ContractPageProps) {
 				/>
 
 				<div className="flex flex-col gap-6">
+					{allSigned && executedAt && <ExecutedBanner executedAt={executedAt} />}
 					<SignatoriesCard signatories={signatories} />
 
 					{role && (

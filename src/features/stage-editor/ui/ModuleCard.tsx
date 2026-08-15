@@ -5,10 +5,10 @@ import type { Module, Phase } from "../types";
 import { WorkflowCard } from "./WorkflowCard";
 import { AddModule, EditModule } from "@/features/stage-editor/ui/modals/ModuleModals";
 import { useDeleteModule } from "@/entities/module/mutations";
-import { ConfirmDeleteModal } from "@/shared/ui"
+import { ConfirmDeleteModal } from "@/shared/ui";
 import { Button } from "@/components/ui/button";
 import { Plus, Clock, ChevronDown, EllipsisVertical } from "lucide-react";
-import { toast } from "@/components/ui/toast"
+import { toast } from "@/components/ui/toast";
 
 // --- INLINE DATE LOGIC & HELPERS ---
 type WorkflowStatus = "not_started" | "started" | "ended";
@@ -165,7 +165,6 @@ export function ModuleCard({
 				stageId,
 			});
 
-			// delete toast
 			toast.add({
 				title: "Module Deleted",
 				description: `Module has been deleted successfully.`,
@@ -207,7 +206,7 @@ export function ModuleCard({
 			<div className="flex justify-between items-center mb-4">
 				<h3 className="text-2xl font-semibold text-slate-900">Modules</h3>
 				{!readOnly && (
-					<Button onClick={openCreateModuleModal}>
+					<Button onClick={openCreateModuleModal} className="cursor-pointer">
 						<Plus className="mr-2 h-4 w-4" /> Add Module
 					</Button>
 				)}
@@ -224,11 +223,9 @@ export function ModuleCard({
 					</div>
 				) : modules.length === 0 ? (
 					<div className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm p-8 text-center">
-						<p className="text-sm">
-							No modules yet for this phase.
-						</p>
+						<p className="text-sm">No modules yet for this phase.</p>
 						<p className="text-xs text-slate-400 mt-1">
-							Click <span className="text-brand-500">Add Module</span> to create one.
+							Click <span className="text-brand-500 font-semibold cursor-pointer" onClick={openCreateModuleModal}>Add Module</span> to create one.
 						</p>
 					</div>
 				) : (
@@ -322,8 +319,9 @@ export function ModuleCard({
 										{/* Edit button */}
 										{!readOnly && (
 											<button
+												type="button"
 												onClick={() => openEditModuleModal(module)}
-												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
+												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded cursor-pointer"
 												aria-label="Edit module"
 											>
 												<EllipsisVertical
@@ -378,10 +376,11 @@ export function ModuleCard({
 				onDelete={handleEditDeleteClick}
 			/>
 
-			{/* Delete Confirmation Modal — shared primitive (Task 5.2) */}
+			{/* Delete Confirmation Modal */}
 			<ConfirmDeleteModal
 				isOpen={isDeleteConfirmOpen}
 				noun="Module"
+				title={moduleToDelete ? "Delete Module?" : undefined}
 				onConfirm={handleDeleteModule}
 				onCancel={() => {
 					setIsDeleteConfirmOpen(false);

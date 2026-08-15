@@ -106,40 +106,61 @@ export function WorkflowModal({
 		defaultValues,
 		validators: { onSubmit: workflowModalSchema },
 		onSubmit: async ({ value }) => {
-			if (isEditMode && workflow) {
-				await updateWorkflowMutation.mutateAsync({
-					workflowId: workflow.workflow_id,
-					stageId,
-					name: value.name,
-					// non-null guaranteed by workflowModalSchema (required plan dates)
-					planStart: value.planStart!,
-					planEnd: value.planEnd!,
-					actualStart: value.actualStart ?? undefined,
-					actualEnd: value.actualEnd ?? undefined,
-				});
+			try {
+				if (isEditMode && workflow) {
+					await updateWorkflowMutation.mutateAsync({
+						workflowId: workflow.workflow_id,
+						stageId,
+						name: value.name,
+						// non-null guaranteed by workflowModalSchema (required plan dates)
+						planStart: value.planStart!,
+						planEnd: value.planEnd!,
+						actualStart: value.actualStart ?? undefined,
+						actualEnd: value.actualEnd ?? undefined,
+					});
+					toast.add({
+						title: "Workflow Edited",
+						description: `"${value.name}" has been edited successfully.`,
+						type: "success",
+					});
+				} else {
+					// 1. Trigger Loading Toast upon adding
+					toast.add({
+						title: "Creating Workflow",
+						description: "Please wait while your workflow is being created...",
+						type: "loading",
+					});
+
+					// 2. Perform create mutation
+					await createWorkflowMutation.mutateAsync({
+						moduleId,
+						stageId,
+						name: value.name,
+						// non-null guaranteed by workflowModalSchema (required plan dates)
+						planStart: value.planStart!,
+						planEnd: value.planEnd!,
+						actualStart: value.actualStart ?? undefined,
+						actualEnd: value.actualEnd ?? undefined,
+					});
+
+					// 3. Trigger Success Toast
+					toast.add({
+						title: "Workflow Created",
+						description: `"${value.name}" has been created successfully.`,
+						type: "success",
+					});
+				}
+				handleClose();
+			} catch (error) {
 				toast.add({
-					title: "Workflow Edited",
-					description: `"${value.name}" has been edited successfully.`,
-					type: "success",
-				});
-			} else {
-				await createWorkflowMutation.mutateAsync({
-					moduleId,
-					stageId,
-					name: value.name,
-					// non-null guaranteed by workflowModalSchema (required plan dates)
-					planStart: value.planStart!,
-					planEnd: value.planEnd!,
-					actualStart: value.actualStart ?? undefined,
-					actualEnd: value.actualEnd ?? undefined,
-				});
-				toast.add({
-					title: "Workflow Created",
-					description: `"${value.name}" has been created successfully.`,
-					type: "success",
+					title: isEditMode ? "Edit Failed" : "Creation Failed",
+					description:
+						error instanceof Error
+							? error.message
+							: "An error occurred while saving the workflow.",
+					type: "error",
 				});
 			}
-			handleClose();
 		},
 	});
 

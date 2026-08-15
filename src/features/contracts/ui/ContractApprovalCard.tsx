@@ -20,7 +20,7 @@ export interface ContractApprovalCardProps {
 	projectId: string;
 	/** Which party THIS user is: owner (roleAssignment) or client (contract client_id). */
 	variant: "owner" | "client";
-	/** Whether the OTHER party has already approved (the only status this user may see). */
+	/** Whether the OTHER party has already approved. */
 	otherPartyApproved: boolean;
 	/** Whether THIS user's side is already approved. */
 	alreadyApproved: boolean;
@@ -28,12 +28,6 @@ export interface ContractApprovalCardProps {
 	onSuccess: () => void;
 }
 
-/**
- * 2026-08-15 spec: button-based contract approval (replaces the OTP flow).
- * Owners see their own button + the client's status; clients see their own
- * button + the owner's status; project team members see neither (the page
- * renders this card only for signers).
- */
 export function ContractApprovalCard({
 	projectId,
 	variant,
@@ -46,17 +40,23 @@ export function ContractApprovalCard({
 	const approveMutation = useApproveContract();
 
 	const roleLabel = variant === "owner" ? "Project Owner" : "Client";
-	const otherLabel = variant === "owner" ? "the client" : "the Project Owner";
+	const otherRoleLabel = variant === "owner" ? "Client" : "Project Owner";
+
+	// Derive individual party approval states
+	const clientApproved =
+		variant === "client" ? alreadyApproved : otherPartyApproved;
+	const ownerApproved =
+		variant === "owner" ? alreadyApproved : otherPartyApproved;
+	const bothApproved = clientApproved && ownerApproved;
 
 	const handleApprove = async () => {
-		// Returns the action result — ConfirmTextModal surfaces failures.
 		return approveMutation.mutateAsync({ projectId, role: variant });
 	};
 
 	const handleApproved = () => {
 		toast.add({
 			title: "Contract Approved",
-			description: "Your approval has been recorded.",
+			description: `Your approval as the ${roleLabel} has been recorded.`,
 			type: "success",
 		});
 		onSuccess();
@@ -65,52 +65,90 @@ export function ContractApprovalCard({
 	return (
 		<Card className="gap-0 p-0 bg-neutral-surface border border-border rounded-md shadow-xs">
 			<CardHeader className="px-5 py-4 border-b border-border gap-1">
-				<CardTitle className="text-base text-foreground">
+				<CardTitle>
 					Approve Contract
 				</CardTitle>
-				<CardDescription className="text-xs">
-					Both the Project Owner and the client must approve before the
-					project can start.
+				<CardDescription className="text-xs text-muted-foreground">
+					Both the Project Owner and the Client must approve before the
+					project can begin.
 				</CardDescription>
 			</CardHeader>
 
 			<CardContent className="p-5 flex flex-col gap-4">
-				{/* Other party's status — the only cross-party status visible */}
-				<div
-					className={`flex items-center gap-2 rounded-md border px-3 py-2.5 text-xs font-medium ${
-						otherPartyApproved
-							? "border-emerald-200 bg-emerald-50 text-emerald-700"
-							: "border-amber-200 bg-amber-50 text-amber-700"
-					}`}
-				>
-					{otherPartyApproved ? (
-						<CheckCircle2 className="h-4 w-4 shrink-0" />
-					) : (
-						<Clock3 className="h-4 w-4 shrink-0" />
-					)}
-					<span>
-						{otherLabel} approval:{" "}
-						{otherPartyApproved ? "Approved" : "Pending"}
-					</span>
+				{/* 1. Both Parties' Status Breakdown */}
+				<div className="flex flex-col gap-2">
+					{/* Client Status */}
+					<div
+						className={`flex items-center justify-between rounded-md border px-3.5 py-2.5 text-xs  ${
+							clientApproved
+								? "border-emerald-200 bg-emerald-50 text-emerald-800"
+								: "border-amber-200 bg-amber-50 text-amber-800"
+						}`}
+					>
+						<div className="flex items-center gap-2">
+							{clientApproved ? (
+								<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+							) : (
+								<Clock3 className="h-4 w-4 shrink-0 text-amber-600" />
+							)}
+							<span>Client Status:</span>
+						</div>
+						<span className="">
+							{clientApproved ? "Approved" : "Pending"}
+						</span>
+					</div>
+
+					{/* Project Owner Status */}
+					<div
+						className={`flex items-center justify-between rounded-md border px-3.5 py-2.5 text-xs  ${
+							ownerApproved
+								? "border-emerald-200 bg-emerald-50 text-emerald-800"
+								: "border-amber-200 bg-amber-50 text-amber-800"
+						}`}
+					>
+						<div className="flex items-center gap-2">
+							{ownerApproved ? (
+								<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+							) : (
+								<Clock3 className="h-4 w-4 shrink-0 text-amber-600" />
+							)}
+							<span>Project Owner Status:</span>
+						</div>
+						<span className="">
+							{ownerApproved ? "Approved" : "Pending"}
+						</span>
+					</div>
 				</div>
 
-				{alreadyApproved ? (
-					<div className="flex items-center gap-2 rounded-md bg-[#ECFDF3] px-3 py-2.5 text-sm font-medium text-green-700">
-						<CheckCircle2 className="h-4 w-4 shrink-0" />
-						You have approved this contract as the {roleLabel}.
+				{/* 2. Outcome Banner or Action Button */}
+				{bothApproved ? (
+					<div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs  text-emerald-800">
+						<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+						<span>Both parties have approved.</span>
+					</div>
+				) : alreadyApproved ? (
+					<div className="flex items-center gap-2.5 rounded-md border border-border bg-neutral-subtle px-3.5 py-3 text-xs  text-muted-foreground">
+						<Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />
+						<span>
+							You have approved. Awaiting {otherRoleLabel} approval.
+						</span>
 					</div>
 				) : (
-					<>
-						<p className="text-xs text-muted-foreground">
-							As the {roleLabel}, approve this contract to proceed.
+					<div className="space-y-3 pt-1">
+						<p className="text-xs text-muted-foreground leading-relaxed">
+							Please review the document and confirm your approval as the{" "}
+							<strong className=" text-foreground">
+								{roleLabel}
+							</strong>
+							.
 						</p>
 						<Button
 							onClick={() => setConfirmOpen(true)}
-							className="w-full h-10 text-xs font-semibold"
+							className="w-full h-10 text-xs  cursor-pointer"
 						>
-							Approve Contract
+							Approve as {roleLabel}
 						</Button>
-					</>
+					</div>
 				)}
 			</CardContent>
 
@@ -119,9 +157,9 @@ export function ContractApprovalCard({
 				onClose={() => setConfirmOpen(false)}
 				noParamFunc={handleApprove}
 				confirmPhrase={CONFIRM_PHRASE}
-				displayText={`You are about to approve the contract "${contractName}" as the ${roleLabel}. To confirm, type "${CONFIRM_PHRASE}" below.`}
+				displayText={`You are about to approve the contract "${contractName}" as the ${roleLabel}. To confirm your agreement, type "${CONFIRM_PHRASE}" below.`}
 				displayTitle="Confirm Contract Approval"
-				buttonText="Approve Contract"
+				buttonText={`Approve as ${roleLabel}`}
 				onSuccess={handleApproved}
 			/>
 		</Card>
