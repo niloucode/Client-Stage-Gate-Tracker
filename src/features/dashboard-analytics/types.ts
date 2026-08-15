@@ -1,4 +1,4 @@
-import type { GanttLevel, GanttTab } from "./lib/schema";
+import type { GanttTab } from "./lib/schema";
 
 export type { GanttLevel, GanttTab } from "./lib/schema";
 export type { ModuleGanttPayload } from "@/entities/module";
