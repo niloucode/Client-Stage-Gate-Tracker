@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link2, Key, Code2 } from "lucide-react";
 import {
 	Dialog,
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import type { VariableItem, VariableType } from "@/entities/variable";
 import type { VariableCreateInput } from "@/shared/schemas/variable";
 
@@ -67,24 +68,22 @@ export function VariableFormModal({
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	useEffect(() => {
-		if (isOpen) {
-			if (variable) {
-				setName(variable.name);
-				setType(variable.type);
-				setValue(variable.value);
-				setNotesTeam(variable.notesTeam);
-				setNotesClient(variable.notesClient);
-			} else {
-				setName("");
-				setType("link");
-				setValue("");
-				setNotesTeam("");
-				setNotesClient("");
-			}
-			setErrors({});
+	useResetOnOpen(isOpen, () => {
+		if (variable) {
+			setName(variable.name);
+			setType(variable.type);
+			setValue(variable.value);
+			setNotesTeam(variable.notesTeam);
+			setNotesClient(variable.notesClient);
+		} else {
+			setName("");
+			setType("link");
+			setValue("");
+			setNotesTeam("");
+			setNotesClient("");
 		}
-	}, [isOpen, variable]);
+		setErrors({});
+	});
 
 	const handleClose = () => {
 		setErrors({});
