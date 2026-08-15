@@ -6,6 +6,7 @@
 // redirect for client profiles should land when the Client Portal exists.
 
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "@/app/globals.css";
 import Sidebar from "@/shared/ui/sidebar";
 import TopNav from "@/features/navigation/ui/TopNav";
@@ -13,7 +14,7 @@ import { getCurrentUserProfile } from "@/entities/profile/profileActions";
 
 // The shell reads the session on every request (getCurrentUserProfile →
 // cookies) and TopNav calls useSearchParams (breadcrumbs) without a
-// Suspense boundary — static prerender of any (app) page trips both and
+// Suspense boundary — static Prerender of any (app) page trips both and
 // fails the build. The whole group is session-dependent anyway, so render
 // it dynamically (2026-08-15 — unblocks `next build`).
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
 export default async function AppLayout({
 	children,
 }: Readonly<{
-	children: React.ReactNode;
+	children: ReactNode;
 }>) {
 	// Role-aware navigation: client profiles must not see the Clients
 	// registry entry ("no access from the start"). Resolved server-side and

@@ -29,10 +29,6 @@ const profileQueryOptions = {
 		}),
 };
 
-export function useProfiles() {
-	return useQuery(profileQueryOptions.list());
-}
-
 export function useTeamProfiles(options?: { enabled?: boolean }) {
 	return useQuery({
 		...profileQueryOptions.team(),

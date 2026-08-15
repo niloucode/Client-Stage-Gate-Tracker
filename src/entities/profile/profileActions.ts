@@ -99,29 +99,6 @@ export async function getCurrentUserProfile() {
 	});
 }
 
-export async function getProfilesByClientId(clientId: string) {
-	try {
-		// Authentication gate: employee PII must never be enumerable by
-		// unauthenticated callers. (Membership-level scoping is reviewed
-		// with the contracts feature.)
-		const userId = await getCurrentUserId();
-		if (!userId) return { success: false, error: "Authentication required." };
-
-		z.uuid().parse(clientId);
-		const usersArray = await prisma.profiles.findMany({
-			where: {
-				client_id: clientId,
-				is_deleted: false,
-			},
-		});
-
-		return { success: true, data: usersArray };
-	} catch (error) {
-		console.error("Failed to fetch user:", error);
-		return { success: false, error: "Failed to fetch user details." };
-	}
-}
-
 // ── Profile creation (signup flows) ─────────────────────────────────────────
 
 const createProfileInputSchema = z.object({

@@ -2,9 +2,9 @@
 
 import { use, useState, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ModuleCard } from "@/features/stage-editor/ui/ModuleCard"
-import { PhaseCard } from "@/features/stage-editor/ui/PhaseCard"
-import type { Phase } from "@/features/stage-editor/types"
+import { ModuleCard } from "@/features/stage-editor"
+import { PhaseCard } from "@/features/stage-editor"
+import type { Phase } from "@/features/stage-editor"
 import { useStageTree } from "@/entities/stage/queries"
 import { useCurrentUser } from "@/entities/profile/queries"
 import { Plus } from "lucide-react"

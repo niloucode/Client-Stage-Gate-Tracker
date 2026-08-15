@@ -7,6 +7,7 @@ import { FormInput } from "@/components/ui/forminput";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ColorPicker } from "@/shared/ui";
+import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 
 export default function TagFormModal({
 	mode,
@@ -35,26 +36,18 @@ export default function TagFormModal({
 }) {
 	const currentIsOpen = isOpen ?? true;
 
-	// Render-phase sync to update form state when modal opens or initial tag changes
-	const [prevIsOpen, setPrevIsOpen] = useState(currentIsOpen);
-	const [prevInitial, setPrevInitial] = useState(initial);
-
 	const [name, setName] = useState(initial?.name ?? "");
 	const [description, setDescription] = useState(initial?.description ?? "");
 	const [color, setColor] = useState(initial?.color ?? "#3B82F6");
 	const [fieldError, setFieldError] = useState<string | null>(null);
 
-	// Adjust state synchronously during render when props change
-	if (currentIsOpen && (!prevIsOpen || prevInitial !== initial)) {
-		setPrevIsOpen(true);
-		setPrevInitial(initial);
+	// Reset the form fields when the dialog opens (deferred until mount).
+	useResetOnOpen(currentIsOpen, () => {
 		setName(initial?.name ?? "");
 		setDescription(initial?.description ?? "");
 		setColor(initial?.color ?? "#3B82F6");
 		setFieldError(null);
-	} else if (!currentIsOpen && prevIsOpen) {
-		setPrevIsOpen(false);
-	}
+	});
 
 	async function handleSubmit() {
 		if (!name.trim()) {

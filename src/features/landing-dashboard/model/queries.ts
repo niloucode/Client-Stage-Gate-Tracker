@@ -2,7 +2,6 @@
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { dashboardKeys, issueKeys } from "@/shared/query/keys";
-import { getMyDashboardRole } from "@/entities/roleAssignment";
 import {
 	selectMyTickets,
 	selectWatchedTickets,
@@ -13,11 +12,6 @@ import { getMyContracts } from "@/entities/contract";
 import { mapDashboardTicketRow, mapContractRow } from "./mappers";
 
 const dashboardQueryOptions = {
-	role: () =>
-		queryOptions({
-			queryKey: dashboardKeys.role(),
-			queryFn: getMyDashboardRole,
-		}),
 	myTickets: (enabled: boolean) =>
 		queryOptions({
 			queryKey: dashboardKeys.myTickets(),
@@ -51,9 +45,7 @@ const dashboardQueryOptions = {
 		}),
 };
 
-export function useDashboardRole() {
-	return useQuery(dashboardQueryOptions.role());
-}
+export { useDashboardRole } from "@/entities/roleAssignment";
 
 export function useMyTickets(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.myTickets(enabled));

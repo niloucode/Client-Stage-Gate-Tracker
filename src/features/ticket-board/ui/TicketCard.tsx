@@ -358,7 +358,11 @@ export default function TicketCard({
 			style={style}
 			{...attributes}
 			{...listeners}
-			className="cursor-grab active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:rounded-md"
+			className={
+				readOnly
+					? "focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:rounded-md"
+					: "cursor-grab active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:rounded-md"
+			}
 		>
 			<TicketCardContent
 				ticket={ticket}

@@ -13,6 +13,8 @@ interface TicketColumnProps {
 	subtasksByParent: ReadonlyMap<string, Ticket[]>;
 	onSelectTicket: (ticket: Ticket) => void;
 	onDeleteTicket?: (ticketId: string, mode: "cascade" | "promote") => void;
+	/** Clients are read-only: cards are not draggable (server-enforced too). */
+	readOnly?: boolean;
 }
 
 export default function TicketColumn({
@@ -21,6 +23,7 @@ export default function TicketColumn({
 	subtasksByParent,
 	onSelectTicket,
 	onDeleteTicket = () => {}, // Default fallback function
+	readOnly = false,
 }: TicketColumnProps) {
 	const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
@@ -54,6 +57,7 @@ export default function TicketColumn({
 						subtasks={subtasksByParent.get(ticket.ticket_id) ?? []}
 						onSelect={onSelectTicket}
 						onDelete={onDeleteTicket}
+						readOnly={readOnly}
 					/> :""
 				))}
 

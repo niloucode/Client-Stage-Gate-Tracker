@@ -2,13 +2,16 @@ import { z } from "zod";
 
 // ── Tag ──────────────────────────────────────────────────────────────────────
 
-export const tagSchema = z.object({
+// Type-only base (Tag derives from it); form validation uses tagCreateSchema.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used via typeof
+const tagSchema = z.object({
 	tag_id: z.uuid(),
 	name: z.string().trim().min(1, "Tag name is required"),
 	description: z.string().nullable().optional(),
 	color: z.string().nullable().optional(),
 	is_deleted: z.boolean().default(false),
 	deleted_at: z.date().nullable().optional(),
+	is_protected: z.boolean().default(false),
 });
 
 export type Tag = z.infer<typeof tagSchema>;
@@ -18,6 +21,7 @@ export type Tag = z.infer<typeof tagSchema>;
 export const tagCreateSchema = z.object({
 	name: z
 		.string()
+		.trim()
 		.min(1, "Tag name is required")
 		.max(12, "Tag name must be 12 characters or less"),
 	description: z

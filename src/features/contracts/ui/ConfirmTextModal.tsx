@@ -126,4 +126,3 @@ export function ConfirmTextModal({
 	);
 }
 
-export default ConfirmTextModal;

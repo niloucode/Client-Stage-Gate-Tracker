@@ -5,7 +5,7 @@ import { z } from "zod";
 // enum value in Issues.type, EXCEPT for type "other" where the free-text
 // specific type is stored in Issues.type (the UI already renders unknown
 // type strings via `BUG_TYPE_LABELS[type] ?? type`).
-export const ISSUE_BUG_TYPES = [
+const ISSUE_BUG_TYPES = [
 	"feature_request",
 	"deadlinks",
 	"missing_fields",
@@ -14,7 +14,7 @@ export const ISSUE_BUG_TYPES = [
 	"other",
 ] as const;
 
-export const ISSUE_URGENCIES = ["low", "medium", "high"] as const;
+const ISSUE_URGENCIES = ["low", "medium", "high"] as const;
 
 export const issueCreateSchema = z
 	.object({

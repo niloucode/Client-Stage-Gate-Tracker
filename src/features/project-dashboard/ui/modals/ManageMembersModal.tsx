@@ -27,7 +27,7 @@ interface ManageMembersModalProps {
 	onClose: () => void;
 }
 
-export function DepartmentDisplay({
+function DepartmentDisplay({
 	departmentName,
 }: {
 	departmentName: string;

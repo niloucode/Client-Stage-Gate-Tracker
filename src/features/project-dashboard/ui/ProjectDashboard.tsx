@@ -29,8 +29,8 @@ interface ModalState {
 	name: string;
 	description?: string | null;
 	client_id?: string | null;
-	start_date?: Date | null;
-	deadline_date?: Date | null;
+	planStart?: Date | null;
+	planEnd?: Date | null;
 }
 
 export function ProjectDashboard() {
@@ -107,14 +107,18 @@ export function ProjectDashboard() {
 		});
 	};
 
-	const handleCreate = async (data: ProjectCreateInput) => {
+	const handleCreate = async (
+		data:
+			| ProjectCreateInput
+			| (Omit<ProjectCreateInput, "client_id"> & { client_id?: string }),
+	) => {
 		if (!data.client_id) return;
 		const result = await createMutation.mutateAsync({
 			name: data.name,
 			description: data.description,
 			client_id: data.client_id,
-			start_date: data.start_date,
-			deadline_date: data.deadline_date,
+			planStart: data.planStart,
+			planEnd: data.planEnd,
 		});
 		if (result.success && result.data) {
 			setShowAddModal(false);
@@ -130,15 +134,20 @@ export function ProjectDashboard() {
 	};
 
 	const handleUpdate = async (
-		data: ProjectCreateInput & { project_id: string },
+		data:
+			| (ProjectCreateInput & { project_id: string })
+			| (Omit<ProjectCreateInput, "client_id"> & {
+					project_id: string;
+					client_id?: string;
+			  }),
 	) => {
 		const result = await updateMutation.mutateAsync({
 			project_id: data.project_id,
 			name: data.name,
 			description: data.description,
 			client_id: data.client_id ?? undefined,
-			start_date: data.start_date,
-			deadline_date: data.deadline_date,
+			planStart: data.planStart,
+			planEnd: data.planEnd,
 		});
 		if (result.success) {
 			setEditProject(null);
@@ -227,8 +236,8 @@ export function ProjectDashboard() {
 								name: project.name,
 								description: project.description,
 								client_id: project.client_id,
-								start_date: project.start_date,
-								deadline_date: project.deadline_date,
+								planStart: project.planStart,
+								planEnd: project.planEnd,
 							};
 							return (
 								<ProjectCard

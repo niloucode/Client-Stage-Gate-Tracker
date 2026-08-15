@@ -1,8 +1,7 @@
 // src/proxy.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
-const isDev = process.env.NODE_ENV === "development";
 
 /** Normalize a URL to its origin; returns null for invalid input. */
 function toOrigin(value: string): string | null {
@@ -53,7 +52,10 @@ function buildCsp(): string {
 		`img-src 'self' data: blob: ${supabaseOrigin} https://*.supabase.co`,
 		"font-src 'self' data: https://fonts.gstatic.com",
 		`connect-src ${CONNECT_SRC}`,
-		"object-src 'none'",
+		// Contract PDFs render in an <embed> (ContractViewer) — object-src
+		// must allow the app's own storage origin + blob: preview URLs.
+		// Previously 'none' blocked the embed entirely (gray box).
+		`object-src 'self' blob: ${supabaseOrigin} https://*.supabase.co`,
 		"base-uri 'self'",
 		"form-action 'self'",
 		"frame-ancestors 'none'",

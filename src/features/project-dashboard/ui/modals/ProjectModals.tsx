@@ -2,7 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
-import { projectCreateSchema, type ProjectCreateInput } from "@/shared/schemas";
+import {
+	baseProject,
+	projectCreateSchema,
+	type ProjectCreateInput,
+} from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
 import { useClients } from "@/entities/client";
 import {
@@ -31,8 +35,8 @@ interface EditProjectFormState {
 	name: string;
 	description: string;
 	client_id: string;
-	start_date: Date | null;
-	deadline_date: Date | null;
+	planStart: Date | null;
+	planEnd: Date | null;
 }
 
 interface EditProjectModalProps {
@@ -42,19 +46,25 @@ interface EditProjectModalProps {
 		name: string;
 		description?: string | null;
 		client_id?: string | null;
-		start_date?: Date | string | null;
-		deadline_date?: Date | string | null;
+		planStart?: Date | string | null;
+		planEnd?: Date | string | null;
 	} | null; // null = "Add" mode
 	onClose: () => void;
-	onSubmit: (data: ProjectCreateInput) => void | Promise<void>;
+	/** Create requires client_id; edit passes it optionally (leave unchanged
+	 * when the linkage is absent — projectUpdateSchema semantics). */
+	onSubmit: (
+		data:
+			| ProjectCreateInput
+			| (Omit<ProjectCreateInput, "client_id"> & { client_id?: string }),
+	) => void | Promise<void>;
 }
 
 const emptyFormData: EditProjectFormState = {
 	name: "",
 	description: "",
 	client_id: "",
-	start_date: null,
-	deadline_date: null,
+	planStart: null,
+	planEnd: null,
 };
 
 function parseDate(dateVal: Date | string | null | undefined): Date | null {
@@ -80,27 +90,49 @@ function getInitialFormData(
 			name: project.name ?? "",
 			description: project.description ?? "",
 			client_id: project.client_id ?? "",
-			start_date: parseDate(project.start_date),
-			deadline_date: parseDate(project.deadline_date),
+			planStart: parseDate(project.planStart),
+			planEnd: parseDate(project.planEnd),
 		};
 	}
 	return emptyFormData;
 }
 
-const projectModalSchema = projectCreateSchema.superRefine((data, ctx) => {
-	if (data.start_date && data.deadline_date && data.start_date > data.deadline_date) {
+// Create requires client_id (contracts are created atomically with it);
+// edit does NOT — the client picker is hidden in edit mode and the
+// existing linkage lives on the Contracts row (NOT NULL invariant). An
+// edit must stay saveable even if the contract row were ever missing
+// (projectUpdateSchema semantics — client_id is optional there).
+const createProjectModalSchema = projectCreateSchema.superRefine((data, ctx) => {
+	if (data.planStart && data.planEnd && data.planStart > data.planEnd) {
 		ctx.addIssue({
 			code: "custom",
 			message: "Start must be before End",
-			path: ["start_date"],
+			path: ["planStart"],
 		});
 		ctx.addIssue({
 			code: "custom",
 			message: "End must be after Start",
-			path: ["deadline_date"],
+			path: ["planEnd"],
 		});
 	}
 });
+
+const editProjectModalSchema = baseProject
+	.omit({ client_id: true })
+	.superRefine((data, ctx) => {
+		if (data.planStart && data.planEnd && data.planStart > data.planEnd) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Start must be before End",
+				path: ["planStart"],
+			});
+			ctx.addIssue({
+				code: "custom",
+				message: "End must be after Start",
+				path: ["planEnd"],
+			});
+		}
+	});
 
 type FieldErrors = Partial<Record<keyof EditProjectFormState, string>>;
 
@@ -150,8 +182,8 @@ export function EditProjectModal({
 			formData.name !== initialFormData.name ||
 			formData.description !== initialFormData.description ||
 			formData.client_id !== initialFormData.client_id ||
-			!areDatesEqual(formData.start_date, initialFormData.start_date) ||
-			!areDatesEqual(formData.deadline_date, initialFormData.deadline_date)
+			!areDatesEqual(formData.planStart, initialFormData.planStart) ||
+			!areDatesEqual(formData.planEnd, initialFormData.planEnd)
 		);
 	}, [formData, initialFormData]);
 
@@ -186,7 +218,8 @@ export function EditProjectModal({
 	};
 
 	const handleSubmit = async () => {
-		const result = projectModalSchema.safeParse(formData);
+		const schema = isEditMode ? editProjectModalSchema : createProjectModalSchema;
+		const result = schema.safeParse(formData);
 		if (!result.success) {
 			const mapped = getFieldErrors(result);
 			setFieldErrors(mapped);
@@ -206,7 +239,16 @@ export function EditProjectModal({
 		});
 
 		try {
-			await onSubmit(result.data);
+			// Edit validation omits client_id (not editable in edit mode).
+			// client_id is only re-attached when a linkage exists — an empty
+			// value must NOT be sent (projectUpdateSchema would reject it
+			// and the contract row may not exist).
+			const base = result.data as Omit<ProjectCreateInput, "client_id">;
+			await onSubmit(
+				isEditMode
+					? { ...base, client_id: formData.client_id || undefined }
+					: { ...base, client_id: formData.client_id },
+			);
 		} catch (err) {
 			toast.add({
 				title: isEditMode ? "Save Failed" : "Creation Failed",
@@ -324,40 +366,40 @@ export function EditProjectModal({
 								label="Plan Start"
 								required
 								value={
-									formData.start_date
-										? new Date(formData.start_date)
+									formData.planStart
+										? new Date(formData.planStart)
 										: undefined
 								}
 								onChange={(date) => {
 									setFormData({
 										...formData,
-										start_date: date ?? null,
+										planStart: date ?? null,
 									});
-									clearFieldError("start_date");
-									clearFieldError("deadline_date");
+									clearFieldError("planStart");
+									clearFieldError("planEnd");
 								}}
 								placeholder="Pick Planned Start"
-								error={fieldErrors.start_date}
+								error={fieldErrors.planStart}
 							/>
 
 							<DateTimePicker
 								label="Plan End"
 								required
 								value={
-									formData.deadline_date
-										? new Date(formData.deadline_date)
+									formData.planEnd
+										? new Date(formData.planEnd)
 										: undefined
 								}
 								onChange={(date) => {
 									setFormData({
 										...formData,
-										deadline_date: date ?? null,
+										planEnd: date ?? null,
 									});
-									clearFieldError("start_date");
-									clearFieldError("deadline_date");
+									clearFieldError("planStart");
+									clearFieldError("planEnd");
 								}}
 								placeholder="Pick Planned End"
-								error={fieldErrors.deadline_date}
+								error={fieldErrors.planEnd}
 							/>
 						</div>
 					</div>

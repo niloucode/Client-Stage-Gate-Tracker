@@ -1,15 +1,11 @@
-// TODO(backend): re-enable Supabase session guard when Prisma adapter is resolved
-// import { createClient } from "@/lib/supabase/server";
-// import { redirect } from "next/navigation";
-
+// Auth group shell — a passthrough layout. Authentication redirects are
+// handled by the middleware (src/proxy.ts): anonymous users are sent to
+// /login, signed-in users are redirected away from auth pages by the
+// client AuthProvider (features/auth).
 export default function AuthLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	// const supabase = await createClient();
-	// const { data } = await supabase.auth.getClaims();
-	// if (data?.claims) redirect("/dashboard");
-
 	return <>{children}</>;
 }

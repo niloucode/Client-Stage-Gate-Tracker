@@ -18,9 +18,10 @@ export {
 	moduleUpdateSchema,
 	workflowCreateSchema,
 	workflowUpdateSchema,
+	baseProject,
 	projectCreateSchema,
 	projectUpdateSchema,
-	projectDeleteSchema,
+	stageCreateSchema,
 } from "./project";
 export type {
 	PhaseCreateInput,
@@ -31,13 +32,12 @@ export type {
 	WorkflowUpdateInput,
 	ProjectCreateInput,
 	ProjectUpdateInput,
-	ProjectDeleteInput,
+	StageCreateInput,
 } from "./project";
 
-export { tagSchema, tagCreateSchema, tagUpdateSchema } from "./tag";
+export { tagCreateSchema, tagUpdateSchema } from "./tag";
 export type { Tag, TagCreateInput, TagUpdateInput } from "./tag";
 
-export { profileSchema, profileDisplaySchema } from "./profile";
 export type { ProfileType, ProfileDisplay } from "./profile";
 
 export { clientSchema, clientCreateSchema } from "./client";

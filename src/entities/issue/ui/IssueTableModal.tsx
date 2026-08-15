@@ -69,4 +69,3 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
 	);
 };
 
-export default IssueTableModal;

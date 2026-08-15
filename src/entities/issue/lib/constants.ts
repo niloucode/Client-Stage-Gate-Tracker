@@ -6,7 +6,7 @@ export const URGENCY_WEIGHT: Record<UrgencyLevel, number> = {
 	low: 1,
 };
 
-export const BUG_TYPE_LABELS: Record<BugType, string> = {
+const BUG_TYPE_LABELS: Record<BugType, string> = {
 	feature_request: "Feature Request",
 	deadlinks: "Deadlinks",
 	missing_fields: "Missing Fields",

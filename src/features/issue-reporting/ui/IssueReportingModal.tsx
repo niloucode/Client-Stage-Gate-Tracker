@@ -748,4 +748,3 @@ const StepRow = ({
   );
 };
 
-export default IssueReportingModal;

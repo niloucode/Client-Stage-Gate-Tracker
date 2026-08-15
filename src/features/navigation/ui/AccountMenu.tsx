@@ -20,7 +20,7 @@ import {
 // consume it downward, then delete this comment.
 export function AccountMenu() {
 	const { user, logout } = useAuth();
-	// Local pending state so the LOG OUT button disables while sign-out and
+	// Local pending state so the LOG-OUT button disables while sign-out and
 	// the navigation run (the provider additionally guards re-entry).
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const handleLogout = async () => {

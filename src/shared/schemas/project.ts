@@ -7,7 +7,9 @@ import {
 
 // ── Project ──────────────────────────────────────────────────────────────────
 
-const baseProject = z.object({
+// Shared by create/update/delete schemas and the project modal (edit mode
+// omits client_id via baseProject.omit — see ProjectModals).
+export const baseProject = z.object({
 	name: z
 		.string()
 		.trim()
@@ -22,18 +24,18 @@ const baseProject = z.object({
 	// Project plan dates are REQUIRED (non-nullable): the DB columns
 	// plan_start_at/plan_end_at are NOT NULL and the user must always pick
 	// them — never fill them with new Date() fallbacks (Input Rules).
-	start_date: z.date({ message: "Plan Start Date is required" }),
-	deadline_date: z.date({ message: "Plan End Date is required" }),
+	planStart: z.date({ message: "Plan Start Date is required" }),
+	planEnd: z.date({ message: "Plan End Date is required" }),
 });
 
 export const projectCreateSchema = baseProject.refine(
 	(data) =>
-		!data.start_date ||
-		!data.deadline_date ||
-		data.start_date <= data.deadline_date,
+		!data.planStart ||
+		!data.planEnd ||
+		data.planStart <= data.planEnd,
 	{
 		message: "Start must be before End",
-		path: ["start_date"],
+		path: ["planStart"],
 	},
 );
 
@@ -44,19 +46,71 @@ export const projectUpdateSchema = baseProject
 	})
 	.refine(
 		(data) =>
-			!data.start_date ||
-			!data.deadline_date ||
-			data.start_date <= data.deadline_date,
+			!data.planStart ||
+			!data.planEnd ||
+			data.planStart <= data.planEnd,
 		{
 			message: "Start date must be before or equal to deadline date",
-			path: ["start_date"],
+			path: ["planStart"],
 		},
 	);
 
-export const projectDeleteSchema = z.object({
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used via typeof
+const projectDeleteSchema = z.object({
 	project_id: z.uuid({ message: "Invalid project ID" }),
 	confirmation_name: z.string().min(1, "Project name confirmation is required"),
 });
+
+// ── Stage ────────────────────────────────────────────────────────────────────
+// Date rules: plan dates REQUIRED for stages (DB NOT NULL); the form keeps
+// them nullable while picking, hence the nullable+refine pattern (types stay
+// Date | null in the form, validation enforces non-null on submit).
+
+const baseStage = z.object({
+	name: z
+		.string()
+		.trim()
+		.min(1, "Stage name is required")
+		.max(20, "Stage name must be 20 characters or less"),
+	description: z
+		.string()
+		.max(160, "Description must be 160 characters or less")
+		.optional()
+		.default(""),
+	planStart: z
+		.date()
+		.nullable()
+		.refine((val): val is Date => val !== null, {
+			error: "Plan Start Date is required",
+		}),
+	planEnd: z
+		.date()
+		.nullable()
+		.refine((val): val is Date => val !== null, {
+			error: "Plan End Date is required",
+		}),
+});
+
+function stageRangeIssues(data: {
+	planStart?: Date | null | undefined;
+	planEnd?: Date | null | undefined;
+}) {
+	const issues: { message: string; path: ("planStart" | "planEnd")[] }[] = [];
+	if (data.planStart && data.planEnd && data.planStart > data.planEnd) {
+		issues.push({ message: "Start must be before End", path: ["planStart"] });
+		issues.push({ message: "End must be after Start", path: ["planEnd"] });
+	}
+	return issues;
+}
+
+export const stageCreateSchema = baseStage.superRefine((data, ctx) => {
+	for (const issue of stageRangeIssues(data)) {
+		ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
+	}
+});
+
+
+export type StageCreateInput = z.infer<typeof stageCreateSchema>;
 
 export type ProjectCreateInput = z.infer<typeof projectCreateSchema>;
 export type ProjectUpdateInput = z.infer<typeof projectUpdateSchema>;

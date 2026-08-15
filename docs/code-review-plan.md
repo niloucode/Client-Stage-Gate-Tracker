@@ -63,6 +63,7 @@
 - [x] src/shared/schemas/ticket.ts
 - [x] src/shared/schemas/variable.ts (new 2026-08-15 — VARIABLE_TYPES + variableCreateSchema, 10 tests)
 - [x] src/shared/schemas/variable.test.ts (new 2026-08-15)
+- [x] src/shared/schemas/tag.test.ts (new 2026-08-15 — tagCreateSchema, 4 tests)
 
 ## 4. Shared layer — query infrastructure
 
@@ -164,7 +165,7 @@
 - [x] src/entities/roleAssignment/index.ts
 - [x] src/entities/roleAssignment/roleAssignmentActions.ts
 - [x] src/entities/roleAssignment/dashboardRole.ts
-- [x] src/entities/roleAssignment/dashboardRole.test.ts
+- [x] src/entities/roleAssignment/queries.ts (new 2026-08-15 — useDashboardRole moved here from features/landing-dashboard; TeamPage owner gate is now role-based)
 - [x] src/entities/department/index.ts
 - [x] src/entities/department/departmentActions.ts (2026-08-14: generateStaffInviteCode owner-gated + persists HMAC hash to Department.invite_code_hash)
 - [x] src/entities/department/queries.ts
@@ -359,10 +360,12 @@
 - [x] src/features/stage-editor/ui/modals/ModuleModals.tsx (2026-08-15: reviewed — manual useState form (not the form kit); handleSubmit closes + toasts success BEFORE async onSave resolves; delete-in-edit-modal OK; migration to useAppForm scheduled)
 - [x] src/features/stage-editor/ui/modals/PhaseModals.tsx (2026-08-15: reviewed — form-kit pattern (useAppForm); awaits mutation before close; zod v4 refine type-guard predicates are a runtime-only no-op (types stay Date|null); useStore is a deprecated alias of useSelector; required plan-date UI confirmed present)
 - [x] src/features/stage-editor/ui/modals/WorkflowModals.tsx (2026-08-15: reviewed — same findings as ModuleModals: manual form, closes before async onSave resolves)
-- [ ] src/features/tag-manager/index.ts
-- [ ] src/features/tag-manager/ui/TagFormModal.tsx
-- [ ] src/features/tag-manager/ui/TagListModal.tsx
-- [ ] src/features/tag-manager/ui/TagModals.tsx
+- [x] src/features/tag-manager/index.ts (2026-08-15: public API OK — exports TagManager only; verified in the integration)
+- [x] src/features/tag-manager/ui/TagFormModal.tsx (2026-08-15: render-phase setState replaced with useResetOnOpen; trailing newline added; verified in the integration)
+- [x] src/features/tag-manager/ui/TagListModal.tsx (2026-08-15: BLOCKING fixed — 'not deletable' tags now Tags.is_protected DB flag; PINNED_TAGS + inline name check + warcrime comment deleted; sorting/search via tested helpers; delete button keyed on tag.is_protected)
+- [x] src/features/tag-manager/ui/TagModals.tsx (2026-08-15: import{ spacing fixed; dead empty-name guard removed; formatting normalized)
+- [x] src/features/tag-manager/model/tagOrdering.ts (new 2026-08-15 — sortTagsForDisplay/matchesTagSearch, 7 tests)
+- [x] src/features/tag-manager/model/tagOrdering.test.ts (new 2026-08-15)
 - [x] src/features/variable-manager/index.ts (2026-08-15: public API OK — page/modals re-exported; VariableItem/VariableType re-exported from @/entities/variable; verified in the integration)
 - [x] src/features/variable-manager/model/mockData.ts (deleted 2026-08-15 by the integration — mock secret material removed)
 - [x] src/features/variable-manager/model/types.ts (deleted 2026-08-15 — canonical types moved to entities/variable)
@@ -377,8 +380,8 @@
 - [x] src/features/ticket-board/model/types.ts (2026-08-15: reviewed — TicketHistoryEntry mirrors the joined server row)
 - [x] src/features/ticket-board/ui/index.ts (2026-08-15: reviewed — exports TicketBoard as the page imports)
 - [x] src/features/ticket-board/ui/TicketBoard.tsx (2026-08-15: reviewed — success toast outside try/catch (failed creates toast success, duplicates modal toast); delete fire-and-forget + unconditional success toast; DnD fire-and-forget; no client read-only gating; TagManager same-layer import)
-- [x] src/features/ticket-board/ui/TicketCard.tsx (2026-08-15: reviewed — getDummySubtasks fabricates 3 fake tickets (ids `${id}-sub-1`..3) that flow into onSelect (editor opens on a fake ticket) and onDelete (server z.uuid().parse throws); root cause ticketInclude omits subTickets; onEdit prop dead; delete button unlabeled; focus:outline-none)
-- [x] src/features/ticket-board/ui/TicketColumn.tsx (2026-08-15: reviewed — simple droppable wrapper; optional no-op callbacks; fine)
+- [x] src/features/ticket-board/ui/TicketCard.tsx (2026-08-15 re-audit: cursor-grab suppressed when readOnly. Original note: — getDummySubtasks fabricates 3 fake tickets (ids `${id}-sub-1`..3) that flow into onSelect (editor opens on a fake ticket) and onDelete (server z.uuid().parse throws); root cause ticketInclude omits subTickets; onEdit prop dead; delete button unlabeled; focus:outline-none)
+- [x] src/features/ticket-board/ui/TicketColumn.tsx (2026-08-15: reviewed — simple droppable wrapper; optional no-op callbacks; fine. 2026-08-15 re-audit: `readOnly` threading added — the column rendered TicketCard without forwarding readOnly, so clients got draggable cards + visible delete buttons; now `readOnly` flows board → column → card (`useDraggable({disabled})`, dnd-kit drops listeners when disabled))
 - [x] src/features/ticket-board/ui/TicketHistoryLog.tsx (2026-08-15: reviewed — rendered inside TicketActivitySection; unused expanded/hasMore state)
 - [x] src/features/ticket-board/ui/TicketModals.tsx (2026-08-15: reviewed — consolidated create+edit modals (plan listed TicketModalCreate/TicketModalEdit as separate files — actual path is TicketModals.tsx); manual useState forms (not the form kit); image upload direct to Supabase with orphaning on failure + alert(); edit slide-over renders TicketEditor; hardcoded codes)
 - [x] src/features/ticket-board/ui/TicketModalCreate.tsx (deleted — consolidated into TicketModals.tsx)
@@ -391,24 +394,24 @@
 
 ## 11. App layer — layouts, pages, API routes
 
-- [ ] src/app/layout.tsx
-- [ ] src/app/page.tsx
-- [ ] src/app/(auth)/layout.tsx
-- [ ] src/app/(auth)/login/page.tsx
-- [ ] src/app/(auth)/signup/client/page.tsx
-- [ ] src/app/(auth)/signup/staff/page.tsx
-- [ ] src/app/(auth)/signup-callback/route.ts
-- [ ] src/app/(app)/layout.tsx (2026-08-15: `export const dynamic = "force-dynamic"` added to unblock `next build` — the shell reads cookies via getCurrentUserProfile and TopNav calls useSearchParams without Suspense, so static prerender of any (app) page failed (pre-existing; reproduced at baseline ce76417). The `/analytics` + `/credentials` pages were left pristine. Full review of this file still pending)
-- [ ] src/app/(app)/dashboard/page.tsx
-- [ ] src/app/(app)/clients/page.tsx
+- [x] src/app/layout.tsx (2026-08-15: formatting fixed — indentation in the font-variables cn() call; providers/toaster structure reviewed OK)
+- [x] src/app/page.tsx (2026-08-15: role-aware redirect reviewed OK — middleware handles anonymous; TODO(client-portal) documented)
+- [x] src/app/(auth)/layout.tsx (2026-08-15: dead commented session-guard block removed; auth redirects live in the middleware + AuthProvider)
+- [x] src/app/(auth)/login/page.tsx (2026-08-15: reviewed OK — split-panel with LoginForm)
+- [x] src/app/(auth)/signup/client/page.tsx (2026-08-15: template-literal className → plain string; reviewed OK)
+- [x] src/app/(auth)/signup/staff/page.tsx (2026-08-15: reviewed OK)
+- [x] src/app/(auth)/signup-callback/route.ts (2026-08-15: now exchanges ?code via supabase.auth.exchangeCodeForSession → /dashboard; falls back to /login; no open redirect)
+- [x] src/app/(app)/layout.tsx (2026-08-15: `export const dynamic = "force-dynamic"` (shell reads cookies via getCurrentUserProfile; TopNav uses useSearchParams without Suspense); TODO(authz) documented — layout-level client redirect deferred until the Client Portal exists)
+- [x] src/app/(app)/dashboard/page.tsx (2026-08-15: reviewed OK — role-gated queries + loading/error states)
+- [x] src/app/(app)/clients/page.tsx (2026-08-15: reviewed OK — thin FSD wrapper)
 - [x] src/app/(app)/team/page.tsx (new — reviewed 2026-08-14; renders TeamPage)
-- [ ] src/app/(app)/(workspace)/analytics/page.tsx
-- [ ] src/app/(app)/(workspace)/credentials/page.tsx
-- [ ] src/app/(app)/(workspace)/projects/page.tsx
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/page.tsx
+- [x] src/app/(app)/(workspace)/analytics/page.tsx (2026-08-15: intentional stub reviewed OK — renders statically via the (app) layout force-dynamic)
+- [x] src/app/(app)/(workspace)/credentials/page.tsx (2026-08-15: intentional stub reviewed OK)
+- [x] src/app/(app)/(workspace)/projects/page.tsx (2026-08-15: reviewed OK — thin wrapper)
+- [x] src/app/(app)/(workspace)/projects/[projectId]/page.tsx (2026-08-15: stale 'only View Contract is linked' comment removed; deep import → @/ alias)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/variables/page.tsx (2026-08-15: converted to a thin async-params server page passing projectId; access enforced by the gated entity actions)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/contract/page.tsx (2026-08-15: FSD — thin async server page reading params, renders ContractPage via the feature public API; the old inline page logic moved to features/contracts/ui/ContractPage.tsx)
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx (2026-08-15: reviewed OK)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx (2026-08-15: converted to a thin async-params server page (issues-page pattern); access enforced by the gated entity actions)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx (2026-08-15: reads params.projectId (Next 15 async params), imports via the feature public API; renders the real IssueDashboard)
@@ -416,8 +419,8 @@
 - [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/gate/page.tsx (2026-08-15: params fixed to {projectId, stageId}, public-API import, renders the real GateOverview)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx (2026-08-15: reviewed with the stage-editor slice — imports bypass the slice public API (deep imports of ui/ModuleCard, ui/PhaseCard, types); `as unknown as Phase[]` cast hides the planStart/description nullability mismatch; NO client permission gating (clients see all Add/Edit/Delete/DnD controls — server actions reject them, but UI must hide them per spec; scheduled in integration plan)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx (2026-08-15: reviewed with the ticket-board slice — server-rendered shell that fetches getWorkflowById + renders TicketBoard; no client gating (TicketBoard handles it); fine)
-- [ ] src/app/api/notifications/route.ts
-- [ ] src/app/api/webhooks/route.ts
+- [x] src/app/api/notifications/route.ts (2026-08-15: now requires a session (401 otherwise) + stub documented)
+- [x] src/app/api/webhooks/route.ts (2026-08-15: reviewed OK — intentional stub with signature-verification guardrails documented)
 - [x] src/app/dev/ui/page.tsx (deleted)
 - [x] src/app/dev/views/page.tsx (deleted)
 
@@ -487,7 +490,9 @@
       workflow rejection tests added (commit 18d5d7d, `project.test.ts`
       14 tests); ticket actual-date transitions covered by 7 new tests in
       `src/entities/ticket/lib/statusTransitions.test.ts` (commit 35f9aa9);
-      stage date-rule tests still open.
+      **stage date-rule tests ADDED 2026-08-15** — `stageCreateSchema`
+      extracted from StageModal into `shared/schemas/project.ts` (plan dates
+      required, range-checked) + 8 tests (project.test.ts, 22 total).
 
 ---
 
@@ -508,23 +513,23 @@ All pre-existing unless noted — none block the running app except the first.
       (`src/entities/project/projectActions.ts`) — 2026-08-14: `Profiles.client_id`
       check added ("Clients cannot create projects."), matching the new
       `assertProjectMemberNotClient` helper in `src/lib/auth/projectAccess.ts`.
-- [ ] **`EditProjectModal` edit-mode `client_id` edge case**
+- [x] **`EditProjectModal` edit-mode `client_id` edge case** — 2026-08-15: ProjectModals now validates edit mode with `baseProject.omit({client_id})` (create keeps the required client_id); empty client_id is never sent (undefined = leave unchanged).
       (`src/features/project-dashboard/ui/modals/EditProjectModal.tsx`) —
       edit submit validates via `projectCreateSchema`, which requires
       `client_id`; if a project's contract row were missing or deleted the
       edit could never save. Unreachable today (contracts are created
       atomically with `client_id` NOT NULL), but the edit path should
       validate with `projectUpdateSchema` instead.
-- [ ] **A11y: nested interactive in `ProjectCard`** — the ellipsis
+- [x] **A11y: nested interactive in `ProjectCard`** — 2026-08-15: ellipsis menu is now a sibling of the Link (absolute-positioned, z-10); covered content is `aria-hidden`; stopPropagation hacks removed. — the ellipsis
       `DropdownMenuTrigger` button sits inside the card's `<Link>`. It works
       via stopPropagation but is invalid interactive nesting; restructure
       (e.g. place the menu outside the link, or use the Link as the trigger's
       render target).
-- [ ] **Project date-field naming consistency** — `src/shared/schemas/
+- [x] **Project date-field naming consistency** — 2026-08-15: `start_date`/`deadline_date`/`finish_date` renamed to `planStart`/`planEnd`/`actualEnd` across project schema, actions, ProjectWithStatus, ProjectModals, ProjectCard, ProjectDashboard + tests (tsc-verified; zero remaining snake-case consumers). — `src/shared/schemas/
       project.ts` uses `start_date`/`deadline_date` while Phase/Module/
       Workflow use the canonical `planStart`/`planEnd` (Task 1.5
       vocabulary). Align the project schema/UI/actions in a dedicated pass.
-- [ ] **knip cleanup** — `npx knip` reports ~313 findings (unused default
+- [x] **knip cleanup** — 2026-08-15: 313 → 0 findings (files/deps/exports): 6 dead files deleted (register.ts inactive module augmentation, SchedulingFields.tsx, gantt-nav.tsx, modals/index.ts + 2 removed earlier), 10 duplicate default exports removed, ~50 dead exports/barrel re-exports removed, public-API bypasses fixed (comment/tag/stage-editor consumers now use the slice barrels), vendored surfaces (reui, shadcn kit) + config-referenced stubs ignored via knip.json, `npx knip --include files,dependencies,exports` clean + gated in CI (ci.yml). 74 unused exported TYPES remain informational (not gated). — `npx knip` reports ~313 findings (unused default
       exports, dead exports across features), all pre-existing. Triage and
       remove; then gate `knip` in CI. (dashboard-analytics contributed its
       dead `lib/mockData.ts` + `GanttTabInput`/`GanttLevelInput` — removed by
@@ -551,7 +556,19 @@ All pre-existing unless noted — none block the running app except the first.
       Migration 13 NOT yet applied to Supabase (pending user approval —
       apply via `npx prisma db execute --file
       prisma/migrations/20260815030000_13_variables/migration.sql`).
-- [ ] **`ProjectSection` status-config cleanup**
+- [x] **Tag-manager integration** — completed 2026-08-15.
+      **`docs/reasonix/plans/2026-08-15-tag-manager-integration.md`**
+      (Tags.is_protected + migration 14; softDeleteTag refuses protected
+      rows server-side; UI derives pinning/deletability from the flag —
+      hardcoded PINNED_TAGS/warcrime block deleted; TagFormModal →
+      useResetOnOpen; updateTag is_deleted guard; ordering/search pure
+      helpers + 11 new tests). Spec decision: protected tags = DB flag
+      (user answer — hardcoding in code felt wrong). Verified: prisma
+      validate ✓, tsc ✓, vitest 47/317 ✓, eslint 0/0 ✓, knip ✓,
+      `npm run build` ✓. Migration 14 NOT yet applied to Supabase (pending
+      user approval — apply via `npx prisma db execute --file
+      prisma/migrations/20260815040000_14_tags_is_protected/migration.sql`).
+- [x] **`ProjectSection` status-config cleanup** — 2026-08-15: `icolor` typo → `iconColor`/`badgeText`/`badgeBg`; ACTIVE badge `text-brand-100` → `text-brand-50` (contrast on brand-500, token-verified); `<h2>` inside the toggle `<button>` → `<span>` (phrasing-content rule).
       (`src/features/project-dashboard/ui/ProjectSection.tsx`) — `icolor`
       typo, the suspicious `ACTIVE.color: "text-brand-100"` badge value, and
       the `<h2>` heading nested inside the collapsible toggle `<button>`
@@ -574,7 +591,7 @@ All pre-existing unless noted — none block the running app except the first.
       `stage_id` is NOT NULL, plain `@@index([stage_id])`, `status` GateStatus,
       `comment_id` (unique FK to Comments). `getProjectStages` no longer filters
       `is_deleted` on gates.
-- [ ] **`Stages.sort_key` column cleanup** — recorded 2026-08-14: stage
+- [x] **`Stages.sort_key` column cleanup** — 2026-08-15: VERIFIED ALREADY DONE — the column was dropped in migration 7_drop_stages_sort_key (schema has sort_key only on Phases/Workflows; no code reads a stage sort_key). No migration needed. — recorded 2026-08-14: stage
       create no longer writes `sort_key` (spec 4 — stages are ordered by
       `number`, they cannot be reordered). Confirm nothing else reads
       `Stages.sort_key`, then drop the column in a migration. Rollback =
@@ -602,12 +619,12 @@ All pre-existing unless noted — none block the running app except the first.
       personal dashboard below the sparklines, staff/owner only. The legacy
       mock issue-reporting files (IssueDashboard etc.) remain unchecked.
 
-- [ ] **Rotating department invite codes** — 2026-08-14: regenerating a code
+- [x] **Rotating department invite codes** — confirmed behavior, intentionally kept (one-time display UX); documented, no action. — 2026-08-14: regenerating a code
       via the team page overwrites Department.invite_code_hash, so the old
       code stops working immediately (lookup is exact-hash). Confirmed
       behavior, no further action — listed so the one-time-display UX stays
       intentional.
-- [ ] **TeamPage owner check is department-name-based** — `isOwner =
+- [x] **TeamPage owner check is department-name-based** — 2026-08-15: now role-based — `useDashboardRole()` (moved to entities/roleAssignment/queries.ts) === "owner" (a Project Owner roleAssignment on any project); no flash while loading. — `isOwner =
       department?.name === "Project Owner"` (same convention as
       clientActions.requireProjectOwner). If the org ever adds departments
       with other names, the owner gate must move to a role-based check.
