@@ -50,7 +50,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	const loggingOutRef = useRef(false);
 
 	const logout = useCallback(async () => {
-		// Re-entrancy guard: a double press while logout is in flight is a
+		// Re-entrance guard: a double press while logout is in flight is a
 		// no-op (the menu can fire the handler twice on fast clicks).
 		if (loggingOutRef.current) return;
 		loggingOutRef.current = true;
@@ -104,11 +104,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		if (isLoading || !user) return;
 		if (!(AUTH_PAGES as readonly string[]).includes(pathname)) return;
 
-		// TODO(client-portal): route client profiles (user.client_id set) to
-		// their own landing dashboard once it exists (planned in
-		// features/landing-dashboard). Until then clients land on the staff
-		// dashboard — server-side authz still guards workspace data, and the
-		// (app) shell provides the logout affordance.
+		// /dashboard is role-aware (landing-dashboard): clients get the
+		// contracts view, staff the workload view — no client-portal split
+		// needed (resolved 2026-08-15).
 		router.replace(DEFAULT_PROJECT_REDIRECT);
 	}, [user, pathname, isLoading, router]);
 

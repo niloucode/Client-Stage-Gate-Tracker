@@ -217,8 +217,8 @@ export async function createProject(data: ProjectCreateInput) {
 
 		// Client profiles (Profiles.client_id set) must never create
 		// projects — their projects come from contracts, and the creator
-		// would otherwise become Project Owner (follow-up TODO resolved).
-		// Fail closed: a missing profile row is also denied.
+		// would otherwise become Project Owner. Fail closed: a missing
+		// profile row is also denied.
 		const profile = await prisma.profiles.findUnique({
 			where: { profile_id: userId },
 			select: { client_id: true },
