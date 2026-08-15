@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Back } from "@/components/ui/back";
 import { Button } from "@/components/ui/button";
 import { useModulesGantt, usePhasesGantt, useWorkflowsGantt } from "../queries";
 import type { GanttLevel, GanttRowData, GanttTab } from "../types";
@@ -58,6 +59,8 @@ export function DashboardAnalyticsPage({ projectId }: { projectId: string }) {
 
 	return (
 		<div className="flex flex-1 flex-col gap-6">
+			<Back link={`/projects/${projectId}`} />
+
 			<div className="mb-6">
 				<h1>Dashboard Analytics</h1>
 				<p className="subtitle">
