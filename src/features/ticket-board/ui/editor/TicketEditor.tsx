@@ -3,11 +3,12 @@
 import { X, Plus, Calendar } from "lucide-react";
 
 import { Ticket, Tag } from "@/entities/types";
-import { useProfiles } from "@/entities/profile";
+import { useProjectMembers } from "@/entities/profile";
 import { useTicketImages, useTicketComments } from "@/entities/comment/queries";
 import { status as StatusEnum } from "@/lib/generated/prisma";
+import Image from "next/image";
 import ImageLightbox from "@/shared/ui/image-lightbox";
-import { Avatar, Button, FormInput, Label } from "@/components/ui";
+import { Button, FormInput, Label } from "@/components/ui";
 
 import TicketModalEdit from "../TicketModals";
 import { useTicketEditor } from "./useTicketEditor";
@@ -19,33 +20,45 @@ import {
   SubtaskSelectionModal,
 } from "./TicketEditorSubcomponents";
 import { TicketActivitySection } from "./TicketActivitySection";
+import { ticketCode } from "./helpers";
 
 export default function TicketEditor({
   initialTicket,
   tags,
-  onClose,
-  onUpdate,
+  onCloseAction,
+  onUpdateAction,
   allTickets = [],
   isSubtaskView = false,
   parentTicket = null,
+  readOnly = false,
+  projectId,
 }: {
   initialTicket: Ticket;
   tags: Tag[];
-  onClose: () => void;
-  onUpdate: (t: Ticket) => void;
+  onCloseAction: () => void;
+  onUpdateAction: (t: Ticket) => void;
   allTickets?: Ticket[];
   isSubtaskView?: boolean;
   parentTicket?: Ticket | null;
+  /** Clients are read-only: hide Save and subtask management. */
+  readOnly?: boolean;
+  /** Project scope for the assignee/watcher dropdowns. */
+  projectId?: string;
 }) {
-  const { data: profiles = [] } = useProfiles();
-  const { data: comments = [] } = useTicketComments(initialTicket.ticket_id);
-  const { data: ticketImages = [] } = useTicketImages(initialTicket.ticket_id);
+  const { data: profiles = [] } = useProjectMembers(projectId);
+  const commentsQuery = useTicketComments(initialTicket.ticket_id);
+  const imagesQuery = useTicketImages(initialTicket.ticket_id);
+  const comments = commentsQuery.data ?? [];
+  const ticketImages = imagesQuery.data ?? [];
+
+  // No silent empty states: a failed read shows a retry banner instead.
+  const loadFailed = commentsQuery.isError || imagesQuery.isError;
 
   const state = useTicketEditor({
     initialTicket,
     tags,
-    onUpdate,
-    onClose,
+    onUpdate: onUpdateAction,
+    onClose: onCloseAction,
     isSubtaskView,
     allTickets,
   });
@@ -55,9 +68,9 @@ export default function TicketEditor({
       {/* 1. Header */}
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
         <span className="font-mono text-sm text-brand-500">
-          {isSubtaskView ? "Subtask" : "LRN-BNN"}
+          {isSubtaskView ? "Subtask" : ticketCode(initialTicket.ticket_id)}
         </span>
-        <Button variant="ghost" size="icon-sm" onClick={onClose}>
+        <Button variant="ghost" size="icon-sm" onClick={onCloseAction}>
           <X className="text-neutral-border hover:text-foreground transition-all duration-300" />
         </Button>
       </div>
@@ -79,8 +92,8 @@ export default function TicketEditor({
         ticket={state.ticket}
         tags={tags}
         selectedTags={state.selectedTags}
-        setTicket={state.setTicket}
-        setSelectedTags={state.setSelectedTags}
+        setTicketAction={state.setTicket}
+        setSelectedTagsAction={state.setSelectedTags}
       />
 
       <div className="flex-1 overflow-y-auto scrollbar-gutter-stable pb-24">
@@ -89,20 +102,21 @@ export default function TicketEditor({
           <TicketAssignees
             ticket={state.ticket}
             profiles={profiles}
-            setTicket={state.setTicket}
+            setTicketAction={state.setTicket}
           />
           {state.isApiTagSelected && (
             <TicketApiDetails
               apiMethod={state.apiMethod}
               apiRoute={state.apiRoute}
-              setApiMethod={state.setApiMethod}
-              setApiRoute={state.setApiRoute}
+              setApiMethodAction={state.setApiMethod}
+              setApiRouteAction={state.setApiRoute}
             />
           )}
           <TicketSchedule
             ticket={state.ticket}
-            setTicket={state.setTicket}
+            setTicketAction={state.setTicket}
             showDateError={state.showDateError}
+            projectId={projectId}
           />
         </div>
 
@@ -175,7 +189,7 @@ export default function TicketEditor({
                           {/* Left: Code, Title, Date */}
                           <div className="flex flex-col min-w-0 flex-1 pr-3">
                             <span className="font-mono text-xs font-semibold text-brand-500">
-                              ASC-1028
+                              {ticketCode(subtask.ticket_id)}
                             </span>
                             <h4 className="text-sm font-semibold text-foreground truncate mt-0.5">
                               {subtask.name}
@@ -216,17 +230,20 @@ export default function TicketEditor({
                                 : "Pending"}
                             </span>
                             {/* Remove Button on Hover */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                state.handleRemoveSubtask(subtask.ticket_id);
-                              }}
-                              className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                              title="Remove subtask"
-                            >
-                              <X size={14} />
-                            </button>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void state.handleRemoveSubtask(subtask.ticket_id);
+                                }}
+                                className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                title="Remove subtask"
+                                aria-label="Remove subtask"
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
                           </div>
                         </div>
                       );
@@ -235,19 +252,37 @@ export default function TicketEditor({
                 </div>
 
                 {/* Dashed Add Subtask Button (Outside Scroll Region) */}
-                <button
-                  type="button"
-                  onClick={() => state.setIsSubtaskSelectionOpen(true)}
-                  className="w-full border-2 border-dashed border-gray-200 hover:border-brand-300 hover:bg-brand-50/20 rounded-md py-2.5 text-center text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Plus size={14} strokeWidth={2.5} />
-                  <span>Add subtask</span>
-                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => state.setIsSubtaskSelectionOpen(true)}
+                    className="w-full border-2 border-dashed border-gray-200 hover:border-brand-300 hover:bg-brand-50/20 rounded-md py-2.5 text-center text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus size={14} strokeWidth={2.5} />
+                    <span>Add subtask</span>
+                  </button>
+                )}
               </div>
             );
           })()}
 
         {/* 8. Attachments */}
+        {loadFailed && (
+          <div className="px-5 mt-5 py-3 text-xs text-red-600 bg-red-50 border-y border-red-100">
+            Couldn&apos;t load comments or attachments.{" "}
+            <button
+              type="button"
+              className="underline font-semibold"
+              onClick={() => {
+                void commentsQuery.refetch();
+                void imagesQuery.refetch();
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {ticketImages.length > 0 && (
           <div className="px-5 mt-5">
             <p className="text-sm font-semibold text-neutral-border mb-2 uppercase tracking-wider">
@@ -255,10 +290,13 @@ export default function TicketEditor({
             </p>
             <div className="flex flex-wrap gap-2">
               {ticketImages.map((img) => (
-                <img
+                <Image
                   key={img.image_id}
                   src={img.image_src}
                   alt="attachment"
+                  width={200}
+                  height={200}
+                  unoptimized
                   className="h-16 w-auto rounded-md border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => state.setLightboxSrc(img.image_src)}
                 />
@@ -272,7 +310,7 @@ export default function TicketEditor({
           ticketId={state.ticket.ticket_id}
           comments={comments}
           currentUser={state.user}
-          onImageClick={state.setLightboxSrc}
+          onImageClickAction={state.setLightboxSrc}
         />
       </div>
 
@@ -280,14 +318,16 @@ export default function TicketEditor({
       <div className="fixed bottom-0 right-0 w-160 flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-neutral-surface z-50">
         <button
           type="button"
-          onClick={onClose}
+          onClick={onCloseAction}
           className="text-sm font-medium text-gray-500 px-4 py-2 rounded-md hover:bg-gray-100"
         >
           Cancel
         </button>
-        <Button onClick={state.handleSave} disabled={state.isSaving}>
-          {state.isSaving ? "Saving..." : "Save Changes"}
-        </Button>
+        {!readOnly && (
+          <Button onClick={state.handleSave} disabled={state.isSaving}>
+            {state.isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        )}
       </div>
 
       {/* Modals */}
@@ -307,18 +347,20 @@ export default function TicketEditor({
             state.setIsSubtaskViewOpen(false);
             state.setSelectedSubtask(null);
           }}
-          onUpdate={onUpdate}
+          onUpdate={onUpdateAction}
           tags={tags}
           allTickets={allTickets}
           isSubtaskView={true}
           parentTicket={state.ticket}
+          readOnly={readOnly}
+          projectId={projectId}
         />
       )}
 
       <SubtaskSelectionModal
         open={state.isSubtaskSelectionOpen}
-        onOpenChange={state.setIsSubtaskSelectionOpen}
-        onSelectSubtask={state.handleAddSubtask}
+        onOpenChangeAction={state.setIsSubtaskSelectionOpen}
+        onSelectSubtaskAction={state.handleAddSubtask}
         availableTickets={state.availableTickets}
       />
     </div>

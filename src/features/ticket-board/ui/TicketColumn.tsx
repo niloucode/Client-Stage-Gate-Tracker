@@ -10,16 +10,16 @@ import { Ticket } from "@/entities/types";
 interface TicketColumnProps {
 	column: Column;
 	tickets: Ticket[];
+	subtasksByParent: ReadonlyMap<string, Ticket[]>;
 	onSelectTicket: (ticket: Ticket) => void;
-	onEditTicket?: (ticket: Ticket) => void; // Made optional with "?"
-	onDeleteTicket?: (ticketId: string) => void; // Made optional with "?"
+	onDeleteTicket?: (ticketId: string, mode: "cascade" | "promote") => void;
 }
 
 export default function TicketColumn({
 	column,
 	tickets,
+	subtasksByParent,
 	onSelectTicket,
-	onEditTicket = () => {}, // Default fallback function
 	onDeleteTicket = () => {}, // Default fallback function
 }: TicketColumnProps) {
 	const { setNodeRef, isOver } = useDroppable({ id: column.id });
@@ -47,13 +47,14 @@ export default function TicketColumn({
 				}`}
 			>
 				{tickets.map((ticket) => (
+					!ticket.parent_id ?
 					<TicketCard
 						key={ticket.ticket_id}
 						ticket={ticket}
+						subtasks={subtasksByParent.get(ticket.ticket_id) ?? []}
 						onSelect={onSelectTicket}
-						onEdit={onEditTicket}
 						onDelete={onDeleteTicket}
-					/>
+					/> :""
 				))}
 
 						{tickets.length === 0 && (

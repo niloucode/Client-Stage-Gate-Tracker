@@ -5,7 +5,7 @@ import { ChevronDown, Paperclip, Bug } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { Ticket, Tag } from "@/entities/types";
-import { useProfiles } from "@/entities/profile";
+import { useProjectMembers } from "@/entities/profile";
 import { TagBadge } from "@/entities/tag/ui";
 import { ticketCreateSchema, type CreateTicketParams } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
@@ -31,8 +31,8 @@ import {
 	toast,
 } from "@/components/ui";
 
-import IssueTableModal from "@/features/issue-reporting/ui/IssueTableModal";
-import type { IssueItem } from "@/features/issue-reporting/ui/IssueDashboard";
+import { IssueTableModal } from "@/entities/issue";
+import type { IssueItem } from "@/entities/issue";
 
 import TicketEditor from "./editor/TicketEditor";
 
@@ -47,6 +47,8 @@ export interface CreateTicketModalProps {
 	onClose: () => void;
 	onCreateTicket: (data: CreateTicketFormData) => Promise<void>;
 	tags: Tag[];
+	/** Project scope for the assignee/watcher dropdowns. */
+	projectId?: string;
 }
 
 export interface TicketModalEditProps {
@@ -61,6 +63,10 @@ export interface TicketModalEditProps {
 	isSubtaskView?: boolean;
 	/** Parent ticket info to display when in subtask view */
 	parentTicket?: Ticket | null;
+	/** Clients are read-only: the editor hides all edit affordances. */
+	readOnly?: boolean;
+	/** Project scope for the assignee/watcher dropdowns. */
+	projectId?: string;
 }
 
 const createTicketModalSchema = ticketCreateSchema.superRefine((data, ctx) => {
@@ -124,6 +130,7 @@ export function TicketModalCreate({
 	onClose,
 	onCreateTicket,
 	tags,
+	projectId,
 }: CreateTicketModalProps) {
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
@@ -134,7 +141,8 @@ export function TicketModalCreate({
 	const [linkedIssue, setLinkedIssue] = useState<IssueItem | null>(null);
 	const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
 
-	const { data: profiles = [] } = useProfiles();
+	// Only project team members + owners (roleAssignments) are assignable.
+	const { data: profiles = [] } = useProjectMembers(projectId);
 
 	const [assignedIds, setAssignedIds] = useState<string[]>([]);
 	const [watcherId, setWatcherId] = useState("");
@@ -178,7 +186,11 @@ export function TicketModalCreate({
 		const newPreviews: string[] = [];
 		for (const file of Array.from(files)) {
 			if (file.size > 5 * 1024 * 1024) {
-				alert(`Image "${file.name}" must be under 5MB.`);
+				toast.add({
+					title: "File Too Large",
+					description: `"${file.name}" must be under 5MB.`,
+					type: "error",
+				});
 				continue;
 			}
 			newFiles.push(file);
@@ -243,7 +255,7 @@ export function TicketModalCreate({
 		onClose();
 	};
 
-	async function handleSubmit(e: React.FormEvent) {
+	async function handleSubmit(e: React.SyntheticEvent) {
 		e.preventDefault();
 
 		const rawPayload = {
@@ -255,6 +267,8 @@ export function TicketModalCreate({
 			plan_end_at: deadline ?? null,
 			api_route: isApiTagSelected ? (apiRoute.trim() || null) : null,
 			api_method: isApiTagSelected ? apiMethod : null,
+			// 1-to-1 issue link (spec): persisted via createTicket.
+			issue_id: linkedIssue?.id ?? null,
 		};
 
 		// Validate with Zod schema
@@ -276,6 +290,8 @@ export function TicketModalCreate({
 		});
 
 		const imageUrls: string[] = [];
+		const uploadedPaths: string[] = [];
+		let uploadError: string | null = null;
 
 		if (imageFiles.length > 0) {
 			try {
@@ -292,17 +308,39 @@ export function TicketModalCreate({
 							upsert: false,
 						});
 
-					if (error)
-						throw new Error(`Failed to upload image: ${error.message}`);
+					if (error) {
+						uploadError = `Failed to upload image: ${error.message}`;
+						break;
+					}
 
 					const {
 						data: { publicUrl },
 					} = supabase.storage.from("images").getPublicUrl(filePath);
 
+					uploadedPaths.push(filePath);
 					imageUrls.push(publicUrl);
 				}
 			} catch (err) {
 				console.error("Image upload failed:", err);
+				uploadError =
+					err instanceof Error ? err.message : "Failed to upload images.";
+			}
+
+			if (uploadError) {
+				// All-or-nothing: remove already-uploaded files and abort the
+				// ticket creation so no ticket is created without its images.
+				if (uploadedPaths.length > 0) {
+					const supabase = createClient();
+					await supabase.storage.from("images").remove(uploadedPaths);
+				}
+				toast.add({
+					title: "Upload Failed",
+					description:
+						"Your images could not be uploaded. The ticket was not created.",
+					type: "error",
+				});
+				setIsSubmitting(false);
+				return;
 			}
 		}
 
@@ -318,6 +356,7 @@ export function TicketModalCreate({
 				api_route: validation.data.api_route ?? null,
 				api_method: validation.data.api_method ?? null,
 				image_urls: imageUrls,
+				issue_id: validation.data.issue_id ?? null,
 			});
 
 			// Success Toast
@@ -333,7 +372,8 @@ export function TicketModalCreate({
 			console.error("Ticket creation failed:", error);
 			toast.add({
 				title: "Creation Failed",
-				description: "Unable to create ticket. Please try again.",
+				description:
+					error instanceof Error ? error.message : "Unable to create ticket. Please try again.",
 				type: "error",
 			});
 		} finally {
@@ -655,6 +695,8 @@ export function TicketModalCreate({
 								<div className="flex flex-wrap gap-3 pt-1">
 									{imagePreviews.map((preview, idx) => (
 										<div key={idx} className="relative inline-block">
+											{/* blob: previews are not supported by next/image — plain img is intentional */}
+											{/* eslint-disable-next-line @next/next/no-img-element */}
 											<img
 												src={preview}
 												alt={`Preview ${idx + 1}`}
@@ -725,6 +767,7 @@ export function TicketModalCreate({
 			<IssueTableModal
 				open={isIssueModalOpen}
 				onOpenChange={setIsIssueModalOpen}
+				projectId={projectId}
 				onSelectIssue={(issue) => setLinkedIssue(issue)}
 			/>
 
@@ -794,8 +837,8 @@ export function TicketModalEdit({
 					<TicketEditor
 						key={activeTicket.ticket_id}
 						initialTicket={activeTicket}
-						onClose={onClose}
-						onUpdate={handleTicketUpdate}
+						onCloseAction={onClose}
+						onUpdateAction={handleTicketUpdate}
 						{...rest}
 					/>
 				)}

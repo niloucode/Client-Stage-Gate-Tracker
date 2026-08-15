@@ -1,7 +1,7 @@
 "use server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserId } from "@/lib/auth/projectAccess";
+import { getCurrentUserId, assertProjectMember } from "@/lib/auth/projectAccess";
 import type { Profiles } from "@/lib/generated/prisma";
 import { hashInviteCode } from "@/shared/lib/inviteCode";
 import type { EntityFilterStatus } from "@/entities/types";
@@ -20,6 +20,41 @@ export async function selectProfile() {
 			email: true,
 		},
 	});
+}
+
+/**
+ * Profiles that can be ASSIGNED to tickets of a project: everyone with a
+ * RoleAssignments row in the project (team + owners). Client profiles are
+ * excluded (spec: clients are never assignable). Membership-guarded read.
+ */
+export async function selectProjectMembers(projectId: string) {
+	z.uuid().parse(projectId);
+
+	const auth = await assertProjectMember(projectId);
+	if (!auth.ok) return [];
+
+	const rows = await prisma.roleAssignments.findMany({
+		where: {
+			project_id: projectId,
+			Profile: { client_id: null, is_deleted: false },
+		},
+		select: {
+			user_id: true,
+			Profile: {
+				select: {
+					profile_id: true,
+					first_name: true,
+					last_name: true,
+					email: true,
+				},
+			},
+		},
+		orderBy: { Profile: { first_name: "asc" } },
+	});
+
+	return rows
+		.map((r) => r.Profile)
+		.filter((p): p is NonNullable<typeof p> => p !== null);
 }
 
 export async function getProfileById(

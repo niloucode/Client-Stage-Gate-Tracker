@@ -90,6 +90,7 @@ model Comments {
   is_deleted    Boolean           @default(false)
   deleted_at    DateTime?         @db.Timestamptz(6)
   Profile       Profiles          @relation(fields: [profile_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
+  Gates         Gates?            @relation("GateFeedbackComment")
 
   @@index([parent_type, parent_id, is_deleted])
   @@schema("public")
@@ -130,27 +131,15 @@ model Department {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Gates {
-  gate_id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  creation_date  DateTime        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  number         Int?
-  stage_id       String          @db.Uuid
-  status         GateStatus      @default(PENDING)
-  GateSignatures GateSignatures?
-  Stages         Stages          @relation(fields: [stage_id], references: [stage_id], onDelete: NoAction, onUpdate: NoAction)
+  gate_id    String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  number     Int?
+  stage_id   String     @db.Uuid
+  status     GateStatus @default(PENDING)
+  comment_id String?    @unique @db.Uuid
+  Comments   Comments?  @relation("GateFeedbackComment", fields: [comment_id], references: [comment_id], onDelete: NoAction, onUpdate: NoAction)
+  Stages     Stages     @relation(fields: [stage_id], references: [stage_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([stage_id])
-  @@schema("public")
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model GateSignatures {
-  gate_id    String   @id @db.Uuid
-  profile_id String   @db.Uuid
-  signature  String
-  signed_at  DateTime @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  Gates      Gates    @relation(fields: [gate_id], references: [gate_id], onDelete: NoAction, onUpdate: NoAction)
-  Profile    Profiles @relation(fields: [profile_id], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
-
   @@schema("public")
 }
 
@@ -238,6 +227,7 @@ model Projects {
   status          ProjectStatus     @default(PENDING)
   actual_start_at DateTime?         @db.Timestamptz(6)
   Contracts       Contracts?
+  Issues          Issues[]
   RoleAssignments RoleAssignments[]
   Stages          Stages[]
 
@@ -340,10 +330,10 @@ model Tickets {
   watcher_id      String?          @db.Uuid
   api_route       String?
   api_method      ApiMethod?
-  plan_start_at   DateTime         @db.Timestamptz(6)
+  plan_start_at   DateTime?        @db.Timestamptz(6)
   actual_start_at DateTime?        @db.Timestamptz(6)
   parent_id       String?          @db.Uuid
-  issue_id        String?          @db.Uuid
+  issue_id        String?          @unique @db.Uuid
   HistoryEvent    HistoryEvent[]
   TicketAssigned  TicketAssigned[]
   TicketTags      TicketTags[]
@@ -356,7 +346,6 @@ model Tickets {
   @@index([workflow_id, status])
   @@index([status, is_deleted])
   @@index([workflow_id, is_deleted])
-  @@index([issue_id])
   @@index([parent_id])
   @@schema("public")
 }
@@ -393,9 +382,16 @@ model Issues {
   urgency            IssueUrgency
   system_environment String?
   time_of_error      DateTime?    @db.Timestamptz(6)
+  project_id         String       @db.Uuid
+  reported_by        String?      @db.Uuid
+  reported_at        DateTime     @default(now()) @db.Timestamptz(6)
+  status             IssueStatus  @default(UNLINKED)
   IssueSteps         IssueSteps[]
+  Projects           Projects     @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
+  Profile            Profiles?    @relation(fields: [reported_by], references: [profile_id], onDelete: NoAction, onUpdate: NoAction)
   Tickets            Tickets[]
 
+  @@index([project_id])
   @@schema("public")
 }
 
@@ -425,9 +421,9 @@ model Profiles {
   is_deleted                                       Boolean           @default(false)
   deleted_at                                       DateTime?         @db.Timestamptz(6)
   Comments                                         Comments[]
-  GateSignatures                                   GateSignatures[]
   HistoryEvent_HistoryEvent_performed_byToProfiles HistoryEvent[]    @relation("HistoryEvent_performed_byToProfiles")
   HistoryEvent                                     HistoryEvent[]
+  Issues                                           Issues[]
   Clients                                          Clients?          @relation(fields: [client_id], references: [client_id], onDelete: NoAction, onUpdate: NoAction, map: "Users_client_id_fkey")
   Department                                       Department?       @relation(fields: [department_id], references: [department_id], onDelete: NoAction, onUpdate: NoAction, map: "Users_department_id_fkey")
   Images                                           Images?           @relation(fields: [image_id], references: [image_id], onDelete: NoAction, onUpdate: NoAction, map: "Users_image_id_fkey")
@@ -511,6 +507,14 @@ enum IssueUrgency {
   LOW
   MEDIUM
   HIGH
+
+  @@schema("public")
+}
+
+enum IssueStatus {
+  UNLINKED
+  LINKED
+  RESOLVED
 
   @@schema("public")
 }

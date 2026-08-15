@@ -8,7 +8,9 @@ import { CommentParentType, ImageParentType } from "@/lib/generated/prisma";
 const commentQueryOptions = {
 	list: (ticketId: string | undefined) =>
 		queryOptions({
-			queryKey: commentKeys.list("TICKET", ticketId!),
+			// MUST match the invalidation key in useCreateComment
+			// (commentKeys.list(CommentParentType.TICKET_COMMENT, parentId)).
+			queryKey: commentKeys.list(CommentParentType.TICKET_COMMENT, ticketId!),
 			queryFn: () => selectComment(CommentParentType.TICKET_COMMENT, ticketId!),
 			enabled: !!ticketId,
 		}),

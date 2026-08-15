@@ -175,12 +175,14 @@
 - [x] src/entities/client/index.ts
 - [x] src/entities/client/clientActions.ts
 - [ ] src/entities/client/clientActions.test.ts
-- [ ] src/shared/lib/inviteCode.ts
+- [x] src/shared/lib/gateRules.ts (new 2026-08-15 — deriveNextGateNumber, imageParentTypeFor, allPhasesFinished; 9 tests)
+- [x] src/shared/lib/gateRules.test.ts
+- [x] src/shared/lib/inviteCode.ts
 - [ ] src/shared/lib/inviteCode.test.ts
 - [x] src/entities/client/queries.ts
 - [x] src/entities/comment/index.ts
 - [x] src/entities/comment/types.ts
-- [x] src/entities/comment/commentActions.ts
+- [x] src/entities/comment/commentActions.ts (2026-08-15: image parent type derived via imageParentTypeFor — gate comments store/load GATE_COMMENT images instead of the TICKET_COMMENT hardcode)
 - [x] src/entities/comment/mutations.ts
 - [x] src/entities/comment/queries.ts
 - [x] src/entities/contract/index.ts
@@ -189,6 +191,22 @@
 - [x] src/entities/contract/mutations.ts
 - [x] src/entities/contract/queries.ts
 - [x] src/entities/gate/gateActions.ts (deleted — slice had zero live consumers)
+- [x] src/entities/issue/index.ts (2026-08-15: public API — actions, types, lib/constants, lib/mappers, queries, ui)
+- [x] src/entities/issue/issueActions.ts (2026-08-15: + createIssue/listIssues — project-scoped via assertProjectMemberOrClient (clients may report), reporter from session, "other"→type mapping, issueDetailInclude)
+- [x] src/entities/issue/types.ts (2026-08-15: canonical issue types (moved from features/issue-reporting); IssueItem reworked — type: string, lowercase status, specificType removed)
+- [x] src/entities/issue/lib/constants.ts (new — URGENCY_WEIGHT, BUG_TYPE_LABELS, bugTypeLabel)
+- [x] src/entities/issue/lib/mappers.ts (new — mapIssueRow/formatIssueDateTime/IssueRow, 4 tests)
+- [x] src/entities/issue/lib/mappers.test.ts
+- [x] src/entities/issue/queries.ts (new — useProjectIssues/useCreateIssue, issueKeys.list invalidation)
+- [x] src/entities/issue/ui/index.ts
+- [x] src/entities/issue/ui/IssueCard.tsx (moved from features/issue-reporting 2026-08-15)
+- [x] src/entities/issue/ui/IssueBox.tsx (moved 2026-08-15; create-button props dropped)
+- [x] src/entities/issue/ui/IssueDetailsModal.tsx (moved 2026-08-15)
+- [x] src/entities/issue/ui/IssueTableModal.tsx (moved 2026-08-15 + real: useProjectIssues, unlinked-only for the 1-to-1 rule)
+- [x] src/entities/gate/index.ts (new 2026-08-15 — actions, types, queries)
+- [x] src/entities/gate/types.ts (new 2026-08-15 — GateFeedbackEntry server shape)
+- [x] src/entities/gate/gateActions.ts (new 2026-08-15 — getStageGates (+canDecide), decideGate (client-only, phases-finished, CAS, deleted-stage guard, APPROVED→dates / REJECTED→gate N+1), createGateComment (latest-gate-only), getGateComments; entity isolation — no cross-entity imports)
+- [x] src/entities/gate/queries.ts (new 2026-08-15 — useStageGates/useGateComments/useDecideGate/useCreateGateComment, gateKeys+stageKeys invalidation)
 - [x] src/entities/module/index.ts
 - [x] src/entities/module/types.ts (deleted — merged into slice files)
 - [x] src/entities/module/moduleActions.ts
@@ -207,7 +225,7 @@
 - [x] src/entities/project/queries.ts
 - [x] src/entities/project/projectStatus.test.ts
 - [x] src/entities/stage/index.ts
-- [x] src/entities/stage/stageActions.ts
+- [x] src/entities/stage/stageActions.ts (2026-08-15: createStage auto-creates gate #1; getProjectStages approved rule → status === "APPROVED")
 - [x] src/entities/stage/queries.ts
 - [x] src/entities/stage/ordering.test.ts
 - [x] src/entities/ticket/index.ts
@@ -257,8 +275,11 @@
 - [ ] src/features/contracts/ui/ConfirmTextModal.tsx
 - [ ] src/features/contracts/ui/ExecuteAgreementCard.tsx
 - [ ] src/features/contracts/ui/ExecutedBanner.tsx
-- [ ] src/features/gate-overview/GateOverview.tsx
-- [ ] src/features/gate-overview/GateFeedbackModal.tsx
+- [x] src/features/gate-overview/index.ts (new 2026-08-15 — public API: GateOverview, the three modals)
+- [x] src/features/gate-overview/GateOverview.tsx (2026-08-15: rewritten — real stage tree + gates, client-only Approve/Decline gated on all phases finished, canDecide from the payload, error states, keyboard-accessible accordions)
+- [x] src/features/gate-overview/GateFeedbackModal.tsx (2026-08-15: rewritten — real GateFeedbackEntry[], gates number DESC, status badges, clickable feedback images via ImageLightbox, per-gate Comment button + further-comments count)
+- [x] src/features/gate-overview/GateFeedbackGiveModal.tsx (2026-08-15: rewritten — real decideGate submit with Supabase uploads (gates/ path, all-or-nothing + cleanup), error.message toasts, close blocked while submitting, FormEvent → SyntheticEvent, alert() → toast)
+- [x] src/features/gate-overview/GateDiscussionModal.tsx (new 2026-08-15 — per-gate discussion popup, latest-gate-only posting (spec 8), storage uploads, lightbox, error state)
 - [ ] src/features/dashboard-analytics/index.ts
 - [ ] src/features/dashboard-analytics/types.ts
 - [ ] src/features/dashboard-analytics/queries.ts
@@ -272,10 +293,11 @@
 - [ ] src/features/dashboard-analytics/ui/GanttTabs.tsx
 - [ ] src/features/dashboard-analytics/ui/LevelFilterPills.tsx
 - [ ] src/features/dashboard-analytics/ui/ProjectGanttChart.tsx
-- [ ] src/features/issue-reporting/model/issues.ts
-- [ ] src/features/issue-reporting/ui/IssueDashboard.tsx
-- [ ] src/features/issue-reporting/ui/IssueReportingModal.tsx
-- [ ] src/features/issue-reporting/ui/IssueTableModal.tsx
+- [x] src/features/issue-reporting/index.ts (new — public API: IssueDashboard, IssueReportingModal, IssueFormState)
+- [x] src/features/issue-reporting/model/issues.ts (deleted — dead in-memory mock store, zero importers; types moved to entities/issue)
+- [x] src/features/issue-reporting/ui/IssueDashboard.tsx (2026-08-15: rewritten — real useProjectIssues(projectId), real counts/tabs, loading+error states, page-level New Issue button)
+- [x] src/features/issue-reporting/ui/IssueReportingModal.tsx (2026-08-15: image-remove ✕ bug fixed (cleared description, never the image); object-URL revocation on remove/close/unmount; 5MB cap; Supabase storage upload (images bucket, issues/ path, all-or-nothing + orphan cleanup); owns useCreateIssue mutation, awaits before close; form-kit migration still a follow-up. Re-audit 2026-08-15: React.FormEvent → SyntheticEvent (TS6385), upload loop restructured — no locally-caught throws, close blocked while isSubmitting)
+- [x] src/features/issue-reporting/ui/IssueTableModal.tsx (deleted — moved to entities/issue/ui and made real; ticket-board imports via @/entities/issue)
 - [x] src/features/landing-dashboard/index.ts
 - [x] src/features/landing-dashboard/model/types.ts
 - [x] src/features/landing-dashboard/model/mappers.ts
@@ -326,22 +348,23 @@
 - [ ] src/features/tag-manager/ui/TagFormModal.tsx
 - [ ] src/features/tag-manager/ui/TagListModal.tsx
 - [ ] src/features/tag-manager/ui/TagModals.tsx
-- [ ] src/features/ticket-board/model/columns.ts
-- [ ] src/features/ticket-board/model/queries.ts
-- [ ] src/features/ticket-board/model/schema.ts
-- [ ] src/features/ticket-board/model/types.ts
-- [ ] src/features/ticket-board/ui/index.ts
-- [ ] src/features/ticket-board/ui/TicketBoard.tsx
-- [ ] src/features/ticket-board/ui/TicketCard.tsx
-- [ ] src/features/ticket-board/ui/TicketColumn.tsx
-- [ ] src/features/ticket-board/ui/TicketHistoryLog.tsx
-- [ ] src/features/ticket-board/ui/TicketModalCreate.tsx
-- [ ] src/features/ticket-board/ui/TicketModalEdit.tsx
-- [ ] src/features/ticket-board/ui/editor/TicketEditor.tsx
-- [ ] src/features/ticket-board/ui/editor/TicketEditorSubcomponents.tsx
-- [ ] src/features/ticket-board/ui/editor/TicketActivitySection.tsx
-- [ ] src/features/ticket-board/ui/editor/useTicketEditor.ts
-- [ ] src/features/ticket-board/ui/editor/helpers.tsx
+- [x] src/features/ticket-board/model/columns.ts (2026-08-15: reviewed — COLUMNS PENDING/IN_PROGRESS/FINISHED matches the Prisma status enum)
+- [x] src/features/ticket-board/model/queries.ts (2026-08-15: reviewed — useTicketHistory fetches selectTicketHistory, maps via ticketHistoryEntrySchema; fine)
+- [x] src/features/ticket-board/model/schema.ts (2026-08-15: reviewed — ticketHistoryEntrySchema; ACTION_ENUM matches the Prisma action enum exactly (verified); z.coerce.date() valid v4 usage)
+- [x] src/features/ticket-board/model/types.ts (2026-08-15: reviewed — TicketHistoryEntry mirrors the joined server row)
+- [x] src/features/ticket-board/ui/index.ts (2026-08-15: reviewed — exports TicketBoard as the page imports)
+- [x] src/features/ticket-board/ui/TicketBoard.tsx (2026-08-15: reviewed — success toast outside try/catch (failed creates toast success, duplicates modal toast); delete fire-and-forget + unconditional success toast; DnD fire-and-forget; no client read-only gating; TagManager same-layer import)
+- [x] src/features/ticket-board/ui/TicketCard.tsx (2026-08-15: reviewed — getDummySubtasks fabricates 3 fake tickets (ids `${id}-sub-1`..3) that flow into onSelect (editor opens on a fake ticket) and onDelete (server z.uuid().parse throws); root cause ticketInclude omits subTickets; onEdit prop dead; delete button unlabeled; focus:outline-none)
+- [x] src/features/ticket-board/ui/TicketColumn.tsx (2026-08-15: reviewed — simple droppable wrapper; optional no-op callbacks; fine)
+- [x] src/features/ticket-board/ui/TicketHistoryLog.tsx (2026-08-15: reviewed — rendered inside TicketActivitySection; unused expanded/hasMore state)
+- [x] src/features/ticket-board/ui/TicketModals.tsx (2026-08-15: reviewed — consolidated create+edit modals (plan listed TicketModalCreate/TicketModalEdit as separate files — actual path is TicketModals.tsx); manual useState forms (not the form kit); image upload direct to Supabase with orphaning on failure + alert(); edit slide-over renders TicketEditor; hardcoded codes)
+- [x] src/features/ticket-board/ui/TicketModalCreate.tsx (deleted — consolidated into TicketModals.tsx)
+- [x] src/features/ticket-board/ui/TicketModalEdit.tsx (deleted — consolidated into TicketModals.tsx)
+- [x] src/features/ticket-board/ui/editor/TicketEditor.tsx (2026-08-15: reviewed — subtask list + selection modal wired to real parent_id; hardcoded 'ASC-1028'/'LRN-BNN' codes; fixed-position footer; nested edit slide-over for subtasks)
+- [x] src/features/ticket-board/ui/editor/TicketEditorSubcomponents.tsx (2026-08-15: reviewed — TicketSchedule DEADLINE required; disabled actual dates; SubtaskSelectionModal OK; eslint-disable for same-layer issue-reporting import)
+- [x] src/features/ticket-board/ui/editor/TicketActivitySection.tsx (2026-08-15: reviewed — comments + images; `comments: any[]` untyped; alert() for size; image upload orphaning; some unlabeled buttons)
+- [x] src/features/ticket-board/ui/editor/useTicketEditor.ts (2026-08-15: reviewed — DUMMY_SUBTICKETS (4 fake tickets; ids 'du123mmy-subtask-2/-4' FAIL the startsWith('dummy-') guard → picking them calls updateTicketParent with a fake uuid); handleSave `plan_end_at ?? new Date()` fallback (rule 3); add/remove subtask errors console.error only; subtasks derived from combinedTickets parent_id)
+- [x] src/features/ticket-board/ui/editor/helpers.tsx (2026-08-15: reviewed — STATUS_CONFIG/UserAvatar/getLinkedIssueStyle; eslint-disable boundaries/dependencies for IssueItem import from features/issue-reporting — same-layer FSD violation)
 
 ## 11. App layer — layouts, pages, API routes
 
@@ -364,10 +387,11 @@
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx
 - [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx (2026-08-15: reads params.projectId (Next 15 async params), imports via the feature public API; renders the real IssueDashboard)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
+- [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/gate/page.tsx (2026-08-15: params fixed to {projectId, stageId}, public-API import, renders the real GateOverview)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/stages/[stageId]/page.tsx (2026-08-15: reviewed with the stage-editor slice — imports bypass the slice public API (deep imports of ui/ModuleCard, ui/PhaseCard, types); `as unknown as Phase[]` cast hides the planStart/description nullability mismatch; NO client permission gating (clients see all Add/Edit/Delete/DnD controls — server actions reject them, but UI must hide them per spec; scheduled in integration plan)
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/workflows/[workflowId]/page.tsx (2026-08-15: reviewed with the ticket-board slice — server-rendered shell that fetches getWorkflowById + renders TicketBoard; no client gating (TicketBoard handles it); fine)
 - [ ] src/app/api/notifications/route.ts
 - [ ] src/app/api/webhooks/route.ts
 - [x] src/app/dev/ui/page.tsx (deleted)
@@ -411,12 +435,15 @@
       (`src/features/project-structure/ui/StageModal.tsx`) requires them. —
       2026-08-15, commit 18d5d7d (stageActions needed no change — createStage
       already required dates)
-- [ ] `src/shared/schemas/ticket.ts` — `plan_end_at` (currently
-      `z.date({ message: "Deadline is required" })`) → `z.date().optional()
-      .nullable()`; `plan_start_at` already optional nullable.
-- [ ] **DB migration** — `Tickets.plan_start_at` / `Tickets.plan_end_at` are
-      currently NOT NULL; make them nullable so optional ticket dates can be
-      stored. Rollback = revert the migration.
+- [x] `src/shared/schemas/ticket.ts` — 2026-08-15 user spec REVISED: `plan_end_at`
+      stays REQUIRED (modernize deprecated `message` → `error` param only);
+      `plan_start_at` is already `z.date().optional().nullable()`.
+- [x] **DB migration** — `Tickets.plan_start_at` → nullable (2026-08-15 spec:
+      ONLY plan_start_at; `plan_end_at` stays NOT NULL). Rollback = revert the
+      migration. — 2026-08-15, commit 9630efe
+      (`prisma/migrations/20260815000000_10_tickets_plan_start_nullable/`;
+      hand-written because `migrate dev` is blocked by pre-existing shadow-DB
+      drift — apply to Supabase out-of-band)
 - [x] Stage form at `src/features/project-structure/ui/StageModal.tsx` — required
       plan dates + planEnd>=planStart — 2026-08-14
 - [x] Stage-editor modals (`src/features/stage-editor/ui/modals/PhaseModals.tsx`,
@@ -424,13 +451,19 @@
       validation) for the now-required plan dates — verified 2026-08-15
       (client-side required + range checks present in all three; zod v4
       refine type-guard predicates noted as runtime-only no-op)
-- [ ] Tickets form/editor (`src/features/ticket-board`) — dates must be
-      omitable; remove any client-side "deadline required" enforcement.
+- [x] Tickets form/editor (`src/features/ticket-board`) — 2026-08-15 spec
+      REVISED: the deadline stays REQUIRED (client-side enforcement stays);
+      planned start is omitable; the editor's `plan_end_at ?? new Date()`
+      fallback replaced with required-deadline direct use; createTicket
+      stores the user's `plan_start_at`. — 2026-08-15, commits 9630efe +
+      105c02b
 - [x] Tests: schema date-rule tests for stage/phase/module/workflow/ticket;
       keep the pure-helper pattern (`projectStatus.ts` style — pure helpers
       must NOT live in `"use server"` files). — 2026-08-15: phase/module/
       workflow rejection tests added (commit 18d5d7d, `project.test.ts`
-      14 tests); stage/ticket parts still open.
+      14 tests); ticket actual-date transitions covered by 7 new tests in
+      `src/entities/ticket/lib/statusTransitions.test.ts` (commit 35f9aa9);
+      stage date-rule tests still open.
 
 ---
 
@@ -443,7 +476,7 @@ All pre-existing unless noted — none block the running app except the first.
       `mode="edit"` prop on `TicketModalEdit` in
       `src/features/ticket-board/ui/editor/TicketEditor.tsx:211` (TS2322).
       Fixed; `next build` is green again. (`getDummySubtasks` in TicketCard
-      remains, still worth removing per the original note.)
+      removal is scheduled in the 2026-08-15 ticket-board integration plan.)
 - [x] **`src/features/landing-dashboard/ui/ActivitySparklines.tsx`** —
       2026-08-14: dead `http2` import removed and the component integrated
       (no longer on hold).
@@ -477,22 +510,21 @@ All pre-existing unless noted — none block the running app except the first.
       (flow content in a button) — verify colors against the design tokens
       and use a non-heading element for the section label.
 
-- [ ] **Gate-approval persistence (`approveGate`)** — recorded 2026-08-14
-      (stage-structure feature, deferred by decision): `GateOverview.tsx` is
-      mock-only and NOTHING writes `GateSignatures` today. The action must
-      (1) create the `GateSignatures` row + set `Gates.status = APPROVED`,
-      and (2) materialize stage actual dates per specs 2-3 by calling
-      `gateApprovalDates` (`src/shared/lib/scheduling/stageSchedule.ts`,
-      already implemented + tested, marked `TODO(gate-approval)`): the
-      stage's `actual_end_at` = approval timestamp, and the next stage's
-      `actual_start_at` = the same date. Client + owner signature rules from
-      the contract flow apply.
+- [x] **Gate-approval persistence** — RESOLVED 2026-08-15 by the
+      **gate-overview integration** (`docs/reasonix/plans/2026-08-15-gate-overview-integration.md`):
+      `decideGate` (entities/gate) is client-only, gated on all phases finished,
+      creates the feedback comment + sets `Gates.status` + `comment_id`, and
+      materializes stage dates via `gateApprovalDates` (stage `actual_end_at` =
+      approval timestamp; next stage `actual_start_at` = same date). Rejection
+      auto-creates gate N+1. **The GateSignatures model was DROPPED** (migration
+      12 — status-based approval per user decision), `Gates.creation_date`
+      dropped, `Gates.comment_id` (unique FK → Comments) added. `getProjectStages`
+      approved rule is now `status === "APPROVED"`.
       
-      **Gates model state (2026-08-14 Supabase edit, synced via db pull):**
-      gates have NO `is_deleted`/`deleted_at` (undeletable), `number` is
-      nullable (`Int?`), `stage_id` is NOT NULL, and the partial unique
-      `@@unique([stage_id, number])` index was replaced by plain
-      `@@index([stage_id])`. `getProjectStages` no longer filters
+      **Gates model state (2026-08-15, migration 12):** gates have NO
+      `is_deleted`/`deleted_at` (undeletable), `number` is nullable (`Int?`),
+      `stage_id` is NOT NULL, plain `@@index([stage_id])`, `status` GateStatus,
+      `comment_id` (unique FK to Comments). `getProjectStages` no longer filters
       `is_deleted` on gates.
 - [ ] **`Stages.sort_key` column cleanup** — recorded 2026-08-14: stage
       create no longer writes `sort_key` (spec 4 — stages are ordered by
@@ -552,7 +584,14 @@ All pre-existing unless noted — none block the running app except the first.
       (inline execution, commits 859f78a → f161f7e):
   - [x] **Client read-only UI** — `stages/[stageId]/page.tsx` + the three cards
         hide Add/Edit/Delete/DnD for clients via
-        `useCurrentUser()` + `profile?.client_id` (ProjectStructure pattern) — 859f78a
+        `useCurrentUser()` + `profile?.client_id` (ProjectStructure pattern) — 859f78a.
+        **2026-08-15 re-audit (dcadeb9):** two gaps closed — (a) the branch
+        rewrite (`6d769d4 fix: vscode errors`) had reverted
+        `PhaseCard` `draggable={true}` → restored `draggable={!readOnly}`;
+        (b) `ModuleCard` never forwarded `readOnly` to `WorkflowCard`, so
+        clients still saw Add Workflow, the edit ellipsis, and workflow
+        drag-and-drop → `readOnly={readOnly}` added. Verify nothing else was
+        dropped in future rewrites.
   - [x] **Page imports bypass the slice public API** — page still deep-imports
         `ui/PhaseCard`, `ui/ModuleCard` (needed for `ref` typing on PhaseCard);
         `WorkflowCard`/`PhaseCard`/`ModuleCard` + `types` re-exported via index.ts.
@@ -579,3 +618,112 @@ All pre-existing unless noted — none block the running app except the first.
         `npm run build` ✓. NOTE: `eslint src/app` still fails on
         `projects/[projectId]/contract/page.tsx` (3× react-hooks/immutability,
         pre-existing — that file remains unchecked in section 11).
+
+- [x] **Ticket-board integration (2026-08-15)** — ALL items below were completed and
+      verified in **`docs/reasonix/plans/2026-08-15-ticket-board-integration.md`**
+      (inline execution, commits 7460eb6 → c85efd2; spec: clients read-only /
+      team+owners full access; subtasks = `parent_id` derivation; pick-from-existing
+      creation; `plan_end_at` REQUIRED + `plan_start_at` nullable + actual-date
+      transitions; 3-option delete modal; project-scoped dropdowns; comments +
+      attachments without refresh):
+  - [x] **Subtask integration (BLOCKING)** — `getDummySubtasks` + `DUMMY_SUBTICKETS`
+        removed; board derives real subtasks from the flat workflow list via
+        `parent_id` (subtasksByParent map) — 7460eb6
+  - [x] **createTicket** — stores `data.plan_start_at ?? null` (was `new Date()`)
+        — 9630efe
+  - [x] **updateTicket** — writes `plan_start_at` (undefined=skip, null=clear)
+        — 9630efe
+  - [x] **Actual-date transitions** — `computeActualDates` pure helper + 7 tests
+        (PENDING→IN_PROGRESS start; PENDING→FINISHED same ts; regressions revert),
+        wired into `updateTicket` + `updateTicketStatus` — 35f9aa9
+  - [x] **Delete options (spec)** — `cascadeSoftDeleteTicket(ticketId, performed_by,
+        mode)` with cascade (subtree BFS) vs promote (children `parent_id = null`);
+        TicketCard shows the 3-option dialog (Cascade / Promote / Cancel) when
+        subtasks exist — 794f219
+  - [x] **DB migration** — `Tickets.plan_start_at` → nullable via
+        `prisma/migrations/20260815000000_10_tickets_plan_start_nullable/migration.sql`
+        (hand-written: `migrate dev` is blocked by pre-existing shadow-DB drift;
+        apply to Supabase out-of-band); rollback = revert — 9630efe
+  - [x] **Client read-only gating** — board buttons (New Ticket/Tags), DnD
+        (handlers + useDraggable disabled), delete, and editor (Save, add/remove
+        subtask) hidden for clients — 7b386fb
+  - [x] **Project-scoped assignee/watcher dropdowns (P1)** — new
+        `selectProjectMembers(projectId)` (roleAssignments join, `client_id: null`)
+        + `useProjectMembers`; projectId threaded board → modals → editor — 2905831
+  - [x] **Comments not visible until refresh (P3)** — query-key fixed:
+        `commentKeys.list(CommentParentType.TICKET_COMMENT, id)` now matches the
+        invalidation key — 105c02b
+  - [x] **Attachments don't load (P2)** — images keys invalidated on create/update;
+        slide-over shows a Retry banner instead of silent []; uploads are
+        all-or-nothing with storage cleanup + toast errors (alert() removed) —
+        105c02b
+  - [x] **Error handling** — create toast pass-through (modal owns toasts);
+        delete + drag-move awaited with error toasts — 794f219 + 2d839f8
+  - [x] **Nits** — `IssueItem`/`BugType`/`UrgencyLevel`/`StepItem` moved to
+        `entities/issue` (IssueDashboard re-exports; same-layer eslint-disable
+        imports gone); `ticketCode()` replaces `LRN-BNN`/`ASC-1028`;
+        `KeyboardSensor` added; `comments: any[]` → `CommentWithImages[]`;
+        dead `expanded`/`hasMore`/`ReactElement` removed — c85efd2
+  - [x] **Verification (Task 10)** — `prisma validate` ✓, `tsc --noEmit` ✓,
+        `vitest run` 34 files / 226 tests ✓ (incl. 7 new statusTransitions tests),
+        `eslint` on all touched dirs ✓ (0 errors), `npm run build` ✓. NOTE:
+        `prisma migrate dev` is blocked by pre-existing shadow-DB drift
+        (P3018 on migration 4) — the plan's migration file must be applied to
+        Supabase out-of-band.
+  - [x] **WebStorm inspection pass (2026-08-15, commit 3f93451)** — re-audit
+        cleared every listed diagnostic: TS71007 serializable-props renames
+        (`onCloseAction`/`onUpdateAction`/`onImageClickAction`/`onOpenChangeAction`/
+        `onSelectSubtaskAction`/`setTicketAction`/`setSelectedTagsAction`/
+        `setApiMethodAction`/`setApiRouteAction` — WebStorm-only inspection, not
+        emitted by tsc; renamed per the Next.js-documented contract);
+        throw-in-try control flow replaced with boolean helpers/early returns in
+        model/schema.ts + both upload loops; unused `TicketHistoryEntryInput`
+        removed; `React.*` UMD globals → typed imports; stale JSDoc in
+        TicketBoard rewritten; deprecated `React.FormEvent` → `React.SyntheticEvent`;
+        ignored promises `void`-prefixed; `<img>` → `next/image` (unoptimized) for
+        attachment URLs, blob: previews kept with scoped eslint-disable.
+        **Bonus find:** tsc surfaced a LATENT bug (masked by the incremental
+        cache, unmasked by the user's edits): `IssueFormState.urgency` is
+        `UrgencyLevel | ""` and was assigned to `urgency: UrgencyLevel` in
+        IssueDashboard:630 + IssueTableModal:47 — fixed with `|| "low"` (matches
+        the existing `type || "other"` pattern). Re-verified: tsc ✓, eslint ✓
+        (0 problems incl. legacy issue-reporting), vitest 34/226 ✓, build ✓.
+
+- [x] **Issue-reporting integration (2026-08-15)** — ALL items below were completed and
+      verified in **`docs/reasonix/plans/2026-08-15-issue-reporting-integration.md`**
+      (inline execution with serial step sign-off; built-in review on the final diff,
+      no blockers, 2 should-fix items applied; final verification: prisma validate ✓,
+      tsc ✓, vitest 37 files / 246 tests ✓ (20 new), eslint ✓ 0 problems, build ✓):
+  - [x] **Migration 11 (hand-written, apply to Supabase out-of-band; rollback = revert)** —
+        `Issues.project_id` NOT NULL FK + `reported_by` FK + `reported_at` +
+        `IssueStatus` enum + `status` column; `Tickets.issue_id` → unique (1-to-1).
+  - [x] **Entity data layer** — `createIssue`/`listIssues` (project-scoped,
+        `assertProjectMemberOrClient` — clients report too; reporter from session),
+        `issueCreateSchema` (10 tests), `issueStatus` pure helpers (6 tests),
+        `mapIssueRow` mapper (4 tests), `useProjectIssues`/`useCreateIssue` hooks.
+  - [x] **Ticket link persistence (was pure theater)** — `issue_id` added to the ticket
+        schemas + create/update actions (previously Zod silently stripped it);
+        status auto-sync (link / FINISHED→RESOLVED / regression→LINKED /
+        soft-delete: non-FINISHED releases, FINISHED keeps); cross-project link guard;
+        P2002 checked against `Tickets_issue_id_key`; `ticketInclude` carries `issue`.
+  - [x] **UI** — picker moved to `entities/issue/ui` (real data, unlinked-only),
+        same-layer ticket-board import gone; `IssueDashboard` real data; modal fixes
+        (image-remove ✕ bug, object-URL leaks, 5MB cap, Supabase upload all-or-nothing
+        incl. orphan cleanup); feature public API; page passes projectId.
+  - [ ] Follow-ups: `IssueReportingModal` → `useAppForm` migration; DB-backed tests for
+        the transactional sync paths; `ticketInclude.issue` read weight.
+  - [x] **Re-audit + runtime fixes (2026-08-15, same plan doc)** — user-reported
+        `'use server" file can only export async functions, found object` + `Failed to
+        load issues`: root cause was `export const issueDetailInclude` (plain object)
+        in the "use server" file — made module-private; new repo-wide regression test
+        `src/shared/testing/use-server-exports.test.ts` scans all directive files.
+        WebStorm diagnostics fixed (FormEvent, throw-in-try, close-during-submit,
+        pagination aria-labels); stale-UI fix: all 4 ticket mutation hooks now
+        invalidate `issueKeys.all`; `updateTicket` syncs the linked issue on
+        status-only changes; P2002 conflict check matches `meta.target` FIELD name
+        (`issue_id`, per clientActions.ts convention) so the friendly "already linked"
+        error actually fires; create+edit toasts surface `error.message`.
+  - [x] **Migration 11 APPLIED to Supabase (2026-08-15)** — `prisma db execute --file`
+        after user approval (0 rows affected); re-verified read-only: new columns +
+        `IssueStatus` type + `Tickets_issue_id_key` unique present; generated-client
+        smoke test against the DB clean.

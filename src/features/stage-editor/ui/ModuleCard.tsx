@@ -350,6 +350,7 @@ export function ModuleCard({
 											moduleId={module.module_id}
 											projectId={projectId}
 											stageId={stageId}
+											readOnly={readOnly}
 										/>
 									</div>
 								</div>

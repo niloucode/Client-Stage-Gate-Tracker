@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, type ReactElement } from "react";
 import { action } from "@/lib/generated/prisma";
 import { useTicketHistory } from "../model/queries";
 import type { TicketHistoryEntry } from "../model/types";
@@ -17,7 +16,7 @@ import {
   LucideIcon
 } from "lucide-react";
 
-// ── Icon + colour mapping per action ─────────────────────────────────────────
+// ── Icon + color mapping per action ─────────────────────────────────────────
 
 const ACTION_META: Record<
 	action,
@@ -74,7 +73,7 @@ const ACTION_META: Record<
 	},
 };
 
-// ── Status colour helpers ────────────────────────────────────────────────────
+// ── Status color helpers ────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
 	PENDING: "text-gray-500",
@@ -297,20 +296,15 @@ function HistoryEntryRow({ entry }: { entry: TicketHistoryEntry }) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
-const INITIAL_VISIBLE = 4;
-
 export default function TicketHistoryLog({
 	ticketId,
 }: {
 	ticketId: string | undefined;
 }) {
 	const { data: history = [], isLoading, isError, error } = useTicketHistory(ticketId);
-	const [expanded, setExpanded] = useState(false);
-
-	const hasMore = history.length > INITIAL_VISIBLE;
 
 	return (
-		<div className="px-5 pb-4 max-h-[12rem] mb-6 overflow-y-scroll border-b border-gray-100">
+		<div className="px-5 pb-4 max-h-48 mb-6 overflow-y-scroll border-b border-gray-100">
 
 			{isLoading ? (
 				<p className="text-sm text-gray-400">Loading activity…</p>

@@ -18,6 +18,8 @@ export const profileKeys = {
 	details: () => [...profileKeys.all, "detail"] as const,
 	detail: (id: string | undefined) => [...profileKeys.details(), id] as const,
 	currentUser: () => [...profileKeys.all, "currentUser"] as const,
+	projectMembers: (projectId: string) =>
+		[...profileKeys.all, "projectMembers", projectId] as const,
 };
 
 export const commentKeys = {
@@ -88,6 +90,15 @@ export const dashboardAnalyticsKeys = {
 export const issueKeys = {
 	all: ["issues"] as const,
 	stats: () => [...issueKeys.all, "stats"] as const,
+	lists: () => [...issueKeys.all, "list"] as const,
+	list: (projectId: string) => [...issueKeys.lists(), projectId] as const,
+};
+
+export const gateKeys = {
+	all: ["gates"] as const,
+	lists: () => [...gateKeys.all, "list"] as const,
+	list: (stageId: string) => [...gateKeys.lists(), stageId] as const,
+	comments: (gateId: string) => [...gateKeys.all, "comments", gateId] as const,
 };
 
 export const dashboardKeys = {

@@ -7,6 +7,7 @@ import {
 	DragEndEvent,
 	DragOverlay,
 	DragStartEvent,
+	KeyboardSensor,
 	MouseSensor,
 	TouchSensor,
 	useSensor,
@@ -22,6 +23,7 @@ import { Back } from "@/components/ui/back";
 
 // TanStack Query hooks
 import { useTicketsByWorkflow } from "@/entities/ticket/queries";
+import { useCurrentUser } from "@/entities/profile/queries";
 import {
 	useCreateTicket,
 	useUpdateTicketStatus,
@@ -53,13 +55,8 @@ import { Button } from "@/components/ui/button";
 /**
  * Renders the primary project workflow board workspace.
  * Uses TanStack Query for server state and dnd-kit for drag-and-drop.
- *
- * @param {Object} props
- * @param {string} props.workflow_id - Unique container scope identifying the target board sprint layout.
- * @param {string} [props.workflowName] - Display name for the board header (defaults to "Current Sprint").
- * @param {string} [props.projectId] - Parent project id, used for auth and project-scoped lookups.
- * @param {string} [props.stageId] - Parent stage id, used for tag scope resolution.
- * @returns {JSX.Element} The fully rendered sprint board panel or a loading skeleton.
+ * Props are typed on the destructured signature (workflow_id, workflowName,
+ * projectId, stageId).
  */
 export default function TicketBoard({
 	workflow_id,
@@ -80,6 +77,10 @@ export default function TicketBoard({
 
 	const wasDraggingRef = useRef(false);
 	const { user } = useAuth();
+	const { data: profile } = useCurrentUser();
+	// Spec: client profiles (linked via the contract) are read-only here;
+	// project team and project owners have full edit access.
+	const isClientProfile = !!profile?.client_id;
 
 	const mouseSensor = useSensor(MouseSensor, {
 		activationConstraint: { distance: 8 },
@@ -87,7 +88,8 @@ export default function TicketBoard({
 	const touchSensor = useSensor(TouchSensor, {
 		activationConstraint: { delay: 200, tolerance: 5 },
 	});
-	const sensors = useSensors(mouseSensor, touchSensor);
+	const keyboardSensor = useSensor(KeyboardSensor);
+	const sensors = useSensors(mouseSensor, touchSensor, keyboardSensor);
 
 	// ── TanStack Query ────────────────────────────────────────────────────
 
@@ -133,6 +135,20 @@ export default function TicketBoard({
 
 	const { data: tags = [] } = useTags();
 
+	// Real subtasks: tickets whose parent_id points at a ticket in this
+	// workflow. Derived from the flat list (one fetch, no nested include) —
+	// same source the editor uses.
+	const subtasksByParent = useMemo(() => {
+		const map = new Map<string, Ticket[]>();
+		for (const t of tickets) {
+			if (!t.parent_id) continue;
+			const list = map.get(t.parent_id) ?? [];
+			list.push(t);
+			map.set(t.parent_id, list);
+		}
+		return map;
+	}, [tickets]);
+
 	const createTicketMutation = useCreateTicket();
 	const updateStatusMutation = useUpdateTicketStatus();
 	const deleteTicketMutation = useDeleteTicket();
@@ -145,11 +161,10 @@ export default function TicketBoard({
 		: null;
 
 	/**
-	 * Intercepts selection events on individual ticket layout targets to open the view/edit drawer.
-	 * Includes a guard condition checking the mutable dragging reference to avoid firing
-	 * accidental element selections at the immediate termination of item canvas shifts.
-	 * @param {Ticket} ticket - The specific ticket entity being targeted for inspection.
-	 * @returns {void}
+	 * Intercepts selection events on individual ticket layout targets to
+	 * open the view/edit drawer. Guards against accidental selection right
+	 * after a drag ends.
+	 * @param ticket - The ticket being inspected.
 	 */
 	function handleSelectTicket(ticket: Ticket) {
 		if (wasDraggingRef.current) return;
@@ -160,71 +175,61 @@ export default function TicketBoard({
 	}
 
 	/**
-	 * Asynchronously posts fields gathered by the creation modal component configuration to the database backend.
-	 * Provides error isolation by preserving structural state rollback snapshots if the downstream
-	 * network request throws an unhandled server error mutation exception.
-	 * * @async
-	 * @param {Object} params - Cleaned property payload collected from form context inputs.
-	 * @param {string} params.name - Target display summary title for the generated ticket.
-	 * @param {Date} params.deadline_date - Due date timestamp threshold flag for overdue visual triggers.
-	 * @param {string | null} [params.watcher_id] - Profile reference string track for monitoring changes.
-	 * @param {string[] | null} [params.TicketAssigned] - Collection array of profile reference id keys linked to assignees.
-	 * @param {string[] | null} [params.tagIds] - Primary key association list attaching metadata styling tags.
-	 * @param {string | null} [params.description] - Markdown descriptive content text block string.
-	 * @param {Date | null} [params.start_date] - Timestamp scheduling baseline start window boundary.
-	 * @param {Date | null} [params.finish_date] - Timestamp scheduling baseline completion window boundary.
-	 * @returns {Promise<void>} Resolves when the local state append routine completes.
+	 * Posts the create-modal payload to the server. The modal owns all
+	 * toasts (success + failure) — failures propagate to its catch.
+	 * @param data - Cleaned payload from the create form (see CreateTicketFormData).
 	 */
 	async function handleCreateTicket(data: CreateTicketFormData) {
-		try {
-			await createTicketMutation.mutateAsync({
-				...data,
-				workflow_id: workflow_id,
-				status: TicketStatus.PENDING,
-				TicketAssigned: data.TicketAssigned ?? [],
-				tagIds: data.tagIds ?? [],
-				performed_by: user?.profile_id,
-			} as CreateTicketParams & { performed_by?: string });
-			setModalOpen(false);
-		} catch (error) {
-			console.error("Failed to create ticket:", error);
-		}
-
-		// Trigger Success Toast
-		toast.add({
-			title: "Ticket Created",
-			description: `Ticket has been created successfully.`,
-			type: "success",
-		});
+		await createTicketMutation.mutateAsync({
+			...data,
+			workflow_id: workflow_id,
+			status: TicketStatus.PENDING,
+			TicketAssigned: data.TicketAssigned ?? [],
+			tagIds: data.tagIds ?? [],
+			performed_by: user?.profile_id,
+		} as CreateTicketParams & { performed_by?: string });
+		setModalOpen(false);
 	}
 
 	/**
 	 * Soft-deletes a ticket via the delete mutation. The ticket disappears
 	 * from the board when the server mutation succeeds (query invalidation
 	 * refetches the list) — there is no client-side optimistic removal.
-	 * @param {string} ticketId - The UUID of the ticket to delete.
+	 * `mode` is chosen in the delete dialog: "cascade" removes the whole
+	 * subtask subtree, "promote" turns subtasks into top-level tickets.
+	 * @param ticketId - The UUID of the ticket to delete.
+	 * @param mode - What happens to the ticket's subtasks.
 	 */
-	function handleDeleteTicket(ticketId: string) {
-		deleteTicketMutation.mutate({ ticketId, performed_by: user?.profile_id });
-		// Trigger Success Toast
-		toast.add({
-			title: "Ticket Deleted",
-			description: `Ticket has been deleted successfully.`,
-			type: "delete",
-		});
+	async function handleDeleteTicket(
+		ticketId: string,
+		mode: "cascade" | "promote",
+	) {
+		try {
+			await deleteTicketMutation.mutateAsync({
+				ticketId,
+				mode,
+				performed_by: user?.profile_id,
+			});
+			// Trigger Success Toast
+			toast.add({
+				title: "Ticket Deleted",
+				description: `Ticket has been deleted successfully.`,
+				type: "delete",
+			});
+		} catch (error) {
+			toast.add({
+				title: "Delete Failed",
+				description:
+					error instanceof Error ? error.message : "Something went wrong.",
+				type: "error",
+			});
+		}
 	}
 
 	/**
-	 * Processes the creation of a new tag or updates an existing tag by invoking
-	 * backend server actions and optimistically/reactively updating the local state.
-	 * * - If a `tag_id` is present, it targets an update mutation (`updateTag`).
-	 * - If `tag_id` is empty or falsy, it defaults to a creation sequence (`createTag`).
-	 * * @async
-	 * @param {string} tag_id - The unique identifier of the target tag. Pass an empty string or nullish value to trigger tag creation.
-	 * @param {string} name - The intended display name for the tag.
-	 * @param {string | null} [description] - Optional contextual details or summary of the tag's purpose.
-	 * @param {string | null} [color] - Optional Hex code, Tailwind class, or color variant identifier for UI styling.
-	 * @returns {Promise<void>} Resolves when the database mutations complete and React component state is successfully reconciled.
+	 * Creates or updates a tag: a `tag_id` targets an update, otherwise the
+	 * tag is created. Returns `{ error }` so the TagManager can surface it.
+	 * @param input - The tag payload (`tag_id` empty/falsy = create).
 	 */
 	async function handleSaveTag({
 		name,
@@ -249,54 +254,56 @@ export default function TicketBoard({
 				await createTagMutation.mutateAsync({ name, description, color });
 			}
 			return {};
-		} catch (err: any) {
-			return { error: err?.message ?? "Failed to save tag" };
+		} catch (err) {
+			return { error: err instanceof Error ? err.message : "Failed to save tag" };
 		}
 	}
 
 	/**
-	 * Executes soft delete sequences on categorization tags. Removes references instantly from layout options
-	 * and retains a contextual rollback fallback array to cover unexpected database operational failures.
-	 * * @async
-	 * @param {string} tagId - Target primary key mapping to the custom styling metadata structure.
-	 * @returns {Promise<void>} Resolves when structural mutations finish execution steps.
+	 * Soft-deletes a tag.
+	 * @param tagId - The tag to remove.
 	 */
 	function handleDeleteTag(tagId: string) {
 		deleteTagMutation.mutate(tagId);
 	}
 
 	/**
-	 * Captures active pointer initialization signals emitted from active dnd-kit draggable component bounds.
-	 * Sets the layout state values with the current target card string and flags tracking parameters
-	 * to ensure background selections remain blocked during the motion phase.
-	 * @param {DragStartEvent} event - Native dnd-kit synthetic payload context tracking mouse/touch triggers.
-	 * @returns {void}
+	 * Records the dragged card id and blocks selection while dragging.
+	 * @param event - dnd-kit drag-start payload.
 	 */
 	function handleDragStart(event: DragStartEvent) {
+		if (isClientProfile) return;
 		setActiveId(event.active.id as string);
 		wasDraggingRef.current = true;
 	}
 
 	/**
-	 * Validates landing node layouts at pointer finalization boundaries to execute lane state shifts.
-	 * Modifies columns optimistically across local collections and handles exceptions by restoring
-	 * state signatures if backend mutations drop or timeout. Includes a short timeout delay clear
-	 * to separate trailing pointer tap events from completed movement paths.
-	 * * @async
-	 * @param {DragEndEvent} event - Context event tracking target item nodes and overlapping droppable lanes.
-	 * @returns {Promise<void>}
+	 * Moves a ticket to the column it was dropped on (awaited, with an
+	 * error toast on failure), then releases the drag lock after a short
+	 * delay so the trailing pointer tap doesn't open the slide-over.
+	 * @param event - dnd-kit drag-end payload.
 	 */
-	function handleDragEnd(event: DragEndEvent) {
+	async function handleDragEnd(event: DragEndEvent) {
+		if (isClientProfile) return;
 		const { active, over } = event;
 		setActiveId(null);
 
 		if (over && active.id !== over.id) {
 			const newStatus = over.id as TicketStatus;
-			updateStatusMutation.mutate({
-				ticketId: active.id as string,
-				status: newStatus,
-				performed_by: user?.profile_id,
-			});
+			try {
+				await updateStatusMutation.mutateAsync({
+					ticketId: active.id as string,
+					status: newStatus,
+					performed_by: user?.profile_id,
+				});
+			} catch (error) {
+				toast.add({
+					title: "Move Failed",
+					description:
+						error instanceof Error ? error.message : "Something went wrong.",
+					type: "error",
+				});
+			}
 		}
 
 		setTimeout(() => {
@@ -326,18 +333,22 @@ export default function TicketBoard({
 				</div>
 
 				<div className="flex items-center gap-3">
-					<Button
-						onClick={() => setTagManagerOpen(true)}
-						className="flex items-center gap-1.5 bg-transparent text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
-					>
-						<Tag />
-						Tags
-					</Button>
+					{!isClientProfile && (
+						<Button
+							onClick={() => setTagManagerOpen(true)}
+							className="flex items-center gap-1.5 bg-transparent text-sm font-medium text-gray-600 border-2 border-gray-200 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
+						>
+							<Tag />
+							Tags
+						</Button>
+					)}
 
-					<Button onClick={() => setModalOpen(true)}>
-						<Plus />
-						New Ticket
-					</Button>
+					{!isClientProfile && (
+						<Button onClick={() => setModalOpen(true)}>
+							<Plus />
+							New Ticket
+						</Button>
+					)}
 				</div>
 			</div>
 
@@ -354,6 +365,7 @@ export default function TicketBoard({
 								key={column.id}
 								column={column}
 								tickets={ticketsByStatus.get(column.id) ?? []}
+								subtasksByParent={subtasksByParent}
 								onSelectTicket={handleSelectTicket}
 								onDeleteTicket={handleDeleteTicket}
 							/>
@@ -366,8 +378,8 @@ export default function TicketBoard({
 						<div className="rotate-2 opacity-90">
 							<TicketCardContent
 								ticket={activeTicket}
+								subtasks={subtasksByParent.get(activeTicket.ticket_id) ?? []}
 								onSelect={() => {}}
-								onEdit={() => {}}
 								onDelete={() => {}}
 							/>
 						</div>
@@ -388,6 +400,8 @@ export default function TicketBoard({
 				onUpdate={(updated) => setSelectedTicket(updated)}
 				tags={tags}
 				allTickets={tickets}
+				projectId={projectId}
+				readOnly={isClientProfile}
 			/>
 
 			<TicketModalCreate
@@ -395,6 +409,7 @@ export default function TicketBoard({
 				onClose={() => setModalOpen(false)}
 				onCreateTicket={handleCreateTicket}
 				tags={tags}
+				projectId={projectId}
 			/>
 
 			<TagManager

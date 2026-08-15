@@ -285,7 +285,7 @@ export const PhaseCard = forwardRef<
 											<div
 												key={phase.phase_id}
 												className="relative flex flex-col items-center shrink-0 w-12 transition-all duration-200 cursor-grab active:cursor-grabbing"
-												draggable={true}
+												draggable={!readOnly}
 												onDragStart={(e) => handleDragStart(e, index)}
 												onDragEnd={handleDragEnd}
 												onDragOver={(e) => handleDragOver(e, index)}

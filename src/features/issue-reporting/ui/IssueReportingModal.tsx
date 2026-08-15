@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, ChangeEvent, useRef, useMemo } from "react";
+import React, { useState, ChangeEvent, useRef, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,10 @@ import { FormInput } from "@/components/ui/forminput";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { toast } from "@/components/ui/toast";
+import { createClient } from "@/lib/supabase/client";
+import { useCreateIssue } from "@/entities/issue";
+import type { IssueCreateInput } from "@/shared/schemas/issue";
 
 /* -------------------------------------------------------------------------- */
 /* TYPES & INTERFACES                                                        */
@@ -55,9 +59,10 @@ export interface IssueFormState {
 }
 
 interface IssueReportingModalProps {
+  /** Project the reported issue belongs to (issue-reporting spec). */
+  projectId: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  onSubmitSuccess?: (data: IssueFormState) => void;
 }
 
 const initialFormState: IssueFormState = {
@@ -168,8 +173,8 @@ const UrgencySelector = ({
               isSelected
                 ? opt.activeClass
                 : error
-                ? "border-destructive/60 bg-neutral-surface hover:border-destructive text-destructive"
-                : "border-border bg-neutral-surface hover:bg-neutral-subtle"
+                  ? "border-destructive/60 bg-neutral-surface hover:border-destructive text-destructive"
+                  : "border-border bg-neutral-surface hover:bg-neutral-subtle"
             }`}
           >
             <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${opt.dot}`} />
@@ -186,16 +191,37 @@ const UrgencySelector = ({
 /* -------------------------------------------------------------------------- */
 
 export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
+  projectId,
   open = true,
   onOpenChange,
-  onSubmitSuccess,
 }) => {
   const [formData, setFormData] = useState<IssueFormState>(initialFormState);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Original Files for step images (object URLs alone cannot be re-uploaded).
+  const [attachedFiles, setAttachedFiles] = useState<Record<string, File>>({});
+  // Every object URL we create, revoked on close and on unmount (no leaks).
+  const objectUrlsRef = useRef<string[]>([]);
 
   // Ref to target the scrollable steps container
   const stepsContainerRef = useRef<HTMLDivElement>(null);
+
+  const createIssueMutation = useCreateIssue(projectId);
+
+  // Revoke every preview URL created by this modal instance.
+  const revokeObjectUrls = () => {
+    objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrlsRef.current = [];
+  };
+
+  // Unmount safety net (modal is kept mounted, but be safe).
+  useEffect(() => {
+    return () => {
+      revokeObjectUrls();
+    };
+  }, []);
 
   // Check if form is modified
   const isDirty = useMemo(() => {
@@ -216,16 +242,22 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
     setFormData(initialFormState);
     setFieldErrors({});
     setShowDiscardConfirm(false);
+    setAttachedFiles({});
   });
 
   const handleClose = () => {
+    revokeObjectUrls();
     setFormData(initialFormState);
     setFieldErrors({});
     setShowDiscardConfirm(false);
+    setAttachedFiles({});
     onOpenChange?.(false);
   };
 
   const handleAttemptClose = () => {
+    // A submit in flight cannot be canceled — the upload + create finish
+    // regardless, so keep the modal open until they resolve.
+    if (isSubmitting) return;
     if (isDirty) {
       setShowDiscardConfirm(true);
       return;
@@ -279,10 +311,51 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
   };
 
   const handleImageAttach = (id: string, file: File) => {
+    // Mirror the ticket-board 5MB cap; reject early so nothing is uploaded.
+    if (file.size > 5 * 1024 * 1024) {
+      toast.add({
+        title: "File Too Large",
+        description: `"${file.name}" must be under 5MB.`,
+        type: "error",
+      });
+      return;
+    }
     const imageUrl = URL.createObjectURL(file);
+    objectUrlsRef.current.push(imageUrl);
+    setAttachedFiles((prev) => ({ ...prev, [id]: file }));
     setFormData((prev) => ({
       ...prev,
       steps: prev.steps.map((s) => (s.id === id ? { ...s, image: imageUrl } : s)),
+    }));
+  };
+
+  // Fix: the ✕ button on a preview clears the IMAGE (previously it re-set the
+  // description and could never remove the attachment).
+  const handleRemoveStepImage = (id: string) => {
+    const target = formData.steps.find((s) => s.id === id);
+    if (target?.image) URL.revokeObjectURL(target.image);
+    setAttachedFiles((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setFormData((prev) => ({
+      ...prev,
+      steps: prev.steps.map((s) => (s.id === id ? { ...s, image: undefined } : s)),
+    }));
+  };
+
+  const handleRemoveStep = (id: string) => {
+    const target = formData.steps.find((s) => s.id === id);
+    if (target?.image) URL.revokeObjectURL(target.image);
+    setAttachedFiles((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setFormData((prev) => ({
+      ...prev,
+      steps: prev.steps.filter((s) => s.id !== id),
     }));
   };
 
@@ -299,12 +372,99 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate() || isSubmitting) return;
+    setIsSubmitting(true);
 
-    onSubmitSuccess?.(formData);
-    handleClose();
+    // 1. Upload step images first (all-or-nothing, ticket-board pattern).
+    //    No throws inside the loop — collect the error and bail (WebStorm
+    //    flags locally-caught throws).
+    const uploadedPaths: string[] = [];
+    const stepImages: Record<string, string> = {};
+    let uploadError: string | null = null;
+    const supabase = createClient();
+    for (const step of formData.steps) {
+      const file = attachedFiles[step.id];
+      if (!step.image || !file) continue;
+      try {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `issues/${fileName}`;
+
+        const { error } = await supabase.storage
+          .from("images")
+          .upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+        if (error) {
+          uploadError = `Failed to upload image: ${error.message}`;
+          break;
+        }
+
+        uploadedPaths.push(filePath);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("images").getPublicUrl(filePath);
+        stepImages[step.id] = publicUrl;
+      } catch (err) {
+        uploadError = err instanceof Error ? err.message : "Failed to upload images.";
+        break;
+      }
+    }
+
+    if (uploadError) {
+      // All-or-nothing: remove already-uploaded files and abort so no issue
+      // is created without its images.
+      if (uploadedPaths.length > 0) {
+        await supabase.storage.from("images").remove(uploadedPaths);
+      }
+      toast.add({
+        title: "Upload Failed",
+        description: uploadError,
+        type: "error",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // 2. Create the issue with the uploaded image URLs.
+    const payload: IssueCreateInput = {
+      name: formData.name,
+      type: formData.type || "other",
+      specificType: formData.specificType,
+      urgency: formData.urgency || "low",
+      description: formData.description,
+      systemEnv: formData.systemEnv,
+      timeOfError: formData.timeOfError ? new Date(formData.timeOfError) : null,
+      steps: formData.steps
+        .filter((s) => s.description.trim() !== "" || !!s.image)
+        .map((s) => ({ description: s.description, image: stepImages[s.id] ?? null })),
+    };
+
+    try {
+      await createIssueMutation.mutateAsync(payload);
+      toast.add({
+        title: "Issue Reported",
+        description: `"${formData.name}" has been reported successfully.`,
+        type: "success",
+      });
+      handleClose();
+    } catch (error) {
+      // Creation failed — drop the just-uploaded images (no orphans).
+      if (uploadedPaths.length > 0) {
+        const supabase = createClient();
+        await supabase.storage.from("images").remove(uploadedPaths);
+      }
+      toast.add({
+        title: "Failed to Report Issue",
+        description: error instanceof Error ? error.message : "Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFeatureRequest = formData.type === "feature_request";
@@ -339,50 +499,50 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
                 onClearError={() => clearFieldError("name")}
               />
 
-<div className="flex gap-5">
-              {/* Issue Type (w-full with error highlighting) */}
-              <FormField label="Type" required error={fieldErrors.type}>
-                <Select
-                  value={formData.type || ""}
-                  onValueChange={(val) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      type: val as BugType,
-                    }));
-                    clearFieldError("type");
-                  }}
-                >
-                  <SelectTrigger
-                    className={`w-full h-10 text-xs bg-neutral-surface transition-colors ${
-                      fieldErrors.type
-                        ? "border-destructive ring-1 ring-destructive text-destructive"
-                        : "border-border"
-                    }`}
+              <div className="flex gap-5">
+                {/* Issue Type (w-full with error highlighting) */}
+                <FormField label="Type" required error={fieldErrors.type}>
+                  <Select
+                    value={formData.type || ""}
+                    onValueChange={(val) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        type: val as BugType,
+                      }));
+                      clearFieldError("type");
+                    }}
                   >
-                    <SelectValue placeholder="Select issue type..." />
-                  </SelectTrigger>
-                  <SelectContent side="bottom" sideOffset={4}>
-                    {BUG_TYPE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
+                    <SelectTrigger
+                      className={`w-full h-10 text-xs bg-neutral-surface transition-colors ${
+                        fieldErrors.type
+                          ? "border-destructive ring-1 ring-destructive text-destructive"
+                          : "border-border"
+                      }`}
+                    >
+                      <SelectValue placeholder="Select issue type..." />
+                    </SelectTrigger>
+                    <SelectContent side="bottom" sideOffset={4}>
+                      {BUG_TYPE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
 
-              {/* Priority (w-full, no default, highlighted states) */}
-              <FormField label="Priority" required error={fieldErrors.urgency}>
-                <UrgencySelector
-                  value={formData.urgency}
-                  error={!!fieldErrors.urgency}
-                  onChange={(urgency) => {
-                    setFormData((prev) => ({ ...prev, urgency }));
-                    clearFieldError("urgency");
-                  }}
-                />
-              </FormField>
-</div>
+                {/* Priority (w-full, no default, highlighted states) */}
+                <FormField label="Priority" required error={fieldErrors.urgency}>
+                  <UrgencySelector
+                    value={formData.urgency}
+                    error={!!fieldErrors.urgency}
+                    onChange={(urgency) => {
+                      setFormData((prev) => ({ ...prev, urgency }));
+                      clearFieldError("urgency");
+                    }}
+                  />
+                </FormField>
+              </div>
               {/* Conditional Specific Type for 'Other' */}
               {isOtherType && (
                 <FormInput
@@ -451,12 +611,8 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
                         index={idx}
                         step={step}
                         onUpdate={(text) => handleStepUpdate(step.id, text)}
-                        onRemove={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            steps: prev.steps.filter((s) => s.id !== step.id),
-                          }))
-                        }
+                        onRemove={() => handleRemoveStep(step.id)}
+                        onRemoveImage={() => handleRemoveStepImage(step.id)}
                         onAttach={(file) => handleImageAttach(step.id, file)}
                       />
                     ))}
@@ -481,11 +637,12 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
                 type="button"
                 variant="ghost"
                 onClick={handleAttemptClose}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                Report Bug
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Reporting…" : "Report Bug"}
               </Button>
             </DialogFooter>
           </form>
@@ -513,12 +670,14 @@ const StepRow = ({
   step,
   onUpdate,
   onRemove,
+  onRemoveImage,
   onAttach,
 }: {
   index: number;
   step: StepData;
   onUpdate: (text: string) => void;
   onRemove: () => void;
+  onRemoveImage: () => void;
   onAttach: (file: File) => void;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -538,6 +697,7 @@ const StepRow = ({
         />
         {step.image && (
           <div className="mt-2 relative inline-block group">
+            {/* eslint-disable-next-line @next/next/no-img-element -- object-URL preview; upload happens on submit */}
             <img
               src={step.image}
               alt="Attachment"
@@ -545,8 +705,9 @@ const StepRow = ({
             />
             <button
               type="button"
-              onClick={() => onUpdate(step.description)}
-              className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Remove image"
+              onClick={onRemoveImage}
+              className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
             >
               <X className="w-3 h-3" />
             </button>

@@ -1,13 +1,90 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserId } from "@/lib/auth/projectAccess";
+import { getCurrentUserId, assertProjectMemberOrClient } from "@/lib/auth/projectAccess";
+import type { Prisma, IssueUrgency } from "@/lib/generated/prisma";
+import { issueCreateSchema, type IssueCreateInput } from "@/shared/schemas/issue";
+import { mapIssueRow } from "./lib/mappers";
+import type { IssueItem } from "./types";
 
 export interface IssueStats {
 	total: number;
 	byUrgency: { urgency: "LOW" | "MEDIUM" | "HIGH"; count: number }[];
 	assigned: number;
 	unassigned: number;
+}
+
+/**
+ * Server-side include for issue reads. 1-to-1 issue↔ticket: `Tickets` carries
+ * at most one row (FINISHED soft-deleted tickets keep their link per spec).
+ * Module-private: a "use server" file may only export async functions
+ * (Next.js rule — an exported object breaks every import of this module).
+ */
+const issueDetailInclude = {
+	IssueSteps: { orderBy: { number: "asc" as const } },
+	Tickets: { take: 1 },
+	Profile: { select: { first_name: true, last_name: true } },
+} satisfies Prisma.IssuesInclude;
+
+/**
+ * Creates a project-scoped issue. Both clients and project team/owners may
+ * report issues (spec 2026-08-15); the reporter profile is recorded
+ * server-side from the session.
+ */
+export async function createIssue(
+	projectId: string,
+	data: IssueCreateInput,
+): Promise<IssueItem> {
+	const auth = await assertProjectMemberOrClient(projectId);
+	if (!auth.ok) throw new Error(auth.error);
+
+	const parsed = issueCreateSchema.parse(data);
+	// "other" stores the free text in the DB `type` column (the UI renders
+	// raw type strings via bugTypeLabel).
+	const dbType =
+		parsed.type === "other" && parsed.specificType.trim()
+			? parsed.specificType.trim()
+			: parsed.type;
+	const steps = parsed.steps.filter((s) => s.description.trim() !== "" || !!s.image);
+
+	const created = await prisma.issues.create({
+		data: {
+			project_id: projectId,
+			reported_by: auth.userId,
+			status: "UNLINKED",
+			name: parsed.name,
+			type: dbType,
+			description: parsed.description || null,
+			urgency: parsed.urgency.toUpperCase() as IssueUrgency,
+			system_environment: parsed.systemEnv || null,
+			time_of_error: parsed.timeOfError,
+			IssueSteps: {
+				create: steps.map((s, index) => ({
+					number: index + 1,
+					step: s.description,
+					image: s.image ?? null,
+				})),
+			},
+		},
+		include: issueDetailInclude,
+	});
+	return mapIssueRow(created);
+}
+
+/**
+ * Project-scoped issue list (newest first), mapped to the UI shape.
+ * Any project member — including the contract client — may read.
+ */
+export async function listIssues(projectId: string): Promise<IssueItem[]> {
+	const auth = await assertProjectMemberOrClient(projectId);
+	if (!auth.ok) throw new Error(auth.error);
+
+	const rows = await prisma.issues.findMany({
+		where: { project_id: projectId },
+		orderBy: { reported_at: "desc" },
+		include: issueDetailInclude,
+	});
+	return rows.map(mapIssueRow);
 }
 
 /**
