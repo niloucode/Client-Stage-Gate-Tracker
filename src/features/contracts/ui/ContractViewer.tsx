@@ -74,6 +74,12 @@ export function ContractViewer({
 
 						// Reconstruct File from the public URL
 						const response = await fetch(result.data);
+						// Defense in depth: a non-OK fetch (e.g. bucket made
+						// private, object missing) must surface an error
+						// instead of building a broken "PDF" from the body.
+						if (!response.ok) {
+							throw new Error(`Failed to load contract (HTTP ${response.status}).`);
+						}
 						const blob = await response.blob();
 						const fileName =
 							initialFilePath.split("/").pop() ?? "contract.pdf";
@@ -297,7 +303,14 @@ export function ContractViewer({
 								}}
 							>
 								<embed
-									src={`${fileUrl}#toolbar=0`}
+									// #toolbar=0 is a Chrome PDF-viewer parameter —
+									// but appending it to a blob: URL breaks the
+									// viewer (gray embed). Blob URLs skip it.
+									src={
+										fileUrl.startsWith("blob:")
+											? fileUrl
+											: `${fileUrl}#toolbar=0`
+									}
 									type="application/pdf"
 									className="aspect-8.5/11 w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
 								/>
