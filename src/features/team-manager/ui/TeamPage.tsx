@@ -15,10 +15,10 @@ function TeamHeader() {
 	return (
 		<div className="mb-6">
 			<h1 className="text-4xl font-bold tracking-wide text-foreground">
-				Project Team
+				Acesoft Team
 			</h1>
 			<p className="subtitle">
-				View the fellow project members working in the project.
+				View your fellow Acesoft Team members.
 			</p>
 		</div>
 	);
