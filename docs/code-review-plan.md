@@ -382,7 +382,7 @@
 - [ ] src/app/(auth)/signup/client/page.tsx
 - [ ] src/app/(auth)/signup/staff/page.tsx
 - [ ] src/app/(auth)/signup-callback/route.ts
-- [ ] src/app/(app)/layout.tsx
+- [ ] src/app/(app)/layout.tsx (2026-08-15: `export const dynamic = "force-dynamic"` added to unblock `next build` — the shell reads cookies via getCurrentUserProfile and TopNav calls useSearchParams without Suspense, so static prerender of any (app) page failed (pre-existing; reproduced at baseline ce76417). The `/analytics` + `/credentials` pages were left pristine. Full review of this file still pending)
 - [ ] src/app/(app)/dashboard/page.tsx
 - [ ] src/app/(app)/clients/page.tsx
 - [x] src/app/(app)/team/page.tsx (new — reviewed 2026-08-14; renders TeamPage)
@@ -520,11 +520,8 @@ All pre-existing unless noted — none block the running app except the first.
       code-review-plan flip). Spec decisions: any project profile incl.
       clients may view read-only (`assertProjectMemberOrClient`); default
       tab Actual; button label "Gantt Chart" + `ChartGantt` icon.
-      Verified: prisma validate ✓, tsc ✓, vitest 43/285 ✓, eslint 0/0 ✓.
-      `npm run build` blocked by a PRE-EXISTING /analytics prerender failure
-      (reproduced at baseline ce76417; layout cookies + useSearchParams
-      without Suspense) — suggested fix: `export const dynamic =
-      "force-dynamic"` on `src/app/(app)/(workspace)/analytics/page.tsx`.
+      Verified: prisma validate ✓, tsc ✓, vitest 43/285 ✓, eslint 0/0 ✓,
+      `npm run build` ✓ (see layout fix below).
 - [ ] **`ProjectSection` status-config cleanup**
       (`src/features/project-dashboard/ui/ProjectSection.tsx`) — `icolor`
       typo, the suspicious `ACTIVE.color: "text-brand-100"` badge value, and
