@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Back } from "@/components/ui/back";
 import { Plus, Unlink, Link as LinkIcon, CheckCircle2 } from "lucide-react";
 
 import { IssueReportingModal } from "./IssueReportingModal";
@@ -81,7 +82,10 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 p-6 md:p-10 space-y-8 mx-auto w-full max-w-7xl">
+        <main className="flex-1 p-6 md:p-10 space-y-6 mx-auto w-full max-w-7xl">
+          {/* Back Button */}
+          <Back link={`/projects/${projectId}`} />
+
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1>Issue Reporting</h1>
