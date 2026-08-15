@@ -230,6 +230,7 @@ model Projects {
   Issues          Issues[]
   RoleAssignments RoleAssignments[]
   Stages          Stages[]
+  Variables       Variables[]
 
   @@schema("public")
 }
@@ -404,6 +405,35 @@ model IssueSteps {
   Issues   Issues  @relation(fields: [issue_id], references: [issue_id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([issue_id, number])
+  @@schema("public")
+}
+
+/// Project-scoped credentials/links/repos. The client portal sees ONLY
+/// client_visible rows (value included); notes_team is team-only and never
+/// leaves the server for client viewers. Soft delete (project rule 1).
+model Variables {
+  variable_id    String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id     String       @db.Uuid
+  name           String
+  type           VariableType
+  value          String
+  client_visible Boolean      @default(false)
+  notes_team     String       @default("")
+  notes_client   String       @default("")
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  is_deleted     Boolean      @default(false)
+  deleted_at     DateTime?    @db.Timestamptz(6)
+  Projects       Projects     @relation(fields: [project_id], references: [project_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([project_id, is_deleted])
+  @@schema("public")
+}
+
+enum VariableType {
+  LINK
+  CREDENTIAL
+  REPOSITORY
+
   @@schema("public")
 }
 
