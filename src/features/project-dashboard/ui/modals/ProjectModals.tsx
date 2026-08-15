@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 import { projectCreateSchema, type ProjectCreateInput } from "@/shared/schemas";
 import { getFieldErrors } from "@/shared/lib/zod";
@@ -22,6 +22,7 @@ import {
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
+	toast,
 } from "@/components/ui";
 
 // Internal form state: dates stay nullable while picking; the submit payload
@@ -45,7 +46,7 @@ interface EditProjectModalProps {
 		deadline_date?: Date | string | null;
 	} | null; // null = "Add" mode
 	onClose: () => void;
-	onSubmit: (data: ProjectCreateInput) => void;
+	onSubmit: (data: ProjectCreateInput) => void | Promise<void>;
 }
 
 const emptyFormData: EditProjectFormState = {
@@ -109,32 +110,29 @@ export function EditProjectModal({
 	onClose,
 	onSubmit,
 }: EditProjectModalProps) {
-	// Preserve the active project while open so exit animations retain Edit mode UI
-	const [activeProject, setActiveProject] = useState(project);
+	// Cache project during render so exit transitions retain Edit mode UI without triggering cascading renders
+	const [cachedProject, setCachedProject] = useState(project);
+	const [prevProject, setPrevProject] = useState(project);
 
-	useEffect(() => {
-		if (isOpen) {
-			setActiveProject(project);
+	if (project !== prevProject) {
+		setPrevProject(project);
+		if (project !== null) {
+			setCachedProject(project);
 		}
-	}, [isOpen, project]);
+	}
 
+	const activeProject = isOpen ? project : (project ?? cachedProject);
 	const isEditMode = activeProject !== null;
 
 	const initialFormData = useMemo(
 		() => getInitialFormData(activeProject),
-		[
-			activeProject?.project_id,
-			activeProject?.name,
-			activeProject?.description,
-			activeProject?.client_id,
-			activeProject?.start_date,
-			activeProject?.deadline_date,
-		],
+		[activeProject],
 	);
 
 	const [formData, setFormData] = useState<EditProjectFormState>(initialFormData);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const { data: clients } = useClients();
 
 	// Reset form state when modal opens
@@ -143,6 +141,7 @@ export function EditProjectModal({
 		setFormData(init);
 		setFieldErrors({});
 		setShowDiscardConfirm(false);
+		setIsSubmitting(false);
 	});
 
 	// Check if user has made unsaved modifications
@@ -161,11 +160,13 @@ export function EditProjectModal({
 	const handleClose = () => {
 		setFieldErrors({});
 		setShowDiscardConfirm(false);
+		setIsSubmitting(false);
 		onClose();
 	};
 
 	// Prevents exiting if unsaved changes exist
 	const handleAttemptClose = () => {
+		if (isSubmitting) return;
 		if (isDirty) {
 			setShowDiscardConfirm(true);
 			return;
@@ -184,7 +185,7 @@ export function EditProjectModal({
 		}
 	};
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
 		const result = projectModalSchema.safeParse(formData);
 		if (!result.success) {
 			const mapped = getFieldErrors(result);
@@ -193,7 +194,31 @@ export function EditProjectModal({
 		}
 
 		setFieldErrors({});
-		onSubmit(result.data);
+		setIsSubmitting(true);
+
+		// Trigger Loading Toast
+		toast.add({
+			title: isEditMode ? "Saving Changes" : "Creating Project",
+			description: isEditMode
+				? "Please wait while your changes are being saved..."
+				: "Please wait while your project is being created...",
+			type: "loading",
+		});
+
+		try {
+			await onSubmit(result.data);
+		} catch (err) {
+			toast.add({
+				title: isEditMode ? "Save Failed" : "Creation Failed",
+				description:
+					err instanceof Error
+						? err.message
+						: "An error occurred while processing the project.",
+				type: "error",
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -337,11 +362,21 @@ export function EditProjectModal({
 						</div>
 					</div>
 					<DialogFooter>
-						<Button onClick={handleAttemptClose} variant="ghost">
+						<Button
+							onClick={handleAttemptClose}
+							variant="ghost"
+							disabled={isSubmitting}
+						>
 							Cancel
 						</Button>
-						<Button onClick={handleSubmit}>
-							{isEditMode ? "Save Changes" : "Create Project"}
+						<Button onClick={handleSubmit} disabled={isSubmitting}>
+							{isSubmitting
+								? isEditMode
+									? "Saving…"
+									: "Creating…"
+								: isEditMode
+									? "Save Changes"
+									: "Create Project"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

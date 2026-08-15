@@ -1,19 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ClientsDropdown, type ClientOption } from "./ClientsDropdown";
-import {
-	createClientRoleAssignment,
-	deleteClientRoleAssignment,
-} from "@/entities/roleAssignment";
-import { ConfirmTextModal, ContractDetails } from "./ConfirmTextModal";
 
 export type SignatoryStatus = "signed" | "pending";
 
@@ -29,21 +21,9 @@ export interface Signatory {
 	device?: string;
 }
 
-export type ClientSignatoryState =
-	| "no_client" // client not yet selected — show dropdown (disabled confirm)
-	| "client_decided" // client confirmed — show "Change" link
-	| "client_signed"; // both signed — show signature box
-
 interface SignatoriesCardProps {
 	signatories: Signatory[];
 	className?: string;
-	// Client management
-	clientState?: ClientSignatoryState;
-	availableClients?: ClientOption[];
-	// selectedClient?: ClientOption | null;
-	// onChangeClient?: () => void;
-	contractDetails: ContractDetails;
-	onSuccess: () => void;
 }
 
 function initialsFor(name: string) {
@@ -56,7 +36,7 @@ function initialsFor(name: string) {
 		.toUpperCase();
 }
 
-function SignatoryRow({ person, index }: { person: Signatory; index: number }) {
+function SignatoryRow({ person }: { person: Signatory }) {
 	const isSigned = person.status === "signed";
 
 	return (
@@ -71,9 +51,7 @@ function SignatoryRow({ person, index }: { person: Signatory; index: number }) {
 			</Avatar>
 
 			<div className="min-w-0 flex-1">
-				<p className="truncate text-sm  text-[#181724]">
-					{person.name}
-				</p>
+				<p className="truncate text-sm  text-[#181724]">{person.name}</p>
 				<p className="truncate text-xs text-[#6E6B82]">{person.role}</p>
 				{isSigned && person.timestamp && (
 					<p className="mt-0.5 text-[11px] text-[#9C9AB0]">
@@ -100,15 +78,11 @@ function SignatoryRow({ person, index }: { person: Signatory; index: number }) {
 	);
 }
 
+const SIGNATURE_FONT = "'Great Vibes', cursive";
+
 function SignatureBox({ person }: { person: Signatory }) {
 	const [imageSrc, setImageSrc] = useState<string | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-
-	const currentStyle = {
-		id: "great-vibes",
-		label: "Style 1",
-		font: "'Great Vibes', cursive",
-	};
 
 	// Generate PNG from the signature text
 	useEffect(() => {
@@ -121,8 +95,8 @@ function SignatureBox({ person }: { person: Signatory }) {
 		if (!ctx) return;
 
 		const text = person.signed_name;
-		const fontSize = 30; // matches the original clamp(18px,5vw,30px) roughly
-		const font = `${fontSize}px ${currentStyle.font}`;
+		const fontSize = 30;
+		const font = `${fontSize}px ${SIGNATURE_FONT}`;
 
 		// Wait for font to be ready
 		document.fonts.ready.then(() => {
@@ -157,6 +131,7 @@ function SignatureBox({ person }: { person: Signatory }) {
 			<canvas ref={canvasRef} className="hidden" />
 
 			{imageSrc && (
+				// eslint-disable-next-line @next/next/no-img-element -- canvas-generated data URL; not optimizable
 				<img
 					src={imageSrc}
 					alt="Signature"
@@ -174,152 +149,46 @@ function SignatureBox({ person }: { person: Signatory }) {
 	);
 }
 
+/**
+ * 2026-08-15 spec: read-only signatory list (owner + client). The client
+ * signatory is now defined by the contract's client_id (no more role
+ * assignment flows — those moved to the ContractApprovalCard).
+ */
 export function SignatoriesCard({
 	signatories,
 	className = "",
-	clientState,
-	availableClients = [],
-	// selectedClient = null,
-	// onChangeClient,
-	contractDetails,
-	onSuccess,
 }: SignatoriesCardProps) {
-	const [createModalOpen, setCreateModalOpen] = useState(false);
-	const [changeModalOpen, setChangeModalOpen] = useState(false);
-	const [selectedClient, setSelectedClient] = useState<ClientOption | null>(
-		null,
-	);
-
-	const completed = signatories.filter((s) => s.status === "signed").length;
-	const showClientDropdown = clientState === "no_client";
-	const showChangeLink = clientState === "client_decided";
-	const showSignatures = clientState === "client_signed";
-
-	const confirm_client_phrase = "Yes, I'm Sure";
-	const change_client_phrase = "Yes, I'm Sure";
-	const confirm_client_text = `You are about to assign
-            ${selectedClient?.name ?? "this person"}
-            as the signatory for ${contractDetails.name}. Please verify that this
-            individual is authorized to sign the contract on behalf of the
-            client. To confirm, type "${confirm_client_phrase}" below.`;
-
-	const change_client_text = `You are about to reassign the signatory 
-            from ${selectedClient?.name ?? "this person"}
-            for ${contractDetails.name}. To confirm this action, type
-            "${change_client_phrase}" below.`;
-
-	useEffect(() => {
-		for (let i = 0; i < signatories.length; i++) {
-			if (signatories[i].role == "Client") {
-				setSelectedClient({
-					id: signatories[i].id,
-					name: signatories[i].name,
-					email: signatories[i].email,
-				});
-			}
-		}
-	}, [signatories]);
-
-	const handleConfirmClick = () => {
-		if (selectedClient) {
-			setCreateModalOpen(true);
-		}
-	};
-
-	const handleClientChange = async () => {
-		if (selectedClient) {
-			setChangeModalOpen(true);
-		}
-	};
-
-	// const handleModalConfirm = () => {
-	// 	setModalOpen(false);
-	// 	onConfirmClient?.();
-	// };
-
 	return (
-	<>
-		<Card className={cn("p-6 gap-0 bg-neutral-surface border border-border rounded-md shadow-xs", className)}>
-		<CardHeader className="p-0 pb-4 border-b border-border">
-			<CardTitle className="text-base  text-foreground">
-			Signatories
-			</CardTitle>
-		</CardHeader>
-
-		<CardContent className="p-0 pt-4 flex flex-col gap-4">
-			{/* Render existing signatories only if present */}
-			{signatories.length > 0 && (
-			<ul className="flex flex-col gap-3 w-full">
-				{signatories.map((person, i) => (
-				<li key={person.id} className="flex flex-col gap-3">
-					<SignatoryRow person={person} index={i} />
-					<SignatureBox person={person} />
-					{i < signatories.length - 1 && <Separator />}
-				</li>
-				))}
-			</ul>
+		<Card
+			className={cn(
+				"p-6 gap-0 bg-neutral-surface border border-border rounded-md shadow-xs",
+				className,
 			)}
+		>
+			<CardHeader className="p-0 pb-4 border-b border-border">
+				<CardTitle className="text-base  text-foreground">
+					Signatories
+				</CardTitle>
+			</CardHeader>
 
-			{/* Client selection & action */}
-			{showClientDropdown && (
-			<div className="flex flex-col gap-3 w-full">
-				<ClientsDropdown
-				clients={availableClients}
-				selected={selectedClient}
-				onSelect={(client) => setSelectedClient(client)}
-				/>
-				<Button
-				disabled={clientState === "no_client" && !selectedClient}
-				onClick={handleConfirmClick}
-				className="w-full h-10 text-xs "
-				>
-				Confirm Client Signatory
-				</Button>
-			</div>
-			)}
-
-			{/* Change signatory option */}
-			{showChangeLink && (
-			<div className="pt-1 text-center">
-				<button
-				type="button"
-				onClick={handleClientChange}
-				className="text-xs  text-brand-600 underline underline-offset-4 hover:opacity-80 transition-opacity cursor-pointer"
-				>
-				Change Client Signatory?
-				</button>
-			</div>
-			)}
-		</CardContent>
+			<CardContent className="p-0 pt-4 flex flex-col gap-4">
+				{signatories.length > 0 ? (
+					<ul className="flex flex-col gap-3 w-full">
+						{signatories.map((person, i) => (
+							<li key={person.id} className="flex flex-col gap-3">
+								<SignatoryRow person={person} />
+								<SignatureBox person={person} />
+								{i < signatories.length - 1 && <Separator />}
+							</li>
+						))}
+					</ul>
+				) : (
+					<p className="py-4 text-center text-xs text-muted-foreground">
+						No signatories yet.
+					</p>
+				)}
+			</CardContent>
 		</Card>
-
-		<ConfirmTextModal
-		open={createModalOpen}
-		onClose={() => setCreateModalOpen(false)}
-		twoParamFunc={createClientRoleAssignment}
-		client={selectedClient}
-		contractDetails={contractDetails}
-		confirmPhrase={confirm_client_phrase}
-		displayText={confirm_client_text}
-		displayTitle="Confirm Client Signatory"
-		buttonText="Confirm Signatory"
-		onSuccess={onSuccess}
-		/>
-
-		<ConfirmTextModal
-		open={changeModalOpen}
-		onClose={() => setChangeModalOpen(false)}
-		twoParamFunc={deleteClientRoleAssignment}
-		client={selectedClient}
-		contractDetails={contractDetails}
-		confirmPhrase={change_client_phrase}
-		displayText={change_client_text}
-		displayTitle="Confirm Client Signatory"
-		buttonText="Re-assign Signatory"
-		onSuccess={onSuccess}
-		setSelectedClient={setSelectedClient}
-		/>
-	</>
 	);
 }
 

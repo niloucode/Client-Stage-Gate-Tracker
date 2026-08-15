@@ -45,11 +45,9 @@ export type { ClientType, ClientCreateType } from "./client";
 
 export {
 	contractUploadSchema,
-	contractSignSchema,
-	contractChangeNameSchema,
+	contractApproveSchema,
 } from "./contract";
 export type {
 	ContractUploadInput,
-	ContractSignInput,
-	ContractChangeNameInput,
+	ContractApproveInput,
 } from "./contract";

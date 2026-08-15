@@ -177,6 +177,9 @@
 - [ ] src/entities/client/clientActions.test.ts
 - [x] src/shared/lib/gateRules.ts (new 2026-08-15 — deriveNextGateNumber, imageParentTypeFor, allPhasesFinished; 9 tests)
 - [x] src/shared/lib/gateRules.test.ts
+- [x] src/shared/lib/contractRules.ts (new 2026-08-15 — deriveInitials for contract approvals; 6 tests)
+- [x] src/shared/lib/contractRules.test.ts
+- [x] src/shared/schemas/contract.test.ts (new 2026-08-15 — contractApproveSchema, 4 tests)
 - [x] src/shared/lib/inviteCode.ts
 - [ ] src/shared/lib/inviteCode.test.ts
 - [x] src/entities/client/queries.ts
@@ -186,7 +189,7 @@
 - [x] src/entities/comment/mutations.ts
 - [x] src/entities/comment/queries.ts
 - [x] src/entities/contract/index.ts
-- [x] src/entities/contract/contractActions.ts
+- [x] src/entities/contract/contractActions.ts (2026-08-15: approveContract replaces signContract — owner/client dual button approval with FOR UPDATE serialization; upload/delete owner-only; upload no longer reassigns client_id; getContractByProjectId includes Clients.client_name)
 - [x] src/entities/contract/contractActions.test.ts
 - [x] src/entities/contract/mutations.ts
 - [x] src/entities/contract/queries.ts
@@ -265,16 +268,19 @@
 - [x] src/features/client-manager/ui/EditClientModal.tsx (deleted — dead duplicate of ClientFormModal's edit mode)
 - [x] src/features/client-manager/ui/ViewTeamMembersModal.tsx
 - [x] src/features/client-manager/clients-page.role.test.tsx
-- [ ] src/features/contracts/ui/index.tsx
-- [ ] src/features/contracts/ui/ContractViewer.tsx
-- [ ] src/features/contracts/ui/ClientsDropdown.tsx
-- [ ] src/features/contracts/ui/SignatureUpload.tsx
-- [ ] src/features/contracts/ui/SignatoriesCard.tsx
-- [ ] src/features/contracts/ui/OTPVerification.tsx
-- [ ] src/features/contracts/ui/AdoptSignatureModal.tsx
-- [ ] src/features/contracts/ui/ConfirmTextModal.tsx
-- [ ] src/features/contracts/ui/ExecuteAgreementCard.tsx
-- [ ] src/features/contracts/ui/ExecutedBanner.tsx
+- [x] src/features/contracts/index.ts (new 2026-08-15 — feature public API: ContractPage, ContractViewer, SignatoriesCard, ContractApprovalCard, ExecutedBanner)
+- [x] src/features/contracts/ui/index.tsx (deleted 2026-08-15 — superseded by the feature-root public API)
+- [x] src/features/contracts/ui/ContractPage.tsx (new 2026-08-15 — FSD: ALL page logic; role derivation owner/client/team, approval card, ExecutedBanner, signatories from owner + client company)
+- [x] src/features/contracts/ui/ContractViewer.tsx (2026-08-15: owner-gated upload/delete (canManage), dead rename/download/print + unused props removed, name prefill fixed, failures surfaced)
+- [x] src/features/contracts/ui/ClientsDropdown.tsx (deleted 2026-08-15 — the client-assignment flow was replaced by contract client_id approval)
+- [x] src/features/contracts/ui/SignatureUpload.tsx (deleted 2026-08-15 — OTP/signature-file flow replaced by button approval)
+- [x] src/features/contracts/ui/SignatoriesCard.tsx (2026-08-15: list-only — owner + client rows, cursive signature; assignment dropdown flows removed)
+- [x] src/features/contracts/ui/OTPVerification.tsx (deleted 2026-08-15 — replaced by button approval)
+- [x] src/features/contracts/ui/AdoptSignatureModal.tsx (deleted 2026-08-15)
+- [x] src/features/contracts/ui/ConfirmTextModal.tsx (2026-08-15: silent-failure bug fixed — result check + error toast, stays open on failure; simplified to noParamFunc flow)
+- [x] src/features/contracts/ui/ContractApprovalCard.tsx (new 2026-08-15 — gate-style approval card: owner/client variant, own button + other-party status only)
+- [x] src/features/contracts/ui/ExecuteAgreementCard.tsx (deleted 2026-08-15)
+- [x] src/features/contracts/ui/ExecutedBanner.tsx (2026-08-15: now rendered on the page once both parties approve)
 - [x] src/features/gate-overview/index.ts (new 2026-08-15 — public API: GateOverview, the three modals)
 - [x] src/features/gate-overview/GateOverview.tsx (2026-08-15: rewritten — real stage tree + gates, client-only Approve/Decline gated on all phases finished, canDecide from the payload, error states, keyboard-accessible accordions)
 - [x] src/features/gate-overview/GateFeedbackModal.tsx (2026-08-15: rewritten — real GateFeedbackEntry[], gates number DESC, status badges, clickable feedback images via ImageLightbox, per-gate Comment button + further-comments count)
@@ -383,7 +389,7 @@
 - [ ] src/app/(app)/(workspace)/credentials/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/page.tsx
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/contract/page.tsx (2026-08-15: FSD — thin async server page reading params, renders ContractPage via the feature public API; the old inline page logic moved to features/contracts/ui/ContractPage.tsx)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx
 - [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
@@ -537,10 +543,14 @@ All pre-existing unless noted — none block the running app except the first.
       `assertProjectMemberNotClient` in all 16 mutation call sites across
       phaseActions / phase safeActions / moduleActions / workflowActions /
       ticketActions (+ createProject fails closed on missing profile).
-- [ ] **Contract page signing-role UI** — `signContract` now verifies the
-      caller's claimed role against `roleAssignments` (2026-08-14 security
-      fix); confirm the contract page surfaces the correct role per user
-      (client vs owner) so the new error path is not reachable in normal use.
+- [x] **Contract page signing-role UI** — RESOLVED 2026-08-15 by the
+      **contracts integration** (`docs/reasonix/plans/2026-08-15-contracts-integration.md`):
+      the OTP/typed-signature flow is replaced by button-based dual approval
+      (`approveContract` — owner via roleAssignment, client via contract
+      client_id). The page derives the viewer's role server-adjacent (no more
+      bogus "Client Viewer" default — team members see no approval card, only
+      both statuses), and the previously silent `signContract` role-error path
+      is gone (approvals are authorized before the write; errors toast).
 
 - [x] **Issue charts on the landing dashboard** — 2026-08-14: new
       `src/entities/issue/` slice (`getIssueStats` — severity counts +

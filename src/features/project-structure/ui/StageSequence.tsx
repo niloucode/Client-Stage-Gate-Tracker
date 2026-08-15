@@ -4,18 +4,9 @@ import {
 	Check,
 	Workflow,
 	Plus,
-	EllipsisVertical,
 	Pencil,
-	Trash2,
 	LucideIcon,
 } from "lucide-react";
-import {
-	DropdownMenu,
-	DropdownMenuTrigger,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -69,6 +60,7 @@ function StageStep({
 	selected,
 	badge,
 	onClick,
+	onEdit,
 }: {
 	stageNumber: number;
 	stageName: string;
@@ -76,41 +68,64 @@ function StageStep({
 	selected?: boolean;
 	badge?: "approved" | "current" | null;
 	onClick?: () => void;
+	onEdit?: () => void;
 }) {
 	const isApproved = status === "approved";
 	const isCurrent = badge === "current";
 
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className={`group flex cursor-pointer flex-col items-center gap-2 text-center transition-transform duration-200 focus:outline-none ${
-				selected ? "" : ""
-			}`}
-		>
-			{/* Node Circle */}
-			<div
-				className={`relative flex h-13 w-13 items-center justify-center rounded-full text-sm font-bold border-2 transition-all shadow-xs ${
-					selected
-						? "border-brand-600 bg-brand-600 text-white ring-4 ring-brand-100"
-						: isApproved
-							? "border-brand-500 bg-brand-500 text-white"
-							: isCurrent
-								? "border-brand-600 bg-brand-50 text-brand-600"
-								: "border-warm-gray-200 bg-neutral-subtle text-neutral-border"
-				}`}
-			>
-				{isApproved ? (
-					<Check className="h-5 w-5" />
-				) : (
-					<span>{stageNumber}</span>
+		<div className="group relative flex flex-col items-center shrink-0 text-center transition-all duration-200">
+			{/* Node Circle & Action Button Wrapper */}
+			<div className="relative z-10 flex flex-col items-center">
+				<button
+					type="button"
+					onClick={onClick}
+					className="cursor-pointer focus:outline-none"
+				>
+					{/* Node Circle — Consistent h-13 w-13 size */}
+					<div
+						className={`
+							relative flex h-13 w-13 items-center justify-center rounded-full text-sm font-bold transition-all shadow-xs
+							${
+								selected
+									? "border-4 border-brand-100 bg-brand-600 text-white ring-4 ring-brand-100"
+									: isApproved
+										? "border-4 border-brand-100 bg-brand-500 text-white hover:bg-brand-600"
+										: isCurrent
+											? "border-4 border-brand-100 bg-brand-50 text-brand-600 hover:bg-brand-100"
+											: "border-4 border-brand-100 bg-neutral-surface text-brand-600 hover:bg-brand-50"
+							}
+						`}
+					>
+						{isApproved ? (
+							<Check className="h-5 w-5" />
+						) : (
+							<span>{stageNumber}</span>
+						)}
+					</div>
+				</button>
+
+				{/* Pencil Button on Group Hover */}
+				{onEdit && (
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation();
+							onEdit();
+						}}
+						className="flex items-center justify-center h-6 w-6 absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 bg-brand-100 rounded-full z-20 hover:bg-brand-600 hover:text-brand-10 transition-all cursor-pointer shadow-xs"
+						title={`Edit stage ${stageName}`}
+						aria-label={`Edit stage ${stageName}`}
+					>
+						<Pencil size={12} strokeWidth={3} />
+					</button>
 				)}
 			</div>
 
 			{/* Badge Tag */}
 			{badge && (
 				<span
-					className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+					className={`mt-2 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
 						badge === "approved"
 							? "border-green-600/30 bg-green-100 text-green-600"
 							: "border-brand-500/30 bg-brand-50 text-brand-600"
@@ -122,13 +137,13 @@ function StageStep({
 
 			{/* Title */}
 			<span
-				className={`max-w-25 text-xs font-semibold leading-tight line-clamp-2 ${
+				className={`max-w-25 text-xs font-semibold leading-tight line-clamp-2 ${badge ? "mt-1.5" : "mt-2"} ${
 					selected || isCurrent ? "text-brand-600" : "text-neutral-muted"
 				}`}
 			>
 				{stageName}
 			</span>
-		</button>
+		</div>
 	);
 }
 
@@ -138,7 +153,6 @@ export function StageSequence({
 	onSelectStage,
 	onAddStage,
 	onEditStage,
-	onDeleteStage,
 	showAddButton = true,
 }: StageSequenceProps) {
 	const lastApprovedIdx = stages.reduce(
@@ -148,8 +162,8 @@ export function StageSequence({
 	const progressPct =
 		stages.length > 1 ? (lastApprovedIdx / (stages.length - 1)) * 100 : 0;
 
-	const NODE_SLOT = 120;
-	const CIRCLE_CENTER_Y = 26;
+	const NODE_SLOT = 130;
+	const CIRCLE_CENTER_Y = 26; // Center of h-13 (52px)
 
 	return (
 		<div className="w-full">
@@ -182,7 +196,7 @@ export function StageSequence({
 			) : (
 				<div className="hide-scrollbar overflow-x-auto py-2">
 					<div
-						className="relative flex items-start justify-between min-w-full px-2"
+						className="relative flex items-start justify-between min-w-full px-4"
 						style={{ minWidth: `${stages.length * NODE_SLOT}px` }}
 					>
 						{/* Progress Connector Line */}
@@ -225,43 +239,10 @@ export function StageSequence({
 										selected={selectedId === stage.stage_id}
 										badge={badge}
 										onClick={() => onSelectStage?.(stage.stage_id)}
+										onEdit={
+											onEditStage ? () => onEditStage(stage.stage_id) : undefined
+										}
 									/>
-
-									{/* Per-stage actions menu */}
-									{(onEditStage || onDeleteStage) && (
-										<div className="mt-1">
-											<DropdownMenu>
-												<DropdownMenuTrigger
-													aria-label={`Actions for ${stage.name}`}
-													className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer data-popup-open:bg-slate-100"
-												>
-													<EllipsisVertical size={16} />
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align="end" className="w-44">
-													{onEditStage && (
-														<DropdownMenuItem
-															onClick={() => onEditStage(stage.stage_id)}
-														>
-															<Pencil size={14} />
-															Edit
-														</DropdownMenuItem>
-													)}
-													{onEditStage && onDeleteStage && (
-														<DropdownMenuSeparator />
-													)}
-													{onDeleteStage && (
-														<DropdownMenuItem
-															onClick={() => onDeleteStage(stage.stage_id)}
-															className="text-destructive focus:text-destructive"
-														>
-															<Trash2 size={14} />
-															Delete
-														</DropdownMenuItem>
-													)}
-												</DropdownMenuContent>
-											</DropdownMenu>
-										</div>
-									)}
 								</div>
 							);
 						})}

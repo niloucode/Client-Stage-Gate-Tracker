@@ -3,7 +3,6 @@ import { z } from "zod";
 // ── Upload ───────────────────────────────────────────────────────────────────
 
 export const contractUploadSchema = z.object({
-	clientId: z.uuid({ message: "Invalid client ID" }),
 	projectId: z.uuid({ message: "Invalid project ID" }),
 	contractName: z
 		.string()
@@ -13,33 +12,13 @@ export const contractUploadSchema = z.object({
 
 export type ContractUploadInput = z.infer<typeof contractUploadSchema>;
 
-// ── Sign ─────────────────────────────────────────────────────────────────────
+// ── Approve (2026-08-15 spec: button-based dual approval, no typed signature) ──
 
-export const contractSignSchema = z.object({
+export const contractApproveSchema = z.object({
 	projectId: z.uuid({ message: "Invalid project ID" }),
-	role: z.enum(["Client Viewer", "Project Owner"], {
-		message: "Role must be 'Client Viewer' or 'Project Owner'",
+	role: z.enum(["client", "owner"], {
+		message: "Role must be 'client' or 'owner'",
 	}),
-	fullName: z
-		.string()
-		.min(1, "Full name is required")
-		.max(100, "Full name must be 100 characters or less"),
-	initials: z
-		.string()
-		.min(1, "Initials are required")
-		.max(4, "Initials must be 4 characters or less"),
 });
 
-export type ContractSignInput = z.infer<typeof contractSignSchema>;
-
-// ── Change Name ──────────────────────────────────────────────────────────────
-
-export const contractChangeNameSchema = z.object({
-	projectId: z.uuid({ message: "Invalid project ID" }),
-	contractName: z
-		.string()
-		.min(1, "Contract name is required")
-		.max(100, "Contract name must be 100 characters or less"),
-});
-
-export type ContractChangeNameInput = z.infer<typeof contractChangeNameSchema>;
+export type ContractApproveInput = z.infer<typeof contractApproveSchema>;

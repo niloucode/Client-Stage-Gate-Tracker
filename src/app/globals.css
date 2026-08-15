@@ -6,6 +6,8 @@
 @plugin "tailwindcss-animate";
 
 @theme {
+
+	/* #6b24a7*/
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 
@@ -81,6 +83,7 @@ h1 {
     line-height: 1.0;   
 		padding:0.0;
 		margin:0.0;                  /* "1.0" = perfectly snug (no extra space between lines) */
+		
 }
 
 /* H2 - Subheading */
@@ -277,13 +280,17 @@ body {
 @layer base {
   * {
     @apply border-border outline-ring/50;
-	}
+  }
+  ::selection {
+    background-color: #6b24a7;
+    color: #ffffff;
+  }
   body {
     @apply bg-background text-foreground;
-	}
+  }
   html {
     @apply font-sans;
-	}
+  }
 }
 
 /*

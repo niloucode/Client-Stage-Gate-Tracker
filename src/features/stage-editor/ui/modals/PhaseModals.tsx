@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { z } from "zod";
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, Trash2 } from "lucide-react";
 import { useSelector } from "@tanstack/react-form";
 
 import type { Phase } from "../../types";
@@ -36,6 +36,7 @@ export interface PhaseModalProps {
 	 * Pass a `phase` object for Edit mode, or `null`/`undefined` for Create mode.
 	 */
 	phase?: Phase | null;
+	onDelete?: () => void;
 }
 
 const basePhaseModalSchema = z.object({
@@ -89,7 +90,13 @@ const phaseModalSchema = basePhaseModalSchema.superRefine((data, ctx) => {
 
 type PhaseFormValues = z.input<typeof phaseModalSchema>;
 
-export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps) {
+export function PhaseModal({
+	isOpen,
+	onClose,
+	stageId,
+	phase,
+	onDelete,
+}: PhaseModalProps) {
 	const isEditMode = Boolean(phase);
 	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
@@ -114,40 +121,61 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 			onSubmit: phaseModalSchema,
 		},
 		onSubmit: async ({ value }) => {
-			if (isEditMode && phase) {
-				await updatePhaseMutation.mutateAsync({
-					phaseId: phase.phase_id,
-					stageId,
-					name: value.name,
-					description: value.description ?? "",
-					// non-null guaranteed by phaseModalSchema (required plan dates)
-					planStart: value.planStart!,
-					planEnd: value.planEnd!,
-					actualStart: value.actualStart ?? undefined,
-					actualEnd: value.actualEnd ?? undefined,
-				});
+			try {
+				if (isEditMode && phase) {
+					await updatePhaseMutation.mutateAsync({
+						phaseId: phase.phase_id,
+						stageId,
+						name: value.name,
+						description: value.description ?? "",
+						// non-null guaranteed by phaseModalSchema (required plan dates)
+						planStart: value.planStart!,
+						planEnd: value.planEnd!,
+						actualStart: value.actualStart ?? undefined,
+						actualEnd: value.actualEnd ?? undefined,
+					});
+					toast.add({
+						title: "Phase Edited",
+						description: `"${value.name}" has been edited successfully.`,
+						type: "success",
+					});
+				} else {
+					// 1. Trigger Loading Toast upon adding
+					toast.add({
+						title: "Creating Phase",
+						description: "Please wait while your phase is being created...",
+						type: "loading",
+					});
+
+					// 2. Perform create mutation
+					await createPhaseMutation.mutateAsync({
+						stageId,
+						name: value.name,
+						description: value.description ?? "",
+						planStart: value.planStart!,
+						planEnd: value.planEnd!,
+						actualStart: value.actualStart ?? undefined,
+						actualEnd: value.actualEnd ?? undefined,
+					});
+
+					// 3. Trigger Success Toast
+					toast.add({
+						title: "Phase Created",
+						description: `"${value.name}" has been created successfully.`,
+						type: "success",
+					});
+				}
+				handleClose();
+			} catch (error) {
 				toast.add({
-					title: "Phase Edited",
-					description: `"${value.name}" has been edited successfully.`,
-					type: "success",
-				});
-			} else {
-				await createPhaseMutation.mutateAsync({
-					stageId,
-					name: value.name,
-					description: value.description ?? "",
-					planStart: value.planStart!,
-					planEnd: value.planEnd!,
-					actualStart: value.actualStart ?? undefined,
-					actualEnd: value.actualEnd ?? undefined,
-				});
-				toast.add({
-					title: "Phase Created",
-					description: `"${value.name}" has been created successfully.`,
-					type: "success",
+					title: isEditMode ? "Edit Failed" : "Creation Failed",
+					description:
+						error instanceof Error
+							? error.message
+							: "An error occurred while saving the phase.",
+					type: "error",
 				});
 			}
-			handleClose();
 		},
 	});
 
@@ -179,10 +207,12 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 		handleClose();
 	};
 
-	const isPending = createPhaseMutation.isPending || updatePhaseMutation.isPending;
+	const isPending =
+		createPhaseMutation.isPending || updatePhaseMutation.isPending;
 
 	return (
 		<>
+			{/* Main Form Dialog */}
 			<Dialog
 				open={isOpen}
 				onOpenChange={(open) => {
@@ -192,7 +222,9 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>
-							{isEditMode ? `Edit Phase ${phase?.number ?? ""}` : "Create New Phase"}
+							{isEditMode
+								? `Edit Phase ${phase?.number ?? ""}`
+								: "Create New Phase"}
 						</DialogTitle>
 						<DialogDescription>
 							{isEditMode
@@ -261,7 +293,9 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 															? new Date(field.state.value)
 															: undefined
 													}
-													onChange={(date) => field.handleChange(date ?? null)}
+													onChange={(date) =>
+														field.handleChange(date ?? null)
+													}
 													placeholder="Pick Planned Start"
 													error={error ?? undefined}
 												/>
@@ -283,7 +317,9 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 															? new Date(field.state.value)
 															: undefined
 													}
-													onChange={(date) => field.handleChange(date ?? null)}
+													onChange={(date) =>
+														field.handleChange(date ?? null)
+													}
 													placeholder="Pick Planned End"
 													error={error ?? undefined}
 												/>
@@ -294,6 +330,16 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 							</div>
 
 							<DialogFooter className="mt-6" showCloseButton={false}>
+								{isEditMode && onDelete && (
+									<Button
+										type="button"
+										className="mr-auto"
+										variant="destructive"
+										onClick={onDelete}
+									>
+										<Trash2 className="mr-2 h-4 w-4" /> Delete Phase
+									</Button>
+								)}
 								<Button
 									type="button"
 									variant="ghost"
@@ -302,7 +348,9 @@ export function PhaseModal({ isOpen, onClose, stageId, phase }: PhaseModalProps)
 								>
 									Cancel
 								</Button>
-								<form.SubmitButton pendingLabel={isEditMode ? "Saving…" : "Adding…"}>
+								<form.SubmitButton
+									pendingLabel={isEditMode ? "Saving…" : "Adding…"}
+								>
 									{isEditMode ? (
 										<>
 											<Save className="mr-2 h-4 w-4" /> Save Changes

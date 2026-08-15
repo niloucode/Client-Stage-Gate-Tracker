@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { Tag } from "@/entities/types";
 import { Pencil, Trash2, LucideSearch } from "lucide-react";
 import { TagBadge } from "@/entities/tag/ui/TagBadge";
 import { Lacking } from "@/shared/ui/search-status";
+
+const PINNED_TAGS = ["API", "Bugs", "Integration", "Production"] as const;
 
 export default function TagListModal({
 	tags,
@@ -18,14 +20,53 @@ export default function TagListModal({
 }) {
 	const [searchQuery, setSearchQuery] = useState("");
 
-	const filteredTags = tags.filter((tag) => {
+	// 1. Filter by search query, 2. Keep the 4 hardcoded tags at top, 3. Sort remainder alphabetically
+	const displayedTags = useMemo(() => {
 		const q = searchQuery.toLowerCase().trim();
-		if (!q) return true;
-		return (
-			tag.name.toLowerCase().includes(q) ||
-			(tag.description && tag.description.toLowerCase().includes(q))
+
+		const matchesSearch = (tag: Tag) => {
+			if (!q) return true;
+			return (
+				tag.name.toLowerCase().includes(q) ||
+				(tag.description && tag.description.toLowerCase().includes(q))
+			);
+		};
+
+		const pinned: Tag[] = [];
+		const others: Tag[] = [];
+
+		tags.forEach((tag) => {
+			if (!matchesSearch(tag)) return;
+
+			const isPinned = PINNED_TAGS.some(
+				(p) => p.toLowerCase() === tag.name.toLowerCase(),
+			);
+
+			if (isPinned) {
+				pinned.push(tag);
+			} else {
+				others.push(tag);
+			}
+		});
+
+		// Sort pinned according to the PINNED_TAGS array order
+		pinned.sort((a, b) => {
+			const idxA = PINNED_TAGS.findIndex(
+				(p) => p.toLowerCase() === a.name.toLowerCase(),
+			);
+			const idxB = PINNED_TAGS.findIndex(
+				(p) => p.toLowerCase() === b.name.toLowerCase(),
+			);
+			return idxA - idxB;
+		});
+
+		// Sort all other tags alphabetically by name
+		others.sort((a, b) =>
+			a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
 		);
-	});
+
+		return [...pinned, ...others];
+	}, [tags, searchQuery]);
 
 	return (
 		<div className="px-6 w-full flex flex-col gap-3">
@@ -47,7 +88,7 @@ export default function TagListModal({
 
 			{/* Table Container */}
 			<div className="w-full bg-neutral-surface overflow-x-auto rounded h-80 overflow-y-auto border border-brand-100">
-				{filteredTags.length === 0 ? (
+				{displayedTags.length === 0 ? (
 					<Lacking />
 				) : (
 					<table className="w-full border-collapse text-left">
@@ -68,7 +109,7 @@ export default function TagListModal({
 
 						{/* Table Body */}
 						<tbody className="bg-neutral-surface">
-							{filteredTags.map((tag) => (
+							{displayedTags.map((tag) => (
 								<tr
 									key={tag.tag_id}
 									className="transition-colors hover:bg-neutral-subtle/20 border-b border-brand-100/60"
@@ -95,19 +136,29 @@ export default function TagListModal({
 												onClick={() => onEditTag(tag)}
 												title={`Edit ${tag.name}`}
 												aria-label={`Edit ${tag.name}`}
-												className="p-1.5 rounded-md text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+												className="p-1.5 rounded-md text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 cursor-pointer"
 											>
 												<Pencil size={15} />
 											</button>
-											<button
-												type="button"
-												onClick={() => onRequestDeleteTag(tag)}
-												title={`Delete ${tag.name}`}
-												aria-label={`Delete ${tag.name}`}
-												className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-											>
-												<Trash2 size={15} />
-											</button>
+
+											{/* SIR SKY I AM SO SORRY FOR THIS WARCRIME... DEADLINES WERE IMMINENT */}
+
+											{!(tag.name === "API" ||
+											tag.name === "Bugs" ||
+											tag.name === "Integration" ||
+											tag.name === "Production") ? (
+												<button
+													type="button"
+													onClick={() => onRequestDeleteTag(tag)}
+													title={`Delete ${tag.name}`}
+													aria-label={`Delete ${tag.name}`}
+													className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 cursor-pointer"
+												>
+													<Trash2 size={15} />
+												</button>
+											) : (
+												""
+											)}
 										</div>
 									</td>
 								</tr>

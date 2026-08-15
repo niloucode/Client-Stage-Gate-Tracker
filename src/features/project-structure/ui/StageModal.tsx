@@ -116,70 +116,89 @@ export function StageModal({
 		defaultValues,
 		validators: { onSubmit: stageModalSchema },
 		onSubmit: async ({ value }) => {
-			if (isEditMode && stage) {
-				const res = await updateStage(
-					stage.stage_id,
-					value.name,
-					value.description ?? "",
-					value.planStart!,
-					value.planEnd!,
-				);
+			try {
+				if (isEditMode && stage) {
+					const res = await updateStage(
+						stage.stage_id,
+						value.name,
+						value.description ?? "",
+						value.planStart!,
+						value.planEnd!,
+					);
 
-				if (!res.success || !res.data) {
-					const errMsg =
-						typeof res.error === "string"
-							? res.error
-							: "Failed to update the stage.";
+					if (!res.success || !res.data) {
+						const errMsg =
+							typeof res.error === "string"
+								? res.error
+								: "Failed to update the stage.";
+						toast.add({
+							title: "Edit Failed",
+							description: errMsg,
+							type: "error",
+						});
+						return;
+					}
+
 					toast.add({
-						title: "Edit Failed",
-						description: errMsg,
-						type: "error",
+						title: "Stage Edited",
+						description: `"${value.name}" has been updated successfully.`,
+						type: "success",
 					});
-					return;
-				}
-
-				toast.add({
-					title: "Stage Edited",
-					description: `"${value.name}" has been updated successfully.`,
-					type: "success",
-				});
-				onSaved?.({
-					stage_id: stage.stage_id,
-					name: res.data.name,
-				});
-			} else {
-				const res = await createStage(
-					projectId,
-					value.name,
-					value.description ?? "",
-					value.planStart!,
-					value.planEnd!,
-				);
-
-				if (!res.success || !res.data) {
-					const errMsg =
-						typeof res.error === "string"
-							? res.error
-							: "Failed to create the stage.";
+					onSaved?.({
+						stage_id: stage.stage_id,
+						name: res.data.name,
+					});
+				} else {
+					// 1. Trigger Loading Toast upon adding
 					toast.add({
-						title: "Creation Failed",
-						description: errMsg,
-						type: "error",
+						title: "Creating Stage",
+						description: "Please wait while your stage is being created...",
+						type: "loading",
 					});
-					return;
-				}
 
+					const res = await createStage(
+						projectId,
+						value.name,
+						value.description ?? "",
+						value.planStart!,
+						value.planEnd!,
+					);
+
+					if (!res.success || !res.data) {
+						const errMsg =
+							typeof res.error === "string"
+								? res.error
+								: "Failed to create the stage.";
+						toast.add({
+							title: "Creation Failed",
+							description: errMsg,
+							type: "error",
+						});
+						return;
+					}
+
+					// 2. Trigger Success Toast
+					toast.add({
+						title: "Stage Created",
+						description: `"${value.name}" has been created successfully.`,
+						type: "success",
+					});
+					onSaved?.({
+						stage_id: res.data.stage_id,
+						name: res.data.name,
+					});
+				}
+				handleClose();
+			} catch (error) {
 				toast.add({
-					title: "Stage Created",
-					description: `"${value.name}" has been created successfully.`,
-					type: "success",
-				});
-				onSaved?.({
-					stage_id: res.data.stage_id,
-					name: res.data.name,
+					title: isEditMode ? "Edit Failed" : "Creation Failed",
+					description:
+						error instanceof Error
+							? error.message
+							: "An error occurred while saving the stage.",
+					type: "error",
 				});
 			}
-			handleClose();
 		},
 	});
 

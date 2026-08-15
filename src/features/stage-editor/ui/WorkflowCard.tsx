@@ -27,9 +27,9 @@ interface WorkflowCardProps {
  * ------------------
  * The `Workflow` type exposes the canonical scheduling vocabulary
  * (Task 1.5 / 3.1):
- *   - planStart  -> PLANNED START (PS)
- *   - planEnd    -> PLANNED END (PE) — fixed, never swapped for actualEnd
- *   - actualEnd  -> ACTUAL END (AE), set once the workflow has ended
+ *   - planStart   -> PLANNED START (PS)
+ *   - planEnd     -> PLANNED END (PE) — fixed, never swapped for actualEnd
+ *   - actualEnd   -> ACTUAL END (AE), set once the workflow has ended
  *   - actualStart -> ACTUAL START (AS), distinct from the planned one
  */
 type WorkflowStatus = "not_started" | "started" | "ended";
@@ -134,6 +134,11 @@ export function WorkflowCard({
 	const confirmDelete = (workflow: Workflow) => {
 		setWorkflowToDelete(workflow);
 		setIsDeleteConfirmOpen(true);
+	};
+
+	const handleEditDeleteClick = () => {
+		if (!editingWorkflow) return;
+		confirmDelete(editingWorkflow);
 		setEditingWorkflow(null);
 	};
 
@@ -349,14 +354,14 @@ export function WorkflowCard({
 								</div>
 
 								{/* Ticket Count */}
-								<div className="flex gap-1.5 min-w-[80px]">
+								<div className="flex gap-1.5 min-w-20">
 									<span className="ml-auto text-xs text-neutral-border">
 										{workflow.ticketCount} Tickets
 									</span>
 								</div>
 
 								{/* Progress Bar */}
-								<div className="flex items-center gap-2 min-w-[100px]">
+								<div className="flex items-center gap-2 min-w-25">
 									{workflow.ticketCount === 0 ? (
 										<>
 											<div className="w-20 h-1.5 bg-slate-100 rounded-full" />
@@ -384,8 +389,9 @@ export function WorkflowCard({
 									{!readOnly &&
 										getWorkflowStatus(workflow) !== "ended" && (
 											<button
+												type="button"
 												onClick={() => openEditWorkflowModal(workflow)}
-												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded"
+												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded cursor-pointer"
 												aria-label="Edit workflow"
 											>
 												<EllipsisVertical
@@ -403,8 +409,9 @@ export function WorkflowCard({
 				{/* Add Workflow Button */}
 				{!readOnly && (
 					<button
+						type="button"
 						onClick={openCreateWorkflowModal}
-						className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all"
+						className="w-full m-3 py-2 border-2 border-dashed border-brand-100 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-brand-500 transition-all cursor-pointer"
 						style={{ width: "calc(100% - 24px)" }}
 					>
 						<Plus size={16} className={"text-brand-200"} />
@@ -430,7 +437,7 @@ export function WorkflowCard({
 				moduleId={moduleId}
 				stageId={stageId}
 				onClose={() => setEditingWorkflow(null)}
-				onDelete={() => editingWorkflow && confirmDelete(editingWorkflow)}
+				onDelete={handleEditDeleteClick}
 			/>
 
 			{/* Delete Confirmation Modal */}
@@ -438,7 +445,7 @@ export function WorkflowCard({
 				isOpen={isDeleteConfirmOpen}
 				noun="Workflow"
 				title={
-					workflowToDelete ? `Delete ${workflowToDelete.name}` : undefined
+					workflowToDelete ? `Delete ${workflowToDelete.name}?` : undefined
 				}
 				onConfirm={handleDeleteWorkflow}
 				onCancel={() => {

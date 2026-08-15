@@ -1,17 +1,16 @@
 "use server";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { prisma } from "@/lib/prisma";
 import { contractSignedStart } from "@/shared/lib/scheduling/stageSchedule";
 import {
 	contractUploadSchema,
-	contractSignSchema,
-	contractChangeNameSchema,
+	contractApproveSchema,
 } from "@/shared/schemas";
+import { deriveInitials } from "@/shared/lib/contractRules";
 import {
-	assertProjectMember,
 	getCurrentUserId,
+	requireProjectOwner,
 } from "@/lib/auth/projectAccess";
 
 // ── UPLOAD ────────────────────────────────────────────────────────────────────
@@ -34,24 +33,28 @@ export async function isPdfFile(file: File): Promise<boolean> {
 }
 
 export async function uploadContract(formData: FormData) {
-	const clientId = formData.get("clientId") as string;
 	const projectId = formData.get("projectId") as string;
 	const file = formData.get("file") as File;
 	const contractName = formData.get("contractName") as string;
 	try {
-		// Authorization: caller must be a member of the project
-		const auth = await assertProjectMember(projectId);
-		if (!auth.ok) return { success: false, error: auth.error };
+		// Authorization: owner-only (2026-08-15 spec)
+		const userId = await getCurrentUserId();
+		if (!userId) return { success: false, error: "Authentication required." };
+		if (!(await requireProjectOwner(projectId, userId))) {
+			return {
+				success: false,
+				error: "Only the Project Owner can upload the contract.",
+			};
+		}
 
 		const parsed = contractUploadSchema.safeParse({
-			clientId,
 			projectId,
 			contractName,
 		});
 		if (!parsed.success) {
 			return {
 				success: false,
-				error: z.flattenError(parsed.error).fieldErrors,
+				error: parsed.error.issues.map((i) => i.message).join(" "),
 			};
 		}
 
@@ -73,16 +76,22 @@ export async function uploadContract(formData: FormData) {
 
 		const supabaseAdmin = createAdminClient();
 
-		// Upsert — create or reset soft-delete on existing
-		const updatedContract = await prisma.contracts.upsert({
+		// The contract row always exists (created atomically with the project,
+		// client_id NOT NULL — project rule). Restore it if it was soft-deleted.
+		const existingContract = await prisma.contracts.findFirst({
 			where: { project_id: projectId },
-			update: {
+		});
+		if (!existingContract) {
+			return {
+				success: false,
+				error: "Contract not found for this project.",
+			};
+		}
+		const updatedContract = await prisma.contracts.update({
+			where: { contract_id: existingContract.contract_id },
+			data: {
 				is_deleted: false,
 				deleted_at: null,
-			},
-			create: {
-				client_id: clientId,
-				project_id: projectId,
 			},
 		});
 
@@ -163,9 +172,15 @@ export async function getContractUrl(filePath: string) {
 // ── SOFT DELETE ───────────────────────────────────────────────────────────────
 export async function deleteContract(projectId: string, filePath: string) {
 	try {
-		// Authorization: caller must be a member of the project
-		const auth = await assertProjectMember(projectId);
-		if (!auth.ok) return { success: false, error: auth.error };
+		// Authorization: owner-only (2026-08-15 spec)
+		const userId = await getCurrentUserId();
+		if (!userId) return { success: false, error: "Authentication required." };
+		if (!(await requireProjectOwner(projectId, userId))) {
+			return {
+				success: false,
+				error: "Only the Project Owner can delete the contract.",
+			};
+		}
 
 		// Bind the storage path to this project — never delete a path supplied
 		// for a different project, and no `../` traversal. Escape projectId so
@@ -225,6 +240,9 @@ export async function getContractByProjectId(projectId: string) {
 				project_id: projectId,
 				is_deleted: false,
 			},
+			include: {
+				Clients: { select: { client_name: true } },
+			},
 		});
 
 		return { success: true, data: contract };
@@ -238,115 +256,94 @@ export async function getContractByProjectId(projectId: string) {
 	}
 }
 
-// ── CHANGE NAME ───────────────────────────────────────────────────────────────
+// ── APPROVE (2026-08-15 spec: button-based dual approval) ────────────────────
+// Both the Project Owner and the project's client must approve before the
+// first stage may start. The signer's PROFILE name is recorded server-side
+// (initials derived) — no typed signature, no client-supplied identity.
 
-export async function changeContractName(
+export async function approveContract(
 	projectId: string,
-	contractName: string,
+	role: "client" | "owner",
 ) {
 	try {
-		const parsed = contractChangeNameSchema.safeParse({
-			projectId,
-			contractName,
-		});
+		const parsed = contractApproveSchema.safeParse({ projectId, role });
 		if (!parsed.success) {
 			return {
 				success: false,
-				error: z.flattenError(parsed.error).fieldErrors,
+				error: parsed.error.issues.map((i) => i.message).join(" "),
 			};
 		}
 
-		// Authorization: caller must be a member of the project
-		const auth = await assertProjectMember(projectId);
-		if (!auth.ok) return { success: false, error: auth.error };
+		const userId = await getCurrentUserId();
+		if (!userId) return { success: false, error: "Authentication required." };
 
-		const updated = await prisma.contracts.update({
-			where: { project_id: projectId },
-			data: { contract_name: contractName },
+		const profile = await prisma.profiles.findUnique({
+			where: { profile_id: userId },
+			select: { client_id: true, first_name: true, last_name: true },
 		});
+		if (!profile) return { success: false, error: "Profile not found." };
 
-		return { success: true, data: updated };
-	} catch (error) {
-		console.error("Failed to change contract name:", error);
-		return {
-			success: false,
-			error:
-				error instanceof Error ? error.message : "Failed to rename contract.",
-		};
-	}
-}
+		// Spec 1 (project-structure): once BOTH parties have approved, the
+		// first stage's actual start is the later of the two approval dates.
+		// Everything below runs in ONE transaction that LOCKS the contract
+		// row (SELECT … FOR UPDATE), so concurrent cross-party approvals
+		// serialize: the second approver reads the first's committed
+		// timestamp and its stage write lands last with the LATER date.
+		// No idempotent early return — re-approving preserves the ORIGINAL
+		// timestamp and recomputes the stage start from both committed
+		// timestamps (self-healing if a stage write was ever missed).
+		return await prisma.$transaction(async (tx) => {
+			await tx.$queryRaw`
+				SELECT "contract_id" FROM "public"."Contracts"
+				WHERE "project_id" = ${projectId}::uuid
+				FOR UPDATE
+			`;
 
-// ── SIGN ──────────────────────────────────────────────────────────────────────
+			const contract = await tx.contracts.findUnique({
+				where: { project_id: projectId },
+				select: {
+					client_id: true,
+					is_deleted: true,
+					client_signed_at: true,
+					project_owner_signed_at: true,
+				},
+			});
+			if (!contract || contract.is_deleted) {
+				throw new Error("Contract not found.");
+			}
 
-export async function signContract(
-	projectId: string,
-	role: "Client Viewer" | "Project Owner",
-	fullName: string,
-	initials: string,
-) {
-	try {
-		const parsed = contractSignSchema.safeParse({
-			projectId,
-			role,
-			fullName,
-			initials,
-		});
-		if (!parsed.success) {
-			return {
-				success: false,
-				error: z.flattenError(parsed.error).fieldErrors,
-			};
-		}
+			// Authz: owner = Project Owner roleAssignment; client = the
+			// contract's client company (profile.client_id === contract.client_id).
+			if (role === "owner") {
+				if (!(await requireProjectOwner(projectId, userId))) {
+					throw new Error(
+						"Only the Project Owner can approve the contract.",
+					);
+				}
+			} else if (profile.client_id !== contract.client_id) {
+				throw new Error(
+					"Only the project's client can approve the contract.",
+				);
+			}
 
-		// Authorization: only a member of the project may sign — a
-		// non-member must not be able to forge either signature.
-		const auth = await assertProjectMember(projectId);
-		if (!auth.ok) return { success: false, error: auth.error };
+			const fullName = `${profile.first_name} ${profile.last_name}`.trim();
+			const initials = deriveInitials(fullName);
 
-		// The claimed role must be backed by a real role assignment on this
-		// project — otherwise any member could forge the owner/client
-		// signature (pre-existing vector; verified in the 2026-08-14
-		// security review and now enforced).
-		const claimedRole = await prisma.roles.findUnique({
-			where: { name: role },
-			select: { role_id: true },
-		});
-		if (!claimedRole) {
-			return { success: false, error: "Unknown signing role." };
-		}
-		const roleAssignment = await prisma.roleAssignments.findFirst({
-			where: {
-				project_id: projectId,
-				user_id: auth.userId,
-				role_id: claimedRole.role_id,
-			},
-		});
-		if (!roleAssignment) {
-			return {
-				success: false,
-				error: `You do not hold the "${role}" role for this project.`,
-			};
-		}
-
-		const isClient = role === "Client Viewer";
-
-		// Spec 1 (project-structure): once BOTH parties have signed, the
-		// first stage's actual start is the later of the two signature
-		// dates. Materialized in the same transaction as the signature.
-		await prisma.$transaction(async (tx) => {
 			const updated = await tx.contracts.update({
 				where: { project_id: projectId },
-				data: isClient
-					? {
-							client_signature: fullName,
-							client_initials: initials,
-							client_signed_at: new Date(),
-						}
-					: {
-							project_owner_signature: fullName,
-							project_owner_initials: initials,
-							project_owner_signed_at: new Date(),
-						},
+				data:
+					role === "owner"
+						? {
+								project_owner_signature: fullName,
+								project_owner_initials: initials,
+								project_owner_signed_at:
+									contract.project_owner_signed_at ?? new Date(),
+							}
+						: {
+								client_signature: fullName,
+								client_initials: initials,
+								client_signed_at: contract.client_signed_at ?? new Date(),
+							},
 				select: {
 					client_signed_at: true,
 					project_owner_signed_at: true,
@@ -367,15 +364,15 @@ export async function signContract(
 					data: { actual_start_at: signedAt },
 				});
 			}
-		});
 
-		return { success: true };
+			return { success: true };
+		});
 	} catch (error) {
-		console.error("Failed to sign contract:", error);
+		console.error("Failed to approve contract:", error);
 		return {
 			success: false,
 			error:
-				error instanceof Error ? error.message : "Failed to sign contract.",
+				error instanceof Error ? error.message : "Failed to approve contract.",
 		};
 	}
 }

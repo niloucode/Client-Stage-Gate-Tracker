@@ -1,12 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { contractKeys } from "@/shared/query/keys";
+import { contractKeys, stageKeys } from "@/shared/query/keys";
 import {
 	uploadContract,
 	deleteContract,
-	signContract,
-	changeContractName,
+	approveContract,
 } from "./contractActions";
 
 export function useUploadContract() {
@@ -14,13 +13,11 @@ export function useUploadContract() {
 
 	return useMutation({
 		mutationFn: (params: {
-			clientId: string;
 			projectId: string;
 			file: File;
 			contractName: string;
 		}) => {
 			const formData = new FormData();
-			formData.append("clientId", params.clientId);
 			formData.append("projectId", params.projectId);
 			formData.append("file", params.file);
 			formData.append("contractName", params.contractName);
@@ -48,40 +45,18 @@ export function useDeleteContract() {
 	});
 }
 
-export function useSignContract() {
+export function useApproveContract() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (params: {
-			projectId: string;
-			role: "Client Viewer" | "Project Owner";
-			fullName: string;
-			initials: string;
-		}) =>
-			signContract(
-				params.projectId,
-				params.role,
-				params.fullName,
-				params.initials,
-			),
+		mutationFn: (params: { projectId: string; role: "client" | "owner" }) =>
+			approveContract(params.projectId, params.role),
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({
 				queryKey: contractKeys.detail(variables.projectId),
 			});
-		},
-	});
-}
-
-export function useChangeContractName() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		mutationFn: (params: { projectId: string; contractName: string }) =>
-			changeContractName(params.projectId, params.contractName),
-		onSuccess: async (_data, variables) => {
-			await queryClient.invalidateQueries({
-				queryKey: contractKeys.detail(variables.projectId),
-			});
+			// Both approvals materialize the first stage's actual start.
+			await queryClient.invalidateQueries({ queryKey: stageKeys.all });
 		},
 	});
 }

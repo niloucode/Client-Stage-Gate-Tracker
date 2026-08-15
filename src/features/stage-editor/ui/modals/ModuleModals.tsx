@@ -109,41 +109,63 @@ export function ModuleModal({
 		defaultValues,
 		validators: { onSubmit: moduleModalSchema },
 		onSubmit: async ({ value }) => {
-			if (isEditMode && module) {
-				await updateModuleMutation.mutateAsync({
-					moduleId: module.module_id,
-					stageId,
-					name: value.name,
-					// non-null guaranteed by moduleModalSchema (required plan dates)
-					planStart: value.planStart!,
-					planEnd: value.planEnd!,
-					actualStart: value.actualStart ?? undefined,
-					actualEnd: value.actualEnd ?? undefined,
-				});
+			try {
+				if (isEditMode && module) {
+					await updateModuleMutation.mutateAsync({
+						moduleId: module.module_id,
+						stageId,
+						name: value.name,
+						// non-null guaranteed by moduleModalSchema (required plan dates)
+						planStart: value.planStart!,
+						planEnd: value.planEnd!,
+						actualStart: value.actualStart ?? undefined,
+						actualEnd: value.actualEnd ?? undefined,
+					});
+					toast.add({
+						title: "Module Edited",
+						description: `"${value.name}" has been edited successfully.`,
+						type: "success",
+					});
+				} else {
+					if (!phaseId) return;
+
+					// 1. Trigger Loading Toast upon adding
+					toast.add({
+						title: "Creating Module",
+						description: "Please wait while your module is being created...",
+						type: "loading",
+					});
+
+					// 2. Perform create mutation
+					await createModuleMutation.mutateAsync({
+						phaseId,
+						stageId,
+						name: value.name,
+						// non-null guaranteed by moduleModalSchema (required plan dates)
+						planStart: value.planStart!,
+						planEnd: value.planEnd!,
+						actualStart: value.actualStart ?? undefined,
+						actualEnd: value.actualEnd ?? undefined,
+					});
+
+					// 3. Trigger Success Toast
+					toast.add({
+						title: "Module Added",
+						description: `"${value.name}" has been added successfully.`,
+						type: "success",
+					});
+				}
+				handleClose();
+			} catch (error) {
 				toast.add({
-					title: "Module Edited",
-					description: `"${value.name}" has been edited successfully.`,
-					type: "success",
-				});
-			} else {
-				if (!phaseId) return;
-				await createModuleMutation.mutateAsync({
-					phaseId,
-					stageId,
-					name: value.name,
-					// non-null guaranteed by moduleModalSchema (required plan dates)
-					planStart: value.planStart!,
-					planEnd: value.planEnd!,
-					actualStart: value.actualStart ?? undefined,
-					actualEnd: value.actualEnd ?? undefined,
-				});
-				toast.add({
-					title: "Module Added",
-					description: `"${value.name}" has been added successfully.`,
-					type: "success",
+					title: isEditMode ? "Edit Failed" : "Creation Failed",
+					description:
+						error instanceof Error
+							? error.message
+							: "An error occurred while saving the module.",
+					type: "error",
 				});
 			}
-			handleClose();
 		},
 	});
 
@@ -175,7 +197,8 @@ export function ModuleModal({
 		handleClose();
 	};
 
-	const isPending = createModuleMutation.isPending || updateModuleMutation.isPending;
+	const isPending =
+		createModuleMutation.isPending || updateModuleMutation.isPending;
 
 	return (
 		<>
@@ -234,7 +257,9 @@ export function ModuleModal({
 														? new Date(field.state.value)
 														: undefined
 												}
-												onChange={(date) => field.handleChange(date ?? null)}
+												onChange={(date) =>
+													field.handleChange(date ?? null)
+												}
 												placeholder="Pick Planned Start"
 												error={
 													formErrorToMessage(field.state.meta.errors[0]) ??
@@ -254,7 +279,9 @@ export function ModuleModal({
 														? new Date(field.state.value)
 														: undefined
 												}
-												onChange={(date) => field.handleChange(date ?? null)}
+												onChange={(date) =>
+													field.handleChange(date ?? null)
+												}
 												placeholder="Pick Planned End"
 												error={
 													formErrorToMessage(field.state.meta.errors[0]) ??
@@ -285,7 +312,9 @@ export function ModuleModal({
 								>
 									Cancel
 								</Button>
-								<form.SubmitButton pendingLabel={isEditMode ? "Saving…" : "Adding…"}>
+								<form.SubmitButton
+									pendingLabel={isEditMode ? "Saving…" : "Adding…"}
+								>
 									{isEditMode ? (
 										<>
 											<Save className="mr-2 h-4 w-4" /> Save Changes
