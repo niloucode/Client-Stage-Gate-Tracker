@@ -103,7 +103,7 @@ export function ContractViewer({
 	const isPdfFile = (f: File) =>
 		f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
 
-	// Selecting a file (via picker or drag-drop) just stages it — it isn't
+	// Selecting a file (via picker or drag-and-drop) just stages it — it isn't
 	// loaded as the active contract until the user confirms in the modal.
 	const selectFile = (next: File | null | undefined) => {
 		if (!next) return;
@@ -216,7 +216,7 @@ export function ContractViewer({
 					{/* Toolbar */}
 					<div className="flex items-center justify-between gap-3 border-b border-lavender-100 px-4 py-3">
 						<div className="flex min-w-0 items-center gap-2">
-							<FileText className="h-5.5 w-5.5 shrink-0 text-[#500086]" />
+							<FileText className="h-5.5 w-5.5 shrink-0 text-brand-600" />
 							<span className="truncate text-sm font-medium text-ink">
 								{initialContractName ?? "Contract"}
 							</span>
@@ -237,7 +237,7 @@ export function ContractViewer({
 										variant="ghost"
 										size="sm"
 										onClick={() => setZoom(100)}
-										className="min-w-[3.25rem]"
+										className="min-w-13"
 									>
 										{zoom}%
 									</Button>
@@ -268,7 +268,7 @@ export function ContractViewer({
 										variant="default"
 										size="sm"
 										onClick={() => inputRef.current?.click()}
-										className={"px-4 py-5 bg-[#500086]"}
+										className={"px-4 py-5 bg-brand-600"}
 									>
 										<Upload size={14} />
 										Upload Contract
@@ -299,7 +299,7 @@ export function ContractViewer({
 								<embed
 									src={`${fileUrl}#toolbar=0`}
 									type="application/pdf"
-									className="aspect-[8.5/11] w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
+									className="aspect-8.5/11 w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
 								/>
 							</div>
 						</div>
@@ -317,7 +317,7 @@ export function ContractViewer({
 							onDrop={canManage ? handleDrop : undefined}
 							onClick={canManage ? () => inputRef.current?.click() : undefined}
 							className={`flex flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
-								isDragging ? "bg-lavender-50" : "bg-[#FFFFFF]"
+								isDragging ? "bg-lavender-50" : "bg-neutral-surface"
 							}`}
 						>
 							<div
@@ -325,15 +325,15 @@ export function ContractViewer({
 									isDragging ? "bg-[#E0B9FF]" : "bg-[#F1DAFF]"
 								}`}
 							>
-								<Upload className="h-5 w-5 text-[#500086]" />
+								<Upload className="h-5 w-5 text-brand-600" />
 							</div>
 							<div>
-								<p className="text-sm font-medium text-ink w-[250px]">
+								<p className="text-sm font-medium text-ink w-62.5">
 									{canManage
 										? "Click to upload or drag and drop a PDF"
 										: "No contract document has been uploaded yet."}
 								</p>
-								<p className="mt-1 text-xs text-plum-400 w-[250px]">
+								<p className="mt-1 text-xs text-plum-400 w-62.5">
 									{canManage
 										? "Select a document from your computer to preview and prepare for signing here."
 										: "Only the Project Owner can upload the contract."}
