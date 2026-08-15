@@ -11,6 +11,7 @@ const tagSchema = z.object({
 	color: z.string().nullable().optional(),
 	is_deleted: z.boolean().default(false),
 	deleted_at: z.date().nullable().optional(),
+	is_protected: z.boolean().default(false),
 });
 
 export type Tag = z.infer<typeof tagSchema>;
@@ -20,6 +21,7 @@ export type Tag = z.infer<typeof tagSchema>;
 export const tagCreateSchema = z.object({
 	name: z
 		.string()
+		.trim()
 		.min(1, "Tag name is required")
 		.max(12, "Tag name must be 12 characters or less"),
 	description: z
