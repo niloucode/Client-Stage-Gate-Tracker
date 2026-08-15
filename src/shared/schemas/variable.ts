@@ -4,7 +4,7 @@ import { z } from "zod";
 // Canonical type vocabulary (mirrors the UI radio pills). The DB stores the
 // uppercase enum value; the UI speaks lowercase — mapping lives in
 // entities/variable (mappers.ts).
-export const VARIABLE_TYPES = ["link", "credential", "repository"] as const;
+const VARIABLE_TYPES = ["link", "credential", "repository"] as const;
 
 export const variableCreateSchema = z.object({
 	name: z

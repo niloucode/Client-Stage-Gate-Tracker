@@ -1,7 +1,7 @@
 import type { Prisma } from "@/lib/generated/prisma";
 import type { VariableCreateInput } from "@/shared/schemas/variable";
 
-/** Full row — team/owner view. */
+/** Full row — team/owner view (used by variableActions selects). */
 export const variableSelect = {
 	variable_id: true,
 	name: true,

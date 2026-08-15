@@ -3,13 +3,12 @@
 import type { Tag } from "@/entities/types"
 import { useState } from "react"
 import { ConfirmDeleteModal } from "@/shared/ui"
-import { TagBadge } from "@/entities/tag/ui"
+import { TagBadge } from "@/entities/tag"
 import TagListModal from "@/features/tag-manager/ui/TagListModal"
 import TagFormModal from "@/features/tag-manager/ui/TagFormModal"
 import{ Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import { Label } from "@/components/ui/label"
 
 // ── Tag List Modal ────────────────────────────────────────────────────────────
 

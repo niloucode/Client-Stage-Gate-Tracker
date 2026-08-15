@@ -9,8 +9,9 @@ import {
 import {
 	variableCreateSchema,
 	type VariableCreateInput,
-} from "@/shared/schemas/variable";
+} from "@/shared/schemas";
 import { mapClientVariableRow, mapVariableRow, uiTypeToDbType } from "./lib/mappers";
+import { variableClientSelect, variableSelect } from "./types";
 
 /**
  * Project-scoped variable list. Team/owners see everything; client viewers
@@ -32,15 +33,7 @@ export async function getProjectVariables(projectId: string) {
 			const rows = await prisma.variables.findMany({
 				where: { project_id: projectId, is_deleted: false, client_visible: true },
 				orderBy: { created_at: "asc" },
-				select: {
-					variable_id: true,
-					name: true,
-					type: true,
-					value: true,
-					client_visible: true,
-					notes_client: true,
-					created_at: true,
-				},
+				select: variableClientSelect,
 			});
 			return { success: true as const, data: rows.map(mapClientVariableRow) };
 		}
@@ -48,16 +41,7 @@ export async function getProjectVariables(projectId: string) {
 		const rows = await prisma.variables.findMany({
 			where: { project_id: projectId, is_deleted: false },
 			orderBy: { created_at: "asc" },
-			select: {
-				variable_id: true,
-				name: true,
-				type: true,
-				value: true,
-				client_visible: true,
-				notes_team: true,
-				notes_client: true,
-				created_at: true,
-			},
+			select: variableSelect,
 		});
 		return { success: true as const, data: rows.map(mapVariableRow) };
 	} catch (error) {
@@ -82,16 +66,7 @@ export async function createVariable(projectId: string, input: VariableCreateInp
 				notes_team: data.notesTeam,
 				notes_client: data.notesClient,
 			},
-			select: {
-				variable_id: true,
-				name: true,
-				type: true,
-				value: true,
-				client_visible: true,
-				notes_team: true,
-				notes_client: true,
-				created_at: true,
-			},
+			select: variableSelect,
 		});
 		return { success: true as const, data: mapVariableRow(created) };
 	} catch (error) {
@@ -121,16 +96,7 @@ export async function updateVariable(
 				notes_team: data.notesTeam,
 				notes_client: data.notesClient,
 			},
-			select: {
-				variable_id: true,
-				name: true,
-				type: true,
-				value: true,
-				client_visible: true,
-				notes_team: true,
-				notes_client: true,
-				created_at: true,
-			},
+			select: variableSelect,
 		});
 		return { success: true as const, data: mapVariableRow(updated) };
 	} catch (error) {

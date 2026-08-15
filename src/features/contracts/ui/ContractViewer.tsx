@@ -414,4 +414,3 @@ export function ContractViewer({
 	);
 }
 
-export default ContractViewer;

@@ -2,6 +2,7 @@
 
 import { Layers, LayoutGrid, Workflow as WorkflowIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ganttLevelSchema } from "../lib/schema";
 import type { GanttLevel } from "../types";
 
 const LEVEL_OPTIONS: { level: GanttLevel; label: string; icon: typeof Layers }[] = [
@@ -25,7 +26,12 @@ export function LevelFilterPills({
 					<button
 						key={level}
 						type="button"
-						onClick={() => onValueChange(level)}
+						onClick={() => {
+							// Runtime guard mirrors the schema (single source of truth).
+							if (ganttLevelSchema.safeParse(level).success) {
+								onValueChange(level);
+							}
+						}}
 						aria-pressed={isActive}
 						className={cn(
 							"flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors",

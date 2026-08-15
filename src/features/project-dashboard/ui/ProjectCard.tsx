@@ -62,31 +62,34 @@ export function ProjectCard({
 
 	const endDate =
 		project.project_status === "PENDING" || project.project_status === "ACTIVE"
-			? project.deadline_date
-				? new Date(project.deadline_date)
+			? project.planEnd
+				? new Date(project.planEnd)
 				: undefined
-			: project.finish_date
-				? new Date(project.deadline_date ?? project.finish_date)
+			: project.actualEnd
+				? new Date(project.planEnd ?? project.actualEnd)
 				: undefined;
 
 	return (
-		<Link
-			href={targetHref}
-			className="hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 @container bg-neutral-surface-subtle cursor-pointer rounded-md border border-[#C7C4D8] gap-4 p-5 flex flex-col justify-between h-full select-none"
-		>
+		<div className="relative hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 @container bg-neutral-surface-subtle rounded-md border border-[#C7C4D8] gap-4 p-5 flex flex-col justify-between h-full select-none">
+			<Link
+				href={targetHref}
+				className="absolute inset-0 rounded-md"
+				aria-label={`Open project ${project.name}`}
+			/>
+
 			{/* Client Name — always shown */}
-			<div className="flex justify-between items-center w-full">
-				<p className="text-xs text-brand-500 truncate">
+			<div aria-hidden className="relative flex justify-between items-center w-full">
+				<p className="text-xs text-brand-500 truncate pointer-events-none">
 					{project.client_name ?? "—"}
 				</p>
 				<span
-					className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full shrink-0 ${statusClass}`}
+					className={`pointer-events-none inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full shrink-0 ${statusClass}`}
 				>
 					{statusLabel}
 				</span>
 			</div>
 
-			<div>
+			<div aria-hidden className="relative pointer-events-none">
 				<h3 className="w-3/4 text-m text-slate-900 max-w-[80%] break-all line-clamp-2">
 					{project.name}
 				</h3>
@@ -104,14 +107,14 @@ export function ProjectCard({
 				</p>
 			</div>
 
-			{/* Bottom Row: Responsive Timeline + Menu */}
-			<div className="flex items-end justify-between gap-2 pt-3 border-t border-brand-100">
+			{/* Bottom Row: Responsive Timeline */}
+			<div aria-hidden className="relative flex items-end justify-between gap-2 pt-3 border-t border-brand-100 pointer-events-none">
 				<div className="flex flex-col @[300px]:flex-row @[300px]:items-center gap-1 text-xs text-slate-600 min-w-0">
 					{/* Date 1 + dash */}
 					<div className="flex items-center gap-1.5 min-w-0">
 						<Calendar size={13} className="text-slate-400 shrink-0" />
 						<span className="truncate">
-							{formatProjectDate(project.start_date)}
+							{formatProjectDate(project.planStart)}
 						</span>
 						<span className="text-slate-300 shrink-0 mx-0.5">—</span>
 					</div>
@@ -122,55 +125,37 @@ export function ProjectCard({
 						<span className="truncate">{formatProjectDate(endDate)}</span>
 					</div>
 				</div>
-
-				{/* Menu Ellipsis — bottom right, Project Owners only */}
-				{isOwner && (
-					<div
-						className="shrink-0 ml-2"
-						onClick={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-						}}
-					>
-						<DropdownMenu>
-							<DropdownMenuTrigger className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-popup-open:bg-slate-100">
-								<EllipsisVertical size={16} />
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="w-56">
-								<DropdownMenuItem
-									onClick={(e) => {
-										e.stopPropagation();
-										onEdit();
-									}}
-								>
-									<Pencil size={16} />
-									Edit project details
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={(e) => {
-										e.stopPropagation();
-										onManageMembers();
-									}}
-								>
-									<Users size={16} />
-									Manage project members
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									onClick={(e) => {
-										e.stopPropagation();
-										onDelete();
-									}}
-									className="text-destructive focus:text-destructive"
-								>
-									<Trash2 size={16} />
-									Delete Project
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</div>
-				)}
 			</div>
-		</Link>
+
+			{/* Menu Ellipsis — Project Owners only. Sibling of the Link (not
+			 * nested inside it): interactive elements must not nest (a11y). */}
+			{isOwner && (
+				<div className="absolute bottom-3 right-3 z-10">
+					<DropdownMenu>
+						<DropdownMenuTrigger className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors data-popup-open:bg-slate-100">
+							<EllipsisVertical size={16} />
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="w-56">
+							<DropdownMenuItem onClick={onEdit}>
+								<Pencil size={16} />
+								Edit project details
+							</DropdownMenuItem>
+							<DropdownMenuItem onClick={onManageMembers}>
+								<Users size={16} />
+								Manage project members
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								onClick={onDelete}
+								className="text-destructive focus:text-destructive"
+							>
+								<Trash2 size={16} />
+								Delete Project
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+			)}
+		</div>
 	);
 }

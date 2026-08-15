@@ -4,7 +4,4 @@ export {
 	IssueDashboard,
 	type IssueDashboardProps,
 } from "./ui/IssueDashboard";
-export {
-	IssueReportingModal,
-	type IssueFormState,
-} from "./ui/IssueReportingModal";
+export type { IssueFormState } from "./ui/IssueReportingModal";

@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
-// this function will execute on clicking a confirmation email from Supabase
-export function GET(request: NextRequest) {
-  return NextResponse.redirect(new URL("/login", request.url));
+/**
+ * Email-confirmation callback (Supabase). Exchanges the ?code param for a
+ * real session so clicking the confirmation link signs the user in, then
+ * routes them to the app shell (which redirects role-appropriately).
+ * Falls back to /login when the code is missing or invalid.
+ */
+export async function GET(request: NextRequest) {
+	const code = request.nextUrl.searchParams.get("code");
+	if (!code) {
+		return NextResponse.redirect(new URL("/login", request.url));
+	}
+
+	const supabase = await createClient();
+	const { error } = await supabase.auth.exchangeCodeForSession(code);
+	if (error) {
+		return NextResponse.redirect(new URL("/login", request.url));
+	}
+
+	return NextResponse.redirect(new URL("/dashboard", request.url));
 }

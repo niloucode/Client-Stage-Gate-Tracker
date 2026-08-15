@@ -86,4 +86,3 @@ export function ConfirmationModal({
 
 // Alias for backward compatibility
 export const ConfirmDeleteModal = ConfirmationModal;
-export default ConfirmationModal;

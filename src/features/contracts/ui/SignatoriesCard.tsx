@@ -192,4 +192,3 @@ export function SignatoriesCard({
 	);
 }
 
-export default SignatoriesCard;

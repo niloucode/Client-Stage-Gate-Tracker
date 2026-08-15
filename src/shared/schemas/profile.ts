@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // ── Profile (full DB row) ────────────────────────────────────────────────────
 
-export const profileSchema = z.object({
+const profileSchema = z.object({
 	profile_id: z.uuid(),
 	first_name: z.string().trim().min(1),
 	last_name: z.string().trim().min(1),
@@ -20,7 +20,8 @@ export type ProfileType = z.infer<typeof profileSchema>;
 
 // ── Display profile (subset used in UI dropdowns / assignee lists) ───────────
 
-export const profileDisplaySchema = profileSchema.pick({
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used via typeof
+const profileDisplaySchema = profileSchema.pick({
 	profile_id: true,
 	first_name: true,
 	last_name: true,

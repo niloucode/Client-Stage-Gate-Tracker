@@ -21,31 +21,33 @@ interface ProjectSectionProps {
 const STATUS_CONFIG: Record<
 	ProjectStatus,
 	{
-		icolor: string;
-		color: string;
-		bg: string;
+		iconColor: string;
+		badgeText: string;
+		badgeBg: string;
 		emptyText: string;
 		icon: ComponentType<{ size?: number; className?: string }>;
 	}
 > = {
 	PENDING: {
-		icolor: "text-red-600",
-		color: "text-red-600",
-		bg: "bg-red-100",
+		iconColor: "text-red-600",
+		badgeText: "text-red-600",
+		badgeBg: "bg-red-100",
 		emptyText: "No pending projects.",
 		icon: CircleEllipsis,
 	},
 	ACTIVE: {
-		icolor: "text-brand-500",
-		color: "text-brand-100",
-		bg: "bg-brand-500",
+		iconColor: "text-brand-500",
+		// Dark badge (brand-500) with light text for contrast — verified
+		// against the design tokens (--color-brand-500 #6B1FA8).
+		badgeText: "text-brand-50",
+		badgeBg: "bg-brand-500",
 		emptyText: "No active projects.",
 		icon: Layers,
 	},
 	COMPLETED: {
-		icolor: "text-green-600",
-		color: "text-green-600",
-		bg: "bg-green-100",
+		iconColor: "text-green-600",
+		badgeText: "text-green-600",
+		badgeBg: "bg-green-100",
 		emptyText: "No completed projects yet.",
 		icon: CheckCircle2,
 	},
@@ -71,10 +73,12 @@ export function ProjectSection({
 				className="rounded-md cursor-pointer select-none border border-brand-100 w-full flex items-center justify-between px-5 py-3 bg-neutral-surface-subtle transition-colors hover:bg-neutral-subtle"
 			>
 				<div className="flex items-center gap-5 py-1">
-					<IconComponent size={24} className={config.icolor} />
-					<h2>{title}</h2>
+					<IconComponent size={24} className={config.iconColor} />
+					{/* span, not h2: a heading inside the toggle <button> is
+					 * invalid flow content (buttons allow phrasing only). */}
+					<span className="text-lg font-semibold">{title}</span>
 					<span
-						className={`text-md font-semibold px-4 py-0.5 rounded-full ${config.color} ${config.bg}`}
+						className={`text-md font-semibold px-4 py-0.5 rounded-full ${config.badgeText} ${config.badgeBg}`}
 					>
 						{projects.length}
 					</span>

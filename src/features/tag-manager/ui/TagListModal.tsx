@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import type { Tag } from "@/entities/types";
 import { Pencil, Trash2, LucideSearch } from "lucide-react";
-import { TagBadge } from "@/entities/tag/ui/TagBadge";
+import { TagBadge } from "@/entities/tag";
 import { Lacking } from "@/shared/ui/search-status";
 
 const PINNED_TAGS = ["API", "Bugs", "Integration", "Production"] as const;

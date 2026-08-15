@@ -79,7 +79,7 @@ const moduleModalSchema = z
 
 type ModuleFormValues = z.input<typeof moduleModalSchema>;
 
-export function ModuleModal({
+function ModuleModal({
 	isOpen,
 	onClose,
 	module,

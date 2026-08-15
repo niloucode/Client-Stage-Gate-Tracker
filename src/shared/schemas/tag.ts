@@ -2,7 +2,9 @@ import { z } from "zod";
 
 // ── Tag ──────────────────────────────────────────────────────────────────────
 
-export const tagSchema = z.object({
+// Type-only base (Tag derives from it); form validation uses tagCreateSchema.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used via typeof
+const tagSchema = z.object({
 	tag_id: z.uuid(),
 	name: z.string().trim().min(1, "Tag name is required"),
 	description: z.string().nullable().optional(),

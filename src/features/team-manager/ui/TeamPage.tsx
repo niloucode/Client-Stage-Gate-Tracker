@@ -5,8 +5,8 @@ import { Search, Key } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTeamProfiles } from "@/entities/profile";
-import { useDepartment } from "@/entities/department";
 import { useAuth } from "@/features/auth";
+import { useDashboardRole } from "@/entities/roleAssignment";
 import { TeamTable } from "./TeamTable";
 import { GenerateStaffCodeModal } from "@/features/team-manager";
 import type { TeamMember, TeamSortField, SortDirection } from "../model/types";
@@ -60,9 +60,12 @@ function TeamToolbar({
 }
 
 export function TeamPage() {
-	const { user, isLoading: isAuthLoading } = useAuth();
-	const { data: department } = useDepartment(user?.department_id ?? undefined);
-	const isOwner = department?.name === "Project Owner";
+	const { isLoading: isAuthLoading } = useAuth();
+	// Owner gate is ROLE-based (a Project Owner roleAssignment on any
+	// project), not department-name-based — departments are a display
+	// taxonomy and their names could change (2026-08-15 follow-up).
+	const { data: dashboardRole, isLoading: roleLoading } = useDashboardRole();
+	const isOwner = dashboardRole === "owner" && !roleLoading;
 
 	// Clients see the same read-only member list as project team members;
 	// only the owner-only generate button is gated below.

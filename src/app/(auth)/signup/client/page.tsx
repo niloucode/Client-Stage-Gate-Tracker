@@ -3,7 +3,7 @@ import { ClientSignupForm } from "@/features/auth";
 
 export default function ClientSignupPage() {
 	return (
-		<div className={`flex w-full`}>
+		<div className="flex w-full">
 			{/* ── Left Panel — scrollable ── */}
 			<div className="flex flex-col w-full lg:w-[58%] bg-background min-h-screen px-10 py-10">
 				{/* Brand mark */}

@@ -11,7 +11,7 @@ import { IssueReportingModal } from "./IssueReportingModal";
 import type { IssueItem } from "@/entities/issue";
 import { IssueBox, IssueDetailsModal, useProjectIssues } from "@/entities/issue";
 
-export const TABS = [
+const TABS = [
   { id: "unlinked", label: "Unlinked Issues", icon: Unlink },
   { id: "linked", label: "Linked Issues", icon: LinkIcon },
   { id: "resolved", label: "Resolved Issues", icon: CheckCircle2 },
@@ -28,7 +28,7 @@ export interface MetricCardProps {
   className?: string;
 }
 
-export const MetricCard: React.FC<MetricCardProps> = ({
+const MetricCard: React.FC<MetricCardProps> = ({
   title,
   count,
   textColor,
@@ -161,4 +161,3 @@ export const IssueDashboard: React.FC<IssueDashboardProps> = ({
   );
 };
 
-export default IssueDashboard;

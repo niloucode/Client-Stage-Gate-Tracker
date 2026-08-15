@@ -33,7 +33,7 @@ interface NavItem {
 }
 
 // Nav items array with Next.js route paths
-export const navItems: NavItem[] = [
+const navItems: NavItem[] = [
 	{ label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
 	{ label: "Projects", icon: Folder, href: "/projects" },
 	// { label: "Contracts", icon: FileText, href: "/contracts" }, // TODO(contracts): route not built yet
@@ -42,7 +42,7 @@ export const navItems: NavItem[] = [
 	// { label: "Variables", icon: Key, href: "/variables" },
 ];
 
-export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
+const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
 	<div className="flex items-center border-b border-gray-100 px-3.5 py-4 min-h-16.25 overflow-hidden">
 		<div
 			className={`flex flex-col min-w-0 transition-all duration-300 ease-in-out`}
@@ -81,7 +81,7 @@ export const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
 	</div>
 );
 
-export const SidebarNavItem = ({
+const SidebarNavItem = ({
 	item,
 	active,
 	collapsed,
@@ -151,7 +151,7 @@ export const SidebarNavItem = ({
 	);
 };
 
-export const SidebarFooter = ({
+const SidebarFooter = ({
 	collapsed,
 	onToggle,
 }: {
