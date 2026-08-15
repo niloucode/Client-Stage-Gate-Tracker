@@ -286,19 +286,20 @@
 - [x] src/features/gate-overview/GateFeedbackModal.tsx (2026-08-15: rewritten — real GateFeedbackEntry[], gates number DESC, status badges, clickable feedback images via ImageLightbox, per-gate Comment button + further-comments count)
 - [x] src/features/gate-overview/GateFeedbackGiveModal.tsx (2026-08-15: rewritten — real decideGate submit with Supabase uploads (gates/ path, all-or-nothing + cleanup), error.message toasts, close blocked while submitting, FormEvent → SyntheticEvent, alert() → toast)
 - [x] src/features/gate-overview/GateDiscussionModal.tsx (new 2026-08-15 — per-gate discussion popup, latest-gate-only posting (spec 8), storage uploads, lightbox, error state)
-- [ ] src/features/dashboard-analytics/index.ts
-- [ ] src/features/dashboard-analytics/types.ts
-- [ ] src/features/dashboard-analytics/queries.ts
-- [ ] src/features/dashboard-analytics/lib/ganttMapping.ts
-- [ ] src/features/dashboard-analytics/lib/mockData.ts
-- [ ] src/features/dashboard-analytics/lib/schema.ts
-- [ ] src/features/dashboard-analytics/ui/DashboardAnalyticsPage.tsx
-- [ ] src/features/dashboard-analytics/ui/EmptyGanttState.tsx
-- [ ] src/features/dashboard-analytics/ui/GanttBarContent.tsx
-- [ ] src/features/dashboard-analytics/ui/GanttResourceLabel.tsx
-- [ ] src/features/dashboard-analytics/ui/GanttTabs.tsx
-- [ ] src/features/dashboard-analytics/ui/LevelFilterPills.tsx
-- [ ] src/features/dashboard-analytics/ui/ProjectGanttChart.tsx
+- [x] src/features/dashboard-analytics/index.ts (new — reviewed 2026-08-15: public API OK — DashboardAnalyticsPage + GanttLevel/GanttTab types; verified in the integration)
+- [x] src/features/dashboard-analytics/types.ts (2026-08-15: FSD violation fixed — Prisma payload selects/types moved to entities/*/ganttTypes.ts (imported + re-exported here); GanttTab/GanttLevel now re-exported from lib/schema; verified in the integration)
+- [x] src/features/dashboard-analytics/queries.ts (2026-08-15: BLOCKING fixed — mock fetch fns replaced by gated entity actions getProjectPhasesGantt/getProjectModulesGantt/getProjectWorkflowsGantt (assertProjectMemberOrClient); {success:false} → []; normalize fns kept)
+- [x] src/features/dashboard-analytics/lib/ganttMapping.ts (2026-08-15: nit fixed — getActualRange now skips degenerate end <= start ranges)
+- [x] src/features/dashboard-analytics/lib/ganttMapping.test.ts (new 2026-08-15 — 16 tests: deriveRowStatus/statusColorToken/getPlannedRange/getActualRange incl. degenerate guard/buildGanttResources/buildGanttEvents; created by the integration)
+- [x] src/features/dashboard-analytics/lib/mockData.ts (deleted 2026-08-15 by the integration — mock timelines + MOCK_TODAY removed)
+- [x] src/features/dashboard-analytics/lib/schema.ts (2026-08-15: dead code fixed — now the single source of truth for GanttTab/GanttLevel types; ganttTabSchema used by GanttTabs; GanttTabInput/GanttLevelInput dropped)
+- [x] src/features/dashboard-analytics/ui/DashboardAnalyticsPage.tsx (2026-08-15: MOCK_TODAY → real clock (useState(() => new Date())); loading skeleton + error banner with Retry added; setTab/setLevel passed directly)
+- [x] src/features/dashboard-analytics/ui/EmptyGanttState.tsx (new — reviewed 2026-08-15: fine)
+- [x] src/features/dashboard-analytics/ui/GanttBarContent.tsx (new — reviewed 2026-08-15: fine — planned=dashed outline / actual=solid fill via event data)
+- [x] src/features/dashboard-analytics/ui/GanttResourceLabel.tsx (new — reviewed 2026-08-15: fine — PHASE 01 badge status-colored from resource.color)
+- [x] src/features/dashboard-analytics/ui/GanttTabs.tsx (2026-08-15: unchecked cast fixed — onValueChange validated via ganttTabSchema.safeParse)
+- [x] src/features/dashboard-analytics/ui/LevelFilterPills.tsx (new — reviewed 2026-08-15: fine — aria-pressed toggle pills)
+- [x] src/features/dashboard-analytics/ui/ProjectGanttChart.tsx (new — reviewed 2026-08-15: reui gantt props verified against the vendored API (scale/treePanel/metrics/renderEvent/renderResourceLabel/interactions/…); `resource as GanttRowResource` cast accepted as sound)
 - [x] src/features/issue-reporting/index.ts (new — public API: IssueDashboard, IssueReportingModal, IssueFormState)
 - [x] src/features/issue-reporting/model/issues.ts (deleted — dead in-memory mock store, zero importers; types moved to entities/issue)
 - [x] src/features/issue-reporting/ui/IssueDashboard.tsx (2026-08-15: rewritten — real useProjectIssues(projectId), real counts/tabs, loading+error states, page-level New Issue button)
@@ -391,7 +392,7 @@
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/page.tsx
 - [x] src/app/(app)/(workspace)/projects/[projectId]/contract/page.tsx (2026-08-15: FSD — thin async server page reading params, renders ContractPage via the feature public API; the old inline page logic moved to features/contracts/ui/ContractPage.tsx)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx (2026-08-15: converted to a thin async-params server page (issues-page pattern); access enforced by the gated entity actions)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx (2026-08-15: reads params.projectId (Next 15 async params), imports via the feature public API; renders the real IssueDashboard)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
@@ -508,7 +509,22 @@ All pre-existing unless noted — none block the running app except the first.
       vocabulary). Align the project schema/UI/actions in a dedicated pass.
 - [ ] **knip cleanup** — `npx knip` reports ~313 findings (unused default
       exports, dead exports across features), all pre-existing. Triage and
-      remove; then gate `knip` in CI.
+      remove; then gate `knip` in CI. (dashboard-analytics contributed its
+      dead `lib/mockData.ts` + `GanttTabInput`/`GanttLevelInput` — removed by
+      the 2026-08-15 integration.)
+- [x] **Dashboard-analytics integration** — completed 2026-08-15.
+      **`docs/reasonix/plans/2026-08-15-dashboard-analytics-integration.md`**
+      (real gated data layer, mocks removed, schema.ts wired, cast fix,
+      loading/error states, range guard, Gantt Chart button in
+      ProjectAccessCard, route page → async params, 16 ganttMapping tests,
+      code-review-plan flip). Spec decisions: any project profile incl.
+      clients may view read-only (`assertProjectMemberOrClient`); default
+      tab Actual; button label "Gantt Chart" + `ChartGantt` icon.
+      Verified: prisma validate ✓, tsc ✓, vitest 43/285 ✓, eslint 0/0 ✓.
+      `npm run build` blocked by a PRE-EXISTING /analytics prerender failure
+      (reproduced at baseline ce76417; layout cookies + useSearchParams
+      without Suspense) — suggested fix: `export const dynamic =
+      "force-dynamic"` on `src/app/(app)/(workspace)/analytics/page.tsx`.
 - [ ] **`ProjectSection` status-config cleanup**
       (`src/features/project-dashboard/ui/ProjectSection.tsx`) — `icolor`
       typo, the suspicious `ACTIVE.color: "text-brand-100"` badge value, and
