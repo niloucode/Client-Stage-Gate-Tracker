@@ -61,6 +61,8 @@
 - [x] src/shared/schemas/project.test.ts
 - [x] src/shared/schemas/tag.ts
 - [x] src/shared/schemas/ticket.ts
+- [x] src/shared/schemas/variable.ts (new 2026-08-15 — VARIABLE_TYPES + variableCreateSchema, 10 tests)
+- [x] src/shared/schemas/variable.test.ts (new 2026-08-15)
 
 ## 4. Shared layer — query infrastructure
 
@@ -245,6 +247,12 @@
 - [x] src/entities/workflow/workflowActions.ts
 - [x] src/entities/workflow/mutations.ts
 - [x] src/entities/workflow/queries.ts (deleted — merged into slice files)
+- [x] src/entities/variable/index.ts (new 2026-08-15 — actions, queries, types, lib/mappers)
+- [x] src/entities/variable/types.ts (new 2026-08-15 — variableSelect/variableClientSelect payloads + VariableItem)
+- [x] src/entities/variable/variableActions.ts (new 2026-08-15 — getProjectVariables (client-shaped: visible rows only, no notes_team) / createVariable / updateVariable / toggleVariableVisibility / softDeleteVariable — assertProjectMemberOrClient read, assertProjectMemberNotClient writes)
+- [x] src/entities/variable/queries.ts (new 2026-08-15 — useProjectVariables + 4 mutation hooks, variableKeys.list invalidation)
+- [x] src/entities/variable/lib/mappers.ts (new 2026-08-15 — mapVariableRow/mapClientVariableRow/uiTypeToDbType, 5 tests)
+- [x] src/entities/variable/lib/mappers.test.ts (new 2026-08-15)
 
 ## 10. Features layer
 
@@ -286,19 +294,20 @@
 - [x] src/features/gate-overview/GateFeedbackModal.tsx (2026-08-15: rewritten — real GateFeedbackEntry[], gates number DESC, status badges, clickable feedback images via ImageLightbox, per-gate Comment button + further-comments count)
 - [x] src/features/gate-overview/GateFeedbackGiveModal.tsx (2026-08-15: rewritten — real decideGate submit with Supabase uploads (gates/ path, all-or-nothing + cleanup), error.message toasts, close blocked while submitting, FormEvent → SyntheticEvent, alert() → toast)
 - [x] src/features/gate-overview/GateDiscussionModal.tsx (new 2026-08-15 — per-gate discussion popup, latest-gate-only posting (spec 8), storage uploads, lightbox, error state)
-- [ ] src/features/dashboard-analytics/index.ts
-- [ ] src/features/dashboard-analytics/types.ts
-- [ ] src/features/dashboard-analytics/queries.ts
-- [ ] src/features/dashboard-analytics/lib/ganttMapping.ts
-- [ ] src/features/dashboard-analytics/lib/mockData.ts
-- [ ] src/features/dashboard-analytics/lib/schema.ts
-- [ ] src/features/dashboard-analytics/ui/DashboardAnalyticsPage.tsx
-- [ ] src/features/dashboard-analytics/ui/EmptyGanttState.tsx
-- [ ] src/features/dashboard-analytics/ui/GanttBarContent.tsx
-- [ ] src/features/dashboard-analytics/ui/GanttResourceLabel.tsx
-- [ ] src/features/dashboard-analytics/ui/GanttTabs.tsx
-- [ ] src/features/dashboard-analytics/ui/LevelFilterPills.tsx
-- [ ] src/features/dashboard-analytics/ui/ProjectGanttChart.tsx
+- [x] src/features/dashboard-analytics/index.ts (new — reviewed 2026-08-15: public API OK — DashboardAnalyticsPage + GanttLevel/GanttTab types; verified in the integration)
+- [x] src/features/dashboard-analytics/types.ts (2026-08-15: FSD violation fixed — Prisma payload selects/types moved to entities/*/ganttTypes.ts (imported + re-exported here); GanttTab/GanttLevel now re-exported from lib/schema; verified in the integration)
+- [x] src/features/dashboard-analytics/queries.ts (2026-08-15: BLOCKING fixed — mock fetch fns replaced by gated entity actions getProjectPhasesGantt/getProjectModulesGantt/getProjectWorkflowsGantt (assertProjectMemberOrClient); {success:false} → []; normalize fns kept)
+- [x] src/features/dashboard-analytics/lib/ganttMapping.ts (2026-08-15: nit fixed — getActualRange now skips degenerate end <= start ranges)
+- [x] src/features/dashboard-analytics/lib/ganttMapping.test.ts (new 2026-08-15 — 16 tests: deriveRowStatus/statusColorToken/getPlannedRange/getActualRange incl. degenerate guard/buildGanttResources/buildGanttEvents; created by the integration)
+- [x] src/features/dashboard-analytics/lib/mockData.ts (deleted 2026-08-15 by the integration — mock timelines + MOCK_TODAY removed)
+- [x] src/features/dashboard-analytics/lib/schema.ts (2026-08-15: dead code fixed — now the single source of truth for GanttTab/GanttLevel types; ganttTabSchema used by GanttTabs; GanttTabInput/GanttLevelInput dropped)
+- [x] src/features/dashboard-analytics/ui/DashboardAnalyticsPage.tsx (2026-08-15: MOCK_TODAY → real clock (useState(() => new Date())); loading skeleton + error banner with Retry added; setTab/setLevel passed directly)
+- [x] src/features/dashboard-analytics/ui/EmptyGanttState.tsx (new — reviewed 2026-08-15: fine)
+- [x] src/features/dashboard-analytics/ui/GanttBarContent.tsx (new — reviewed 2026-08-15: fine — planned=dashed outline / actual=solid fill via event data)
+- [x] src/features/dashboard-analytics/ui/GanttResourceLabel.tsx (new — reviewed 2026-08-15: fine — PHASE 01 badge status-colored from resource.color)
+- [x] src/features/dashboard-analytics/ui/GanttTabs.tsx (2026-08-15: unchecked cast fixed — onValueChange validated via ganttTabSchema.safeParse)
+- [x] src/features/dashboard-analytics/ui/LevelFilterPills.tsx (new — reviewed 2026-08-15: fine — aria-pressed toggle pills)
+- [x] src/features/dashboard-analytics/ui/ProjectGanttChart.tsx (new — reviewed 2026-08-15: reui gantt props verified against the vendored API (scale/treePanel/metrics/renderEvent/renderResourceLabel/interactions/…); `resource as GanttRowResource` cast accepted as sound)
 - [x] src/features/issue-reporting/index.ts (new — public API: IssueDashboard, IssueReportingModal, IssueFormState)
 - [x] src/features/issue-reporting/model/issues.ts (deleted — dead in-memory mock store, zero importers; types moved to entities/issue)
 - [x] src/features/issue-reporting/ui/IssueDashboard.tsx (2026-08-15: rewritten — real useProjectIssues(projectId), real counts/tabs, loading+error states, page-level New Issue button)
@@ -354,6 +363,14 @@
 - [ ] src/features/tag-manager/ui/TagFormModal.tsx
 - [ ] src/features/tag-manager/ui/TagListModal.tsx
 - [ ] src/features/tag-manager/ui/TagModals.tsx
+- [x] src/features/variable-manager/index.ts (2026-08-15: public API OK — page/modals re-exported; VariableItem/VariableType re-exported from @/entities/variable; verified in the integration)
+- [x] src/features/variable-manager/model/mockData.ts (deleted 2026-08-15 by the integration — mock secret material removed)
+- [x] src/features/variable-manager/model/types.ts (deleted 2026-08-15 — canonical types moved to entities/variable)
+- [x] src/features/variable-manager/ui/VariablesPage.tsx (2026-08-15: BLOCKING fixed — real useProjectVariables + 4 mutation hooks; client read-only gating (Add button hidden); loading/error states with Retry; async handlers with error toasts; sort types moved to VariablesTable)
+- [x] src/features/variable-manager/ui/VariablesTable.tsx (2026-08-15: dead columns array removed; toggle role=switch + aria-checked + aria-label + focus-visible ring; clipboard catch; readOnly prop hides toggle/edit/delete)
+- [x] src/features/variable-manager/ui/VariableConfirmModal.tsx (2026-08-15: commented block removed; useEffect reset → useResetOnOpen)
+- [x] src/features/variable-manager/ui/VariableFormModal.tsx (2026-08-15: async onSubmit (closes only on success), isSubmitting disabled states, FormEvent import, useEffect sync → useResetOnOpen)
+- [x] src/features/variable-manager/ui/VariableNotesModal.tsx (2026-08-15: BLOCKING fixed — clientView prop hides the team section for clients; commented blocks removed; formatting)
 - [x] src/features/ticket-board/model/columns.ts (2026-08-15: reviewed — COLUMNS PENDING/IN_PROGRESS/FINISHED matches the Prisma status enum)
 - [x] src/features/ticket-board/model/queries.ts (2026-08-15: reviewed — useTicketHistory fetches selectTicketHistory, maps via ticketHistoryEntrySchema; fine)
 - [x] src/features/ticket-board/model/schema.ts (2026-08-15: reviewed — ticketHistoryEntrySchema; ACTION_ENUM matches the Prisma action enum exactly (verified); z.coerce.date() valid v4 usage)
@@ -381,7 +398,7 @@
 - [ ] src/app/(auth)/signup/client/page.tsx
 - [ ] src/app/(auth)/signup/staff/page.tsx
 - [ ] src/app/(auth)/signup-callback/route.ts
-- [ ] src/app/(app)/layout.tsx
+- [ ] src/app/(app)/layout.tsx (2026-08-15: `export const dynamic = "force-dynamic"` added to unblock `next build` — the shell reads cookies via getCurrentUserProfile and TopNav calls useSearchParams without Suspense, so static prerender of any (app) page failed (pre-existing; reproduced at baseline ce76417). The `/analytics` + `/credentials` pages were left pristine. Full review of this file still pending)
 - [ ] src/app/(app)/dashboard/page.tsx
 - [ ] src/app/(app)/clients/page.tsx
 - [x] src/app/(app)/team/page.tsx (new — reviewed 2026-08-14; renders TeamPage)
@@ -389,9 +406,10 @@
 - [ ] src/app/(app)/(workspace)/credentials/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/page.tsx
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/variables/page.tsx (2026-08-15: converted to a thin async-params server page passing projectId; access enforced by the gated entity actions)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/contract/page.tsx (2026-08-15: FSD — thin async server page reading params, renders ContractPage via the feature public API; the old inline page logic moved to features/contracts/ui/ContractPage.tsx)
 - [ ] src/app/(app)/(workspace)/projects/[projectId]/contract/loading.tsx
-- [ ] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx
+- [x] src/app/(app)/(workspace)/projects/[projectId]/dashboard-analytics/page.tsx (2026-08-15: converted to a thin async-params server page (issues-page pattern); access enforced by the gated entity actions)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/gates/[gateId]/page.tsx (deleted — c0b0229 moved gate UI into the workspace)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/issues/page.tsx (2026-08-15: reads params.projectId (Next 15 async params), imports via the feature public API; renders the real IssueDashboard)
 - [x] src/app/(app)/(workspace)/projects/[projectId]/phases/[phaseId]/page.tsx (deleted)
@@ -508,7 +526,31 @@ All pre-existing unless noted — none block the running app except the first.
       vocabulary). Align the project schema/UI/actions in a dedicated pass.
 - [ ] **knip cleanup** — `npx knip` reports ~313 findings (unused default
       exports, dead exports across features), all pre-existing. Triage and
-      remove; then gate `knip` in CI.
+      remove; then gate `knip` in CI. (dashboard-analytics contributed its
+      dead `lib/mockData.ts` + `GanttTabInput`/`GanttLevelInput` — removed by
+      the 2026-08-15 integration.)
+- [x] **Dashboard-analytics integration** — completed 2026-08-15.
+      **`docs/reasonix/plans/2026-08-15-dashboard-analytics-integration.md`**
+      (real gated data layer, mocks removed, schema.ts wired, cast fix,
+      loading/error states, range guard, Gantt Chart button in
+      ProjectAccessCard, route page → async params, 16 ganttMapping tests,
+      code-review-plan flip). Spec decisions: any project profile incl.
+      clients may view read-only (`assertProjectMemberOrClient`); default
+      tab Actual; button label "Gantt Chart" + `ChartGantt` icon.
+      Verified: prisma validate ✓, tsc ✓, vitest 43/285 ✓, eslint 0/0 ✓,
+      `npm run build` ✓ (see layout fix below).
+- [x] **Variable-manager integration** — completed 2026-08-15.
+      **`docs/reasonix/plans/2026-08-15-variable-manager-integration.md`**
+      (Variables model + migration 13; entities/variable slice with gated
+      actions; real queries; client read-only gating — hidden rows never
+      sent, notes_team never sent; role-aware notes modal; a11y toggle;
+      async submit; 15 new tests; route page → async params). Spec
+      decisions: hidden variables hidden entirely from clients; no
+      created_by; team + owners see/manage everything. Verified: prisma
+      validate ✓, tsc ✓, vitest 45/300 ✓, eslint 0/0 ✓, `npm run build` ✓.
+      Migration 13 NOT yet applied to Supabase (pending user approval —
+      apply via `npx prisma db execute --file
+      prisma/migrations/20260815030000_13_variables/migration.sql`).
 - [ ] **`ProjectSection` status-config cleanup**
       (`src/features/project-dashboard/ui/ProjectSection.tsx`) — `icolor`
       typo, the suspicious `ACTIVE.color: "text-brand-100"` badge value, and

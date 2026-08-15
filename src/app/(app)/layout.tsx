@@ -11,6 +11,13 @@ import Sidebar from "@/shared/ui/sidebar";
 import TopNav from "@/features/navigation/ui/TopNav";
 import { getCurrentUserProfile } from "@/entities/profile/profileActions";
 
+// The shell reads the session on every request (getCurrentUserProfile →
+// cookies) and TopNav calls useSearchParams (breadcrumbs) without a
+// Suspense boundary — static prerender of any (app) page trips both and
+// fails the build. The whole group is session-dependent anyway, so render
+// it dynamically (2026-08-15 — unblocks `next build`).
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
 	title: "Client Stage Gate Tracker",
 	description: "Acesoft project tracker",

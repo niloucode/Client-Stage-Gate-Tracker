@@ -2,22 +2,25 @@
 
 import { useState, useMemo } from "react";
 import { Search, Plus } from "lucide-react";
-import { useParams } from "next/navigation";
 import { Back } from "@/components/ui/back";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
-import { INITIAL_VARIABLES } from "../model/mockData";
+import { useCurrentUser } from "@/entities/profile";
+import {
+	useCreateVariable,
+	useDeleteVariable,
+	useProjectVariables,
+	useToggleVariableVisibility,
+	useUpdateVariable,
+} from "@/entities/variable";
+import type { VariableItem } from "@/entities/variable";
+import type { VariableCreateInput } from "@/shared/schemas/variable";
 import { VariablesTable } from "./VariablesTable";
+import type { VariableSortField, SortDirection } from "./VariablesTable";
 import { VariableFormModal } from "./VariableFormModal";
 import { VariableConfirmModal } from "./VariableConfirmModal";
 import { VariableNotesModal } from "./VariableNotesModal";
-import type {
-	VariableItem,
-	VariableFormData,
-	VariableSortField,
-	SortDirection,
-} from "../model/types";
 
 function VariablesHeader() {
 	return (
@@ -36,12 +39,14 @@ interface VariablesToolbarProps {
 	searchQuery: string;
 	onSearchChange: (value: string) => void;
 	onAddVariable: () => void;
+	readOnly: boolean;
 }
 
 function VariablesToolbar({
 	searchQuery,
 	onSearchChange,
 	onAddVariable,
+	readOnly,
 }: VariablesToolbarProps) {
 	return (
 		<div className="mb-5 flex gap-6 justify-between items-center max-h-10">
@@ -55,19 +60,31 @@ function VariablesToolbar({
 					className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0"
 				/>
 			</div>
-			<Button className="flex items-center gap-2" onClick={onAddVariable}>
-				<Plus className="w-3.5 h-3.5" />
-				Add Variable
-			</Button>
+			{!readOnly && (
+				<Button className="flex items-center gap-2" onClick={onAddVariable}>
+					<Plus className="w-3.5 h-3.5" />
+					Add Variable
+				</Button>
+			)}
 		</div>
 	);
 }
 
-export function VariablesPage() {
-	const params = useParams<{ projectId?: string }>();
-	const projectId = params?.projectId;
+export function VariablesPage({ projectId }: { projectId: string }) {
+	const {
+		data: variables = [],
+		isPending,
+		isError,
+		refetch,
+	} = useProjectVariables(projectId);
+	const { data: profile } = useCurrentUser();
+	const isClientProfile = Boolean(profile?.client_id);
 
-	const [variables, setVariables] = useState<VariableItem[]>(INITIAL_VARIABLES);
+	const createMutation = useCreateVariable(projectId);
+	const updateMutation = useUpdateVariable(projectId);
+	const toggleMutation = useToggleVariableVisibility(projectId);
+	const deleteMutation = useDeleteVariable(projectId);
+
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sortField, setSortField] = useState<VariableSortField>("name");
 	const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -126,72 +143,114 @@ export function VariablesPage() {
 		}
 	};
 
-	const handleSaveVariable = (data: VariableFormData) => {
-		if (editingVariable) {
-			setVariables((prev) =>
-				prev.map((v) =>
-					v.id === editingVariable.id ? { ...v, ...data } : v
-				)
-			);
+	/** Returns true only after the mutation succeeded — the modal closes itself. */
+	const handleSaveVariable = async (data: VariableCreateInput): Promise<boolean> => {
+		try {
+			if (editingVariable) {
+				await updateMutation.mutateAsync({
+					variableId: editingVariable.id,
+					input: data,
+				});
+				toast.add({
+					title: "Variable Updated",
+					description: `"${data.name}" has been updated.`,
+					type: "success",
+				});
+			} else {
+				await createMutation.mutateAsync(data);
+				toast.add({
+					title: "Variable Added",
+					description: `"${data.name}" has been added.`,
+					type: "success",
+				});
+			}
+			setEditingVariable(null);
+			return true;
+		} catch (error) {
 			toast.add({
-				title: "Variable Updated",
-				description: `"${data.name}" has been updated.`,
-				type: "success",
+				title: "Save Failed",
+				description:
+					error instanceof Error ? error.message : "Failed to save the variable.",
+				type: "error",
 			});
-		} else {
-			const newVar: VariableItem = {
-				id: `var-${Date.now()}`,
-				...data,
-				clientVisibility: false,
-				createdAt: new Date().toISOString().split("T")[0],
-			};
-			setVariables((prev) => [newVar, ...prev]);
-			toast.add({
-				title: "Variable Added",
-				description: `"${data.name}" has been added.`,
-				type: "success",
-			});
+			return false;
 		}
-		setEditingVariable(null);
 	};
 
-	const handleConfirmToggleVisibility = () => {
+	const handleConfirmToggleVisibility = async () => {
 		if (!visibilityTarget) return;
 		const nextState = !visibilityTarget.clientVisibility;
-
-		setVariables((prev) =>
-			prev.map((v) =>
-				v.id === visibilityTarget.id
-					? { ...v, clientVisibility: nextState }
-					: v
-			)
-		);
-
-		toast.add({
-			title: nextState ? "Visible to Client" : "Hidden from Client",
-			description: `"${visibilityTarget.name}" client visibility changed.`,
-			type: "info",
-		});
-		setVisibilityTarget(null);
+		try {
+			await toggleMutation.mutateAsync(visibilityTarget.id);
+			toast.add({
+				title: nextState ? "Visible to Client" : "Hidden from Client",
+				description: `"${visibilityTarget.name}" client visibility changed.`,
+				type: "info",
+			});
+			setVisibilityTarget(null);
+		} catch (error) {
+			toast.add({
+				title: "Visibility Change Failed",
+				description:
+					error instanceof Error
+						? error.message
+						: "Failed to change client visibility.",
+				type: "error",
+			});
+		}
 	};
 
-	const handleConfirmDelete = () => {
+	const handleConfirmDelete = async () => {
 		if (!deleteTarget) return;
-
-		setVariables((prev) => prev.filter((v) => v.id !== deleteTarget.id));
-		toast.add({
-			title: "Variable Deleted",
-			description: `"${deleteTarget.name}" has been deleted.`,
-			type: "delete",
-		});
-		setDeleteTarget(null);
+		try {
+			await deleteMutation.mutateAsync(deleteTarget.id);
+			toast.add({
+				title: "Variable Deleted",
+				description: `"${deleteTarget.name}" has been deleted.`,
+				type: "delete",
+			});
+			setDeleteTarget(null);
+		} catch (error) {
+			toast.add({
+				title: "Delete Failed",
+				description:
+					error instanceof Error ? error.message : "Failed to delete the variable.",
+				type: "error",
+			});
+		}
 	};
+
+	if (isPending) {
+		return (
+			<main className="flex flex-1 flex-col space-y-4">
+				<Back link={`/projects/${projectId}`} />
+				<VariablesHeader />
+				<div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+					Loading variables…
+				</div>
+			</main>
+		);
+	}
+
+	if (isError) {
+		return (
+			<main className="flex flex-1 flex-col space-y-4">
+				<Back link={`/projects/${projectId}`} />
+				<VariablesHeader />
+				<div className="flex h-64 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+					<p>Failed to load variables for this project.</p>
+					<Button variant="outline" size="sm" onClick={() => void refetch()}>
+						Retry
+					</Button>
+				</div>
+			</main>
+		);
+	}
 
 	return (
 		<>
 			<main className="flex flex-1 flex-col overflow-hidden space-y-4">
-				{/* Back Button */}
-				<Back link={projectId ? `/projects/${projectId}` : "/projects"} />
+				<Back link={`/projects/${projectId}`} />
 
 				<VariablesHeader />
 
@@ -202,6 +261,7 @@ export function VariablesPage() {
 						setEditingVariable(null);
 						setIsFormOpen(true);
 					}}
+					readOnly={isClientProfile}
 				/>
 
 				<VariablesTable
@@ -216,6 +276,7 @@ export function VariablesPage() {
 						setIsFormOpen(true);
 					}}
 					onDeleteRequest={setDeleteTarget}
+					readOnly={isClientProfile}
 				/>
 			</main>
 
@@ -245,7 +306,7 @@ export function VariablesPage() {
 						visibilityTarget.clientVisibility ? "Hide from Client" : "Make Visible"
 					}
 					onClose={() => setVisibilityTarget(null)}
-					onConfirm={handleConfirmToggleVisibility}
+					onConfirm={() => void handleConfirmToggleVisibility()}
 				/>
 			)}
 
@@ -259,7 +320,7 @@ export function VariablesPage() {
 					actionLabel="Delete Variable"
 					variant="destructive"
 					onClose={() => setDeleteTarget(null)}
-					onConfirm={handleConfirmDelete}
+					onConfirm={() => void handleConfirmDelete()}
 				/>
 			)}
 
@@ -267,6 +328,7 @@ export function VariablesPage() {
 			<VariableNotesModal
 				isOpen={Boolean(notesVariable)}
 				variable={notesVariable}
+				clientView={isClientProfile}
 				onClose={() => setNotesVariable(null)}
 			/>
 		</>

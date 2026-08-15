@@ -1,8 +1,10 @@
 "use server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 import {
 	assertProjectMemberNotClient,
+	assertProjectMemberOrClient,
 	resolveModuleProject,
 	resolvePhaseProject,
 } from "@/lib/auth/projectAccess";
@@ -13,6 +15,7 @@ import {
 	type ModuleUpdateInput,
 } from "@/shared/schemas";
 import { softDeleteWorkflowSubtree } from "@/entities/ticket/lib/softDelete";
+import { moduleGanttSelect } from "./ganttTypes";
 
 /**
  * Creates a module under a phase. Scheduling fields use the canonical
@@ -138,5 +141,32 @@ export async function cascadeSoftDeleteModule(
 		console.error("Failed cascading soft delete for module:", error);
 		if (txClient) throw error;
 		return { success: false, error: "Failed to cascade archive module." };
+	}
+}
+
+/**
+ * Project-scoped module rows for the gantt chart (read-only). Any project
+ * profile — team, owners AND clients — may view (2026-08-15 spec).
+ */
+export async function getProjectModulesGantt(projectId: string) {
+	z.uuid().parse(projectId);
+	const auth = await assertProjectMemberOrClient(projectId);
+	if (!auth.ok) return { success: false as const, error: auth.error };
+	try {
+		const modules = await prisma.modules.findMany({
+			where: {
+				is_deleted: false,
+				Phases: {
+					is_deleted: false,
+					Stages: { is_deleted: false, project_id: projectId },
+				},
+			},
+			orderBy: { plan_start_at: "asc" },
+			select: moduleGanttSelect,
+		});
+		return { success: true as const, data: modules };
+	} catch (error) {
+		console.error("Failed to fetch project modules for gantt:", error);
+		return { success: false as const, error: "Failed to load modules." };
 	}
 }

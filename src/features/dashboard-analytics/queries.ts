@@ -1,8 +1,10 @@
 "use client";
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
+import { getProjectModulesGantt } from "@/entities/module";
+import { getProjectPhasesGantt } from "@/entities/phase";
+import { getProjectWorkflowsGantt } from "@/entities/workflow";
 import { dashboardAnalyticsKeys } from "@/shared/query/keys";
-import { MOCK_MODULES, MOCK_PHASES, MOCK_WORKFLOWS } from "./lib/mockData";
 import type {
 	GanttRowData,
 	ModuleGanttPayload,
@@ -10,32 +12,10 @@ import type {
 	WorkflowGanttPayload,
 } from "./types";
 
-// ============ DATA LAYER (replace with API calls) ============
-// TODO: fetch phases from GET /projects/:id/phases (select: phaseGanttSelect)
-// TODO: fetch modules from GET /projects/:id/modules (select: moduleGanttSelect)
-// TODO: fetch workflows from GET /projects/:id/workflows (select: workflowGanttSelect)
-// TODO: Planned Gantt uses <row>.plan_start_at + <row>.plan_end_at directly.
-// TODO: Actual Gantt uses <row>.actual_start_at + <row>.actual_end_at — these
-//       are already rolled up server-side from ticket status transitions by
-//       rollupTicketAncestors (src/entities/ticket/lib/dateRollup.ts), so the
-//       client never re-derives them from ticketHistory itself.
-
-async function fetchPhases(projectId: string): Promise<PhaseGanttPayload[]> {
-	void projectId;
-	return Promise.resolve(MOCK_PHASES);
-}
-
-async function fetchModules(projectId: string): Promise<ModuleGanttPayload[]> {
-	void projectId;
-	return Promise.resolve(MOCK_MODULES);
-}
-
-async function fetchWorkflows(projectId: string): Promise<WorkflowGanttPayload[]> {
-	void projectId;
-	return Promise.resolve(MOCK_WORKFLOWS);
-}
-
 // ── Normalization: each level's id/name column flattens into GanttRowData ──
+// Actual dates are rolled up server-side by rollupTicketAncestors
+// (src/entities/ticket/lib/dateRollup.ts), so the client reads the columns
+// directly — it never re-derives them from ticketHistory.
 
 function normalizePhase(phase: PhaseGanttPayload): GanttRowData {
 	return {
@@ -79,20 +59,31 @@ const dashboardAnalyticsQueryOptions = {
 	phases: (projectId: string) =>
 		queryOptions({
 			queryKey: dashboardAnalyticsKeys.phases(projectId),
-			queryFn: async () => (await fetchPhases(projectId)).map(normalizePhase),
+			queryFn: async () => {
+				const result = await getProjectPhasesGantt(projectId);
+				if (!result.success) return [];
+				return result.data.map(normalizePhase);
+			},
 			enabled: !!projectId,
 		}),
 	modules: (projectId: string) =>
 		queryOptions({
 			queryKey: dashboardAnalyticsKeys.modules(projectId),
-			queryFn: async () => (await fetchModules(projectId)).map(normalizeModule),
+			queryFn: async () => {
+				const result = await getProjectModulesGantt(projectId);
+				if (!result.success) return [];
+				return result.data.map(normalizeModule);
+			},
 			enabled: !!projectId,
 		}),
 	workflows: (projectId: string) =>
 		queryOptions({
 			queryKey: dashboardAnalyticsKeys.workflows(projectId),
-			queryFn: async () =>
-				(await fetchWorkflows(projectId)).map(normalizeWorkflow),
+			queryFn: async () => {
+				const result = await getProjectWorkflowsGantt(projectId);
+				if (!result.success) return [];
+				return result.data.map(normalizeWorkflow);
+			},
 			enabled: !!projectId,
 		}),
 };

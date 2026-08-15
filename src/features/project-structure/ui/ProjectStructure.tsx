@@ -15,6 +15,7 @@ import {
 	Eye,
 	Workflow,
 	Ticket,
+	ChartGantt,
 	LucideIcon,
 	Clock,
 } from "lucide-react";
@@ -71,6 +72,7 @@ interface ProjectStructureProps {
 	onViewContract?: () => void;
 	onCredentialsRepo?: () => void;
 	onIssueReport?: () => void;
+	onGanttChart?: () => void;
 }
 
 // ─── Date Formatting Helpers ──────────────────────────────────────────────────
@@ -143,7 +145,7 @@ function ProjectTimelineCard({
 				<SectionLabel icon={Clock} label="Project Dates" />
 			</CardHeader>
 			<CardContent className="">
-				<div className="flex flex-row gap-5">
+				<div className="flex justify-between gap-5">
 					<div className="flex flex-col">
 						<Label>Actual Start</Label>
 						<h2>{startDate ? formatDate(startDate) : "Not started"}</h2>
@@ -163,11 +165,13 @@ function ProjectAccessCard({
 	onViewContract,
 	onCredentialsRepo,
 	onIssueReport,
+	onGanttChart,
 }: {
 	projectId?: string;
 	onViewContract?: () => void;
 	onCredentialsRepo?: () => void;
 	onIssueReport?: () => void;
+	onGanttChart?: () => void;
 }) {
 	const router = useRouter();
 
@@ -187,6 +191,12 @@ function ProjectAccessCard({
 		onIssueReport ??
 		(() => {
 			if (projectId) router.push(`/projects/${projectId}/issues`);
+		});
+
+	const handleGanttChart =
+		onGanttChart ??
+		(() => {
+			if (projectId) router.push(`/projects/${projectId}/dashboard-analytics`);
 		});
 
 	return (
@@ -218,6 +228,15 @@ function ProjectAccessCard({
 				>
 					<Bug className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 					Issue Reporting
+				</Button>
+				<Button
+					size="sm"
+					onClick={handleGanttChart}
+					variant="outline"
+					className="h-8 justify-start gap-2 text-xs"
+				>
+					<ChartGantt className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+					Gantt Chart
 				</Button>
 			</CardContent>
 		</Card>
@@ -359,6 +378,7 @@ export function ProjectStructure({
 	onViewContract,
 	onCredentialsRepo,
 	onIssueReport,
+	onGanttChart,
 }: ProjectStructureProps) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -537,23 +557,29 @@ export function ProjectStructure({
 				</p>
 			</div>
 
-			{/* Top Overview Cards Grid */}
-			<div className="grid grid-cols-1 gap-3 md:grid-cols-5 items-stretch">
-				<div className="md:col-span-2 flex flex-col h-full">
+			{/* Top Overview Cards Grid*/}
+			<div className="grid grid-cols-1 gap-3 md:grid-cols-9 items-stretch">
+				{/* 1. Project Timeline (3 cols) */}
+				<div className="md:col-span-3 flex flex-col h-full">
 					<ProjectTimelineCard
 						startDate={overallDateRange.start}
 						endDate={overallDateRange.end}
 					/>
 				</div>
-				<div className="md:col-span-2 flex flex-col h-full">
+
+				{/* 2. Overall Progress (4 cols) */}
+				<div className="md:col-span-4 flex flex-col h-full">
 					<ProjectOverviewCard progress={computedProgress} />
 				</div>
-				<div className="md:col-span-1 flex flex-col h-full">
+
+				{/* 3. Quick Access Actions (2 cols) */}
+				<div className="md:col-span-2 flex flex-col h-full">
 					<ProjectAccessCard
 						projectId={projectId}
 						onViewContract={onViewContract}
 						onCredentialsRepo={onCredentialsRepo}
 						onIssueReport={onIssueReport}
+						onGanttChart={onGanttChart}
 					/>
 				</div>
 			</div>
