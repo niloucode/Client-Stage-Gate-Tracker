@@ -8,7 +8,8 @@
  * 3. The following stage's actual start is the previous stage's actual end.
  *
  * Values are materialized into Stages.actual_*_at by the writing actions
- * (signContract for rule 1; the future gate-approval action for rules 2-3).
+ * (approveContract for rule 1, 2026-08-15; gateApprovalDates / decideGate
+ * for rules 2-3).
  */
 
 /**

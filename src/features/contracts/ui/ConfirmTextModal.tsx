@@ -10,75 +10,63 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-export interface ClientOption {
-	id: string;
-	name: string;
-	email: string;
-}
-
-export interface ContractDetails {
-	id: string;
-	name: string;
-}
+import { toast } from "@/components/ui/toast";
 
 interface ConfirmTextModalProps {
 	confirmPhrase: string;
 	open: boolean;
 	onClose: () => void;
-	noParamFunc?: () => Promise<void>;
-	twoParamFunc?: (
-		profileId: string,
-		projectId: string,
-	) => Promise<void | { success: boolean; error?: string }>;
-	client?: ClientOption | null;
-	contractDetails: ContractDetails;
+	noParamFunc?: () => Promise<unknown>;
 	displayText: string;
 	displayTitle: string;
 	buttonText: string;
 	onSuccess: () => void;
-	setSelectedClient?: (selectedClient: ClientOption | null) => void;
 }
-
-// function initialsFor(name: string) {
-// 	return name
-// 		.split(" ")
-// 		.map((p) => p[0])
-// 		.filter(Boolean)
-// 		.slice(0, 2)
-// 		.join("")
-// 		.toUpperCase();
-// }
 
 export function ConfirmTextModal({
 	open,
 	onClose,
 	noParamFunc,
-	twoParamFunc,
-	client,
-	contractDetails,
 	confirmPhrase,
 	displayText,
 	displayTitle,
 	buttonText,
 	onSuccess,
-	setSelectedClient,
 }: ConfirmTextModalProps) {
 	const [confirmText, setConfirmText] = useState("");
 	const canConfirm = confirmText === confirmPhrase;
 
 	const handleConfirm = async () => {
-		//error check
-		if (!canConfirm || !client?.id) return;
+		if (!canConfirm) return;
 
-		if (twoParamFunc) await twoParamFunc?.(client?.id, contractDetails.id);
-		else if (noParamFunc) await noParamFunc?.();
-		onSuccess();
+		try {
+			const result = await noParamFunc?.();
 
-		//reset after changing client
-		setSelectedClient?.(null);
-		handleClose();
+			// Actions return { success:false, error } instead of throwing —
+			// surface the error and keep the modal open (no silent success).
+			const outcome = result as
+				| { success?: boolean; error?: string }
+				| undefined;
+			if (outcome && outcome.success === false) {
+				toast.add({
+					title: "Action Failed",
+					description: outcome.error ?? "Please try again.",
+					type: "error",
+				});
+				return;
+			}
+
+			onSuccess();
+			handleClose();
+		} catch (error) {
+			console.error("Confirm action failed:", error);
+			toast.add({
+				title: "Action Failed",
+				description:
+					error instanceof Error ? error.message : "Please try again.",
+				type: "error",
+			});
+		}
 	};
 
 	const handleClose = () => {
@@ -125,9 +113,6 @@ export function ConfirmTextModal({
 						borderTop: "1px solid #c7c4d8",
 					}}
 				>
-					{/* <Button variant="outline" onClick={handleClose}>
-						Cancel
-					</Button> */}
 					<Button
 						disabled={!canConfirm}
 						onClick={handleConfirm}

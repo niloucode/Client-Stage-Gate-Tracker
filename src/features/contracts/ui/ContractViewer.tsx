@@ -14,8 +14,6 @@ import {
 	Upload,
 	ZoomIn,
 	ZoomOut,
-	Download,
-	Printer,
 	X,
 	AlertTriangle,
 } from "lucide-react";
@@ -26,17 +24,15 @@ import { getContractUrl } from "@/entities/contract";
 import {
 	useUploadContract,
 	useDeleteContract,
-	useChangeContractName,
 } from "@/entities/contract";
-import { ConfirmTextModal, ContractDetails } from "./ConfirmTextModal";
+import { ConfirmTextModal } from "./ConfirmTextModal";
 
 interface PDFViewerProps {
 	className?: string;
 	projectId: string;
-	clientId: string;
-	profileId?: string | null;
-	contractDetails: ContractDetails;
-	initialFilePath?: string | null; //null if contract DOESN'T exist yet
+	/** Only the Project Owner may upload/delete/rename (2026-08-15 spec). */
+	canManage: boolean;
+	initialFilePath?: string | null; // null if contract DOESN'T exist yet
 	initialContractName?: string | null;
 	onSuccess: () => void;
 }
@@ -44,10 +40,9 @@ interface PDFViewerProps {
 export function ContractViewer({
 	className = "",
 	projectId,
-	clientId,
+	canManage,
 	initialFilePath,
 	initialContractName,
-	contractDetails,
 	onSuccess,
 }: PDFViewerProps) {
 	const [file, setFile] = useState<File | null>(null);
@@ -58,26 +53,16 @@ export function ContractViewer({
 	const [isDragging, setIsDragging] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [isUploading, setIsUploading] = useState(false);
-	const [contractName, setContractName] = useState(
-		file && fileUrl ? file.name : "",
-	); //ADDED THISSS
+	const [contractName, setContractName] = useState("");
 	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
 	const uploadMutation = useUploadContract();
 	const deleteMutation = useDeleteContract();
-	const changeNameMutation = useChangeContractName();
 
 	const delete_client_phrase = "Yes, I'm Sure";
 	const delete_client_text = `You're about to permanently delete ${contractName} 
-	from [PROJECT NAME]. This action will also remove all associated signatures from 
+	from this project. This action will also remove all associated signatures from 
 	the contract. To proceed, type "${delete_client_phrase}" below.`;
-
-	// Revoke the object URL whenever it changes or the component unmounts
-	useEffect(() => {
-		if (file && fileUrl) {
-			setContractName((prev) => prev || initialContractName || file.name);
-		}
-	}, [file, fileUrl]);
 
 	useEffect(() => {
 		if (initialFilePath) {
@@ -90,8 +75,11 @@ export function ContractViewer({
 						// Reconstruct File from the public URL
 						const response = await fetch(result.data);
 						const blob = await response.blob();
-						const fileName = initialFilePath.split("/").pop() ?? "contract.pdf";
-						setFile(new File([blob], fileName, { type: "application/pdf" }));
+						const fileName =
+							initialFilePath.split("/").pop() ?? "contract.pdf";
+						setFile(
+							new File([blob], fileName, { type: "application/pdf" }),
+						);
 					} else if (!revoked && !result.success) {
 						setFileError(
 							typeof result.error === "string"
@@ -120,10 +108,13 @@ export function ContractViewer({
 	const selectFile = (next: File | null | undefined) => {
 		if (!next) return;
 		if (!isPdfFile(next)) {
-			setFileError("That doesn't look like a PDF. Please choose a .pdf file.");
+			setFileError(
+				"That doesn't look like a PDF. Please choose a .pdf file.",
+			);
 			return;
 		}
 		setFileError(null);
+		setContractName(initialContractName ?? next.name);
 		setPendingFile(next);
 	};
 
@@ -133,7 +124,6 @@ export function ContractViewer({
 
 		try {
 			const result = await uploadMutation.mutateAsync({
-				clientId,
 				projectId,
 				file: pendingFile,
 				contractName: contractName.trim(),
@@ -156,6 +146,7 @@ export function ContractViewer({
 			setZoom(100);
 			setPendingFile(null);
 		} catch (err) {
+			console.error("Upload failed:", err);
 			setFileError("Upload failed. Please try again.");
 			setPendingFile(null); // close modal on thrown errors too
 		} finally {
@@ -179,25 +170,15 @@ export function ContractViewer({
 		selectFile(e.dataTransfer.files?.[0]);
 	};
 
-	// const handleDownload = async () => {
-	// 	if (!fileUrl) return;
-	// 	const response = await fetch(fileUrl);
-	// 	const blob = await response.blob();
-	// 	const blobUrl = URL.createObjectURL(blob);
-	// 	const a = document.createElement("a");
-	// 	a.href = blobUrl;
-	// 	a.download = changeName || file?.name || "document.pdf";
-	// 	if (!a.download.endsWith(".pdf")) a.download += ".pdf";
-	// 	a.click();
-	// 	URL.revokeObjectURL(blobUrl);
-	// };
-
 	const requestRemove = () => {
 		setDeleteModalOpen(true);
 	};
 
+	// Returns the action result — ConfirmTextModal surfaces failures.
 	const confirmRemove = async () => {
-		if (!file || !initialFilePath || !projectId) return;
+		if (!file || !initialFilePath || !projectId) {
+			return { success: false, error: "No document to delete." };
+		}
 		try {
 			const result = await deleteMutation.mutateAsync({
 				projectId,
@@ -205,30 +186,25 @@ export function ContractViewer({
 			});
 			setContractName("");
 
-			if (!result.success) {
+			if (result.success) {
+				if (fileUrl) URL.revokeObjectURL(fileUrl);
+				setFile(null);
+				setFileUrl(null);
+				setDeleteModalOpen(false);
+			} else {
 				setFileError(
 					typeof result.error === "string"
 						? result.error
 						: "Deletion failed. Please try again.",
 				);
-				return;
 			}
-
-			if (fileUrl) URL.revokeObjectURL(fileUrl);
-			setFile(null);
-			setFileUrl(null);
-			setDeleteModalOpen(false);
+			return result;
 		} catch (err) {
+			console.error("Deletion failed:", err);
 			setFileError("Deletion failed. Please try again.");
+			return { success: false, error: "Deletion failed. Please try again." };
 		}
 	};
-
-	// const handlePrint = () => {
-	// 	if (!fileUrl) return;
-	// 	const win = window.open(fileUrl, "_blank");
-	// 	if (!win) return;
-	// 	win.addEventListener("load", () => win.print());
-	// };
 
 	const zoomIn = () => setZoom((z) => Math.min(z + 10, 200));
 	const zoomOut = () => setZoom((z) => Math.max(z - 10, 50));
@@ -241,26 +217,9 @@ export function ContractViewer({
 					<div className="flex items-center justify-between gap-3 border-b border-lavender-100 px-4 py-3">
 						<div className="flex min-w-0 items-center gap-2">
 							<FileText className="h-5.5 w-5.5 shrink-0 text-[#500086]" />
-							{/* {contractName.trim() != "" && (
-								<input
-									type="text"
-									className="block leading-none py-0 truncate text-sm font-medium text-ink border border-transparent hover:border-foreground"
-									value={changeName}
-									onChange={(e) => setContractName(e.target.value)}
-									//trigger saving when I click enter
-									onKeyDown={(e) => {
-										if (e.key === "Enter") e.currentTarget.blur();
-									}}
-									onBlur={() => {
-										//check if contract exists first
-										if (!changeName || !file) return;
-										changeNameMutation.mutate({
-											projectId,
-											contractName: changeName.trim(),
-										});
-									}}
-								/>
-							)} */}
+							<span className="truncate text-sm font-medium text-ink">
+								{initialContractName ?? "Contract"}
+							</span>
 						</div>
 
 						<div className="flex shrink-0 items-center gap-1">
@@ -291,27 +250,30 @@ export function ContractViewer({
 										<ZoomIn className="h-4 w-4" />
 									</Button>
 									<span className="mx-1 h-4 w-px bg-lavender-100" />
-
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={requestRemove}
-										aria-label="Remove document"
-										className="hover:bg-[#FEF2F2] hover:text-red-600"
-									>
-										<X className="h-4 w-4" />
-									</Button>
+									{canManage && (
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={requestRemove}
+											aria-label="Remove document"
+											className="hover:bg-[#FEF2F2] hover:text-red-600"
+										>
+											<X className="h-4 w-4" />
+										</Button>
+									)}
 								</>
 							) : (
-								<Button
-									variant="default"
-									size="sm"
-									onClick={() => inputRef.current?.click()}
-									className={"px-4 py-5 bg-[#500086]"}
-								>
-									<Upload size={14} />
-									Upload Contract
-								</Button>
+								canManage && (
+									<Button
+										variant="default"
+										size="sm"
+										onClick={() => inputRef.current?.click()}
+										className={"px-4 py-5 bg-[#500086]"}
+									>
+										<Upload size={14} />
+										Upload Contract
+									</Button>
+								)
 							)}
 						</div>
 					</div>
@@ -343,29 +305,38 @@ export function ContractViewer({
 						</div>
 					) : (
 						<div
-							onDragOver={(e) => {
-								e.preventDefault();
-								setIsDragging(true);
-							}}
-							onDragLeave={() => setIsDragging(false)}
-							onDrop={handleDrop}
-							onClick={() => inputRef.current?.click()}
+							onDragOver={
+								canManage
+									? (e) => {
+											e.preventDefault();
+											setIsDragging(true);
+										}
+									: undefined
+							}
+							onDragLeave={canManage ? () => setIsDragging(false) : undefined}
+							onDrop={canManage ? handleDrop : undefined}
+							onClick={canManage ? () => inputRef.current?.click() : undefined}
 							className={`flex flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
 								isDragging ? "bg-lavender-50" : "bg-[#FFFFFF]"
 							}`}
 						>
 							<div
-								className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${isDragging ? "bg-[#E0B9FF]" : "bg-[#F1DAFF]"}`}
+								className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
+									isDragging ? "bg-[#E0B9FF]" : "bg-[#F1DAFF]"
+								}`}
 							>
 								<Upload className="h-5 w-5 text-[#500086]" />
 							</div>
 							<div>
 								<p className="text-sm font-medium text-ink w-[250px]">
-									Click to upload or drag and drop a PDF
+									{canManage
+										? "Click to upload or drag and drop a PDF"
+										: "No contract document has been uploaded yet."}
 								</p>
 								<p className="mt-1 text-xs text-plum-400 w-[250px]">
-									Select a document from your computer to preview and prepare
-									for signing here.
+									{canManage
+										? "Select a document from your computer to preview and prepare for signing here."
+										: "Only the Project Owner can upload the contract."}
 								</p>
 								{fileError && (
 									<p className="mt-2 text-xs font-medium text-red-600">
@@ -392,8 +363,8 @@ export function ContractViewer({
 						</DialogTitle>
 						<DialogDescription className="pt-2">
 							<span className="font-medium text-ink">{contractName}</span>{" "}
-							will become the active contract between you and the client. The
-							client will be able to see this document right away.
+							will become the active contract between you and the client.
+							The client will be able to see this document right away.
 						</DialogDescription>
 					</DialogHeader>
 					<label className="block text-xs font-medium text-plum-400">
@@ -407,16 +378,21 @@ export function ContractViewer({
 						className="mt-1.5"
 					/>
 					<DialogFooter showCloseButton={false}>
-						<Button variant="ghost" onClick={cancelUpload} className="flex-1">
+						<Button
+							variant="ghost"
+							onClick={cancelUpload}
+							disabled={isUploading}
+							className="flex-1"
+						>
 							Cancel
 						</Button>
 						<Button
 							variant="default"
 							onClick={confirmUpload}
-							disabled={!contractName.trim()}
+							disabled={!contractName.trim() || isUploading}
 							className="flex-1"
 						>
-							Yes, upload
+							{isUploading ? "Uploading…" : "Yes, upload"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
@@ -427,7 +403,6 @@ export function ContractViewer({
 					open={deleteModalOpen}
 					onClose={() => setDeleteModalOpen(false)}
 					noParamFunc={confirmRemove}
-					contractDetails={contractDetails}
 					confirmPhrase={delete_client_phrase}
 					displayText={delete_client_text}
 					displayTitle="Confirm Contract Deletion"
