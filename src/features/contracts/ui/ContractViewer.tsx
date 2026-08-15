@@ -217,7 +217,7 @@ export function ContractViewer({
 					<div className="flex items-center justify-between gap-3 border-b border-lavender-100 px-4 py-3">
 						<div className="flex min-w-0 items-center gap-2">
 							<FileText className="h-5.5 w-5.5 shrink-0 text-[#500086]" />
-							<span className="truncate text-sm font-medium text-ink">
+							<span className="truncate text-sm  text-ink">
 								{initialContractName ?? "Contract"}
 							</span>
 						</div>
@@ -316,7 +316,7 @@ export function ContractViewer({
 							onDragLeave={canManage ? () => setIsDragging(false) : undefined}
 							onDrop={canManage ? handleDrop : undefined}
 							onClick={canManage ? () => inputRef.current?.click() : undefined}
-							className={`flex flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
+							className={`flex flex-1 min-h-80 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
 								isDragging ? "bg-lavender-50" : "bg-[#FFFFFF]"
 							}`}
 						>
@@ -328,7 +328,7 @@ export function ContractViewer({
 								<Upload className="h-5 w-5 text-[#500086]" />
 							</div>
 							<div>
-								<p className="text-sm font-medium text-ink w-[250px]">
+								<p className="text-sm text-ink w-[250px]">
 									{canManage
 										? "Click to upload or drag and drop a PDF"
 										: "No contract document has been uploaded yet."}
@@ -339,7 +339,7 @@ export function ContractViewer({
 										: "Only the Project Owner can upload the contract."}
 								</p>
 								{fileError && (
-									<p className="mt-2 text-xs font-medium text-red-600">
+									<p className="mt-2 text-xs  text-red-600">
 										{fileError}
 									</p>
 								)}
@@ -362,12 +362,12 @@ export function ContractViewer({
 							Upload this as the contract?
 						</DialogTitle>
 						<DialogDescription className="pt-2">
-							<span className="font-medium text-ink">{contractName}</span>{" "}
+							<span className=" text-ink">{contractName}</span>{" "}
 							will become the active contract between you and the client.
 							The client will be able to see this document right away.
 						</DialogDescription>
 					</DialogHeader>
-					<label className="block text-xs font-medium text-plum-400">
+					<label className="block text-xs  text-plum-400">
 						Contract name
 					</label>
 					<Input
