@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Search, Plus } from "lucide-react";
+import { useParams } from "next/navigation";
+import { Back } from "@/components/ui/back";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
@@ -62,6 +64,9 @@ function VariablesToolbar({
 }
 
 export function VariablesPage() {
+	const params = useParams<{ projectId?: string }>();
+	const projectId = params?.projectId;
+
 	const [variables, setVariables] = useState<VariableItem[]>(INITIAL_VARIABLES);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sortField, setSortField] = useState<VariableSortField>("name");
@@ -184,7 +189,10 @@ export function VariablesPage() {
 
 	return (
 		<>
-			<main className="flex flex-1 flex-col overflow-hidden">
+			<main className="flex flex-1 flex-col overflow-hidden space-y-4">
+				{/* Back Button */}
+				<Back link={projectId ? `/projects/${projectId}` : "/projects"} />
+
 				<VariablesHeader />
 
 				<VariablesToolbar
