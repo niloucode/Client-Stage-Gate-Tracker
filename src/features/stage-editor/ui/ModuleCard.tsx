@@ -224,11 +224,11 @@ export function ModuleCard({
 					</div>
 				) : modules.length === 0 ? (
 					<div className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm p-8 text-center">
-						<p className="text-sm text-neutral-subtle">
+						<p className="text-sm">
 							No modules yet for this phase.
 						</p>
 						<p className="text-xs text-slate-400 mt-1">
-							Click Add Module to create one.
+							Click <span className="text-brand-500">Add Module</span> to create one.
 						</p>
 					</div>
 				) : (

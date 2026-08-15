@@ -42,7 +42,7 @@ export function TicketCardContent({
 	/** Clients are read-only: hide the delete button. */
 	readOnly?: boolean;
 }) {
-	const [isExpanded, setIsExpanded] = useState(false);
+	const [isExpanded, setIsExpanded] = useState(true);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
 	// Real subtasks passed from the board — no dummy fallback.
@@ -100,7 +100,7 @@ export function TicketCardContent({
 					{/* Header: Code + OVERDUE/LATE Badge + Delete Button */}
 					<div className="flex items-center justify-between gap-2 min-w-0 mb-1">
 						<div className="font-mono text-brand-500 text-xs font-semibold truncate min-w-0 pr-1">
-							{isSubtask ? "SUB-TASK" : ticketCode(ticket.ticket_id)}
+							{isSubtask ? "SUBTASK" : ticketCode(ticket.ticket_id)}
 						</div>
 
 						<div className="flex items-center gap-1.5 shrink-0">
