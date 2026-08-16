@@ -478,16 +478,16 @@ export async function updateTicketStatus(
  * This removes it from active board views while preserving historical audit data.
  *
  * @param ticketId - The UUID of the ticket to softly delete.
- * @param performed_by - The UUID of the profile performing the deletion.
+ * @param performedBy - The UUID of the profile performing the deletion.
  * @param mode - `"cascade"` soft-deletes the whole parent_id subtree; `"promote"` re-parents subtasks to top level first.
- * @param _txClient - Optional Prisma transaction client when invoked inside an existing transaction.
+ * @param txClient - Optional Prisma transaction client when invoked inside an existing transaction.
  * @returns `{ success: boolean, error?: string }`.
  */
 export async function cascadeSoftDeleteTicket(
 	ticketId: string,
-	performed_by?: string,
+	performedBy?: string,
 	mode: "cascade" | "promote" = "cascade",
-	_txClient?: Prisma.TransactionClient,
+	txClient?: Prisma.TransactionClient,
 ) {
 	z.uuid().parse(ticketId);
 
@@ -497,7 +497,7 @@ export async function cascadeSoftDeleteTicket(
 	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false, error: auth.error };
 	try {
-		const db = _txClient ?? prisma;
+		const db = txClient ?? prisma;
 		// Fetch ticket name before soft-deleting so we can record it in history
 		const ticket = await db.tickets.findUnique({
 			where: { ticket_id: ticketId },
@@ -596,10 +596,10 @@ export async function cascadeSoftDeleteTicket(
 			}
 		}
 
-		if (performed_by) {
+		if (performedBy) {
 			await logHistoryEvent(db, {
 				ticketId,
-				performedBy: performed_by,
+				performedBy: performedBy,
 				action: "DELETE",
 				details: { ticket_name: ticket?.name ?? null },
 			});
