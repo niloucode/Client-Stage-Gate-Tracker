@@ -107,6 +107,20 @@ const eslintConfig = defineConfig([
 			],
 		},
 	},
+	// Test files stay light (standard §6) — exports in tests are helpers,
+	// intent is documented via test names.
+	{
+		files: ["**/*.test.{ts,tsx}"],
+		rules: {
+			"jsdoc/require-jsdoc": "off",
+			"jsdoc/require-param": "off",
+			"jsdoc/require-param-name": "off",
+			"jsdoc/check-param-names": "off",
+			"jsdoc/require-returns": "off",
+			"jsdoc/check-tag-names": "off",
+			"jsdoc/check-syntax": "off",
+		},
+	},
 	// Override default ignores of eslint-config-next.
 	globalIgnores([
 		// Default ignores of eslint-config-next:
