@@ -3,6 +3,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/env";
 
+/** Middleware session refresh: refreshes cookies and redirects anonymous users to /login.
+ * @param request - The incoming request.
+ * @returns The (possibly redirected) response.
+ */
 export async function updateSession(request: NextRequest) {
 	let supabaseResponse = NextResponse.next({
 		request,

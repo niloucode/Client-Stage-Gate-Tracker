@@ -12,6 +12,7 @@ import { env } from "@/env";
  *
  * For normal request-scoped access use `@/lib/supabase/server` (anon key).
  */
+/** Service-role client factory (see the admin-only warning above). */
 export function createAdminClient() {
 	return createClient(
 		env.NEXT_PUBLIC_SUPABASE_URL,

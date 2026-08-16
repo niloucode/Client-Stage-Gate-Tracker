@@ -10,6 +10,7 @@ const DEFAULT_LOG_LEVELS: Prisma.LogLevel[] = ["error", "warn"];
  * (comma-separated: query,info,warn,error). Falls back to ["error", "warn"]
  * when the var is unset, empty, or contains no valid levels. Duplicates are
  * dropped, order preserved.
+ * @returns The resolved log level list.
  */
 function resolveLogLevels(): Prisma.LogLevel[] {
 	const raw = process.env.PRISMA_LOG_LEVEL;
