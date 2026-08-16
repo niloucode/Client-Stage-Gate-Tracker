@@ -23,6 +23,7 @@ interface VariableConfirmModalProps {
 	onConfirm: () => void;
 }
 
+/** Confirmation dialog for destructive variable actions (delete/clear). */
 export function VariableConfirmModal({
 	isOpen,
 	title,

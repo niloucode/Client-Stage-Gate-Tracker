@@ -132,6 +132,7 @@ interface VariablesTableProps {
 	readOnly?: boolean;
 }
 
+/** Sortable variables table with visibility toggles and row actions. */
 export function VariablesTable({
 	variables,
 	sortField,

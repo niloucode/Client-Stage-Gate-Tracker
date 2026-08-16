@@ -17,6 +17,7 @@ interface VariableNotesModalProps {
 	onClose: () => void;
 }
 
+/** Team/owner notes viewer for a variable (hidden for clients). */
 export function VariableNotesModal({
 	isOpen,
 	variable,

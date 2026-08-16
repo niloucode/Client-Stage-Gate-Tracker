@@ -70,6 +70,7 @@ function VariablesToolbar({
 	);
 }
 
+/** Variables page: list, create/edit/delete, and client read-only gating. */
 export function VariablesPage({ projectId }: { projectId: string }) {
 	const {
 		data: variables = [],
@@ -147,7 +148,11 @@ export function VariablesPage({ projectId }: { projectId: string }) {
 		}
 	};
 
-	/** Returns true only after the mutation succeeded — the modal closes itself. */
+	/**
+	 * Saves a variable via the create/update mutation.
+	 * @param data - The validated form payload.
+	 * @returns True only after the mutation succeeded — the modal closes itself.
+	 */
 	const handleSaveVariable = async (
 		data: VariableCreateInput,
 	): Promise<boolean> => {
