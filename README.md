@@ -32,7 +32,7 @@ A project management and workflow tracking platform built with Next.js, designed
 
 ## Prerequisites
 
-- Node.js 22 (LTS — see `.nvmrc`)
+- Node.js 22
 - npm (or yarn/pnpm)
 - A Supabase project (or PostgreSQL instance with pg_trgm extension)
 - Environment variables as listed below
