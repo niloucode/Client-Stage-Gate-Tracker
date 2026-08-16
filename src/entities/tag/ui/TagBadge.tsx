@@ -8,6 +8,7 @@ import type { Tag } from "@/entities/types";
  * hand-rolled pill with Badge); the pastel background comes from the tag's
  * color via the shared palette, and the optional hover state turns the
  * badge into a remove affordance (name fades, ✕ appears).
+ * @returns The rendered badge.
  */
 export function TagBadge({
 	tag,

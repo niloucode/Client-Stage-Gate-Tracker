@@ -23,10 +23,12 @@ const stageQueryOptions = {
 		}),
 };
 
+/** Query hook: a stage + its phase/module/workflow tree. */
 export function useStageTree(stageId: string | undefined) {
 	return useQuery(stageQueryOptions.tree(stageId));
 }
 
+/** Query hook: a project's stages. */
 export function useProjectStages(projectId: string | undefined) {
 	return useQuery(stageQueryOptions.list(projectId));
 }
