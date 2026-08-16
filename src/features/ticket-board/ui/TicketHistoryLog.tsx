@@ -4,16 +4,16 @@ import { action } from "@/lib/generated/prisma";
 import { useTicketHistory } from "../model/queries";
 import type { TicketHistoryEntry } from "../model/types";
 import {
-  PlusCircle,
-  CheckCircle,
-  RefreshCw, // standard Lucide equivalent for StatusChange
-  Pencil,
-  MessageSquare, // standard Lucide equivalent for Message
-  UserPlus,
-  UserMinus,
-  Trash2, // standard Lucide clean trash icon (or use Trash)
-  Eye,
-  LucideIcon
+	PlusCircle,
+	CheckCircle,
+	RefreshCw, // standard Lucide equivalent for StatusChange
+	Pencil,
+	MessageSquare, // standard Lucide equivalent for Message
+	UserPlus,
+	UserMinus,
+	Trash2, // standard Lucide clean trash icon (or use Trash)
+	Eye,
+	LucideIcon,
 } from "lucide-react";
 
 // ── Icon + color mapping per action ─────────────────────────────────────────
@@ -142,7 +142,8 @@ function formatHistoryMessage(entry: TicketHistoryEntry): React.ReactNode {
 					if (from)
 						return (
 							<>
-								marked the ticket as finished (from <StatusBadge status={from} />)
+								marked the ticket as finished (from{" "}
+								<StatusBadge status={from} />)
 							</>
 						);
 				} catch {
@@ -301,11 +302,15 @@ export default function TicketHistoryLog({
 }: {
 	ticketId: string | undefined;
 }) {
-	const { data: history = [], isLoading, isError, error } = useTicketHistory(ticketId);
+	const {
+		data: history = [],
+		isLoading,
+		isError,
+		error,
+	} = useTicketHistory(ticketId);
 
 	return (
 		<div className="px-5 pb-4 max-h-48 mb-6 overflow-y-scroll border-b border-gray-100">
-
 			{isLoading ? (
 				<p className="text-sm text-gray-400">Loading activity…</p>
 			) : isError ? (
@@ -319,10 +324,7 @@ export default function TicketHistoryLog({
 				<>
 					<ol className="space-y-3">
 						{history.map((entry) => (
-							<HistoryEntryRow
-								key={entry.history_event_id}
-								entry={entry}
-							/>
+							<HistoryEntryRow key={entry.history_event_id} entry={entry} />
 						))}
 					</ol>
 				</>

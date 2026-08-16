@@ -3,7 +3,10 @@
 import { useState } from "react";
 import type { Module, Phase } from "../types";
 import { WorkflowCard } from "./WorkflowCard";
-import { AddModule, EditModule } from "@/features/stage-editor/ui/modals/ModuleModals";
+import {
+	AddModule,
+	EditModule,
+} from "@/features/stage-editor/ui/modals/ModuleModals";
 import { useDeleteModule } from "@/entities/module/mutations";
 import { ConfirmDeleteModal } from "@/shared/ui";
 import { Button } from "@/components/ui/button";
@@ -225,7 +228,14 @@ export function ModuleCard({
 					<div className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm p-8 text-center">
 						<p className="text-sm">No modules yet for this phase.</p>
 						<p className="text-xs text-slate-400 mt-1">
-							Click <span className="text-brand-500 font-semibold cursor-pointer" onClick={openCreateModuleModal}>Add Module</span> to create one.
+							Click{" "}
+							<span
+								className="text-brand-500 font-semibold cursor-pointer"
+								onClick={openCreateModuleModal}
+							>
+								Add Module
+							</span>{" "}
+							to create one.
 						</p>
 					</div>
 				) : (

@@ -9,11 +9,11 @@ import {
 } from "react";
 import type { Phase } from "../types";
 import { ConfirmDeleteModal } from "@/shared/ui";
-import { AddPhase, EditPhase } from "@/features/stage-editor/ui/modals/PhaseModals";
 import {
-	useDeletePhase,
-	useReorderPhase,
-} from "@/entities/phase/mutations";
+	AddPhase,
+	EditPhase,
+} from "@/features/stage-editor/ui/modals/PhaseModals";
+import { useDeletePhase, useReorderPhase } from "@/entities/phase/mutations";
 import { toast } from "@/components/ui/toast";
 import {
 	Check,
@@ -437,7 +437,8 @@ export const PhaseCard = forwardRef<
 													selected={isActive}
 													badge={badge}
 													onClick={() =>
-														phase.number !== null && setActivePhase(phase.number)
+														phase.number !== null &&
+														setActivePhase(phase.number)
 													}
 													onEdit={
 														!readOnly ? () => openEditModal(phase) : undefined
@@ -480,21 +481,27 @@ export const PhaseCard = forwardRef<
 								<div className="flex items-center gap-1.5 font-medium text-foreground">
 									<span>
 										{currentPhase.planStart
-											? new Date(currentPhase.planStart).toLocaleDateString("en-US", {
-													month: "short",
-													day: "numeric",
-													year: "numeric",
-											  })
+											? new Date(currentPhase.planStart).toLocaleDateString(
+													"en-US",
+													{
+														month: "short",
+														day: "numeric",
+														year: "numeric",
+													},
+												)
 											: "Not set"}
 									</span>
 									<span className="text-muted-foreground font-normal">–</span>
 									<span>
 										{currentPhase.planEnd
-											? new Date(currentPhase.planEnd).toLocaleDateString("en-US", {
-													month: "short",
-													day: "numeric",
-													year: "numeric",
-											  })
+											? new Date(currentPhase.planEnd).toLocaleDateString(
+													"en-US",
+													{
+														month: "short",
+														day: "numeric",
+														year: "numeric",
+													},
+												)
 											: "Not set"}
 									</span>
 								</div>
@@ -510,21 +517,27 @@ export const PhaseCard = forwardRef<
 								<div className="flex items-center gap-1.5 font-medium text-foreground">
 									<span>
 										{currentPhase.actualStart
-											? new Date(currentPhase.actualStart).toLocaleDateString("en-US", {
-													month: "short",
-													day: "numeric",
-													year: "numeric",
-											  })
+											? new Date(currentPhase.actualStart).toLocaleDateString(
+													"en-US",
+													{
+														month: "short",
+														day: "numeric",
+														year: "numeric",
+													},
+												)
 											: "Not started"}
 									</span>
 									<span className="text-muted-foreground font-normal">–</span>
 									<span>
 										{currentPhase.actualEnd
-											? new Date(currentPhase.actualEnd).toLocaleDateString("en-US", {
-													month: "short",
-													day: "numeric",
-													year: "numeric",
-											  })
+											? new Date(currentPhase.actualEnd).toLocaleDateString(
+													"en-US",
+													{
+														month: "short",
+														day: "numeric",
+														year: "numeric",
+													},
+												)
 											: "Not finished"}
 									</span>
 								</div>

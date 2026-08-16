@@ -3,10 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/adminClient";
 import { prisma } from "@/lib/prisma";
 import { contractSignedStart } from "@/shared/lib/scheduling/stageSchedule";
-import {
-	contractUploadSchema,
-	contractApproveSchema,
-} from "@/shared/schemas";
+import { contractUploadSchema, contractApproveSchema } from "@/shared/schemas";
 import { deriveInitials } from "@/shared/lib/contractRules";
 import {
 	getCurrentUserId,
@@ -316,14 +313,10 @@ export async function approveContract(
 			// contract's client company (profile.client_id === contract.client_id).
 			if (role === "owner") {
 				if (!(await requireProjectOwner(projectId, userId))) {
-					throw new Error(
-						"Only the Project Owner can approve the contract.",
-					);
+					throw new Error("Only the Project Owner can approve the contract.");
 				}
 			} else if (profile.client_id !== contract.client_id) {
-				throw new Error(
-					"Only the project's client can approve the contract.",
-				);
+				throw new Error("Only the project's client can approve the contract.");
 			}
 
 			const fullName = `${profile.first_name} ${profile.last_name}`.trim();

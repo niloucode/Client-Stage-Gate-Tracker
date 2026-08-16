@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { ChevronDown, Paperclip, Bug } from "lucide-react";
@@ -70,7 +70,11 @@ export interface TicketModalEditProps {
 }
 
 const createTicketModalSchema = ticketCreateSchema.superRefine((data, ctx) => {
-	if (data.plan_start_at && data.plan_end_at && data.plan_start_at > data.plan_end_at) {
+	if (
+		data.plan_start_at &&
+		data.plan_end_at &&
+		data.plan_start_at > data.plan_end_at
+	) {
 		ctx.addIssue({
 			code: "custom",
 			message: "Start must be before End",
@@ -212,15 +216,15 @@ export function TicketModalCreate({
 	// Check if user has entered any form data
 	const hasUnsavedChanges = Boolean(
 		title.trim() ||
-			description.trim() ||
-			startDate ||
-			deadline ||
-			selectedTags.length > 0 ||
-			assignedIds.length > 0 ||
-			watcherId ||
-			linkedIssue ||
-			imageFiles.length > 0 ||
-			apiRoute.trim(),
+		description.trim() ||
+		startDate ||
+		deadline ||
+		selectedTags.length > 0 ||
+		assignedIds.length > 0 ||
+		watcherId ||
+		linkedIssue ||
+		imageFiles.length > 0 ||
+		apiRoute.trim(),
 	);
 
 	const resetForm = () => {
@@ -265,7 +269,7 @@ export function TicketModalCreate({
 			tagIds: selectedTags,
 			plan_start_at: startDate ?? null,
 			plan_end_at: deadline ?? null,
-			api_route: isApiTagSelected ? (apiRoute.trim() || null) : null,
+			api_route: isApiTagSelected ? apiRoute.trim() || null : null,
 			api_method: isApiTagSelected ? apiMethod : null,
 			// 1-to-1 issue link (spec): persisted via createTicket.
 			issue_id: linkedIssue?.id ?? null,
@@ -373,7 +377,9 @@ export function TicketModalCreate({
 			toast.add({
 				title: "Creation Failed",
 				description:
-					error instanceof Error ? error.message : "Unable to create ticket. Please try again.",
+					error instanceof Error
+						? error.message
+						: "Unable to create ticket. Please try again.",
 				type: "error",
 			});
 		} finally {
@@ -422,7 +428,8 @@ export function TicketModalCreate({
 							error={fieldErrors.name}
 							onChange={(e) => {
 								setTitle(e.target.value);
-								if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: "" }));
+								if (fieldErrors.name)
+									setFieldErrors((prev) => ({ ...prev, name: "" }));
 							}}
 							maxLength={50}
 						/>
@@ -436,7 +443,8 @@ export function TicketModalCreate({
 							error={fieldErrors.description}
 							onChange={(e) => {
 								setDescription(e.target.value);
-								if (fieldErrors.description) setFieldErrors((prev) => ({ ...prev, description: "" }));
+								if (fieldErrors.description)
+									setFieldErrors((prev) => ({ ...prev, description: "" }));
 							}}
 							rows={4}
 							maxLength={360}
@@ -483,7 +491,9 @@ export function TicketModalCreate({
 
 									<DropdownMenuContent className="w-64 max-h-52 overflow-y-auto">
 										{profiles.map((profile) => {
-											const isChecked = assignedIds.includes(profile.profile_id);
+											const isChecked = assignedIds.includes(
+												profile.profile_id,
+											);
 											const name = `${profile.first_name} ${profile.last_name}`;
 											const initials = name
 												.split(" ")
@@ -493,7 +503,9 @@ export function TicketModalCreate({
 												<DropdownMenuCheckboxItem
 													key={profile.profile_id}
 													checked={isChecked}
-													onCheckedChange={() => toggleAssigned(profile.profile_id)}
+													onCheckedChange={() =>
+														toggleAssigned(profile.profile_id)
+													}
 													className="cursor-pointer"
 												>
 													<span className="flex items-center gap-2">
@@ -523,7 +535,7 @@ export function TicketModalCreate({
 														return p
 															? `${p.first_name} ${p.last_name}`
 															: "Add watchers...";
-												  })()
+													})()
 												: "Add watchers..."}
 										</span>
 										<ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
@@ -745,7 +757,8 @@ export function TicketModalCreate({
 										error={fieldErrors.api_route}
 										onChange={(e) => {
 											setApiRoute(e.target.value);
-											if (fieldErrors.api_route) setFieldErrors((prev) => ({ ...prev, api_route: "" }));
+											if (fieldErrors.api_route)
+												setFieldErrors((prev) => ({ ...prev, api_route: "" }));
 										}}
 									/>
 								</div>
@@ -754,7 +767,11 @@ export function TicketModalCreate({
 					</form>
 
 					<DialogFooter>
-						<Button onClick={handleAttemptClose} variant="ghost" disabled={isSubmitting}>
+						<Button
+							onClick={handleAttemptClose}
+							variant="ghost"
+							disabled={isSubmitting}
+						>
 							Cancel
 						</Button>
 						<Button onClick={handleSubmit} disabled={isSubmitting}>
@@ -763,7 +780,7 @@ export function TicketModalCreate({
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-			
+
 			<IssueTableModal
 				open={isIssueModalOpen}
 				onOpenChange={setIsIssueModalOpen}

@@ -3311,7 +3311,9 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
 										// one label at a time: the resize ghost carries it while
 										// this bar is the faded placeholder
 										"group-data-[drag-kind^=resize]/gantt-seg:opacity-0",
-										placement === "after" ? "inset-s-full ms-2" : "inset-e-full me-2",
+										placement === "after"
+											? "inset-s-full ms-2"
+											: "inset-e-full me-2",
 									)}
 								>
 									{segment.occurrence.event.title}

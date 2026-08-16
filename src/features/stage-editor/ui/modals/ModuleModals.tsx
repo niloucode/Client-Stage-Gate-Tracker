@@ -257,9 +257,7 @@ function ModuleModal({
 														? new Date(field.state.value)
 														: undefined
 												}
-												onChange={(date) =>
-													field.handleChange(date ?? null)
-												}
+												onChange={(date) => field.handleChange(date ?? null)}
 												placeholder="Pick Planned Start"
 												error={
 													formErrorToMessage(field.state.meta.errors[0]) ??
@@ -279,9 +277,7 @@ function ModuleModal({
 														? new Date(field.state.value)
 														: undefined
 												}
-												onChange={(date) =>
-													field.handleChange(date ?? null)
-												}
+												onChange={(date) => field.handleChange(date ?? null)}
 												placeholder="Pick Planned End"
 												error={
 													formErrorToMessage(field.state.meta.errors[0]) ??

@@ -91,9 +91,13 @@ export function VariablesPage({ projectId }: { projectId: string }) {
 
 	// Modals state
 	const [isFormOpen, setIsFormOpen] = useState(false);
-	const [editingVariable, setEditingVariable] = useState<VariableItem | null>(null);
+	const [editingVariable, setEditingVariable] = useState<VariableItem | null>(
+		null,
+	);
 	const [notesVariable, setNotesVariable] = useState<VariableItem | null>(null);
-	const [visibilityTarget, setVisibilityTarget] = useState<VariableItem | null>(null);
+	const [visibilityTarget, setVisibilityTarget] = useState<VariableItem | null>(
+		null,
+	);
 	const [deleteTarget, setDeleteTarget] = useState<VariableItem | null>(null);
 
 	const filteredVariables = useMemo(() => {
@@ -103,7 +107,7 @@ export function VariablesPage({ projectId }: { projectId: string }) {
 			(v) =>
 				v.name.toLowerCase().includes(q) ||
 				v.value.toLowerCase().includes(q) ||
-				v.type.toLowerCase().includes(q)
+				v.type.toLowerCase().includes(q),
 		);
 	}, [variables, searchQuery]);
 
@@ -144,7 +148,9 @@ export function VariablesPage({ projectId }: { projectId: string }) {
 	};
 
 	/** Returns true only after the mutation succeeded — the modal closes itself. */
-	const handleSaveVariable = async (data: VariableCreateInput): Promise<boolean> => {
+	const handleSaveVariable = async (
+		data: VariableCreateInput,
+	): Promise<boolean> => {
 		try {
 			if (editingVariable) {
 				await updateMutation.mutateAsync({
@@ -170,7 +176,9 @@ export function VariablesPage({ projectId }: { projectId: string }) {
 			toast.add({
 				title: "Save Failed",
 				description:
-					error instanceof Error ? error.message : "Failed to save the variable.",
+					error instanceof Error
+						? error.message
+						: "Failed to save the variable.",
 				type: "error",
 			});
 			return false;
@@ -214,7 +222,9 @@ export function VariablesPage({ projectId }: { projectId: string }) {
 			toast.add({
 				title: "Delete Failed",
 				description:
-					error instanceof Error ? error.message : "Failed to delete the variable.",
+					error instanceof Error
+						? error.message
+						: "Failed to delete the variable.",
 				type: "error",
 			});
 		}
@@ -303,7 +313,9 @@ export function VariablesPage({ projectId }: { projectId: string }) {
 					}`}
 					confirmName={visibilityTarget.name}
 					actionLabel={
-						visibilityTarget.clientVisibility ? "Hide from Client" : "Make Visible"
+						visibilityTarget.clientVisibility
+							? "Hide from Client"
+							: "Make Visible"
 					}
 					onClose={() => setVisibilityTarget(null)}
 					onConfirm={() => void handleConfirmToggleVisibility()}

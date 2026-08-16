@@ -136,7 +136,11 @@ export async function assertProjectMemberOrClient(
 		};
 	}
 	const contract = await prisma.contracts.findFirst({
-		where: { project_id: projectId, client_id: profile.client_id, is_deleted: false },
+		where: {
+			project_id: projectId,
+			client_id: profile.client_id,
+			is_deleted: false,
+		},
 		select: { contract_id: true },
 	});
 	if (!contract) {
@@ -170,7 +174,11 @@ export async function assertProjectClient(
 		};
 	}
 	const contract = await prisma.contracts.findFirst({
-		where: { project_id: projectId, client_id: profile.client_id, is_deleted: false },
+		where: {
+			project_id: projectId,
+			client_id: profile.client_id,
+			is_deleted: false,
+		},
 		select: { contract_id: true },
 	});
 	if (!contract) {

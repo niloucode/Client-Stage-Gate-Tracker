@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import type { Tag } from "@/entities/types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
+} from "@/components/ui/dialog";
 import { FormInput } from "@/components/ui/forminput";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -64,10 +70,17 @@ export default function TagFormModal({
 	}
 
 	return (
-		<Dialog open={currentIsOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+		<Dialog
+			open={currentIsOpen}
+			onOpenChange={(open) => {
+				if (!open) onClose();
+			}}
+		>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>{mode === "create" ? "Create Tag" : "Edit Tag"}</DialogTitle>
+					<DialogTitle>
+						{mode === "create" ? "Create Tag" : "Edit Tag"}
+					</DialogTitle>
 				</DialogHeader>
 
 				{/* Body */}
@@ -104,11 +117,7 @@ export default function TagFormModal({
 				</div>
 
 				<DialogFooter>
-					<Button
-						onClick={handleSubmit}
-					>
-						Save Tag
-					</Button>
+					<Button onClick={handleSubmit}>Save Tag</Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>

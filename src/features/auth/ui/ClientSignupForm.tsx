@@ -15,7 +15,10 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAppForm } from "@/shared/form";
 import { resolveClientByInviteCode } from "@/entities/client";
-import { getProfileByEmail, createProfileForCurrentUser } from "@/entities/profile";
+import {
+	getProfileByEmail,
+	createProfileForCurrentUser,
+} from "@/entities/profile";
 import { createClient } from "@/lib/supabase/client";
 import { clientSignupSchema } from "@/shared/schemas";
 import { env } from "@/env";
@@ -280,10 +283,7 @@ export function ClientSignupForm() {
 
 				{/* Submit Button */}
 				<form.AppForm>
-					<form.SubmitButton
-						className="w-full"
-						pendingLabel="Registering…"
-					>
+					<form.SubmitButton className="w-full" pendingLabel="Registering…">
 						Create Account
 					</form.SubmitButton>
 				</form.AppForm>

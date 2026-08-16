@@ -58,10 +58,12 @@ class ResizeObserverStub {
 	disconnect() {}
 }
 if (!("ResizeObserver" in globalThis)) {
-	(globalThis as { ResizeObserver?: unknown }).ResizeObserver = ResizeObserverStub;
+	(globalThis as { ResizeObserver?: unknown }).ResizeObserver =
+		ResizeObserverStub;
 }
 if (!("scrollIntoView" in HTMLElement.prototype)) {
-	(HTMLElement.prototype as { scrollIntoView?: () => void }).scrollIntoView = () => {};
+	(HTMLElement.prototype as { scrollIntoView?: () => void }).scrollIntoView =
+		() => {};
 }
 
 import { AccountMenu } from "@/features/navigation/ui";

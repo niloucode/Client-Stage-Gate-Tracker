@@ -27,11 +27,7 @@ interface ManageMembersModalProps {
 	onClose: () => void;
 }
 
-function DepartmentDisplay({
-	departmentName,
-}: {
-	departmentName: string;
-}) {
+function DepartmentDisplay({ departmentName }: { departmentName: string }) {
 	return (
 		<div
 			className={`px-2 w-25 text-center py-0.5 rounded-md text-xs 

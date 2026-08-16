@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	Check,
-	Workflow,
-	Plus,
-	Pencil,
-	LucideIcon,
-} from "lucide-react";
+import { Check, Workflow, Plus, Pencil, LucideIcon } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -186,7 +180,9 @@ export function StageSequence({
 			{stages.length === 0 ? (
 				<div className="flex flex-col items-center justify-center py-8 text-center bg-neutral-subtle/30 rounded-md border border-dashed border-warm-gray-200 my-2">
 					<Workflow className="h-8 w-8 text-muted-foreground/40 mb-2" />
-					<p className="text-sm font-medium text-charcoal">No stages in sequence</p>
+					<p className="text-sm font-medium text-charcoal">
+						No stages in sequence
+					</p>
 					<p className="text-xs text-muted-foreground mt-1 max-w-sm">
 						{showAddButton
 							? "Create your first stage to establish the project roadmap and milestone sequence."
@@ -240,7 +236,9 @@ export function StageSequence({
 										badge={badge}
 										onClick={() => onSelectStage?.(stage.stage_id)}
 										onEdit={
-											onEditStage ? () => onEditStage(stage.stage_id) : undefined
+											onEditStage
+												? () => onEditStage(stage.stage_id)
+												: undefined
 										}
 									/>
 								</div>

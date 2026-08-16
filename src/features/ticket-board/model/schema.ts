@@ -74,7 +74,11 @@ export const ticketHistoryEntrySchema = z
 		}
 
 		// WATCHER_CHANGED carries JSON {from, to} where values are UUID strings or null.
-		if (entry.action === "WATCHER_CHANGED" && details && !isWatcherChangedDetails(details)) {
+		if (
+			entry.action === "WATCHER_CHANGED" &&
+			details &&
+			!isWatcherChangedDetails(details)
+		) {
 			ctx.addIssue({
 				code: "custom",
 				message: `details for WATCHER_CHANGED must be JSON with {from, to} as UUID strings or null`,
@@ -83,7 +87,11 @@ export const ticketHistoryEntrySchema = z
 		}
 
 		// FINISHED carries JSON {from} with the previous status.
-		if (entry.action === "FINISHED" && details && !hasStringFields(details, ["from"])) {
+		if (
+			entry.action === "FINISHED" &&
+			details &&
+			!hasStringFields(details, ["from"])
+		) {
 			ctx.addIssue({
 				code: "custom",
 				message: `details for FINISHED must be JSON with {from} string`,

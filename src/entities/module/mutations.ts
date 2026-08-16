@@ -21,7 +21,8 @@ export function useCreateModule() {
 			params: { phaseId: string; stageId: string } & ModuleCreateInput,
 		) => {
 			const result = await createModule(params.phaseId, params);
-			if (!result.success) throw new Error(result.error ?? "Failed to create module.");
+			if (!result.success)
+				throw new Error(result.error ?? "Failed to create module.");
 			return result;
 		},
 		onSuccess: async (_data, variables) => {
@@ -40,7 +41,8 @@ export function useUpdateModule() {
 			params: { moduleId: string; stageId: string } & ModuleUpdateInput,
 		) => {
 			const result = await updateModule(params.moduleId, params);
-			if (!result.success) throw new Error(result.error ?? "Failed to update module.");
+			if (!result.success)
+				throw new Error(result.error ?? "Failed to update module.");
 			return result;
 		},
 		onSuccess: async (_data, variables) => {
@@ -57,7 +59,8 @@ export function useDeleteModule() {
 	return useMutation({
 		mutationFn: async (params: { moduleId: string; stageId: string }) => {
 			const result = await cascadeSoftDeleteModule(params.moduleId);
-			if (!result.success) throw new Error(result.error ?? "Failed to delete module.");
+			if (!result.success)
+				throw new Error(result.error ?? "Failed to delete module.");
 			return result;
 		},
 		onSuccess: async (_data, variables) => {

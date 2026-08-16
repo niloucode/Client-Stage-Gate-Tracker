@@ -33,7 +33,10 @@ async function main() {
 		 WHERE tablename = 'Profiles' AND indexdef ILIKE '%gin_trgm_ops%'
 		 ORDER BY indexname`,
 	);
-	console.log("Trigram indexes present:", rows.map((r) => r.indexname).join(", "));
+	console.log(
+		"Trigram indexes present:",
+		rows.map((r) => r.indexname).join(", "),
+	);
 	await pool.end();
 }
 

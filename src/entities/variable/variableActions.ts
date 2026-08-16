@@ -10,7 +10,11 @@ import {
 	variableCreateSchema,
 	type VariableCreateInput,
 } from "@/shared/schemas";
-import { mapClientVariableRow, mapVariableRow, uiTypeToDbType } from "./lib/mappers";
+import {
+	mapClientVariableRow,
+	mapVariableRow,
+	uiTypeToDbType,
+} from "./lib/mappers";
 import { variableClientSelect, variableSelect } from "./types";
 
 /**
@@ -31,7 +35,11 @@ export async function getProjectVariables(projectId: string) {
 
 		if (isClient) {
 			const rows = await prisma.variables.findMany({
-				where: { project_id: projectId, is_deleted: false, client_visible: true },
+				where: {
+					project_id: projectId,
+					is_deleted: false,
+					client_visible: true,
+				},
 				orderBy: { created_at: "asc" },
 				select: variableClientSelect,
 			});
@@ -51,7 +59,10 @@ export async function getProjectVariables(projectId: string) {
 }
 
 /** Team/owner only. Creates a variable with client visibility OFF. */
-export async function createVariable(projectId: string, input: VariableCreateInput) {
+export async function createVariable(
+	projectId: string,
+	input: VariableCreateInput,
+) {
 	z.uuid().parse(projectId);
 	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false as const, error: auth.error };
@@ -82,7 +93,8 @@ export async function updateVariable(
 ) {
 	z.uuid().parse(variableId);
 	const projectId = await resolveVariableProject(variableId);
-	if (!projectId) return { success: false as const, error: "Variable not found." };
+	if (!projectId)
+		return { success: false as const, error: "Variable not found." };
 	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false as const, error: auth.error };
 	try {
@@ -109,7 +121,8 @@ export async function updateVariable(
 export async function toggleVariableVisibility(variableId: string) {
 	z.uuid().parse(variableId);
 	const projectId = await resolveVariableProject(variableId);
-	if (!projectId) return { success: false as const, error: "Variable not found." };
+	if (!projectId)
+		return { success: false as const, error: "Variable not found." };
 	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false as const, error: auth.error };
 	try {
@@ -117,7 +130,8 @@ export async function toggleVariableVisibility(variableId: string) {
 			where: { variable_id: variableId },
 			select: { client_visible: true },
 		});
-		if (!current) return { success: false as const, error: "Variable not found." };
+		if (!current)
+			return { success: false as const, error: "Variable not found." };
 		const updated = await prisma.variables.update({
 			where: { variable_id: variableId },
 			data: { client_visible: !current.client_visible },
@@ -126,7 +140,10 @@ export async function toggleVariableVisibility(variableId: string) {
 		return { success: true as const, data: updated };
 	} catch (error) {
 		console.error("Failed to toggle variable visibility:", error);
-		return { success: false as const, error: "Failed to change client visibility." };
+		return {
+			success: false as const,
+			error: "Failed to change client visibility.",
+		};
 	}
 }
 
@@ -134,7 +151,8 @@ export async function toggleVariableVisibility(variableId: string) {
 export async function softDeleteVariable(variableId: string) {
 	z.uuid().parse(variableId);
 	const projectId = await resolveVariableProject(variableId);
-	if (!projectId) return { success: false as const, error: "Variable not found." };
+	if (!projectId)
+		return { success: false as const, error: "Variable not found." };
 	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) return { success: false as const, error: auth.error };
 	try {

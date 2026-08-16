@@ -10,7 +10,10 @@ import { join } from "node:path";
  * revert produced confusing runtime Prisma validation errors. This test
  * fails loudly if the schema drifts from the integration state.
  */
-const schema = readFileSync(join(process.cwd(), "prisma/schema.prisma"), "utf8");
+const schema = readFileSync(
+	join(process.cwd(), "prisma/schema.prisma"),
+	"utf8",
+);
 
 function modelBlock(model: string): string {
 	const start = schema.indexOf(`model ${model} {`);

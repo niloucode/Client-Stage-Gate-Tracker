@@ -65,12 +65,10 @@ export function ContractApprovalCard({
 	return (
 		<Card className="gap-0 p-0 bg-neutral-surface border border-border rounded-md shadow-xs">
 			<CardHeader className="px-5 py-4 border-b border-border gap-1">
-				<CardTitle>
-					Approve Contract
-				</CardTitle>
+				<CardTitle>Approve Contract</CardTitle>
 				<CardDescription className="text-xs text-muted-foreground">
-					Both the Project Owner and the Client must approve before the
-					project can begin.
+					Both the Project Owner and the Client must approve before the project
+					can begin.
 				</CardDescription>
 			</CardHeader>
 
@@ -93,9 +91,7 @@ export function ContractApprovalCard({
 							)}
 							<span>Client Status:</span>
 						</div>
-						<span className="">
-							{clientApproved ? "Approved" : "Pending"}
-						</span>
+						<span className="">{clientApproved ? "Approved" : "Pending"}</span>
 					</div>
 
 					{/* Project Owner Status */}
@@ -114,9 +110,7 @@ export function ContractApprovalCard({
 							)}
 							<span>Project Owner Status:</span>
 						</div>
-						<span className="">
-							{ownerApproved ? "Approved" : "Pending"}
-						</span>
+						<span className="">{ownerApproved ? "Approved" : "Pending"}</span>
 					</div>
 				</div>
 
@@ -129,18 +123,13 @@ export function ContractApprovalCard({
 				) : alreadyApproved ? (
 					<div className="flex items-center gap-2.5 rounded-md border border-border bg-neutral-subtle px-3.5 py-3 text-xs  text-muted-foreground">
 						<Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />
-						<span>
-							You have approved. Awaiting {otherRoleLabel} approval.
-						</span>
+						<span>You have approved. Awaiting {otherRoleLabel} approval.</span>
 					</div>
 				) : (
 					<div className="space-y-3 pt-1">
 						<p className="text-xs text-muted-foreground leading-relaxed">
 							Please review the document and confirm your approval as the{" "}
-							<strong className=" text-foreground">
-								{roleLabel}
-							</strong>
-							.
+							<strong className=" text-foreground">{roleLabel}</strong>.
 						</p>
 						<Button
 							onClick={() => setConfirmOpen(true)}

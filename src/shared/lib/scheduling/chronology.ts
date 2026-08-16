@@ -26,18 +26,24 @@ export function isChronologyValid(d: SchedulingDates): boolean {
 
 /** Earliest non-null date of the four, or null when none is set. */
 export function earliestDate(d: SchedulingDates): Date | null {
-	const candidates = [d.planStart, d.planEnd, d.actualStart, d.actualEnd].filter(
-		(v): v is Date => v !== null,
-	);
+	const candidates = [
+		d.planStart,
+		d.planEnd,
+		d.actualStart,
+		d.actualEnd,
+	].filter((v): v is Date => v !== null);
 	if (candidates.length === 0) return null;
 	return new Date(Math.min(...candidates.map((c) => c.getTime())));
 }
 
 /** Latest non-null date of the four, or null when none is set. */
 export function latestDate(d: SchedulingDates): Date | null {
-	const candidates = [d.planStart, d.planEnd, d.actualStart, d.actualEnd].filter(
-		(v): v is Date => v !== null,
-	);
+	const candidates = [
+		d.planStart,
+		d.planEnd,
+		d.actualStart,
+		d.actualEnd,
+	].filter((v): v is Date => v !== null);
 	if (candidates.length === 0) return null;
 	return new Date(Math.max(...candidates.map((c) => c.getTime())));
 }

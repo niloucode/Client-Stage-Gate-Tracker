@@ -51,13 +51,16 @@ export function TicketCardContent({
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
 
-	const startDate = ticket.plan_start_at ? new Date(ticket.plan_start_at) : null;
+	const startDate = ticket.plan_start_at
+		? new Date(ticket.plan_start_at)
+		: null;
 	const endDate = ticket.plan_end_at ? new Date(ticket.plan_end_at) : null;
-	const actualEndDate = ticket.actual_end_at ? new Date(ticket.actual_end_at) : null;
+	const actualEndDate = ticket.actual_end_at
+		? new Date(ticket.actual_end_at)
+		: null;
 
 	const isCompleted =
-		ticket.status === status.FINISHED ||
-		ticket.actual_end_at != null;
+		ticket.status === status.FINISHED || ticket.actual_end_at != null;
 
 	// In-progress or unfinished tickets whose deadline has passed are overdue
 	const isOverdue = endDate && !isCompleted ? endDate < today : false;
@@ -85,7 +88,7 @@ export function TicketCardContent({
 				className={cn(
 					"bg-neutral-surface flex overflow-clip rounded-md border border-brand-100 cursor-pointer relative @container",
 					"hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 select-none group",
-					isSubtask ? "h-auto min-h-36" : "h-auto min-h-45"
+					isSubtask ? "h-auto min-h-36" : "h-auto min-h-45",
 				)}
 			>
 				{isOverdue ? (
@@ -96,7 +99,12 @@ export function TicketCardContent({
 					<div className="w-0.5 h-full bg-brand-500 shrink-0 group-hover:opacity-50 transition-opacity duration-150" />
 				) : null}
 
-				<div className={cn("w-full flex flex-col min-w-0", isSubtask ? "p-3" : "p-4")}>
+				<div
+					className={cn(
+						"w-full flex flex-col min-w-0",
+						isSubtask ? "p-3" : "p-4",
+					)}
+				>
 					{/* Header: Code + OVERDUE/LATE Badge + Delete Button */}
 					<div className="flex items-center justify-between gap-2 min-w-0 mb-1">
 						<div className="font-mono text-brand-500 text-xs font-semibold truncate min-w-0 pr-1">
@@ -132,7 +140,12 @@ export function TicketCardContent({
 					</div>
 
 					{/* Title */}
-					<h3 className={cn("line-clamp-1 font-semibold text-slate-900", isSubtask ? "text-xs" : "text-sm")}>
+					<h3
+						className={cn(
+							"line-clamp-1 font-semibold text-slate-900",
+							isSubtask ? "text-xs" : "text-sm",
+						)}
+					>
 						{ticket.name}
 					</h3>
 
@@ -160,7 +173,10 @@ export function TicketCardContent({
 
 							{startDate && (
 								<span className="inline-flex items-center gap-1 shrink-0">
-									<Calendar size={13} className={`shrink-0 ${getDateTextColor()}`} />
+									<Calendar
+										size={13}
+										className={`shrink-0 ${getDateTextColor()}`}
+									/>
 									<span className={getDateTextColor()}>
 										{formatDate(startDate)}
 									</span>
@@ -168,12 +184,19 @@ export function TicketCardContent({
 							)}
 
 							{startDate && endDate && (
-								<span className={`${getDateTextColor()} shrink-0 hidden @[100px]:inline`}>—</span>
+								<span
+									className={`${getDateTextColor()} shrink-0 hidden @[100px]:inline`}
+								>
+									—
+								</span>
 							)}
 
 							{endDate && (
 								<span className="inline-flex items-center gap-1 shrink-0">
-									<Calendar size={13} className={`shrink-0 ${getDateTextColor()}`} />
+									<Calendar
+										size={13}
+										className={`shrink-0 ${getDateTextColor()}`}
+									/>
 									<span className={getDateTextColor()}>
 										{formatDate(endDate)}
 									</span>
@@ -191,14 +214,16 @@ export function TicketCardContent({
 									setIsExpanded((prev) => !prev);
 								}}
 								title={isExpanded ? "Collapse subtasks" : "Expand subtasks"}
-								aria-label={isExpanded ? "Collapse subtasks" : "Expand subtasks"}
+								aria-label={
+									isExpanded ? "Collapse subtasks" : "Expand subtasks"
+								}
 							>
 								<ChevronDown
 									size={14}
 									strokeWidth={2}
 									className={cn(
 										"text-gray-400 transition-transform duration-200",
-										isExpanded && "rotate-180"
+										isExpanded && "rotate-180",
 									)}
 								/>
 							</Button>
@@ -214,7 +239,7 @@ export function TicketCardContent({
 						"grid transition-[grid-template-rows,opacity,margin] duration-300 ease-in-out ml-3.5 pl-2.5 border-l-2",
 						isExpanded
 							? "grid-rows-[1fr] opacity-100 mt-2.5 border-brand-400/60"
-							: "grid-rows-[0fr] opacity-0 mt-0 border-transparent pointer-events-none"
+							: "grid-rows-[0fr] opacity-0 mt-0 border-transparent pointer-events-none",
 					)}
 				>
 					<div className="overflow-hidden flex flex-col gap-2 mb-5">
@@ -223,7 +248,7 @@ export function TicketCardContent({
 								key={subtask.ticket_id}
 								className={cn(
 									"transition-all duration-300 p-0.5",
-									isExpanded && "animate-in fade-in-0 slide-in-from-top-2"
+									isExpanded && "animate-in fade-in-0 slide-in-from-top-2",
 								)}
 								style={{
 									animationDelay: isExpanded ? `${idx * 60}ms` : "0ms",
@@ -256,7 +281,9 @@ export function TicketCardContent({
 						<AlertDialogDescription>
 							{hasSubtasks ? (
 								<>
-									<span className="font-medium text-foreground">{ticket.name}</span>{" "}
+									<span className="font-medium text-foreground">
+										{ticket.name}
+									</span>{" "}
 									has{" "}
 									<strong>
 										{subtasks.length} subtask{subtasks.length === 1 ? "" : "s"}

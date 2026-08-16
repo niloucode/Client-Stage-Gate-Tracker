@@ -45,7 +45,8 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
 	className = "",
 }) => {
 	const [currentPage, setCurrentPage] = useState<number>(1);
-	const [sortByUrgency, setSortByUrgency] = useState<SortOrder>(defaultSortOrder);
+	const [sortByUrgency, setSortByUrgency] =
+		useState<SortOrder>(defaultSortOrder);
 	const [urgencyFilter, setUrgencyFilter] =
 		useState<UrgencyFilterOption>(defaultUrgencyFilter);
 
@@ -68,7 +69,10 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
 	const totalPages = Math.ceil(sortedIssues.length / itemsPerPage) || 1;
 	const validPage = Math.min(currentPage, totalPages);
 	const startIndex = (validPage - 1) * itemsPerPage;
-	const paginatedIssues = sortedIssues.slice(startIndex, startIndex + itemsPerPage);
+	const paginatedIssues = sortedIssues.slice(
+		startIndex,
+		startIndex + itemsPerPage,
+	);
 
 	const totalCountDenominator = totalSystemCount ?? issues.length;
 
@@ -188,7 +192,9 @@ export const IssueBox: React.FC<IssueBoxProps> = ({
 				<Button
 					variant="ghost"
 					size="icon"
-					onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+					onClick={() =>
+						setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+					}
 					disabled={validPage >= totalPages}
 					aria-label="Next page"
 					className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"

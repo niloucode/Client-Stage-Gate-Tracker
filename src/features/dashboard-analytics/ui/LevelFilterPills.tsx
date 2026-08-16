@@ -5,7 +5,11 @@ import { cn } from "@/lib/utils";
 import { ganttLevelSchema } from "../lib/schema";
 import type { GanttLevel } from "../types";
 
-const LEVEL_OPTIONS: { level: GanttLevel; label: string; icon: typeof Layers }[] = [
+const LEVEL_OPTIONS: {
+	level: GanttLevel;
+	label: string;
+	icon: typeof Layers;
+}[] = [
 	{ level: "phases", label: "Phases", icon: Layers },
 	{ level: "modules", label: "Modules", icon: LayoutGrid },
 	{ level: "workflows", label: "Workflows", icon: WorkflowIcon },

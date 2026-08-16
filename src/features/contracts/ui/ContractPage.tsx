@@ -170,41 +170,41 @@ export function ContractPage({ projectId }: ContractPageProps) {
 			<div className="mx-auto max-w-6xl space-y-6">
 				<Back link={`/projects/${projectId}`} />
 
-			<header>
-				<h1 className="text-xl font-semibold text-ink">{contractName}</h1>
-				<p className="text-sm text-plum-400">
-					Review the document and complete approval below.
-				</p>
-			</header>
+				<header>
+					<h1 className="text-xl font-semibold text-ink">{contractName}</h1>
+					<p className="text-sm text-plum-400">
+						Review the document and complete approval below.
+					</p>
+				</header>
 
-			
+				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+					<ContractViewer
+						className="h-fit py-0 bg-[#F9F9F7]"
+						projectId={projectId}
+						canManage={role === "owner"}
+						initialFilePath={contract?.file_path ?? null}
+						initialContractName={contract?.contract_name ?? null}
+						onSuccess={refresh}
+					/>
 
-			<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
-				<ContractViewer
-					className="h-fit py-0 bg-[#F9F9F7]"
-					projectId={projectId}
-					canManage={role === "owner"}
-					initialFilePath={contract?.file_path ?? null}
-					initialContractName={contract?.contract_name ?? null}
-					onSuccess={refresh}
-				/>
+					<div className="flex flex-col gap-6">
+						{allSigned && executedAt && (
+							<ExecutedBanner executedAt={executedAt} />
+						)}
+						<SignatoriesCard signatories={signatories} />
 
-				<div className="flex flex-col gap-6">
-					{allSigned && executedAt && <ExecutedBanner executedAt={executedAt} />}
-					<SignatoriesCard signatories={signatories} />
-
-					{role && (
-						<ContractApprovalCard
-							projectId={projectId}
-							variant={role}
-							otherPartyApproved={otherPartyApproved}
-							alreadyApproved={alreadyApproved}
-							contractName={contractName}
-							onSuccess={refresh}
-						/>
-					)}
+						{role && (
+							<ContractApprovalCard
+								projectId={projectId}
+								variant={role}
+								otherPartyApproved={otherPartyApproved}
+								alreadyApproved={alreadyApproved}
+								contractName={contractName}
+								onSuccess={refresh}
+							/>
+						)}
+					</div>
 				</div>
-			</div>
 			</div>
 		</>
 	);

@@ -1,5 +1,10 @@
 import type { IssueStatus, IssueUrgency } from "@/lib/generated/prisma";
-import type { IssueItem, UrgencyLevel } from "../types";
+import type {
+	IssueItem,
+	IssueStatusValue,
+	LinkedIssueChip,
+	UrgencyLevel,
+} from "../types";
 
 /** Server row shapes (Prisma include payloads for an issue). */
 
@@ -37,6 +42,15 @@ export interface IssueRow {
 	Profile: IssueReporterRow | null;
 }
 
+/** Light row shape for the ticket-board include (`ticketInclude.Issues`). */
+export interface LinkedIssueRow {
+	issue_id: string;
+	name: string;
+	type: string;
+	urgency: IssueUrgency;
+	status: IssueStatus;
+}
+
 /** Matches the legacy mock's display format: "08/02/2026, 14:30" (24h). */
 export function formatIssueDateTime(date: Date): string {
 	return `${date.toLocaleDateString("en-US", {
@@ -68,7 +82,9 @@ export function mapIssueRow(row: IssueRow): IssueItem {
 		reportedAt: formatIssueDateTime(row.reported_at),
 		description: row.description ?? "",
 		systemEnv: row.system_environment ?? "",
-		timeOfError: row.time_of_error ? formatIssueDateTime(row.time_of_error) : "N/A",
+		timeOfError: row.time_of_error
+			? formatIssueDateTime(row.time_of_error)
+			: "N/A",
 		ticketName: ticket?.name,
 		ticketId: ticket?.ticket_id,
 		steps: row.IssueSteps.map((s) => ({
@@ -76,5 +92,21 @@ export function mapIssueRow(row: IssueRow): IssueItem {
 			description: s.step,
 			image: s.image ?? undefined,
 		})),
+	};
+}
+
+/**
+ * Maps the LIGHT include row (`ticketInclude.Issues` — 5 fields, no steps/
+ * reporter/linked-ticket tree) to the board's linked-issue chip shape.
+ * Keeps board queries light: the full row is only fetched by the issue
+ * slice's own actions (listIssues / createIssue).
+ */
+export function mapLinkedIssueChip(row: LinkedIssueRow): LinkedIssueChip {
+	return {
+		id: row.issue_id,
+		name: row.name,
+		type: row.type,
+		urgency: row.urgency.toLowerCase() as UrgencyLevel,
+		status: row.status.toLowerCase() as IssueStatusValue,
 	};
 }

@@ -36,5 +36,5 @@ import { NextResponse, type NextRequest } from "next/server";
  *   // ... handle event.idempotently
  */
 export async function POST(_request: NextRequest) {
-  return NextResponse.json({ ok: true });
+	return NextResponse.json({ ok: true });
 }

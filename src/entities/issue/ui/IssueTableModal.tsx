@@ -68,4 +68,3 @@ export const IssueTableModal: React.FC<IssueTableModalProps> = ({
 		</>
 	);
 };
-

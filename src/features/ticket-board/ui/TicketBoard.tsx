@@ -255,7 +255,9 @@ export default function TicketBoard({
 			}
 			return {};
 		} catch (err) {
-			return { error: err instanceof Error ? err.message : "Failed to save tag" };
+			return {
+				error: err instanceof Error ? err.message : "Failed to save tag",
+			};
 		}
 	}
 

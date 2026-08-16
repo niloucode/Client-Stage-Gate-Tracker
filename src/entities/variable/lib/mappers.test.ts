@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { mapClientVariableRow, mapVariableRow, uiTypeToDbType } from "./mappers";
+import {
+	mapClientVariableRow,
+	mapVariableRow,
+	uiTypeToDbType,
+} from "./mappers";
 import type { VariableClientPayload, VariablePayload } from "../types";
 
 const createdAt = new Date("2026-08-01T10:00:00.000Z");
@@ -41,15 +45,21 @@ describe("mapVariableRow", () => {
 
 	it("maps all three DB enum values to lowercase", () => {
 		expect(mapVariableRow({ ...teamRow, type: "LINK" }).type).toBe("link");
-		expect(mapVariableRow({ ...teamRow, type: "CREDENTIAL" }).type).toBe("credential");
-		expect(mapVariableRow({ ...teamRow, type: "REPOSITORY" }).type).toBe("repository");
+		expect(mapVariableRow({ ...teamRow, type: "CREDENTIAL" }).type).toBe(
+			"credential",
+		);
+		expect(mapVariableRow({ ...teamRow, type: "REPOSITORY" }).type).toBe(
+			"repository",
+		);
 	});
 });
 
 describe("mapClientVariableRow", () => {
 	it("never leaks team notes", () => {
 		expect(mapClientVariableRow(clientRow).notesTeam).toBe("");
-		expect(mapClientVariableRow(clientRow).notesClient).toBe("Read-only access.");
+		expect(mapClientVariableRow(clientRow).notesClient).toBe(
+			"Read-only access.",
+		);
 	});
 
 	it("keeps the value for visible rows", () => {

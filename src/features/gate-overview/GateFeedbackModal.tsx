@@ -42,16 +42,18 @@ function GateFeedbackCard({
 	onCommentClick?: (entry: GateFeedbackEntry) => void;
 }) {
 	const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
-	const headerBg = entry.variant === "approved"
-		? "bg-emerald-50"
-		: entry.variant === "rejected"
-			? "bg-red-50"
-			: "bg-amber-50";
-	const bodyBg = entry.variant === "approved"
-		? "bg-emerald-50/40"
-		: entry.variant === "rejected"
-			? "bg-red-50/40"
-			: "bg-amber-50/30";
+	const headerBg =
+		entry.variant === "approved"
+			? "bg-emerald-50"
+			: entry.variant === "rejected"
+				? "bg-red-50"
+				: "bg-amber-50";
+	const bodyBg =
+		entry.variant === "approved"
+			? "bg-emerald-50/40"
+			: entry.variant === "rejected"
+				? "bg-red-50/40"
+				: "bg-amber-50/30";
 
 	return (
 		<div className="overflow-hidden shadow-2xs">

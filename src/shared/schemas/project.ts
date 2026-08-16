@@ -29,10 +29,7 @@ export const baseProject = z.object({
 });
 
 export const projectCreateSchema = baseProject.refine(
-	(data) =>
-		!data.planStart ||
-		!data.planEnd ||
-		data.planStart <= data.planEnd,
+	(data) => !data.planStart || !data.planEnd || data.planStart <= data.planEnd,
 	{
 		message: "Start must be before End",
 		path: ["planStart"],
@@ -46,9 +43,7 @@ export const projectUpdateSchema = baseProject
 	})
 	.refine(
 		(data) =>
-			!data.planStart ||
-			!data.planEnd ||
-			data.planStart <= data.planEnd,
+			!data.planStart || !data.planEnd || data.planStart <= data.planEnd,
 		{
 			message: "Start date must be before or equal to deadline date",
 			path: ["planStart"],
@@ -108,7 +103,6 @@ export const stageCreateSchema = baseStage.superRefine((data, ctx) => {
 		ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
 	}
 });
-
 
 export type StageCreateInput = z.infer<typeof stageCreateSchema>;
 

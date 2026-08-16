@@ -64,7 +64,8 @@ export function DashboardAnalyticsPage({ projectId }: { projectId: string }) {
 			<div className="mb-6">
 				<h1>Dashboard Analytics</h1>
 				<p className="subtitle">
-					Track project timelines and progress across phases, modules, and workflows.
+					Track project timelines and progress across phases, modules, and
+					workflows.
 				</p>
 			</div>
 
@@ -88,7 +89,8 @@ export function DashboardAnalyticsPage({ projectId }: { projectId: string }) {
 					) : activeQuery.isError ? (
 						<div className="flex h-64 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
 							<p>
-								Failed to load {LEVEL_LABEL[level].toLowerCase()} for this project.
+								Failed to load {LEVEL_LABEL[level].toLowerCase()} for this
+								project.
 							</p>
 							<Button
 								variant="outline"
@@ -99,7 +101,12 @@ export function DashboardAnalyticsPage({ projectId }: { projectId: string }) {
 							</Button>
 						</div>
 					) : (
-						<ProjectGanttChart rows={rows} tab={tab} level={level} today={today} />
+						<ProjectGanttChart
+							rows={rows}
+							tab={tab}
+							level={level}
+							today={today}
+						/>
 					)}
 				</section>
 			</div>

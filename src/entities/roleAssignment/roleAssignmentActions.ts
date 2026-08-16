@@ -48,7 +48,6 @@ export async function getProjectOwnerByProjectId(projectId: string) {
 	});
 }
 
-
 /**
  * Grants the Client Viewer role on a project. Owner-only: assigning roles
  * is a privilege escalation and must not be callable by non-owners.

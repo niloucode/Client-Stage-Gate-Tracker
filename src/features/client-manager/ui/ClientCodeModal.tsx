@@ -61,10 +61,10 @@ export function ClientCodeModal({
 					<DialogDescription className="min-h-10 leading-snug">
 						{newInviteCode
 							? "This code is shown ONCE. Share it with the client's employees so they can create their accounts."
-							: error ??
+							: (error ??
 								(isRegenerating
 									? "Generating a new code… (the previous code is invalidated)"
-									: "A new code will invalidate the previous one.")}
+									: "A new code will invalidate the previous one."))}
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex min-h-40 flex-col justify-between">

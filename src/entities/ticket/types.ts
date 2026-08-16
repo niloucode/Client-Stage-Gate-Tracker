@@ -18,16 +18,19 @@ export const ticketInclude = {
 			last_name: true,
 		},
 	},
-	// 1-to-1 issue link (spec 2026-08-15): full row so the editor can map it
-	// via mapIssueRow without an extra round-trip. Shape duplicated locally
-	// (entity isolation — ticket must not import entities/issue). The relation
-	// field is named `Issues` (matches the model — Prisma relation field names
-	// are NOT lowercased). `satisfies` makes tsc catch wrong field names.
+	// 1-to-1 issue link (spec 2026-08-15): LIGHT select — the board only
+	// renders the chip (`name` + urgency styling), so carrying IssueSteps +
+	// Profile + Tickets on every board ticket was pure read weight. The full
+	// tree is fetched only by the issue slice's own actions. The fields here
+	// map via entities/issue `mapLinkedIssueChip`. `satisfies` makes tsc
+	// catch wrong field names.
 	Issues: {
-		include: {
-			IssueSteps: { orderBy: { number: "asc" as const } },
-			Profile: { select: { first_name: true, last_name: true } },
-			Tickets: { take: 1 },
+		select: {
+			issue_id: true,
+			name: true,
+			type: true,
+			urgency: true,
+			status: true,
 		},
 	},
 } satisfies Prisma.TicketsInclude;

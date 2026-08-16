@@ -42,9 +42,7 @@ export async function createStage(
 			where: { project_id: projectId, is_deleted: false },
 			select: { number: true },
 		});
-		const number = nextStageNumber(
-			existingStages.map((s) => s.number),
-		);
+		const number = nextStageNumber(existingStages.map((s) => s.number));
 
 		const newStage = await prisma.stages.create({
 			data: {
@@ -457,9 +455,7 @@ export async function getProjectStages(projectId: string) {
 				planEnd: stage.plan_end_at,
 				actualStart: stage.actual_start_at,
 				actualEnd: stage.actual_end_at,
-				approved: stage.Gates.some(
-					(gate) => gate.status === "APPROVED",
-				),
+				approved: stage.Gates.some((gate) => gate.status === "APPROVED"),
 			})),
 		};
 	} catch (error) {

@@ -102,20 +102,22 @@ function getInitialFormData(
 // existing linkage lives on the Contracts row (NOT NULL invariant). An
 // edit must stay saveable even if the contract row were ever missing
 // (projectUpdateSchema semantics — client_id is optional there).
-const createProjectModalSchema = projectCreateSchema.superRefine((data, ctx) => {
-	if (data.planStart && data.planEnd && data.planStart > data.planEnd) {
-		ctx.addIssue({
-			code: "custom",
-			message: "Start must be before End",
-			path: ["planStart"],
-		});
-		ctx.addIssue({
-			code: "custom",
-			message: "End must be after Start",
-			path: ["planEnd"],
-		});
-	}
-});
+const createProjectModalSchema = projectCreateSchema.superRefine(
+	(data, ctx) => {
+		if (data.planStart && data.planEnd && data.planStart > data.planEnd) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Start must be before End",
+				path: ["planStart"],
+			});
+			ctx.addIssue({
+				code: "custom",
+				message: "End must be after Start",
+				path: ["planEnd"],
+			});
+		}
+	},
+);
 
 const editProjectModalSchema = baseProject
 	.omit({ client_id: true })
@@ -161,7 +163,8 @@ export function EditProjectModal({
 		[activeProject],
 	);
 
-	const [formData, setFormData] = useState<EditProjectFormState>(initialFormData);
+	const [formData, setFormData] =
+		useState<EditProjectFormState>(initialFormData);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 	const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -218,7 +221,9 @@ export function EditProjectModal({
 	};
 
 	const handleSubmit = async () => {
-		const schema = isEditMode ? editProjectModalSchema : createProjectModalSchema;
+		const schema = isEditMode
+			? editProjectModalSchema
+			: createProjectModalSchema;
 		const result = schema.safeParse(formData);
 		if (!result.success) {
 			const mapped = getFieldErrors(result);
@@ -366,9 +371,7 @@ export function EditProjectModal({
 								label="Plan Start"
 								required
 								value={
-									formData.planStart
-										? new Date(formData.planStart)
-										: undefined
+									formData.planStart ? new Date(formData.planStart) : undefined
 								}
 								onChange={(date) => {
 									setFormData({
@@ -386,9 +389,7 @@ export function EditProjectModal({
 								label="Plan End"
 								required
 								value={
-									formData.planEnd
-										? new Date(formData.planEnd)
-										: undefined
+									formData.planEnd ? new Date(formData.planEnd) : undefined
 								}
 								onChange={(date) => {
 									setFormData({

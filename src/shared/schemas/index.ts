@@ -43,14 +43,8 @@ export type { ProfileType, ProfileDisplay } from "./profile";
 export { clientSchema, clientCreateSchema } from "./client";
 export type { ClientType, ClientCreateType } from "./client";
 
-export {
-	contractUploadSchema,
-	contractApproveSchema,
-} from "./contract";
-export type {
-	ContractUploadInput,
-	ContractApproveInput,
-} from "./contract";
+export { contractUploadSchema, contractApproveSchema } from "./contract";
+export type { ContractUploadInput, ContractApproveInput } from "./contract";
 
 export { variableCreateSchema } from "./variable";
 export type { VariableCreateInput } from "./variable";

@@ -34,9 +34,7 @@ describe("gateApprovalDates (specs 2-3)", () => {
 	});
 
 	it("starts the next stage on the same date when one exists", () => {
-		expect(gateApprovalDates(approvedAt, true).nextStageStart).toBe(
-			approvedAt,
-		);
+		expect(gateApprovalDates(approvedAt, true).nextStageStart).toBe(approvedAt);
 	});
 
 	it("does not touch the next stage when the approved stage is last", () => {

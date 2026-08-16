@@ -32,7 +32,9 @@ export function GanttTabs({
 							key={tab}
 							value={tab}
 							className="relative h-auto flex-none rounded-none px-0.5 py-2 text-sm font-medium after:hidden"
-							style={{ color: isActive ? "var(--primary)" : "var(--muted-foreground)" }}
+							style={{
+								color: isActive ? "var(--primary)" : "var(--muted-foreground)",
+							}}
 						>
 							{TAB_LABEL[tab]}
 							{/*
@@ -45,7 +47,9 @@ export function GanttTabs({
 							<span
 								aria-hidden
 								className="absolute inset-x-0 -bottom-1.25 h-0.5"
-								style={{ backgroundColor: isActive ? "var(--primary)" : "transparent" }}
+								style={{
+									backgroundColor: isActive ? "var(--primary)" : "transparent",
+								}}
 							/>
 						</TabsTrigger>
 					);

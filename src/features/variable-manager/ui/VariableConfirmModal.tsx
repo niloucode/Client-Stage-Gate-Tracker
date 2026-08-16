@@ -63,7 +63,10 @@ export function VariableConfirmModal({
 					</p>
 
 					<div className="space-y-1.5">
-						<label htmlFor="confirm-variable-name" className="text-xs text-foreground">
+						<label
+							htmlFor="confirm-variable-name"
+							className="text-xs text-foreground"
+						>
 							Type the variable name to confirm:
 						</label>
 						<Input

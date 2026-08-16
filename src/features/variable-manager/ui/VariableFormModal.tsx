@@ -36,19 +36,22 @@ const TYPE_OPTIONS: {
 		type: "link",
 		label: "Link",
 		icon: Link2,
-		activeClass: "bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-400/20",
+		activeClass:
+			"bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-400/20",
 	},
 	{
 		type: "credential",
 		label: "Credential",
 		icon: Key,
-		activeClass: "bg-[#E5D7FA] text-[#500086] border-[#AE87BB] ring-2 ring-brand-500/20",
+		activeClass:
+			"bg-[#E5D7FA] text-[#500086] border-[#AE87BB] ring-2 ring-brand-500/20",
 	},
 	{
 		type: "repository",
 		label: "Repository",
 		icon: Code2,
-		activeClass: "bg-amber-100 text-amber-900 border-amber-400 ring-2 ring-amber-400/20",
+		activeClass:
+			"bg-amber-100 text-amber-900 border-amber-400 ring-2 ring-amber-400/20",
 	},
 ];
 
@@ -95,7 +98,8 @@ export function VariableFormModal({
 		if (!name.trim()) newErrors.name = "Variable name is required";
 		if (name.length > 20) newErrors.name = "Name must be 20 characters or less";
 		if (!value.trim()) newErrors.value = "Variable value/address is required";
-		if (value.length > 4096) newErrors.value = "Value must be 4096 characters or less";
+		if (value.length > 4096)
+			newErrors.value = "Value must be 4096 characters or less";
 
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
@@ -168,7 +172,7 @@ export function VariableFormModal({
 											"flex items-center gap-2.5 px-3.5 py-2 rounded-full border border-border cursor-pointer transition-all select-none text-xs",
 											isSelected
 												? opt.activeClass
-												: "bg-neutral-surface hover:bg-neutral-subtle text-foreground/80"
+												: "bg-neutral-surface hover:bg-neutral-subtle text-foreground/80",
 										)}
 									>
 										<input
@@ -183,7 +187,7 @@ export function VariableFormModal({
 												"size-3 rounded-full border flex items-center justify-center",
 												isSelected
 													? "border-current bg-current"
-													: "border-muted-foreground"
+													: "border-muted-foreground",
 											)}
 										/>
 										<Icon className="size-3.5 shrink-0" />
@@ -240,7 +244,12 @@ export function VariableFormModal({
 					</div>
 
 					<DialogFooter className="pt-3 border-t border-border">
-						<Button type="button" variant="ghost" onClick={handleClose} disabled={isSubmitting}>
+						<Button
+							type="button"
+							variant="ghost"
+							onClick={handleClose}
+							disabled={isSubmitting}
+						>
 							Cancel
 						</Button>
 						<Button type="submit" disabled={isSubmitting}>

@@ -13,9 +13,19 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/toast";
-import { MessageSquare, Paperclip, X, CheckCircle2, XCircle } from "lucide-react";
+import {
+	MessageSquare,
+	Paperclip,
+	X,
+	CheckCircle2,
+	XCircle,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { collectImages, revokeImagePreviews, uploadImages } from "@/shared/lib/imageUpload";
+import {
+	collectImages,
+	revokeImagePreviews,
+	uploadImages,
+} from "@/shared/lib/imageUpload";
 import { useDecideGate } from "@/entities/gate";
 
 export interface GateFeedbackGiveModalProps {
@@ -78,15 +88,18 @@ export function GateFeedbackGiveModal({
 		e.preventDefault();
 		if (isSubmitting) return;
 
-		const finalFeedback = skipFeedback ? "No feedback provided." : feedbackText.trim();
+		const finalFeedback = skipFeedback
+			? "No feedback provided."
+			: feedbackText.trim();
 		if (!skipFeedback && !finalFeedback && imageFiles.length === 0) return;
 		setIsSubmitting(true);
 
 		// All-or-nothing image upload (shared helper), then decide.
-		const { imageUrls, uploadedPaths, error: uploadError } = await uploadImages(
-			skipFeedback ? [] : imageFiles,
-			"gates",
-		);
+		const {
+			imageUrls,
+			uploadedPaths,
+			error: uploadError,
+		} = await uploadImages(skipFeedback ? [] : imageFiles, "gates");
 		const supabase = createClient();
 
 		if (uploadError) {

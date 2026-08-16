@@ -103,7 +103,10 @@ describe("riskLabel", () => {
 
 describe("velocityChange", () => {
 	it("returns '—' when last week had no completions", () => {
-		expect(velocityChange(0, 0)).toEqual({ change: "—", changePositive: false });
+		expect(velocityChange(0, 0)).toEqual({
+			change: "—",
+			changePositive: false,
+		});
 		expect(velocityChange(3, 0)).toEqual({ change: "—", changePositive: true });
 	});
 

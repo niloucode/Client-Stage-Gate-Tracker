@@ -219,4 +219,3 @@ export function PendingContracts({ contracts = [] }: PendingContractsProps) {
 		</Card>
 	);
 }
-

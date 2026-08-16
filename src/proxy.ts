@@ -2,7 +2,6 @@
 import { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
-
 /** Normalize a URL to its origin; returns null for invalid input. */
 function toOrigin(value: string): string | null {
 	try {
@@ -43,7 +42,9 @@ const CONNECT_SRC = buildConnectSrc();
  */
 function buildCsp(): string {
 	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-	const supabaseOrigin = supabaseUrl ? toOrigin(supabaseUrl) : "https://*.supabase.co";
+	const supabaseOrigin = supabaseUrl
+		? toOrigin(supabaseUrl)
+		: "https://*.supabase.co";
 
 	return [
 		"default-src 'self'",
@@ -56,6 +57,12 @@ function buildCsp(): string {
 		// must allow the app's own storage origin + blob: preview URLs.
 		// Previously 'none' blocked the embed entirely (gray box).
 		`object-src 'self' blob: ${supabaseOrigin} https://*.supabase.co`,
+		// Chromium (>=76) runs a SECOND CSP check for PDF <embed> elements via
+		// frame-src (falling back to child-src, then default-src) on top of
+		// object-src. Without frame-src, a cross-origin storage PDF falls back
+		// to default-src 'self' and is blocked — Chrome shows "This content is
+		// blocked. Contact the site owner to fix the issue." inside the embed.
+		`frame-src 'self' blob: ${supabaseOrigin} https://*.supabase.co`,
 		"base-uri 'self'",
 		"form-action 'self'",
 		"frame-ancestors 'none'",

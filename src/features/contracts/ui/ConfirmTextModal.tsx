@@ -45,8 +45,7 @@ export function ConfirmTextModal({
 			// Actions return { success:false, error } instead of throwing —
 			// surface the error and keep the modal open (no silent success).
 			const outcome = result as
-				| { success?: boolean; error?: string }
-				| undefined;
+				{ success?: boolean; error?: string } | undefined;
 			if (outcome && outcome.success === false) {
 				toast.add({
 					title: "Action Failed",
@@ -125,4 +124,3 @@ export function ConfirmTextModal({
 		</Dialog>
 	);
 }
-

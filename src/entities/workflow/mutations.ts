@@ -25,7 +25,8 @@ export function useCreateWorkflow() {
 			params: { moduleId: string; stageId: string } & WorkflowCreateInput,
 		) => {
 			const result = await createWorkflow(params.moduleId, params);
-			if (!result.success) throw new Error(result.error ?? "Failed to create workflow.");
+			if (!result.success)
+				throw new Error(result.error ?? "Failed to create workflow.");
 			return result;
 		},
 		onSuccess: async (_data, variables) => {
@@ -44,7 +45,8 @@ export function useUpdateWorkflow() {
 			params: { workflowId: string; stageId: string } & WorkflowUpdateInput,
 		) => {
 			const result = await updateWorkflow(params.workflowId, params);
-			if (!result.success) throw new Error(result.error ?? "Failed to update workflow.");
+			if (!result.success)
+				throw new Error(result.error ?? "Failed to update workflow.");
 			return result;
 		},
 		onSuccess: async (_data, variables) => {
@@ -61,7 +63,8 @@ export function useDeleteWorkflow() {
 	return useMutation({
 		mutationFn: async (params: { workflowId: string; stageId: string }) => {
 			const result = await cascadeSoftDeleteWorkflow(params.workflowId);
-			if (!result.success) throw new Error(result.error ?? "Failed to delete workflow.");
+			if (!result.success)
+				throw new Error(result.error ?? "Failed to delete workflow.");
 			return result;
 		},
 		onSuccess: async (_data, variables) => {

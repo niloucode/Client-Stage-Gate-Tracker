@@ -269,22 +269,22 @@ export function StaffSignupForm() {
 			)}
 
 			<div className="flex flex-col gap-2">
-					<p className="text-center text-[11px] text-gray-400 leading-relaxed">
-						By signing up, you agree to our{" "}
-						<Link
-							href="#"
-							className="underline hover:text-gray-500 transition-colors"
-						>
-							Terms of Service
-						</Link>{" "}
-						and{" "}
-						<Link
-							href="#"
-							className="underline hover:text-gray-500 transition-colors"
-						>
-							Privacy Policy
-						</Link>
-					</p>
+				<p className="text-center text-[11px] text-gray-400 leading-relaxed">
+					By signing up, you agree to our{" "}
+					<Link
+						href="#"
+						className="underline hover:text-gray-500 transition-colors"
+					>
+						Terms of Service
+					</Link>{" "}
+					and{" "}
+					<Link
+						href="#"
+						className="underline hover:text-gray-500 transition-colors"
+					>
+						Privacy Policy
+					</Link>
+				</p>
 				{/* Submit Button */}
 				<form.AppForm>
 					<form.SubmitButton

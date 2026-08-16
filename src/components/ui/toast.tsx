@@ -143,7 +143,10 @@ function ToastIcon({ type }: { type: string | undefined }) {
 	if (!type || type === "success") {
 		icon = (
 			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100">
-				<CircleCheckIcon className="size-4 text-emerald-600" aria-hidden="true" />
+				<CircleCheckIcon
+					className="size-4 text-emerald-600"
+					aria-hidden="true"
+				/>
 			</span>
 		);
 	} else if (type === "info") {
@@ -155,7 +158,10 @@ function ToastIcon({ type }: { type: string | undefined }) {
 	} else if (type === "warning") {
 		icon = (
 			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100">
-				<TriangleAlertIcon className="size-4 text-amber-600" aria-hidden="true" />
+				<TriangleAlertIcon
+					className="size-4 text-amber-600"
+					aria-hidden="true"
+				/>
 			</span>
 		);
 	} else if (type === "error") {
@@ -173,7 +179,10 @@ function ToastIcon({ type }: { type: string | undefined }) {
 	} else if (type === "loading") {
 		icon = (
 			<span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50">
-				<Loader2Icon className="size-4 animate-spin text-brand-600" aria-hidden="true" />
+				<Loader2Icon
+					className="size-4 animate-spin text-brand-600"
+					aria-hidden="true"
+				/>
 			</span>
 		);
 	}

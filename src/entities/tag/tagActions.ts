@@ -20,7 +20,8 @@ export async function selectTag() {
 		where: { is_deleted: false },
 		orderBy: { name: "asc" },
 		take: 100, // bound the list; paginate when callers need more
-	});}
+	});
+}
 
 export async function createTag(data: TagCreateInput) {
 	tagCreateSchema.parse(data);

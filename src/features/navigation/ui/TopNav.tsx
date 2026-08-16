@@ -68,9 +68,7 @@ function useRealBreadcrumbs(): BreadcrumbItem[] {
 	const stageSubSection = stageMatch?.[3]; // e.g. "gate"
 
 	// 3. Check for generic Project Route: /projects/[projectId](/[subSection])?
-	const projectMatch = pathname.match(
-		/^\/projects\/([^/]+)(?:\/([^/]+))?/,
-	);
+	const projectMatch = pathname.match(/^\/projects\/([^/]+)(?:\/([^/]+))?/);
 	const baseProjectId = projectMatch?.[1];
 	const baseSubSection = projectMatch?.[2];
 
@@ -215,9 +213,7 @@ function useRealBreadcrumbs(): BreadcrumbItem[] {
 	return segments.map((seg, idx) => {
 		const isLast = idx === segments.length - 1;
 		return {
-			label:
-				SECTION_LABELS[seg] ??
-				seg.charAt(0).toUpperCase() + seg.slice(1),
+			label: SECTION_LABELS[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1),
 			href: isLast ? undefined : `/${segments.slice(0, idx + 1).join("/")}`,
 		};
 	});

@@ -42,7 +42,7 @@ export default function RootLayout({
 			className={cn(
 				inter.variable,
 				hankenGrotesk.variable,
-				jetbrainsMono.variable
+				jetbrainsMono.variable,
 			)}
 		>
 			<body className="min-h-full flex flex-col">

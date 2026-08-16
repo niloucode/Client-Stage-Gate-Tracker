@@ -380,5 +380,5 @@ function GanttBar<TData = unknown>({
 	);
 }
 
-export { GANTT_COLORS, GanttBar, useGanttBarContext };
+export { GanttBar };
 export type { GanttBarContextValue, GanttBarProps };

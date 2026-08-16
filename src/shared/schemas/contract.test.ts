@@ -27,7 +27,9 @@ describe("contractApproveSchema", () => {
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("role"))).toBe(true);
+			expect(result.error.issues.some((i) => i.path.includes("role"))).toBe(
+				true,
+			);
 		}
 	});
 

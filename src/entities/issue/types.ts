@@ -39,3 +39,18 @@ export interface IssueItem {
 	ticketId?: string;
 	steps: StepItem[];
 }
+
+/**
+ * Light issue shape used by the ticket-board's linked-issue chip. The board
+ * only renders `name` + urgency styling, so `ticketInclude.Issues` selects
+ * exactly these fields instead of the full issue tree (read weight — every
+ * board ticket used to carry IssueSteps + Profile + Tickets). A full
+ * `IssueItem` from the picker is structurally assignable to this type.
+ */
+export interface LinkedIssueChip {
+	id: string;
+	name: string;
+	type: string;
+	urgency: UrgencyLevel;
+	status: IssueStatusValue;
+}

@@ -98,8 +98,7 @@ function SignatureBox({ person }: { person: Signatory }) {
 		const fontSize = 30;
 		const font = `${fontSize}px ${SIGNATURE_FONT}`;
 
-		// Wait for font to be ready
-		document.fonts.ready.then(() => {
+		const draw = () => {
 			ctx.font = font;
 			const metrics = ctx.measureText(text);
 			const textWidth = metrics.width;
@@ -120,7 +119,45 @@ function SignatureBox({ person }: { person: Signatory }) {
 			ctx.fillText(text, canvas.width / 2, canvas.height / 2);
 
 			setImageSrc(canvas.toDataURL("image/png"));
-		});
+		};
+
+		if (!document.fonts) {
+			draw();
+			return;
+		}
+
+		// Race: the Great Vibes <link> in ContractPage is hoisted by React 19
+		// and can be parsed AFTER this effect runs, so document.fonts.ready can
+		// resolve before the face even exists — baking the cursive fallback into
+		// the PNG. Wait for the specific face to be registered AND loaded
+		// (document.fonts.load returns [] until the face exists) instead.
+		let cancelled = false;
+
+		const renderWhenFontReady = async () => {
+			let attempts = 0;
+			while (!cancelled) {
+				try {
+					const faces = await document.fonts.load(font);
+					if (faces.length > 0) {
+						draw();
+						return;
+					}
+				} catch {
+					// Face failed to load — keep retrying until the link parsed.
+				}
+				attempts += 1;
+				if (attempts > 40) {
+					draw(); // give up — better a fallback than no signature
+					return;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+		};
+		void renderWhenFontReady();
+
+		return () => {
+			cancelled = true;
+		};
 	}, [person.status, person.signed_name]);
 
 	if (person.status !== "signed") return null;
@@ -191,4 +228,3 @@ export function SignatoriesCard({
 		</Card>
 	);
 }
-

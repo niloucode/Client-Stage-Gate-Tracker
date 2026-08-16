@@ -32,7 +32,10 @@ describe("sortTagsForDisplay", () => {
 			makeTag({ tag_id: "a", name: "beta", is_protected: true }),
 			makeTag({ tag_id: "b", name: "Alpha", is_protected: true }),
 		];
-		expect(sortTagsForDisplay(tags).map((t) => t.name)).toEqual(["Alpha", "beta"]);
+		expect(sortTagsForDisplay(tags).map((t) => t.name)).toEqual([
+			"Alpha",
+			"beta",
+		]);
 	});
 
 	it("does not mutate the input array", () => {

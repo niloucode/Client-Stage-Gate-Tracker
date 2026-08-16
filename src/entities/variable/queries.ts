@@ -56,7 +56,10 @@ export function useCreateVariable(projectId: string) {
 export function useUpdateVariable(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({
-		mutationFn: async (args: { variableId: string; input: VariableCreateInput }) => {
+		mutationFn: async (args: {
+			variableId: string;
+			input: VariableCreateInput;
+		}) => {
 			const result = await updateVariable(args.variableId, args.input);
 			if (!result.success) throw new Error(result.error);
 			return result.data;

@@ -10,12 +10,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardHeader,
-	CardTitle,
-	CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Back } from "@/components/ui/back";
@@ -110,15 +105,16 @@ function PhaseCell({ phase }: { phase: TreePhase }) {
 						<h2
 							className={cn(
 								"truncate min-w-0",
-								completed &&
-									"line-through text-muted-foreground font-normal",
+								completed && "line-through text-muted-foreground font-normal",
 							)}
 						>
 							{phase.name}
 						</h2>
 
 						<div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-							<span>PLANNED: {formatRange(phase.planStart, phase.planEnd)}</span>
+							<span>
+								PLANNED: {formatRange(phase.planStart, phase.planEnd)}
+							</span>
 							<span className="hidden sm:inline text-neutral-border/40">•</span>
 							<span>
 								ACTUAL:{" "}
@@ -158,7 +154,9 @@ function PhaseCell({ phase }: { phase: TreePhase }) {
 			>
 				<div className="overflow-hidden flex flex-col gap-4 pt-2">
 					<div className="pl-1">
-						{phase.description && <p className="subtitle">{phase.description}</p>}
+						{phase.description && (
+							<p className="subtitle">{phase.description}</p>
+						)}
 					</div>
 
 					<div className="flex flex-col gap-3 sm:gap-4">
@@ -200,8 +198,7 @@ function ModuleCell({ module }: { module: TreeModule }) {
 						<h3
 							className={cn(
 								"truncate min-w-0 leading-snug",
-								completed &&
-									"line-through text-muted-foreground font-normal",
+								completed && "line-through text-muted-foreground font-normal",
 							)}
 						>
 							{module.name}
@@ -293,24 +290,31 @@ function WorkflowCell({ workflow }: { workflow: TreeWorkflow }) {
 
 export function GateOverview({ projectId, stageId }: GateOverviewProps) {
 	const { data: tree, isError: treeError } = useStageTree(stageId);
-	const { data: gateData, isLoading: gatesLoading, isError: gatesError } =
-		useStageGates(stageId);
+	const {
+		data: gateData,
+		isLoading: gatesLoading,
+		isError: gatesError,
+	} = useStageGates(stageId);
 
 	const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 	const [isGiveModalOpen, setIsGiveModalOpen] = useState(false);
-	const [decisionVariant, setDecisionVariant] = useState<"approved" | "rejected">(
-		"approved",
-	);
-	const [discussionGate, setDiscussionGate] = useState<GateFeedbackEntry | null>(null);
+	const [decisionVariant, setDecisionVariant] = useState<
+		"approved" | "rejected"
+	>("approved");
+	const [discussionGate, setDiscussionGate] =
+		useState<GateFeedbackEntry | null>(null);
 
 	const gates = gateData?.gates ?? [];
 	// Spec 9: gates are listed descending — the latest gate is first.
 	const latestGate = gates[0] ?? null;
-	const canDecide = (gateData?.canDecide ?? false) && latestGate?.status === "PENDING";
+	const canDecide =
+		(gateData?.canDecide ?? false) && latestGate?.status === "PENDING";
 
 	const phasesFinished = useMemo(() => {
 		const phases = tree?.phases ?? [];
-		return allPhasesFinished(phases.map((p) => ({ actual_end_at: p.actualEnd })));
+		return allPhasesFinished(
+			phases.map((p) => ({ actual_end_at: p.actualEnd })),
+		);
 	}, [tree]);
 
 	const currentStatus = latestGate?.status ?? "PENDING";
@@ -354,7 +358,10 @@ export function GateOverview({ projectId, stageId }: GateOverviewProps) {
 								</p>
 							) : (
 								(tree?.phases ?? []).map((phase) => (
-									<PhaseCell key={phase.phase_id ?? phase.number} phase={phase} />
+									<PhaseCell
+										key={phase.phase_id ?? phase.number}
+										phase={phase}
+									/>
 								))
 							)}
 						</CardContent>
@@ -476,7 +483,8 @@ export function GateOverview({ projectId, stageId }: GateOverviewProps) {
 													{latestReviewer}
 												</span>
 												<span className="text-xs text-muted-foreground truncate">
-													Gate #{latestGate?.number} · {currentStatus.toLowerCase()}
+													Gate #{latestGate?.number} ·{" "}
+													{currentStatus.toLowerCase()}
 												</span>
 											</div>
 										</>

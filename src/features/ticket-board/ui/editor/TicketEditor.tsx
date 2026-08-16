@@ -13,356 +13,358 @@ import { Button, FormInput, Label } from "@/components/ui";
 import TicketModalEdit from "../TicketModals";
 import { useTicketEditor } from "./useTicketEditor";
 import {
-  TicketTitleAndStatus,
-  TicketAssignees,
-  TicketApiDetails,
-  TicketSchedule,
-  SubtaskSelectionModal,
+	TicketTitleAndStatus,
+	TicketAssignees,
+	TicketApiDetails,
+	TicketSchedule,
+	SubtaskSelectionModal,
 } from "./TicketEditorSubcomponents";
 import { TicketActivitySection } from "./TicketActivitySection";
 import { ticketCode } from "./helpers";
 
 export default function TicketEditor({
-  initialTicket,
-  tags,
-  onCloseAction,
-  onUpdateAction,
-  allTickets = [],
-  isSubtaskView = false,
-  parentTicket = null,
-  readOnly = false,
-  projectId,
+	initialTicket,
+	tags,
+	onCloseAction,
+	onUpdateAction,
+	allTickets = [],
+	isSubtaskView = false,
+	parentTicket = null,
+	readOnly = false,
+	projectId,
 }: {
-  initialTicket: Ticket;
-  tags: Tag[];
-  onCloseAction: () => void;
-  onUpdateAction: (t: Ticket) => void;
-  allTickets?: Ticket[];
-  isSubtaskView?: boolean;
-  parentTicket?: Ticket | null;
-  /** Clients are read-only: hide Save and subtask management. */
-  readOnly?: boolean;
-  /** Project scope for the assignee/watcher dropdowns. */
-  projectId?: string;
+	initialTicket: Ticket;
+	tags: Tag[];
+	onCloseAction: () => void;
+	onUpdateAction: (t: Ticket) => void;
+	allTickets?: Ticket[];
+	isSubtaskView?: boolean;
+	parentTicket?: Ticket | null;
+	/** Clients are read-only: hide Save and subtask management. */
+	readOnly?: boolean;
+	/** Project scope for the assignee/watcher dropdowns. */
+	projectId?: string;
 }) {
-  const { data: profiles = [] } = useProjectMembers(projectId);
-  const commentsQuery = useTicketComments(initialTicket.ticket_id);
-  const imagesQuery = useTicketImages(initialTicket.ticket_id);
-  const comments = commentsQuery.data ?? [];
-  const ticketImages = imagesQuery.data ?? [];
+	const { data: profiles = [] } = useProjectMembers(projectId);
+	const commentsQuery = useTicketComments(initialTicket.ticket_id);
+	const imagesQuery = useTicketImages(initialTicket.ticket_id);
+	const comments = commentsQuery.data ?? [];
+	const ticketImages = imagesQuery.data ?? [];
 
-  // No silent empty states: a failed read shows a retry banner instead.
-  const loadFailed = commentsQuery.isError || imagesQuery.isError;
+	// No silent empty states: a failed read shows a retry banner instead.
+	const loadFailed = commentsQuery.isError || imagesQuery.isError;
 
-  const state = useTicketEditor({
-    initialTicket,
-    tags,
-    onUpdate: onUpdateAction,
-    onClose: onCloseAction,
-    isSubtaskView,
-    allTickets,
-  });
+	const state = useTicketEditor({
+		initialTicket,
+		tags,
+		onUpdate: onUpdateAction,
+		onClose: onCloseAction,
+		isSubtaskView,
+		allTickets,
+	});
 
-  return (
-    <div className="flex flex-col h-full bg-neutral-surface">
-      {/* 1. Header */}
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
-        <span className="font-mono text-sm text-brand-500">
-          {isSubtaskView ? "Subtask" : ticketCode(initialTicket.ticket_id)}
-        </span>
-        <Button variant="ghost" size="icon-sm" onClick={onCloseAction}>
-          <X className="text-neutral-border hover:text-foreground transition-all duration-300" />
-        </Button>
-      </div>
+	return (
+		<div className="flex flex-col h-full bg-neutral-surface">
+			{/* 1. Header */}
+			<div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
+				<span className="font-mono text-sm text-brand-500">
+					{isSubtaskView ? "Subtask" : ticketCode(initialTicket.ticket_id)}
+				</span>
+				<Button variant="ghost" size="icon-sm" onClick={onCloseAction}>
+					<X className="text-neutral-border hover:text-foreground transition-all duration-300" />
+				</Button>
+			</div>
 
-      {/* Parent Info */}
-      {isSubtaskView && parentTicket && (
-        <div className="px-5 py-3 border-b border-gray-100 bg-brand-50/50">
-          <p className="text-xs text-muted-foreground">
-            Parent:{" "}
-            <span className="font-medium text-foreground">
-              {parentTicket.name}
-            </span>
-          </p>
-        </div>
-      )}
+			{/* Parent Info */}
+			{isSubtaskView && parentTicket && (
+				<div className="px-5 py-3 border-b border-gray-100 bg-brand-50/50">
+					<p className="text-xs text-muted-foreground">
+						Parent:{" "}
+						<span className="font-medium text-foreground">
+							{parentTicket.name}
+						</span>
+					</p>
+				</div>
+			)}
 
-      {/* 2. Title & Status */}
-      <TicketTitleAndStatus
-        ticket={state.ticket}
-        tags={tags}
-        selectedTags={state.selectedTags}
-        setTicketAction={state.setTicket}
-        setSelectedTagsAction={state.setSelectedTags}
-      />
+			{/* 2. Title & Status */}
+			<TicketTitleAndStatus
+				ticket={state.ticket}
+				tags={tags}
+				selectedTags={state.selectedTags}
+				setTicketAction={state.setTicket}
+				setSelectedTagsAction={state.setSelectedTags}
+			/>
 
-      <div className="flex-1 overflow-y-auto scrollbar-gutter-stable pb-24">
-        <div className="px-5 py-4 flex flex-col gap-4 border-b border-gray-100">
-          {/* 3. Assignees & 4. API Details & 5. Schedule */}
-          <TicketAssignees
-            ticket={state.ticket}
-            profiles={profiles}
-            setTicketAction={state.setTicket}
-          />
-          {state.isApiTagSelected && (
-            <TicketApiDetails
-              apiMethod={state.apiMethod}
-              apiRoute={state.apiRoute}
-              setApiMethodAction={state.setApiMethod}
-              setApiRouteAction={state.setApiRoute}
-            />
-          )}
-          <TicketSchedule
-            ticket={state.ticket}
-            setTicketAction={state.setTicket}
-            showDateError={state.showDateError}
-            projectId={projectId}
-          />
-        </div>
+			<div className="flex-1 overflow-y-auto scrollbar-gutter-stable pb-24">
+				<div className="px-5 py-4 flex flex-col gap-4 border-b border-gray-100">
+					{/* 3. Assignees & 4. API Details & 5. Schedule */}
+					<TicketAssignees
+						ticket={state.ticket}
+						profiles={profiles}
+						setTicketAction={state.setTicket}
+					/>
+					{state.isApiTagSelected && (
+						<TicketApiDetails
+							apiMethod={state.apiMethod}
+							apiRoute={state.apiRoute}
+							setApiMethodAction={state.setApiMethod}
+							setApiRouteAction={state.setApiRoute}
+						/>
+					)}
+					<TicketSchedule
+						ticket={state.ticket}
+						setTicketAction={state.setTicket}
+						showDateError={state.showDateError}
+						projectId={projectId}
+					/>
+				</div>
 
-        {/* 6. Description */}
-        <div className="px-5 py-4 border-b border-gray-100">
-          <Label className="text-md -mb-4 text-neutral-border font-bold tracking-wider uppercase">
-            DESCRIPTION
-          </Label>
-          <FormInput
-            variant="textarea"
-            label=""
-            maxLength={360}
-            rows={4}
-            value={state.ticket.description ?? ""}
-            placeholder="Add a description..."
-            onChange={(e) =>
-              state.setTicket((t) => ({ ...t, description: e.target.value }))
-            }
-          />
-        </div>
+				{/* 6. Description */}
+				<div className="px-5 py-4 border-b border-gray-100">
+					<Label className="text-md -mb-4 text-neutral-border font-bold tracking-wider uppercase">
+						DESCRIPTION
+					</Label>
+					<FormInput
+						variant="textarea"
+						label=""
+						maxLength={360}
+						rows={4}
+						value={state.ticket.description ?? ""}
+						placeholder="Add a description..."
+						onChange={(e) =>
+							state.setTicket((t) => ({ ...t, description: e.target.value }))
+						}
+					/>
+				</div>
 
-        {/* 7. Subtasks */}
-        {!isSubtaskView &&
-          (() => {
-            const totalSubtasks = state.subtasks.length;
-            const finishedSubtasks = state.subtasks.filter(
-              (s) => s.status === StatusEnum.FINISHED,
-            ).length;
-            const progressPct =
-              totalSubtasks > 0 ? (finishedSubtasks / totalSubtasks) * 100 : 0;
+				{/* 7. Subtasks */}
+				{!isSubtaskView &&
+					(() => {
+						const totalSubtasks = state.subtasks.length;
+						const finishedSubtasks = state.subtasks.filter(
+							(s) => s.status === StatusEnum.FINISHED,
+						).length;
+						const progressPct =
+							totalSubtasks > 0 ? (finishedSubtasks / totalSubtasks) * 100 : 0;
 
-            return (
-              <div className="px-5 mt-5 space-y-3">
-                {/* Header: Title & Completion Count */}
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-foreground">
-                    Subtasks
-                  </h3>
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {finishedSubtasks} of {totalSubtasks} complete
-                  </span>
-                </div>
+						return (
+							<div className="px-5 mt-5 space-y-3">
+								{/* Header: Title & Completion Count */}
+								<div className="flex items-center justify-between">
+									<h3 className="text-base font-bold text-foreground">
+										Subtasks
+									</h3>
+									<span className="text-xs font-medium text-muted-foreground">
+										{finishedSubtasks} of {totalSubtasks} complete
+									</span>
+								</div>
 
-                {/* Progress Bar */}
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-subtle">
-                  <div
-                    className="h-full rounded-full bg-brand-500 transition-all duration-300"
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
+								{/* Progress Bar */}
+								<div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-subtle">
+									<div
+										className="h-full rounded-full bg-brand-500 transition-all duration-300"
+										style={{ width: `${progressPct}%` }}
+									/>
+								</div>
 
-                {/* Scrollable Subtasks List */}
-                <div className="max-h-56 overflow-y-auto space-y-2 pr-0.5">
-                  {totalSubtasks === 0 ? (
-                    <div className="py-6 text-center text-xs italic text-muted-foreground border border-dashed border-gray-200 rounded-md">
-                      No subtasks yet.
-                    </div>
-                  ) : (
-                    state.subtasks.map((subtask) => {
-                      const isDone = subtask.status === StatusEnum.FINISHED;
-                      const isInProgress =
-                        subtask.status === StatusEnum.IN_PROGRESS;
+								{/* Scrollable Subtasks List */}
+								<div className="max-h-56 overflow-y-auto space-y-2 pr-0.5">
+									{totalSubtasks === 0 ? (
+										<div className="py-6 text-center text-xs italic text-muted-foreground border border-dashed border-gray-200 rounded-md">
+											No subtasks yet.
+										</div>
+									) : (
+										state.subtasks.map((subtask) => {
+											const isDone = subtask.status === StatusEnum.FINISHED;
+											const isInProgress =
+												subtask.status === StatusEnum.IN_PROGRESS;
 
-                      return (
-                        <div
-                          key={subtask.ticket_id}
-                          onClick={() => state.handleSubtaskClick(subtask)}
-                          className="group relative flex items-center justify-between p-3 bg-neutral-surface border border-gray-200 rounded-md hover:border-brand-300 hover:bg-brand-50/20 cursor-pointer transition-all"
-                        >
-                          {/* Left: Code, Title, Date */}
-                          <div className="flex flex-col min-w-0 flex-1 pr-3">
-                            <span className="font-mono text-xs font-semibold text-brand-500">
-                              {ticketCode(subtask.ticket_id)}
-                            </span>
-                            <h4 className="text-sm font-semibold text-foreground truncate mt-0.5">
-                              {subtask.name}
-                            </h4>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                              <Calendar
-                                size={12}
-                                className="text-muted-foreground shrink-0"
-                              />
-                              <span>
-                                {subtask.plan_end_at
-                                  ? new Date(
-                                      subtask.plan_end_at,
-                                    ).toLocaleDateString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                    })
-                                  : "No date"}
-                              </span>
-                            </div>
-                          </div>
+											return (
+												<div
+													key={subtask.ticket_id}
+													onClick={() => state.handleSubtaskClick(subtask)}
+													className="group relative flex items-center justify-between p-3 bg-neutral-surface border border-gray-200 rounded-md hover:border-brand-300 hover:bg-brand-50/20 cursor-pointer transition-all"
+												>
+													{/* Left: Code, Title, Date */}
+													<div className="flex flex-col min-w-0 flex-1 pr-3">
+														<span className="font-mono text-xs font-semibold text-brand-500">
+															{ticketCode(subtask.ticket_id)}
+														</span>
+														<h4 className="text-sm font-semibold text-foreground truncate mt-0.5">
+															{subtask.name}
+														</h4>
+														<div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+															<Calendar
+																size={12}
+																className="text-muted-foreground shrink-0"
+															/>
+															<span>
+																{subtask.plan_end_at
+																	? new Date(
+																			subtask.plan_end_at,
+																		).toLocaleDateString("en-US", {
+																			month: "short",
+																			day: "numeric",
+																		})
+																	: "No date"}
+															</span>
+														</div>
+													</div>
 
-                          {/* Right: Status Badge + Assignee + Remove Button */}
-                          <div className="flex items-center mb-auto gap-2 shrink-0">
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                                isDone
-                                  ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
-                                  : isInProgress
-                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-                              }`}
-                            >
-                              {isDone
-                                ? "Done"
-                                : isInProgress
-                                ? "In Progress"
-                                : "Pending"}
-                            </span>
-                            {/* Remove Button on Hover */}
-                            {!readOnly && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  void state.handleRemoveSubtask(subtask.ticket_id);
-                                }}
-                                className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                                title="Remove subtask"
-                                aria-label="Remove subtask"
-                              >
-                                <X size={14} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+													{/* Right: Status Badge + Assignee + Remove Button */}
+													<div className="flex items-center mb-auto gap-2 shrink-0">
+														<span
+															className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+																isDone
+																	? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
+																	: isInProgress
+																		? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+																		: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+															}`}
+														>
+															{isDone
+																? "Done"
+																: isInProgress
+																	? "In Progress"
+																	: "Pending"}
+														</span>
+														{/* Remove Button on Hover */}
+														{!readOnly && (
+															<button
+																type="button"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	void state.handleRemoveSubtask(
+																		subtask.ticket_id,
+																	);
+																}}
+																className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+																title="Remove subtask"
+																aria-label="Remove subtask"
+															>
+																<X size={14} />
+															</button>
+														)}
+													</div>
+												</div>
+											);
+										})
+									)}
+								</div>
 
-                {/* Dashed Add Subtask Button (Outside Scroll Region) */}
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={() => state.setIsSubtaskSelectionOpen(true)}
-                    className="w-full border-2 border-dashed border-gray-200 hover:border-brand-300 hover:bg-brand-50/20 rounded-md py-2.5 text-center text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Plus size={14} strokeWidth={2.5} />
-                    <span>Add subtask</span>
-                  </button>
-                )}
-              </div>
-            );
-          })()}
+								{/* Dashed Add Subtask Button (Outside Scroll Region) */}
+								{!readOnly && (
+									<button
+										type="button"
+										onClick={() => state.setIsSubtaskSelectionOpen(true)}
+										className="w-full border-2 border-dashed border-gray-200 hover:border-brand-300 hover:bg-brand-50/20 rounded-md py-2.5 text-center text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+									>
+										<Plus size={14} strokeWidth={2.5} />
+										<span>Add subtask</span>
+									</button>
+								)}
+							</div>
+						);
+					})()}
 
-        {/* 8. Attachments */}
-        {loadFailed && (
-          <div className="px-5 mt-5 py-3 text-xs text-red-600 bg-red-50 border-y border-red-100">
-            Couldn&apos;t load comments or attachments.{" "}
-            <button
-              type="button"
-              className="underline font-semibold"
-              onClick={() => {
-                void commentsQuery.refetch();
-                void imagesQuery.refetch();
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
+				{/* 8. Attachments */}
+				{loadFailed && (
+					<div className="px-5 mt-5 py-3 text-xs text-red-600 bg-red-50 border-y border-red-100">
+						Couldn&apos;t load comments or attachments.{" "}
+						<button
+							type="button"
+							className="underline font-semibold"
+							onClick={() => {
+								void commentsQuery.refetch();
+								void imagesQuery.refetch();
+							}}
+						>
+							Retry
+						</button>
+					</div>
+				)}
 
-        {ticketImages.length > 0 && (
-          <div className="px-5 mt-5">
-            <p className="text-sm font-semibold text-neutral-border mb-2 uppercase tracking-wider">
-              Attachments
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {ticketImages.map((img) => (
-                <Image
-                  key={img.image_id}
-                  src={img.image_src}
-                  alt="attachment"
-                  width={200}
-                  height={200}
-                  unoptimized
-                  className="h-16 w-auto rounded-md border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => state.setLightboxSrc(img.image_src)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+				{ticketImages.length > 0 && (
+					<div className="px-5 mt-5">
+						<p className="text-sm font-semibold text-neutral-border mb-2 uppercase tracking-wider">
+							Attachments
+						</p>
+						<div className="flex flex-wrap gap-2">
+							{ticketImages.map((img) => (
+								<Image
+									key={img.image_id}
+									src={img.image_src}
+									alt="attachment"
+									width={200}
+									height={200}
+									unoptimized
+									className="h-16 w-auto rounded-md border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+									onClick={() => state.setLightboxSrc(img.image_src)}
+								/>
+							))}
+						</div>
+					</div>
+				)}
 
-        {/* 9. Activity */}
-        <TicketActivitySection
-          ticketId={state.ticket.ticket_id}
-          comments={comments}
-          currentUser={state.user}
-          onImageClickAction={state.setLightboxSrc}
-        />
-      </div>
+				{/* 9. Activity */}
+				<TicketActivitySection
+					ticketId={state.ticket.ticket_id}
+					comments={comments}
+					currentUser={state.user}
+					onImageClickAction={state.setLightboxSrc}
+				/>
+			</div>
 
-      {/* 10. Footer */}
-      <div className="fixed bottom-0 right-0 w-160 flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-neutral-surface z-50">
-        <button
-          type="button"
-          onClick={onCloseAction}
-          className="text-sm font-medium text-gray-500 px-4 py-2 rounded-md hover:bg-gray-100"
-        >
-          Cancel
-        </button>
-        {!readOnly && (
-          <Button onClick={state.handleSave} disabled={state.isSaving}>
-            {state.isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        )}
-      </div>
+			{/* 10. Footer */}
+			<div className="fixed bottom-0 right-0 w-160 flex items-center justify-end gap-3 px-5 py-3.5 border-t border-gray-100 shrink-0 bg-neutral-surface z-50">
+				<button
+					type="button"
+					onClick={onCloseAction}
+					className="text-sm font-medium text-gray-500 px-4 py-2 rounded-md hover:bg-gray-100"
+				>
+					Cancel
+				</button>
+				{!readOnly && (
+					<Button onClick={state.handleSave} disabled={state.isSaving}>
+						{state.isSaving ? "Saving..." : "Save Changes"}
+					</Button>
+				)}
+			</div>
 
-      {/* Modals */}
-      {state.lightboxSrc && (
-        <ImageLightbox
-          src={state.lightboxSrc}
-          onClose={() => state.setLightboxSrc(null)}
-        />
-      )}
+			{/* Modals */}
+			{state.lightboxSrc && (
+				<ImageLightbox
+					src={state.lightboxSrc}
+					onClose={() => state.setLightboxSrc(null)}
+				/>
+			)}
 
-      {state.isSubtaskViewOpen && state.selectedSubtask && (
-        <TicketModalEdit
-          mode="edit"
-          ticket={state.selectedSubtask}
-          isOpen={state.isSubtaskViewOpen}
-          onClose={() => {
-            state.setIsSubtaskViewOpen(false);
-            state.setSelectedSubtask(null);
-          }}
-          onUpdate={onUpdateAction}
-          tags={tags}
-          allTickets={allTickets}
-          isSubtaskView={true}
-          parentTicket={state.ticket}
-          readOnly={readOnly}
-          projectId={projectId}
-        />
-      )}
+			{state.isSubtaskViewOpen && state.selectedSubtask && (
+				<TicketModalEdit
+					mode="edit"
+					ticket={state.selectedSubtask}
+					isOpen={state.isSubtaskViewOpen}
+					onClose={() => {
+						state.setIsSubtaskViewOpen(false);
+						state.setSelectedSubtask(null);
+					}}
+					onUpdate={onUpdateAction}
+					tags={tags}
+					allTickets={allTickets}
+					isSubtaskView={true}
+					parentTicket={state.ticket}
+					readOnly={readOnly}
+					projectId={projectId}
+				/>
+			)}
 
-      <SubtaskSelectionModal
-        open={state.isSubtaskSelectionOpen}
-        onOpenChangeAction={state.setIsSubtaskSelectionOpen}
-        onSelectSubtaskAction={state.handleAddSubtask}
-        availableTickets={state.availableTickets}
-      />
-    </div>
-  );
+			<SubtaskSelectionModal
+				open={state.isSubtaskSelectionOpen}
+				onOpenChangeAction={state.setIsSubtaskSelectionOpen}
+				onSelectSubtaskAction={state.handleAddSubtask}
+				availableTickets={state.availableTickets}
+			/>
+		</div>
+	);
 }

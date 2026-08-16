@@ -10,7 +10,9 @@ export type IssueStatusValue = "UNLINKED" | "LINKED" | "RESOLVED";
  * Used by the ticket mutations (ticketActions) to keep Issues.status in sync
  * when a ticket is linked/unlinked, changes status, or is soft-deleted.
  */
-export function deriveIssueStatus(ticketStatus: status | null): IssueStatusValue {
+export function deriveIssueStatus(
+	ticketStatus: status | null,
+): IssueStatusValue {
 	if (ticketStatus === null) return "UNLINKED";
 	return ticketStatus === "FINISHED" ? "RESOLVED" : "LINKED";
 }

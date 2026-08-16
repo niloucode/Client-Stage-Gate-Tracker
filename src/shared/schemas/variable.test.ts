@@ -22,7 +22,9 @@ describe("variableCreateSchema", () => {
 
 	it("accepts all three variable types", () => {
 		for (const type of ["link", "credential", "repository"] as const) {
-			expect(variableCreateSchema.safeParse({ ...validPayload, type }).success).toBe(true);
+			expect(
+				variableCreateSchema.safeParse({ ...validPayload, type }).success,
+			).toBe(true);
 		}
 	});
 
@@ -53,7 +55,10 @@ describe("variableCreateSchema", () => {
 	});
 
 	it("rejects an empty name", () => {
-		const result = variableCreateSchema.safeParse({ ...validPayload, name: "   " });
+		const result = variableCreateSchema.safeParse({
+			...validPayload,
+			name: "   ",
+		});
 		expect(result.success).toBe(false);
 	});
 
@@ -66,7 +71,10 @@ describe("variableCreateSchema", () => {
 	});
 
 	it("rejects an empty value", () => {
-		const result = variableCreateSchema.safeParse({ ...validPayload, value: "" });
+		const result = variableCreateSchema.safeParse({
+			...validPayload,
+			value: "",
+		});
 		expect(result.success).toBe(false);
 	});
 
@@ -79,7 +87,10 @@ describe("variableCreateSchema", () => {
 	});
 
 	it("rejects an unknown type", () => {
-		const result = variableCreateSchema.safeParse({ ...validPayload, type: "api_key" });
+		const result = variableCreateSchema.safeParse({
+			...validPayload,
+			type: "api_key",
+		});
 		expect(result.success).toBe(false);
 	});
 

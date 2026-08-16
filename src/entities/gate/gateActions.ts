@@ -123,9 +123,7 @@ export async function getStageGates(
 						: status === "REJECTED"
 							? "rejected"
 							: null,
-				images: comment
-					? (imagesByComment.get(comment.comment_id) ?? [])
-					: [],
+				images: comment ? (imagesByComment.get(comment.comment_id) ?? []) : [],
 				commentCount: comment
 					? (discussionCountByGate.get(gate.gate_id) ?? 0)
 					: 0,
@@ -348,9 +346,7 @@ export async function getGateComments(gateId: string) {
 			// Exclude the approve/decline feedback comment ("further comments"
 			// only). A PENDING gate has no feedback yet — omit the filter
 			// entirely (a `not: ""` would be an invalid uuid for Postgres).
-			...(gate.comment_id
-				? { comment_id: { not: gate.comment_id } }
-				: {}),
+			...(gate.comment_id ? { comment_id: { not: gate.comment_id } } : {}),
 		},
 		orderBy: { creation_date: "asc" },
 		include: {
