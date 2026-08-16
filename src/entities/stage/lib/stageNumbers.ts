@@ -12,7 +12,10 @@
  * coexist and the shift-by-decrement never collides.
  */
 
-/** Next sequential number for a new stage under a project. */
+/** Next sequential number for a new stage under a project. 
+ * @param numbers - Existing stage numbers (nulls allowed).
+ * @returns max + 1, or 1 when empty.
+ */
 export function nextStageNumber(numbers: (number | null)[]): number {
 	let max = 0;
 	for (const n of numbers) {
@@ -25,6 +28,9 @@ export function nextStageNumber(numbers: (number | null)[]): number {
  * How many remaining stages shift down after deleting the stage with
  * `deletedNumber` (spec 7: "the other stage's numbers shift accordingly").
  * Returns 0 when the deleted stage had no number (nothing to shift).
+ * @param numbers - The stage numbers before deletion.
+ * @param deletedNumber - The deleted stage's number (null = nothing to shift).
+ * @returns How many stages shift down after the delete.
  */
 export function renumberAfterDelete(
 	numbers: (number | null)[],

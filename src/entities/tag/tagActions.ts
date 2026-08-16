@@ -12,6 +12,7 @@ import { z } from "zod";
 /**
  * Global tag reference list (cross-ticket categorization). Bounded to 100.
  * Authenticated-only (2026-08-14 audit): anonymous callers get nothing.
+ * @returns The tag row.
  */
 export async function selectTag() {
 	const userId = await getCurrentUserId();
@@ -23,6 +24,7 @@ export async function selectTag() {
 	});
 }
 
+/** Creates a tag (is_protected defaults false). */
 export async function createTag(data: TagCreateInput) {
 	tagCreateSchema.parse(data);
 	// Authorization: any authenticated user may manage global tags
@@ -51,6 +53,7 @@ export async function createTag(data: TagCreateInput) {
 	}
 }
 
+/** Updates a tag's name/color (is_deleted guard). */
 export async function updateTag(data: TagUpdateInput) {
 	// Partial updates validated with the update schema, not the create one.
 	z.uuid().parse(data.tag_id);
@@ -89,6 +92,7 @@ export async function updateTag(data: TagUpdateInput) {
  * delete button is not the enforcement (2026-08-15 spec).
  *
  * @param tagId - UUID of the tag to archive.
+ * @returns The mutation result.
  */
 export async function softDeleteTag(tagId: string) {
 	z.uuid().parse(tagId);

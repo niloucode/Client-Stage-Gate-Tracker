@@ -21,7 +21,8 @@ import { softDeleteWorkflowSubtree } from "@/entities/ticket/lib/softDelete";
  * @param description - Optional description (empty string stores null).
  * @param startDate - Required scheduled start.
  * @param endDate - Required scheduled end.
- */
+  * @returns The mutation result.
+*/
 export async function createStage(
 	projectId: string,
 	stageName: string,
@@ -72,6 +73,7 @@ export async function createStage(
 	}
 }
 
+/** Updates a stage's name/description. */
 export async function updateStage(
 	stageId: string,
 	stageName: string,
@@ -106,6 +108,7 @@ export async function updateStage(
 	}
 }
 
+/** Cascading soft delete: stage + its phases/modules/workflows/tickets. */
 export async function cascadeSoftDeleteStage(
 	stageId: string,
 	txClient?: Prisma.TransactionClient,
@@ -201,7 +204,8 @@ export async function cascadeSoftDeleteStage(
  * project membership.
  *
  * @param stageId - UUID of the stage to load.
- */
+  * @returns The tree/payload.
+*/
 export async function getStageTree(stageId: string) {
 	z.uuid().parse(stageId);
 
@@ -418,7 +422,8 @@ export async function getStageTree(stageId: string) {
  *
  * A stage is `approved` when any of its gates has status APPROVED
  * (2026-08-15 gate-overview spec: status-based approval; GateSignatures dropped).
- */
+  * @returns The tree/payload.
+*/
 export async function getProjectStages(projectId: string) {
 	z.uuid().parse(projectId);
 
