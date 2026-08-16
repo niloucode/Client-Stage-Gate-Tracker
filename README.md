@@ -8,7 +8,7 @@ A project management and workflow tracking platform built with Next.js, designed
 
 - **Project & Stage Management** – Hierarchical project breakdown with customizable stages, phases, modules, and workflows
 - **Ticket Boards** – Drag-and-drop Kanban boards (powered by dnd-kit) with status tracking (Pending, In Progress, Finished)
-- **Contract Management** – Upload PDF contracts, manage client signatories, and execute agreements with OTP verification
+- **Contract Management** – Upload PDF contracts, manage client signatories, and execute agreements with dual owner/client approval
 - **Client & User Management** – Role-based access control (Project Owner, Project Team, Client Viewer) with department assignments
 - **Issue Reporting** – Track bugs and feature requests with urgency levels and reproduction steps
 - **Audit Logging** – Full history of ticket actions (creation, status changes, assignments, comments)
@@ -32,7 +32,7 @@ A project management and workflow tracking platform built with Next.js, designed
 
 ## Prerequisites
 
-- Node.js 20+ (LTS recommended)
+- Node.js 22 (LTS — see `.nvmrc`)
 - npm (or yarn/pnpm)
 - A Supabase project (or PostgreSQL instance with pg_trgm extension)
 - Environment variables as listed below
@@ -54,7 +54,7 @@ npm install
 
 ### 3. Environment Configuration
 
-Create a `.env.local` file in the root directory with the following variables:
+Create a `.env` file in the root directory with the following variables (template: `.env.example`):
 
 ```env
 # Supabase (required)
@@ -66,11 +66,15 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 DATABASE_URL=postgresql://...:6543/postgres?pgbouncer=true
 DIRECT_URL=postgresql://...:5432/postgres  # Direct connection for migrations
 
+# Server secrets
+CLIENT_INVITE_PEPPER=your-invite-code-pepper  # REQUIRED in production
+
 # Optional
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_ALLOWED_CONNECT_ORIGINS=https://*.supabase.co
 PRISMA_LOG_LEVEL=error,warn
 SKIP_ENV_VALIDATION=false
+# SHADOW_DATABASE_URL=postgresql://...  # local Postgres for `prisma migrate dev` (see CONTRIBUTING)
 ```
 
 ### 4. Database Setup & Migrations
@@ -83,7 +87,7 @@ npx prisma generate
 npx prisma migrate deploy
 
 # Seed sort keys (for existing data – idempotent)
-npm run seed
+npx prisma db seed
 ```
 
 ### 5. Run Development Server
@@ -104,7 +108,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 | `npm run typecheck` | Runs TypeScript type checking (`tsc --noEmit`) |
 | `npm run test` | Runs Vitest unit tests |
 | `npm run test:coverage` | Runs tests with coverage report |
-| `npm run lint` | Runs ESLint (non‑blocking in CI) |
+| `npm run lint` | Runs ESLint (hard gate in CI on errors; vendored reui excluded) |
 | `npm run knip` | Checks for unused exports/dependencies |
 | `npm run format` | Formats code with Prettier |
 | `npm run deploy` | Applies pending Prisma migrations to production |
@@ -118,7 +122,7 @@ src/
 ├── app/                     # Next.js pages and layouts (app router)
 │   ├── (app)/               # Authenticated routes (sidebar + topnav)
 │   │   ├── (workspace)/     # Project workspace routes
-│   │   ├── dashboard/       # Landing dashboard (WIP)
+│   │   ├── dashboard/       # Personal dashboard
 │   │   └── clients/         # Client management
 │   ├── (auth)/              # Authentication routes (login, signup)
 │   ├── api/                 # API routes (webhooks, notifications)
@@ -132,7 +136,7 @@ src/
 ├── features/                # Feature-specific business logic & UI
 │   ├── auth/                # Authentication context & forms
 │   ├── ticket-board/        # Kanban board with drag-and-drop
-│   ├── contracts/           # Contract viewer, signatories, OTP
+│   ├── contracts/           # Contract viewer, signatories, dual approval
 │   ├── project-structure/   # Stage sequence and details
 │   ├── stage-editor/        # Phase stepper, modules, workflows
 │   └── ...                  # Other features
@@ -157,11 +161,11 @@ The application is designed for deployment on **Vercel** (or any Node.js hosting
 
 - **Database**: Supabase PostgreSQL (pooled connection recommended for serverless)
 - **Authentication**: Supabase Auth with cookie-based session management (via `@supabase/ssr`)
-- **Storage**: Supabase Storage (for contract PDFs and ticket/comment images)
+- **Storage**: Supabase Storage (for contract PDFs and ticket/comment/gate/issue images)
 - **Environment Variables**: All secrets must be set in the deployment environment (see `.env` section)
 - **Migrations**: Run `npx prisma migrate deploy` as part of your deployment pipeline (included in `npm run deploy`)
 - **Build Process**: `prisma generate` is run automatically during `npm install`; ensure `DATABASE_URL` and `DIRECT_URL` are available at build time for schema validation
-- **Content Security Policy**: The middleware (`src/proxy.ts`) sets a strict CSP with nonces for script-src; no unsafe-inline is used in production
+- **Content Security Policy**: The middleware (`src/proxy.ts`) sets a strict CSP (script-src includes `'unsafe-inline'`/`'unsafe-eval'` for Next.js hydration and React Compiler bootstrap)
 
 **Recommended hosting**: Vercel (with environment variables) + Supabase (with pgBouncer enabled for pooling).
 
