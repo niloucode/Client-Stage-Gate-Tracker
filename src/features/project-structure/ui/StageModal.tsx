@@ -51,6 +51,7 @@ const stageModalSchema = stageCreateSchema;
 
 type StageFormValues = z.input<typeof stageModalSchema>;
 
+/** Create/edit stage dialog with required plan dates. */
 export function StageModal({
 	isOpen,
 	onClose,

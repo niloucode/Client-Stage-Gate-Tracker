@@ -47,22 +47,27 @@ const dashboardQueryOptions = {
 
 export { useDashboardRole } from "@/entities/roleAssignment";
 
+/** Dashboard query: tickets assigned to me. */
 export function useMyTickets(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.myTickets(enabled));
 }
 
+/** Dashboard query: tickets I watch. */
 export function useWatchedTickets(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.watchedTickets(enabled));
 }
 
+/** Dashboard query: my pending contracts. */
 export function useMyContracts(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.myContracts(enabled));
 }
 
+/** Dashboard query: weekly velocity/risk/deadline sparkline data. */
 export function useActivitySparklines(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.sparklines(enabled));
 }
 
+/** Dashboard query: issue severity + assignment stats. */
 export function useIssueStats(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.issueStats(enabled));
 }

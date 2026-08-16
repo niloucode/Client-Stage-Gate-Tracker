@@ -24,7 +24,11 @@ function toInitials(first: string, last: string): string {
 	return initials || "?";
 }
 
-/** Tag badge colors derived from the Tag row's single color hex. */
+/** Tag badge colors derived from the Tag row's single color hex. 
+ * @param tagName - The tag name (null → "Untagged").
+ * @param color - The hex color, or null for the neutral fallback.
+ * @returns The badge label + color pair.
+ */
 export function tagToBadge(
 	tagName: string | null,
 	color: string | null,
@@ -34,6 +38,7 @@ export function tagToBadge(
 	return { label, bg: `${color}1A`, text: color };
 }
 
+/** Maps a joined dashboard ticket row to the board TicketItem. */
 export function mapDashboardTicketRow(row: DashboardTicketRow): TicketItem {
 	const workflow = row.Workflows;
 	const moduleRow = workflow?.Modules;
@@ -64,6 +69,7 @@ export function mapDashboardTicketRow(row: DashboardTicketRow): TicketItem {
 	};
 }
 
+/** Maps a contract row to the pending-contract card shape. */
 export function mapContractRow(row: ContractRow): PendingContract {
 	const executed = Boolean(row.client_signature && row.project_owner_signature);
 	return {
@@ -87,6 +93,10 @@ export interface IssueSeverityCounts {
 	low: number;
 }
 
+/** Maps the server issue stats into dashboard chart shapes.
+ * @param stats - The server payload.
+ * @returns Severity counts + assigned/unassigned totals.
+ */
 export function mapIssueStats(stats: IssueStats): {
 	issuesBySeverity: IssueSeverityCounts;
 	assignedVsUnassigned: { assigned: number; unassigned: number };

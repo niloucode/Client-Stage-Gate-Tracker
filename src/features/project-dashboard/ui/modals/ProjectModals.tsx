@@ -138,6 +138,7 @@ const editProjectModalSchema = baseProject
 
 type FieldErrors = Partial<Record<keyof EditProjectFormState, string>>;
 
+/** Project create/edit modal (form-kit based). */
 export function EditProjectModal({
 	isOpen,
 	project,

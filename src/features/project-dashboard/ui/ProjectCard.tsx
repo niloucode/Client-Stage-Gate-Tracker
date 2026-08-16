@@ -37,6 +37,7 @@ function formatProjectDate(date: Date | null | undefined): string {
 	return format(d, "MMM d, yyyy");
 }
 
+/** Project summary card with status badge and action menu. */
 export function ProjectCard({
 	project,
 	href,

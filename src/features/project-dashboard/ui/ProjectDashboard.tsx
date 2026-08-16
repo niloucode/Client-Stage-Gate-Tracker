@@ -33,6 +33,7 @@ interface ModalState {
 	planEnd?: Date | null;
 }
 
+/** Projects dashboard: sections, creation, and member management. */
 export function ProjectDashboard() {
 	const { data: projects, isLoading, error } = useProjectsForMember();
 	const { data: profile } = useCurrentUser();
