@@ -262,8 +262,7 @@ export function ContractApprovalCard({
 				id: clientSignatory?.id || "client-party",
 				role: "Client",
 				name:
-					clientSignatory?.name ||
-					(variant === "client" ? userName : "Client"),
+					clientSignatory?.name || (variant === "client" ? userName : "Client"),
 				timestamp: clientSignatory?.timestamp,
 				isApproved: clientApproved,
 				signatory: {
@@ -308,11 +307,7 @@ export function ContractApprovalCard({
 	})();
 
 	return (
-		<Card
-			className={cn(
-				className,
-			)}
-		>
+		<Card className={cn(className)}>
 			<CardHeader>
 				<CardTitle>Approve Contract</CardTitle>
 				<CardDescription>
@@ -322,9 +317,11 @@ export function ContractApprovalCard({
 			</CardHeader>
 
 			<CardContent>
-				{hasContract?<>{/* Signatories / Approval Status List */}
-					<div className="flex flex-col gap-3">
-						{parties.map((party) => {
+				{hasContract ? (
+					<>
+						{/* Signatories / Approval Status List */}
+						<div className="flex flex-col gap-3">
+							{parties.map((party) => {
 								return (
 									<div
 										key={party.id}
@@ -356,63 +353,65 @@ export function ContractApprovalCard({
 													</p>
 												)}
 											</div>
-											{
-												party.isApproved ? 
+											{party.isApproved ? (
 												<div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
 													<CheckCircle2 className="h-4 w-4" />
 													<span>Approved</span>
-												</div>	:
+												</div>
+											) : (
 												<div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
 													<Clock3 className="h-4 w-4" />
 													<span>Pending</span>
 												</div>
-											}
+											)}
 										</div>
-										{party.signatory && <SignatureBox person={party.signatory} />}
+										{party.signatory && (
+											<SignatureBox person={party.signatory} />
+										)}
 									</div>
-								)})
-						}
-					</div>
+								);
+							})}
+						</div>
 
-					{/* Outcome Banner or Action Button */}
-					{bothApproved ? (
-						<div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs text-emerald-800">
-							<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-							<span>Both parties have approved.</span>
-						</div>
-					) : alreadyApproved ? (
-						<div className="flex items-center gap-2.5 rounded-md border border-border bg-neutral-subtle px-3.5 py-3 text-xs text-muted-foreground">
-							<Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />
-							<span>You have approved. Awaiting {otherRoleLabel} approval.</span>
-						</div>
-					) : (
-						<div className="space-y-3 pt-1">
-							
-						</div>
-					)}
-				</>:""}
+						{/* Outcome Banner or Action Button */}
+						{bothApproved ? (
+							<div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs text-emerald-800">
+								<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+								<span>Both parties have approved.</span>
+							</div>
+						) : alreadyApproved ? (
+							<div className="flex items-center gap-2.5 rounded-md border border-border bg-neutral-subtle px-3.5 py-3 text-xs text-muted-foreground">
+								<Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />
+								<span>
+									You have approved. Awaiting {otherRoleLabel} approval.
+								</span>
+							</div>
+						) : (
+							<div className="space-y-3 pt-1"></div>
+						)}
+					</>
+				) : (
+					""
+				)}
 			</CardContent>
-			
+
 			<CardFooter className="flex flex-col gap-2">
-				{hasContract?
-				<>
-				<p className="text-muted-foreground">
-					Please review the document and confirm your approval as the{" "}
-					<span className="text-brand-600!">{roleLabel}</span>.
-				</p>
-				<Button
-					onClick={() => setConfirmOpen(true)}
-					className="w-full"
-				>
-					<CircleCheck/>
-					Approve as {roleLabel}
-				</Button>
-				</>
-				:
-				<div className="w-full flex justify-center text-slate-600">
-					This project does not have a uploaded contract file.
-				</div>
-				}
+				{hasContract ? (
+					<>
+						<p className="text-muted-foreground">
+							Please review the document and confirm your approval as the{" "}
+							<span className="text-brand-600!">{roleLabel}</span>.
+						</p>
+						<Button onClick={() => setConfirmOpen(true)} className="w-full">
+							<CircleCheck />
+							Approve as {roleLabel}
+						</Button>
+					</>
+				) : (
+					<div className="w-full flex justify-center text-slate-600">
+						This project does not have a uploaded contract file.
+					</div>
+				)}
 			</CardFooter>
 
 			<ConfirmTextModal
