@@ -50,6 +50,7 @@ function getInitials(name: string): string {
 		.toUpperCase();
 }
 
+/** Per-gate discussion popup: latest-gate-only posting with uploads. */
 export function GateDiscussionModal({
 	gateId,
 	stageId,

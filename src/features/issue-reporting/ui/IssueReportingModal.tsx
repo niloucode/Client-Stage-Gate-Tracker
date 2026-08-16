@@ -93,7 +93,9 @@ const BUG_TYPE_OPTIONS: { value: BugType; label: string }[] = [
 /* HELPER COMPONENTS                                                         */
 /* -------------------------------------------------------------------------- */
 
-/** Label Wrapper for non-input elements (Select & Priority) */
+/** Label Wrapper for non-input elements (Select & Priority). 
+ * @returns The wrapped label + children block.
+ */
 const FormField = ({
 	label,
 	required,
