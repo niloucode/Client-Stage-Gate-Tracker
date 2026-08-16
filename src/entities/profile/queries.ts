@@ -34,6 +34,7 @@ const profileQueryOptions = {
 		}),
 };
 
+/** Query hook: the team profile list. */
 export function useTeamProfiles(options?: { enabled?: boolean }) {
 	return useQuery({
 		...profileQueryOptions.team(),
@@ -41,10 +42,12 @@ export function useTeamProfiles(options?: { enabled?: boolean }) {
 	});
 }
 
+/** Query hook: a project's member profiles. */
 export function useProjectMembers(projectId: string | undefined) {
 	return useQuery(profileQueryOptions.projectMembers(projectId));
 }
 
+/** Query hook: the session profile. */
 export function useCurrentUser() {
 	return useQuery(profileQueryOptions.currentUser());
 }

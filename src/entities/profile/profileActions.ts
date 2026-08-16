@@ -12,6 +12,7 @@ import type { EntityFilterStatus } from "@/entities/types";
 /** Assignee-dropdown profile shape (what `selectProfile` returns). */
 export type ProfileSelect = Awaited<ReturnType<typeof selectProfile>>[number];
 
+/** The caller's own profile row. */
 export async function selectProfile() {
 	// Assignee-dropdown shape only — never the full row (phone, job_title…).
 	return prisma.profiles.findMany({
@@ -29,6 +30,7 @@ export async function selectProfile() {
  * Profiles that can be ASSIGNED to tickets of a project: everyone with a
  * RoleAssignments row in the project (team + owners). Client profiles are
  * excluded (spec: clients are never assignable). Membership-guarded read.
+ * @returns The project's member profiles.
  */
 export async function selectProjectMembers(projectId: string) {
 	z.uuid().parse(projectId);
@@ -60,6 +62,7 @@ export async function selectProjectMembers(projectId: string) {
 		.filter((p): p is NonNullable<typeof p> => p !== null);
 }
 
+/** A profile row by id (membership-guarded). */
 export async function getProfileById(
 	profileId: string,
 	status: EntityFilterStatus = "active",
@@ -93,6 +96,7 @@ export async function getProfileById(
  * The signed-in user's own profile, or null when unauthenticated/archived.
  * Prisma-backed so the client never touches the DB directly (RLS and the
  * server-action layer stay the only data paths).
+ * @returns The session profile, or null.
  */
 export async function getCurrentUserProfile() {
 	const userId = await getCurrentUserId();
@@ -153,6 +157,7 @@ type CreateProfileResult =
  * Idempotent: if the row already exists (external auth trigger, retried
  * submit), the unique violation is absorbed and the existing profile is
  * returned so signup flows can't double-create.
+ * @returns The created profile.
  */
 export async function createProfileForCurrentUser(
 	input: CreateProfileInput,
@@ -302,6 +307,7 @@ export async function createProfileForCurrentUser(
 	}
 }
 
+/** A profile row by email (membership-guarded). */
 export async function getProfileByEmail(profileEmail: string) {
 	try {
 		z.email().parse(profileEmail);
@@ -328,6 +334,7 @@ export async function getProfileByEmail(profileEmail: string) {
  * Fetches all non-deleted staff profiles (internal team members), ordered by
  * name. Any signed-in user may read the list (clients see it read-only on
  * the team page); unauthenticated callers get nothing.
+ * @returns All non-client team profiles.
  */
 export async function selectTeamProfiles() {
 	const userId = await getCurrentUserId();

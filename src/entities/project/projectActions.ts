@@ -38,6 +38,7 @@ export interface ProjectWithStatus {
 
 /**
  * Fetches all non-deleted projects, ordered by name.
+ * @returns The project rows (bounded at 200).
  */
 export async function selectProjects() {
 	// No catch: a thrown error lets React Query retry and surface isError.
@@ -54,6 +55,7 @@ export async function selectProjects() {
 /**
  * Fetches projects the current user is a member of (any role), with
  * per-project `is_owner` and computed status.
+ * @returns The caller's projects.
  *
  * Reads the existing Projects.status column, computes the correct status
  * from Contracts + Stages data, and updates the DB if they differ.
@@ -188,6 +190,8 @@ export async function selectProjectsForMember(): Promise<ProjectWithStatus[]> {
 
 /**
  * Fetches a single project by its ID.
+ * @param projectId - The project to fetch.
+ * @returns The project row, or null when missing/forbidden.
  */
 export async function getProjectById(projectId: string) {
 	const userId = await getCurrentUserId();
@@ -201,6 +205,8 @@ export async function getProjectById(projectId: string) {
 /**
  * Creates a new project and assigns the current user as "Project Owner".
  * The user ID is obtained from the server-side Supabase session.
+ * @param data - The validated project payload.
+ * @returns The mutation result.
  */
 export async function createProject(data: ProjectCreateInput) {
 	try {
@@ -312,6 +318,8 @@ export async function createProject(data: ProjectCreateInput) {
 /**
  * Updates an existing project's details.
  * Only fields that are provided in the input will be updated.
+ * @param data - The validated update payload.
+ * @returns The mutation result.
  */
 export async function updateProject(data: ProjectUpdateInput) {
 	projectUpdateSchema.parse(data);
@@ -367,6 +375,9 @@ export async function updateProject(data: ProjectUpdateInput) {
 /**
  * Soft-deletes a project after verifying the confirmation name matches
  * the project's current name.
+ * @param projectId - The project to delete.
+ * @param confirmationName - The typed project name (must match).
+ * @returns The mutation result.
  */
 export async function softDeleteProject(
 	projectId: string,
