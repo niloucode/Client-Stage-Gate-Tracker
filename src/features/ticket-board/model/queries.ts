@@ -10,6 +10,8 @@ import type { TicketHistoryEntry } from "./types";
  * Fetches real HistoryEvent rows from the database via the `selectTicketHistory`
  * server action and maps the joined profile relations into flat `performerName`
  * and `targetName` fields for the UI.
+ * @param ticketId - The ticket to fetch history for.
+ * @returns The mapped history entries.
  */
 async function fetchTicketHistory(
 	ticketId: string,
@@ -35,6 +37,7 @@ async function fetchTicketHistory(
 	);
 }
 
+/** TanStack Query hook for a ticket's history log. */
 export function useTicketHistory(ticketId: string | undefined) {
 	return useQuery({
 		queryKey: historyKeys.list(ticketId!),
