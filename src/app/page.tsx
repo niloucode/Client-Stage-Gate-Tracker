@@ -5,6 +5,7 @@ import { getProfileById } from "@/entities/profile/profileActions";
 // Root route. Anonymous users are already sent to /login by the middleware
 // (proxy.ts). Signed-in users get a role-aware redirect that mirrors the
 // AuthProvider post-login routing, so clients never see the staff dashboard.
+/** Root route: role-aware redirect. */
 export default async function RootPage() {
 	const supabase = await createClient();
 	const {

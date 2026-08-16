@@ -4,6 +4,7 @@ interface PageParams {
 	projectId: string;
 }
 
+/** Issues route. */
 export default async function IssueDashboardPage({
 	params,
 }: {

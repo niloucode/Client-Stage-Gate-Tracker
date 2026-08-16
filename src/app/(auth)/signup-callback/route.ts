@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
  * routes them to the app shell (which redirects role-appropriately).
  * Falls back to /login when the code is missing or invalid.
  */
+/** OAuth callback: exchanges the code for a session. */
 export async function GET(request: NextRequest) {
 	const code = request.nextUrl.searchParams.get("code");
 	if (!code) {

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getWorkflowById } from "@/entities/workflow/workflowActions";
 import { TicketBoard } from "@/features/ticket-board/ui";
 
+/** Workflow ticket-board route. */
 export default async function TicketsPage({
 	params,
 }: {

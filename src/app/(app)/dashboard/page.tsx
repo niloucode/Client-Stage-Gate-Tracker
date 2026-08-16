@@ -14,6 +14,7 @@ import {
 } from "@/features/landing-dashboard";
 import { useAuth } from "@/features/auth";
 
+/** Personal dashboard route. */
 export default function DashboardPage() {
 	const { user } = useAuth();
 	const roleQuery = useDashboardRole();
