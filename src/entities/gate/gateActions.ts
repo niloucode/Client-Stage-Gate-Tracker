@@ -30,6 +30,8 @@ function formatGateDate(date: Date): string {
  * comment (reviewer + date + attachments) and discussion-comment count.
  * Any project member — including the client — may read; `canDecide` tells
  * the UI whether the caller is the project's client (approve/decline rights).
+ * @param stageId - The stage whose gates are listed.
+ * @returns The gates plus the viewer's `canDecide` flag.
  */
 export async function getStageGates(
 	stageId: string,
@@ -140,6 +142,11 @@ export async function getStageGates(
  * points at it. APPROVED → status + stage dates materialized via
  * gateApprovalDates; REJECTED → status + a new PENDING gate with the next
  * number (spec 2).
+ * @param gateId - The gate being decided.
+ * @param decision - APPROVED or REJECTED.
+ * @param feedback - The client's feedback text (stored as a GATE_COMMENT).
+ * @param imageUrls - Optional attachment URLs for the feedback comment.
+ * @returns The updated gate.
  */
 export async function decideGate(
 	gateId: string,
@@ -265,6 +272,10 @@ export async function decideGate(
 /**
  * Discussion comments on a gate (spec 7): clients and project team/owners may
  * comment; NEW comments are only allowed on the latest gate (spec 8).
+ * @param gateId - The gate being commented on.
+ * @param description - The comment text.
+ * @param imageUrls - Optional attachment URLs.
+ * @returns The created comment.
  */
 export async function createGateComment(
 	gateId: string,
@@ -323,6 +334,8 @@ export async function createGateComment(
 /**
  * The discussion thread for a gate (feedback comment excluded — it is shown
  * in the history card; "further comments" only), newest last, with images.
+ * @param gateId - The gate whose thread is fetched.
+ * @returns The comments with their images.
  */
 export async function getGateComments(gateId: string) {
 	z.uuid().parse(gateId);

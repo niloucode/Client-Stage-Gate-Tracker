@@ -29,14 +29,17 @@ const gateQueryOptions = {
 		}),
 };
 
+/** Query hook: a stage's gates + canDecide. */
 export function useStageGates(stageId: string | undefined) {
 	return useQuery(gateQueryOptions.list(stageId));
 }
 
+/** Query hook: a gate's discussion thread. */
 export function useGateComments(gateId: string | undefined) {
 	return useQuery(gateQueryOptions.comments(gateId));
 }
 
+/** Mutation hook: decide (approve/decline) a stage gate. */
 export function useDecideGate(stageId: string | undefined) {
 	const queryClient = useQueryClient();
 

@@ -19,6 +19,7 @@ import { phaseGanttSelect } from "./ganttTypes";
  *
  * @param phaseId - UUID of the phase to archive.
  * @param txClient - Optional Prisma transaction to join (used by stage-level cascades).
+ * @returns The mutation result.
  */
 export async function cascadeSoftDeletePhase(
 	phaseId: string,
@@ -81,6 +82,7 @@ export async function cascadeSoftDeletePhase(
  *
  * @param phaseId - UUID of the phase being moved.
  * @param targetNumber - The desired 1-based position.
+ * @returns The mutation result.
  */
 export async function reorderPhase(phaseId: string, targetNumber: number) {
 	// Authorization: caller must be a member of the parent project
@@ -138,6 +140,7 @@ export async function reorderPhase(phaseId: string, targetNumber: number) {
 /**
  * Project-scoped phase rows for the gantt chart (read-only). Any project
  * profile — team, owners AND clients — may view (2026-08-15 spec).
+ * @returns The gantt-shaped phase rows.
  */
 export async function getProjectPhasesGantt(projectId: string) {
 	z.uuid().parse(projectId);

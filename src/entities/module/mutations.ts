@@ -12,6 +12,7 @@ import type { ModuleCreateInput, ModuleUpdateInput } from "@/shared/schemas";
 /**
  * Module mutations use the canonical scheduling vocabulary
  * (planStart/planEnd/actualStart/actualEnd) — see Task 3.1.
+ * @returns The mutation hook.
  */
 export function useCreateModule() {
 	const queryClient = useQueryClient();
@@ -33,6 +34,7 @@ export function useCreateModule() {
 	});
 }
 
+/** Mutation hook: update a module. */
 export function useUpdateModule() {
 	const queryClient = useQueryClient();
 
@@ -53,6 +55,7 @@ export function useUpdateModule() {
 	});
 }
 
+/** Mutation hook: cascade-soft-delete a module. */
 export function useDeleteModule() {
 	const queryClient = useQueryClient();
 
