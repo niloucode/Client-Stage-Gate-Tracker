@@ -154,6 +154,7 @@ function GateFeedbackCard({
 	);
 }
 
+/** Gate feedback history: comments and images for every gate decision. */
 export function GateFeedbackModal({
 	isOpen,
 	onClose,

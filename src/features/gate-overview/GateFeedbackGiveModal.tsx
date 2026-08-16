@@ -36,6 +36,7 @@ export interface GateFeedbackGiveModalProps {
 	stageId: string;
 }
 
+/** Approve/decline dialog: feedback comment + image uploads (client-only). */
 export function GateFeedbackGiveModal({
 	isOpen,
 	onClose,
