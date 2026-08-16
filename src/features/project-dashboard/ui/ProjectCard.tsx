@@ -18,6 +18,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui";
 
 interface ProjectCardProps {
 	project: ProjectWithStatus;
@@ -70,7 +71,7 @@ export function ProjectCard({
 				: undefined;
 
 	return (
-		<div className="relative hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 @container bg-neutral-surface-subtle rounded-md border border-lavender-300 gap-4 p-5 flex flex-col justify-between h-full select-none">
+		<div className="border-brand-100 relative hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 @container bg-neutral-surface-subtle rounded-md border gap-6 p-5 flex flex-col justify-between h-full select-none">
 			<Link
 				href={targetHref}
 				className="absolute inset-0 rounded-md"
@@ -82,32 +83,24 @@ export function ProjectCard({
 				aria-hidden
 				className="relative flex justify-between items-center w-full"
 			>
-				<p className="text-xs text-brand-500 truncate pointer-events-none">
+				<p className="text-xs font-mono text-brand-500 truncate pointer-events-none">
 					{project.client_name ?? "—"}
 				</p>
-				<span
-					className={`pointer-events-none inline-flex items-center gap-1 text-[10px] px-2 py-0.5 shrink-0 ${statusClass}`}
-				>
+				<Badge className={statusClass}>
 					{statusLabel}
-				</span>
+				</Badge>
 			</div>
 
 			<div aria-hidden className="relative pointer-events-none">
-				<h3 className="w-3/4 text-m text-slate-900 max-w-[80%] break-all line-clamp-2">
+				<h3 className="w-3/4 text-slate-900 wrap-break-word line-clamp-2">
 					{project.name}
 				</h3>
 				{/* Description — always shown, clamped to 3 lines */}
-				<p
-					className={`w-3/4 text-xs wrap-break-word ${project.description ? "text-slate-600" : "text-slate-400"}`}
-					style={{
-						display: "-webkit-box",
-						WebkitLineClamp: 3,
-						WebkitBoxOrient: "vertical",
-						overflow: "hidden",
-					}}
-				>
-					{project.description}
-				</p>
+				<div className="h-8">
+					<p className={`w-3/4 text-xs line-clamp-2 wrap-break-word text-slate-600`}>
+						{project.description}
+					</p>
+				</div>
 			</div>
 
 			{/* Bottom Row: Responsive Timeline */}

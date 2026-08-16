@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import type { ProjectWithStatus, ProjectStatus } from "@/entities/project";
+import { Badge } from "@/components/ui";
 
 interface ProjectSectionProps {
 	title: string;
@@ -76,12 +77,12 @@ export function ProjectSection({
 					<IconComponent size={24} className={config.iconColor} />
 					{/* span, not h2: a heading inside the toggle <button> is
 					 * invalid flow content (buttons allow phrasing only). */}
-					<span
-						className={`text-md font-semibold px-4 py-0.5 rounded-md ${config.badgeText} ${config.badgeBg}`}
+					<Badge
+						className={config.badgeBg}
 					>
-						{projects.length}
-					</span>
-					<span className="text-lg font-semibold">{title}</span>
+						<h3 className={`${config.badgeText}!`}>{projects.length}</h3>
+					</Badge>
+					<h3>{title}</h3>
 				</div>
 				<ChevronDown
 					size={24}

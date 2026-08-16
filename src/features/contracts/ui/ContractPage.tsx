@@ -174,6 +174,9 @@ export function ContractPage({ projectId }: ContractPageProps) {
 					</p>
 				</header>
 
+				{allSigned && executedAt && 
+					<ExecutedBanner executedAt={executedAt} />
+				}
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
 					<ContractViewer
 						className="h-fit py-0 bg-neutral-50"
@@ -185,11 +188,9 @@ export function ContractPage({ projectId }: ContractPageProps) {
 					/>
 
 					<div className="flex flex-col gap-6">
-						{allSigned && executedAt && (
-							<ExecutedBanner executedAt={executedAt} />
-						)}
-
-						{role && (
+						
+					
+						{role &&(
 							<ContractApprovalCard
 								projectId={projectId}
 								variant={role}

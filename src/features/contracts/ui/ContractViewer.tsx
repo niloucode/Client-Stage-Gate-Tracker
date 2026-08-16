@@ -24,7 +24,7 @@ import {
 	AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getContractUrl } from "@/entities/contract";
 import { useUploadContract, useDeleteContract } from "@/entities/contract";
@@ -227,73 +227,68 @@ export function ContractViewer({
 
 	return (
 		<>
-			<Card className={`flex flex-col overflow-hidden ${className}`}>
-				<CardContent className="flex flex-1 flex-col overflow-hidden p-0">
-					{/* Toolbar */}
-					<div className="flex items-center justify-between gap-3 border-b border-lavender-100 px-4 py-3">
-						<div className="flex min-w-0 items-center gap-2">
-							<FileText className="h-5.5 w-5.5 shrink-0 text-brand-600" />
-							<span className="truncate text-sm  text-ink">
-								{initialContractName ?? "Contract"}
-							</span>
-						</div>
-
-						<div className="flex shrink-0 items-center gap-1">
-							{fileUrl ? (
-								<>
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={zoomOut}
-										aria-label="Zoom out"
-									>
-										<ZoomOut className="h-4 w-4" />
-									</Button>
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={() => setZoom(100)}
-										className="min-w-13"
-									>
-										{zoom}%
-									</Button>
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={zoomIn}
-										aria-label="Zoom in"
-									>
-										<ZoomIn className="h-4 w-4" />
-									</Button>
-									<span className="mx-1 h-4 w-px bg-lavender-100" />
-									{canManage && (
-										<Button
-											variant="ghost"
-											size="icon"
-											onClick={requestRemove}
-											aria-label="Remove document"
-											className="hover:bg-red-50 hover:text-red-600"
-										>
-											<X className="h-4 w-4" />
-										</Button>
-									)}
-								</>
-							) : (
-								canManage && (
-									<Button
-										variant="default"
-										size="sm"
-										onClick={() => inputRef.current?.click()}
-										className={"px-4 py-5 bg-brand-600"}
-									>
-										<Upload size={14} />
-										Upload Contract
-									</Button>
-								)
-							)}
-						</div>
+			<Card className={`gap-0 min-h-255 max-h-255 flex flex-col overflow-hidden ${className}`}>
+				<CardHeader className="pt-4 flex items-center justify-between">
+					<div className="flex gap-2">
+						<FileText className="h-5.5 w-5.5 shrink-0 text-brand-600" />
+						<span className="truncate text-sm  text-ink">
+							{initialContractName ?? "Contract"}
+						</span>
 					</div>
-
+					<div>
+						{fileUrl ? (
+							<>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={zoomOut}
+									aria-label="Zoom out"
+								>
+									<ZoomOut className="h-4 w-4" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => setZoom(100)}
+									className="min-w-13"
+								>
+									{zoom}%
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={zoomIn}
+									aria-label="Zoom in"
+								>
+									<ZoomIn className="h-4 w-4" />
+								</Button>
+								<span className="mx-1 h-4 w-px bg-lavender-100" />
+								{canManage && (
+									<Button
+										variant="ghost"
+										size="icon"
+										onClick={requestRemove}
+										aria-label="Remove document"
+										className="hover:bg-red-50 hover:text-red-600"
+									>
+										<X className="h-4 w-4" />
+									</Button>
+								)}
+							</>
+						) : (
+							canManage && (
+								<Button
+									variant="default"
+									onClick={() => inputRef.current?.click()}
+								>
+									<Upload size={14} />
+									Upload Contract
+								</Button>
+							)
+						)}
+					</div>
+				</CardHeader>
+				<CardContent className="flex flex-1 flex-col overflow-hidden p-0! m-0!">
 					<input
 						ref={inputRef}
 						type="file"
@@ -339,30 +334,35 @@ export function ContractViewer({
 							onDragLeave={canManage ? () => setIsDragging(false) : undefined}
 							onDrop={canManage ? handleDrop : undefined}
 							onClick={canManage ? () => inputRef.current?.click() : undefined}
-							className={`flex flex-1 min-h-80 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
-								isDragging ? "bg-lavender-50" : "bg-white"
+							className={`flex flex-1 h-full w-full flex-col items-center justify-start py-20 gap-3 px-6 text-center transition-all ${
+								canManage ? "cursor-pointer" : "cursor-default"
+							} ${
+								isDragging
+									? "bg-lavender-50 border-2 border-dashed border-brand-500"
+									: ""
 							}`}
 						>
 							<div
-								className={`flex h-12 w-12 items-center justify-center rounded-sm transition-colors ${
-									isDragging ? "bg-brand-100" : "bg-brand-100"
+								className={`flex h-12 w-12 items-center justify-center rounded-lg transition-colors ${
+									isDragging ? "bg-brand-200" : "bg-brand-100"
 								}`}
 							>
 								<Upload className="h-5 w-5 text-brand-600" />
 							</div>
+
 							<div className="flex flex-col items-center">
-								<h4>
+								<h4 className="text-sm font-medium text-ink">
 									{canManage
 										? "Click to upload or drag and drop a PDF"
 										: "No contract document has been uploaded yet."}
 								</h4>
-								<p className="mt-1 text-xs text-plum-400 w-62.5">
+								<p className="mt-1 text-xs text-plum-400 max-w-xs">
 									{canManage
 										? "Select a document from your computer to preview and prepare for signing here."
 										: "Only the Project Owner can upload the contract."}
 								</p>
 								{fileError && (
-									<p className="mt-2 text-xs  text-red-600">{fileError}</p>
+									<p className="mt-2 text-xs font-medium text-red-600">{fileError}</p>
 								)}
 							</div>
 						</div>
