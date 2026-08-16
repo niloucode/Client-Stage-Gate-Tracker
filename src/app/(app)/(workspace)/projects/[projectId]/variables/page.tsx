@@ -4,6 +4,7 @@ interface PageParams {
 	projectId: string;
 }
 
+/** Variables route. */
 export default async function VariablesRoute({
 	params,
 }: {

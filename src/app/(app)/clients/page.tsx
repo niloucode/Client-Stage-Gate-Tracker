@@ -4,6 +4,7 @@
 
 import { ClientsPage } from "@/features/client-manager";
 
+/** Clients route (registry, staff-only). */
 export default function ClientsRoute() {
 	return <ClientsPage />;
 }
