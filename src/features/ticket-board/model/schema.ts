@@ -113,7 +113,11 @@ export const ticketHistoryEntrySchema = z
 		}
 	});
 
-/** True when `value` parses as a JSON object whose listed fields are all strings. */
+/** True when `value` parses as a JSON object whose listed fields are all strings. 
+ * @param value - The raw JSON string.
+ * @param fields - Field names that must all be strings.
+ * @returns True when every listed field is a string.
+ */
 function hasStringFields(value: string, fields: string[]): boolean {
 	try {
 		const parsed: unknown = JSON.parse(value);
@@ -126,7 +130,10 @@ function hasStringFields(value: string, fields: string[]): boolean {
 	}
 }
 
-/** True when `value` parses as a JSON object with {from, to} as UUID strings or null. */
+/** True when `value` parses as a JSON object with {from, to} as UUID strings or null. 
+ * @param value - The raw JSON string.
+ * @returns True when {from, to} are both UUIDs or null.
+ */
 function isWatcherChangedDetails(value: string): boolean {
 	try {
 		const parsed: unknown = JSON.parse(value);

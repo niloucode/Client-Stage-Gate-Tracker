@@ -57,6 +57,7 @@ function TeamToolbar({
 	);
 }
 
+/** Team page: member table + owner-gated invite-code generation. */
 export function TeamPage() {
 	const { isLoading: isAuthLoading } = useAuth();
 	// Owner gate is ROLE-based (a Project Owner roleAssignment on any
