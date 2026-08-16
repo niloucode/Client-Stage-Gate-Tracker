@@ -32,6 +32,8 @@ const SECTION_LABELS: Record<string, string> = {
 /**
  * Fetches workflow details (including parent Module, Phase, and Stage ID)
  * when on a workflow board route.
+ * @param workflowId - The workflow id from the route (nullable).
+ * @returns The workflow query result.
  */
 function useWorkflowData(workflowId: string | null | undefined) {
 	return useQuery({
@@ -47,6 +49,7 @@ function useWorkflowData(workflowId: string | null | undefined) {
 
 /**
  * Derives full, real-time hierarchical breadcrumbs from the route structure.
+ * @returns The breadcrumb items for the current route.
  */
 function useRealBreadcrumbs(): BreadcrumbItem[] {
 	const pathname = usePathname();
@@ -224,6 +227,7 @@ function TopNavBreadcrumbs() {
 	return <Breadcrumbs items={breadcrumbs} />;
 }
 
+/** Top navigation bar: breadcrumbs + account menu. */
 export default function TopNav() {
 	return (
 		<header className="bg-neutral-surface relative flex items-center justify-between px-8 py-3 border-b border-brand-100 shrink-0">

@@ -160,6 +160,7 @@ export interface ClientsTableProps {
 	showEditButton: boolean;
 }
 
+/** Sortable client registry table with invite-code + team actions. */
 export function ClientsTable({
 	clients,
 	sortField,
