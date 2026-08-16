@@ -23,6 +23,8 @@ export interface ContractPageProps {
  *   both statuses (via the signatories list).
  * - Both approvals unlock the first stage's actual start (server-side).
  * - Only the Project Owner manages the contract document (upload/delete).
+ * @param projectId - The project whose contract is shown.
+ * @returns The rendered contract page.
  */
 export function ContractPage({ projectId }: ContractPageProps) {
 	const { data: contract, isLoading, error } = useContract(projectId);

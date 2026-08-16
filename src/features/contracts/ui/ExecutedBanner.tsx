@@ -5,6 +5,7 @@ interface ExecutedBannerProps {
 	className?: string;
 }
 
+/** Success banner shown once both parties have approved the contract. */
 export function ExecutedBanner({
 	executedAt,
 	className = "",

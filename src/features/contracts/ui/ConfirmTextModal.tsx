@@ -23,6 +23,7 @@ interface ConfirmTextModalProps {
 	onSuccess: () => void;
 }
 
+/** Type-the-phrase confirmation dialog for destructive contract actions. */
 export function ConfirmTextModal({
 	open,
 	onClose,
