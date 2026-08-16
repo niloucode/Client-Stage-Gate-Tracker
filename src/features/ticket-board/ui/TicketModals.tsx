@@ -88,7 +88,10 @@ const createTicketModalSchema = ticketCreateSchema.superRefine((data, ctx) => {
 	}
 });
 
-/** Helper to derive box colors based strictly on issue urgency */
+/** Helper to derive box colors based strictly on issue urgency. 
+ * @param issue - The linked issue, or null when unlinked.
+ * @returns The style tokens for the linked-issue box.
+ */
 function getIssueUrgencyStyle(issue: IssueItem | null) {
 	if (!issue) {
 		return {
@@ -129,6 +132,7 @@ function getIssueUrgencyStyle(issue: IssueItem | null) {
 /* 1. TICKET CREATE MODAL (DIALOG)                                            */
 /* -------------------------------------------------------------------------- */
 
+/** Create-ticket dialog (dialog shell; see TicketModals for the editor). */
 export function TicketModalCreate({
 	isOpen,
 	onClose,
@@ -807,6 +811,7 @@ export function TicketModalCreate({
 /* 2. TICKET EDIT MODAL (SLIDING PANEL DRAWER)                                */
 /* -------------------------------------------------------------------------- */
 
+/** Edit-ticket sliding panel; renders the TicketEditor. */
 export function TicketModalEdit({
 	ticket,
 	isOpen,
@@ -872,6 +877,7 @@ export type TicketModalProps =
 	| ({ mode: "create" } & CreateTicketModalProps)
 	| ({ mode: "edit" } & TicketModalEditProps);
 
+/** Dispatches to the create dialog or the edit drawer by mode. */
 export default function TicketModal(props: TicketModalProps) {
 	if (props.mode === "create") {
 		return <TicketModalCreate {...props} />;
