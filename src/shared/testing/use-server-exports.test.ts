@@ -6,7 +6,7 @@ import { join } from "node:path";
  * Regression guard for the Next.js "use server" rule: a module with the
  * directive may only export async functions — an exported plain object
  * crashes every import of that module at runtime with
- * `'use server" file can only export async functions, found object`
+ * `"use server" file can only export async functions, found object`
  * (hit 2026-08-15: `export const issueDetailInclude` in issueActions.ts).
  */
 function collectSourceFiles(dir: string, out: string[] = []): string[] {
