@@ -1,5 +1,5 @@
 /**
- * @fileoverview Staff / internal team signup form.
+ * @file Staff / internal team signup form.
  * Creates an auth user via Supabase, stores profile metadata
  * (first_name, last_name, job_title, phone), then creates the Profiles row
  * explicitly via `createProfileForCurrentUser` so the signup is
@@ -26,6 +26,7 @@ import { signupSchema } from "@/shared/schemas";
 import { env } from "@/env";
 import { profileKeys } from "@/shared/query/keys";
 
+/** Staff signup form (department invite code). */
 export function StaffSignupForm() {
 	const router = useRouter();
 	const queryClient = useQueryClient();

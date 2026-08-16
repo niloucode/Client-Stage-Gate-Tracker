@@ -1,5 +1,5 @@
 /**
- * @fileoverview Sign-in form with email + password fields.
+ * @file Sign-in form with email + password fields.
  * Validates via `loginSchema` (Zod), displays per-field errors,
  * authenticates through Supabase Auth, and invalidates the profile
  * query cache on success so `useCurrentUser()` picks up the session.
@@ -16,7 +16,8 @@ import { createClient } from "@/lib/supabase/client";
 import { loginSchema } from "@/shared/schemas";
 import { profileKeys } from "@/shared/query/keys";
 
-/** Renders the login form — email, password, submit, and signup links. */
+/** Renders the login form — email, password, submit, and signup links. * @returns The rendered login form.
+ */
 export function LoginForm() {
 	const router = useRouter();
 	const queryClient = useQueryClient();

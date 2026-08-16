@@ -34,6 +34,7 @@ interface ClientFormModalProps {
 	onClose: () => void;
 }
 
+/** Create/edit client dialog. */
 export default function ClientFormModal({
 	isOpen,
 	clientId,

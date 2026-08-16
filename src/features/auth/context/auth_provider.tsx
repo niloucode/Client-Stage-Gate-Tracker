@@ -40,6 +40,7 @@ const auth_context = createContext<AuthContextValue>({
 	isLoading: true,
 });
 
+/** Auth context provider: session state + login/logout actions. */
 export function AuthProvider({ children }: AuthProviderProps) {
 	const { data: user, isLoading } = useCurrentUser();
 	const queryClient = useQueryClient();
@@ -120,6 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	);
 }
 
+/** Reads the auth context (session user + loading + actions). */
 export function useAuth() {
 	return useContext(auth_context);
 }
