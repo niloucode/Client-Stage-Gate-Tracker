@@ -53,10 +53,10 @@ export function ProjectCard({
 
 	const statusClass =
 		project.project_status === "ACTIVE"
-			? "bg-brand-500 text-[#DAD7FF]"
+			? "bg-brand-50 text-brand-500"
 			: project.project_status === "PENDING"
-				? "bg-[#FFDAD7] text-[#6d0007]"
-				: "bg-[#BAE9D4] text-[#00714D]";
+				? "bg-red-100 text-red-700"
+				: "bg-emerald-100 text-emerald-900"
 
 	const targetHref = href ?? `/projects/${project.project_id}`;
 
@@ -86,7 +86,7 @@ export function ProjectCard({
 					{project.client_name ?? "—"}
 				</p>
 				<span
-					className={`pointer-events-none inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full shrink-0 ${statusClass}`}
+					className={`pointer-events-none inline-flex items-center gap-1 text-[10px] px-2 py-0.5 shrink-0 ${statusClass}`}
 				>
 					{statusLabel}
 				</span>

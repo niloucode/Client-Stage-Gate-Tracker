@@ -338,18 +338,18 @@ export function ContractViewer({
 							}`}
 						>
 							<div
-								className={`flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
+								className={`flex h-12 w-12 items-center justify-center rounded-sm transition-colors ${
 									isDragging ? "bg-[#E0B9FF]" : "bg-[#F1DAFF]"
 								}`}
 							>
 								<Upload className="h-5 w-5 text-brand-600" />
 							</div>
-							<div>
-								<p className="text-sm text-ink w-[250px]">
+							<div className="flex flex-col items-center">
+								<h4>
 									{canManage
 										? "Click to upload or drag and drop a PDF"
 										: "No contract document has been uploaded yet."}
-								</p>
+								</h4>
 								<p className="mt-1 text-xs text-plum-400 w-62.5">
 									{canManage
 										? "Select a document from your computer to preview and prepare for signing here."

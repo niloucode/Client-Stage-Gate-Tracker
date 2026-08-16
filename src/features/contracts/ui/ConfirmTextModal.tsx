@@ -100,7 +100,7 @@ export function ConfirmTextModal({
 					<Input
 						value={confirmText}
 						onChange={(e) => setConfirmText(e.target.value)}
-						placeholder={confirmPhrase}
+						placeholder={"Your name here"}
 					/>
 				</div>
 

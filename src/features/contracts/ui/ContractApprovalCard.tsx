@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, Clock3 } from "lucide-react";
 import {
 	Card,
 	CardContent,
@@ -8,13 +9,30 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Clock3 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
 import { useApproveContract } from "@/entities/contract";
 import { ConfirmTextModal } from "./ConfirmTextModal";
+import { useAuth } from "@/features/auth";
 
 const CONFIRM_PHRASE = "Yes, I'm Sure";
+const SIGNATURE_FONT = "'Great Vibes', cursive";
+
+export type SignatoryStatus = "signed" | "pending";
+
+export interface Signatory {
+	id: string;
+	name: string;
+	signed_name: string | null;
+	role: string;
+	email: string;
+	status: SignatoryStatus;
+	timestamp?: string;
+	location?: string;
+	device?: string;
+}
 
 export interface ContractApprovalCardProps {
 	projectId: string;
@@ -25,17 +43,146 @@ export interface ContractApprovalCardProps {
 	/** Whether THIS user's side is already approved. */
 	alreadyApproved: boolean;
 	contractName: string;
+	signatories?: Signatory[];
 	onSuccess: () => void;
+	className?: string;
 }
 
+function initialsFor(name?: string) {
+	if (!name) return "?";
+	return (
+		name
+			.split(" ")
+			.map((part) => part[0])
+			.filter(Boolean)
+			.slice(0, 2)
+			.join("")
+			.toUpperCase() || "?"
+	);
+}
+
+function SignatureBox({ person }: { person: Signatory }) {
+	const [imageSrc, setImageSrc] = useState<string | null>(null);
+	const canvasRef = useRef<HTMLCanvasElement>(null);
+
+	// Generate PNG from the signature text
+	useEffect(() => {
+		if (person.status !== "signed" || !person.signed_name) return;
+
+		const canvas = canvasRef.current;
+		if (!canvas) return;
+
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return;
+
+		const text = person.signed_name;
+		const fontSize = 30;
+		const font = `${fontSize}px ${SIGNATURE_FONT}`;
+
+		const draw = () => {
+			ctx.font = font;
+			const metrics = ctx.measureText(text);
+			const textWidth = metrics.width;
+			const textHeight =
+				metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+			// Set canvas size with some padding
+			const paddingX = 16;
+			const paddingY = 12;
+			canvas.width = textWidth + paddingX * 2;
+			canvas.height = textHeight + paddingY * 2;
+
+			// Redraw after resize (because canvas clears)
+			ctx.font = font;
+			ctx.fillStyle = "#181724"; // text-ink color
+			ctx.textBaseline = "middle";
+			ctx.textAlign = "center";
+			ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+			setImageSrc(canvas.toDataURL("image/png"));
+		};
+
+		if (!document.fonts) {
+			draw();
+			return;
+		}
+
+		// Race: the Great Vibes <link> in ContractPage is hoisted by React 19
+		// and can be parsed AFTER this effect runs, so document.fonts.ready can
+		// resolve before the face even exists — baking the cursive fallback into
+		// the PNG. Wait for the specific face to be registered AND loaded
+		// (document.fonts.load returns [] until the face exists) instead.
+		let cancelled = false;
+
+		const renderWhenFontReady = async () => {
+			let attempts = 0;
+			while (!cancelled) {
+				try {
+					const faces = await document.fonts.load(font);
+					if (faces.length > 0) {
+						draw();
+						return;
+					}
+				} catch {
+					// Face failed to load — keep retrying until the link parsed.
+				}
+				attempts += 1;
+				if (attempts > 40) {
+					draw(); // give up — better a fallback than no signature
+					return;
+				}
+				await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+		};
+		void renderWhenFontReady();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [person.status, person.signed_name]);
+
+	if (person.status !== "signed" || !person.signed_name) return null;
+
+	return (
+		<div className="min-w-0 overflow-hidden flex justify-center items-center rounded-md border border-lavender-200 bg-neutral-surface px-6 py-4">
+			{/* Hidden canvas used for rendering */}
+			<canvas ref={canvasRef} className="hidden" />
+
+			{imageSrc && (
+				// eslint-disable-next-line @next/next/no-img-element -- canvas-generated data URL; not optimizable
+				<img
+					src={imageSrc}
+					alt="Signature"
+					className="max-w-full h-auto"
+					style={{ margin: "0 auto", display: "block" }}
+				/>
+			)}
+			{/* Fallback while image is being generated */}
+			{!imageSrc && (
+				<div className="text-center text-xs text-[#9C9AB0]">
+					Generating signature…
+				</div>
+			)}
+		</div>
+	);
+}
+
+/**
+ * 2026-08-15 spec: Combined signatory list and approval workflow.
+ * Approved signatories show their details and signature; pending parties
+ * only show a pending status indicator.
+ */
 export function ContractApprovalCard({
 	projectId,
 	variant,
 	otherPartyApproved,
 	alreadyApproved,
 	contractName,
+	signatories = [],
 	onSuccess,
+	className,
 }: ContractApprovalCardProps) {
+	const { user } = useAuth();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const approveMutation = useApproveContract();
 
@@ -62,8 +209,104 @@ export function ContractApprovalCard({
 		onSuccess();
 	};
 
+	const userName =
+		user?.first_name && user?.last_name
+			? `${user.first_name} ${user.last_name}`
+			: user?.first_name || CONFIRM_PHRASE;
+
+	// Build party entries: match from signatories or fallback to the two required parties
+	const parties = (() => {
+		if (signatories.length > 0) {
+			return signatories.map((person) => {
+				const roleLower = person.role?.toLowerCase() || "";
+				const isRoleApproved = roleLower.includes("client")
+					? clientApproved
+					: roleLower.includes("owner")
+						? ownerApproved
+						: person.status === "signed";
+
+				const isApproved = person.status === "signed" || isRoleApproved;
+
+				return {
+					id: person.id,
+					role: person.role || "Signatory",
+					name: person.name,
+					timestamp: person.timestamp,
+					isApproved,
+					signatory: {
+						...person,
+						status: (isApproved ? "signed" : "pending") as SignatoryStatus,
+						signed_name: person.signed_name || person.name,
+					},
+				};
+			});
+		}
+
+		// Fallback when signatories array is empty: derive Client & Owner parties
+		const clientSignatory = signatories.find((s) =>
+			s.role?.toLowerCase().includes("client"),
+		);
+		const ownerSignatory = signatories.find((s) =>
+			s.role?.toLowerCase().includes("owner"),
+		);
+
+		return [
+			{
+				id: clientSignatory?.id || "client-party",
+				role: "Client",
+				name:
+					clientSignatory?.name ||
+					(variant === "client" ? userName : "Client"),
+				timestamp: clientSignatory?.timestamp,
+				isApproved: clientApproved,
+				signatory: {
+					id: clientSignatory?.id || "client-party",
+					name:
+						clientSignatory?.name ||
+						(variant === "client" ? userName : "Client"),
+					signed_name:
+						clientSignatory?.signed_name ||
+						clientSignatory?.name ||
+						(variant === "client" ? userName : null),
+					role: "Client",
+					email: clientSignatory?.email || "",
+					status: (clientApproved ? "signed" : "pending") as SignatoryStatus,
+					timestamp: clientSignatory?.timestamp,
+				},
+			},
+			{
+				id: ownerSignatory?.id || "owner-party",
+				role: "Project Owner",
+				name:
+					ownerSignatory?.name ||
+					(variant === "owner" ? userName : "Project Owner"),
+				timestamp: ownerSignatory?.timestamp,
+				isApproved: ownerApproved,
+				signatory: {
+					id: ownerSignatory?.id || "owner-party",
+					name:
+						ownerSignatory?.name ||
+						(variant === "owner" ? userName : "Project Owner"),
+					signed_name:
+						ownerSignatory?.signed_name ||
+						ownerSignatory?.name ||
+						(variant === "owner" ? userName : null),
+					role: "Project Owner",
+					email: ownerSignatory?.email || "",
+					status: (ownerApproved ? "signed" : "pending") as SignatoryStatus,
+					timestamp: ownerSignatory?.timestamp,
+				},
+			},
+		];
+	})();
+
 	return (
-		<Card className="gap-0 p-0 bg-neutral-surface border border-border rounded-md shadow-xs">
+		<Card
+			className={cn(
+				"gap-0 p-0 bg-neutral-surface border border-border rounded-md shadow-xs",
+				className,
+			)}
+		>
 			<CardHeader className="px-5 py-4 border-b border-border gap-1">
 				<CardTitle>Approve Contract</CardTitle>
 				<CardDescription className="text-xs text-muted-foreground">
@@ -73,55 +316,66 @@ export function ContractApprovalCard({
 			</CardHeader>
 
 			<CardContent className="p-5 flex flex-col gap-4">
-				{/* 1. Both Parties' Status Breakdown */}
-				<div className="flex flex-col gap-2">
-					{/* Client Status */}
-					<div
-						className={`flex items-center justify-between rounded-md border px-3.5 py-2.5 text-xs  ${
-							clientApproved
-								? "border-emerald-200 bg-emerald-50 text-emerald-800"
-								: "border-amber-200 bg-amber-50 text-amber-800"
-						}`}
-					>
-						<div className="flex items-center gap-2">
-							{clientApproved ? (
-								<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-							) : (
-								<Clock3 className="h-4 w-4 shrink-0 text-amber-600" />
-							)}
-							<span>Client Status:</span>
-						</div>
-						<span className="">{clientApproved ? "Approved" : "Pending"}</span>
-					</div>
+				{/* Signatories / Approval Status List */}
+				<div className="flex flex-col gap-3">
+					{parties.map((party) => {
+							return (
+								<div
+									key={party.id}
+									className="flex flex-col gap-3 rounded-md border border-border bg-neutral-surface p-3.5"
+								>
+									<div className="flex items-center gap-3 w-full">
+										<Avatar className="h-10 w-10">
+											<AvatarFallback
+												className="text-sm"
+												style={{
+													backgroundColor: "#EAEDFF",
+													color: "#131B2E",
+												}}
+											>
+												{initialsFor(party.name)}
+											</AvatarFallback>
+										</Avatar>
 
-					{/* Project Owner Status */}
-					<div
-						className={`flex items-center justify-between rounded-md border px-3.5 py-2.5 text-xs  ${
-							ownerApproved
-								? "border-emerald-200 bg-emerald-50 text-emerald-800"
-								: "border-amber-200 bg-amber-50 text-amber-800"
-						}`}
-					>
-						<div className="flex items-center gap-2">
-							{ownerApproved ? (
-								<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-							) : (
-								<Clock3 className="h-4 w-4 shrink-0 text-amber-600" />
-							)}
-							<span>Project Owner Status:</span>
-						</div>
-						<span className="">{ownerApproved ? "Approved" : "Pending"}</span>
-					</div>
+										<div className="min-w-0 flex-1">
+											<p className="truncate text-sm text-foreground font-medium">
+												{party.name}
+											</p>
+											<p className="truncate text-xs text-neutral-subtle-foreground">
+												{party.role}
+											</p>
+											{party.timestamp && (
+												<p className="mt-0.5 text-[11px] text-muted-foreground">
+													Approved {party.timestamp}
+												</p>
+											)}
+										</div>
+										{
+											party.isApproved ? 
+											<div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+												<CheckCircle2 className="h-4 w-4" />
+												<span>Approved</span>
+											</div>	:
+											<div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
+												<Clock3 className="h-4 w-4" />
+												<span>Pending</span>
+											</div>
+										}
+									</div>
+									{party.signatory && <SignatureBox person={party.signatory} />}
+								</div>
+							)})
+					}
 				</div>
 
-				{/* 2. Outcome Banner or Action Button */}
+				{/* Outcome Banner or Action Button */}
 				{bothApproved ? (
-					<div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs  text-emerald-800">
+					<div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs text-emerald-800">
 						<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
 						<span>Both parties have approved.</span>
 					</div>
 				) : alreadyApproved ? (
-					<div className="flex items-center gap-2.5 rounded-md border border-border bg-neutral-subtle px-3.5 py-3 text-xs  text-muted-foreground">
+					<div className="flex items-center gap-2.5 rounded-md border border-border bg-neutral-subtle px-3.5 py-3 text-xs text-muted-foreground">
 						<Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />
 						<span>You have approved. Awaiting {otherRoleLabel} approval.</span>
 					</div>
@@ -129,11 +383,11 @@ export function ContractApprovalCard({
 					<div className="space-y-3 pt-1">
 						<p className="text-xs text-muted-foreground leading-relaxed">
 							Please review the document and confirm your approval as the{" "}
-							<strong className=" text-foreground">{roleLabel}</strong>.
+							<strong className="text-foreground">{roleLabel}</strong>.
 						</p>
 						<Button
 							onClick={() => setConfirmOpen(true)}
-							className="w-full h-10 text-xs  cursor-pointer"
+							className="w-full h-10 text-xs cursor-pointer"
 						>
 							Approve as {roleLabel}
 						</Button>
@@ -145,8 +399,8 @@ export function ContractApprovalCard({
 				open={confirmOpen}
 				onClose={() => setConfirmOpen(false)}
 				noParamFunc={handleApprove}
-				confirmPhrase={CONFIRM_PHRASE}
-				displayText={`You are about to approve the contract "${contractName}" as the ${roleLabel}. To confirm your agreement, type "${CONFIRM_PHRASE}" below.`}
+				confirmPhrase={userName}
+				displayText={`You are about to approve the contract "${contractName}" as the ${roleLabel}. To confirm your agreement, type your name below.`}
 				displayTitle="Confirm Contract Approval"
 				buttonText={`Approve as ${roleLabel}`}
 				onSuccess={handleApproved}

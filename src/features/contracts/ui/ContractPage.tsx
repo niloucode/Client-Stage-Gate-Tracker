@@ -8,10 +8,7 @@ import { useCurrentUser } from "@/entities/profile/queries";
 import { getProjectOwnerByProjectId } from "@/entities/roleAssignment";
 import { contractSignedStart } from "@/shared/lib/scheduling/stageSchedule";
 import { Back } from "@/components/ui/back";
-import { ContractViewer } from "./ContractViewer";
-import { SignatoriesCard, type Signatory } from "./SignatoriesCard";
-import { ContractApprovalCard } from "@/features/contracts";
-import { ExecutedBanner } from "./ExecutedBanner";
+import { ContractViewer, ExecutedBanner, ContractApprovalCard, type Signatory } from "@/features/contracts/";
 
 export interface ContractPageProps {
 	projectId: string;
@@ -172,7 +169,7 @@ export function ContractPage({ projectId }: ContractPageProps) {
 
 				<header>
 					<h1 className="text-xl font-semibold text-ink">{contractName}</h1>
-					<p className="text-sm text-plum-400">
+					<p className="subtitle">
 						Review the document and complete approval below.
 					</p>
 				</header>
@@ -191,7 +188,6 @@ export function ContractPage({ projectId }: ContractPageProps) {
 						{allSigned && executedAt && (
 							<ExecutedBanner executedAt={executedAt} />
 						)}
-						<SignatoriesCard signatories={signatories} />
 
 						{role && (
 							<ContractApprovalCard
