@@ -118,6 +118,8 @@ function TargetName({ name }: { name: string }) {
  *   ASSIGNED        → "assigned [Juan dela Cruz]"
  *   UNASSIGNED      → "unassigned [Juan dela Cruz]"
  *   DELETE          → "deleted the ticket"
+ * @param entry - The history event row to format.
+ * @returns The human-readable sentence.
  */
 function formatHistoryMessage(entry: TicketHistoryEntry): ReactNode {
 	const a = entry.action;
@@ -254,6 +256,8 @@ function formatHistoryMessage(entry: TicketHistoryEntry): ReactNode {
 /**
  * Formats a Date as a short, human-readable datetime string.
  * Example output: "Jan 15, 2024, 2:30 PM"
+ * @param date - The date to format.
+ * @returns The formatted string.
  */
 function formatDateTime(date: Date): string {
 	return date.toLocaleString("en-US", {

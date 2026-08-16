@@ -25,6 +25,7 @@ import {
 
 /**
  * Renders the internal visual contents, layout, and contextual menus of a single ticket or subtask.
+ * @returns The rendered card content.
  */
 export function TicketCardContent({
 	ticket,
@@ -348,6 +349,7 @@ export function TicketCardContent({
  * The default exported React component providing specialized Drag-and-Drop functionality wrapper.
  * It integrates the `@dnd-kit/core` `useDraggable` hook with individual node references, active
  * movement translations, visual dragging opacities, and listener configurations.
+ * @returns The rendered draggable ticket card.
  */
 export default function TicketCard({
 	ticket,

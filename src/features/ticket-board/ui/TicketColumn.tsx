@@ -17,12 +17,15 @@ interface TicketColumnProps {
 	readOnly?: boolean;
 }
 
+/**
+ * Droppable column wrapper: hosts the board's cards for a status lane.
+ * @returns The rendered column.
+ */
 export default function TicketColumn({
 	column,
 	tickets,
 	subtasksByParent,
-	onSelectTicket,
-	onDeleteTicket = () => {}, // Default fallback function
+	onSelectTicket,	onDeleteTicket = () => {}, // Default fallback function
 	readOnly = false,
 }: TicketColumnProps) {
 	const { setNodeRef, isOver } = useDroppable({ id: column.id });

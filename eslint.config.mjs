@@ -49,7 +49,11 @@ const eslintConfig = defineConfig([
 				{ checkDestructured: false, checkDestructuredRoots: false },
 			],
 			"jsdoc/require-param-name": "warn",
-			"jsdoc/check-param-names": "warn",
+			"jsdoc/check-param-names": [
+				"warn",
+				// Matches require-param: destructured props stay undocumented.
+				{ checkDestructured: false },
+			],
 			"jsdoc/require-returns": "warn",
 			"jsdoc/check-tag-names": "warn",
 			"jsdoc/check-syntax": "warn",

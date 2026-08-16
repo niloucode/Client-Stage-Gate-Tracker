@@ -57,6 +57,7 @@ import { Button } from "@/components/ui/button";
  * Uses TanStack Query for server state and dnd-kit for drag-and-drop.
  * Props are typed on the destructured signature (workflow_id, workflowName,
  * projectId, stageId).
+ * @returns The rendered board.
  */
 export default function TicketBoard({
 	workflow_id,
@@ -230,6 +231,7 @@ export default function TicketBoard({
 	 * Creates or updates a tag: a `tag_id` targets an update, otherwise the
 	 * tag is created. Returns `{ error }` so the TagManager can surface it.
 	 * @param input - The tag payload (`tag_id` empty/falsy = create).
+	 * @returns `{ error }` on failure, undefined on success.
 	 */
 	async function handleSaveTag({
 		name,
