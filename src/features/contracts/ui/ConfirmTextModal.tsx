@@ -79,7 +79,7 @@ export function ConfirmTextModal({
 
 	return (
 		<Dialog open={open} onOpenChange={handleClose}>
-			<DialogContent className="max-w-[480px] gap-0 overflow-hidden p-0 border border-[#C7C4D84D]">
+			<DialogContent className="max-w-120 gap-0 overflow-hidden p-0 border border-[#C7C4D84D]">
 				{/* Header */}
 				<DialogHeader
 					className="px-6 pl-10 py-5 h-28 flex justify-center"

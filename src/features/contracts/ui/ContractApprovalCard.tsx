@@ -164,7 +164,7 @@ function SignatureBox({ person }: { person: Signatory }) {
 			)}
 			{/* Fallback while image is being generated */}
 			{!imageSrc && (
-				<div className="text-center text-xs text-[#9C9AB0]">
+				<div className="text-center text-xs text-plum-300">
 					Generating signature…
 				</div>
 			)}
