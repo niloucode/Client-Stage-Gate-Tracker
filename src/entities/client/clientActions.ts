@@ -20,6 +20,7 @@ type ClientMutationResult =
  * employees and Project Team members are rejected — only the Project Owner
  * department may mutate the client registry. The department is matched by
  * NAME (unique in the DB) so no UUIDs are hardcoded.
+ * @returns `{ ok: true }` or `{ ok: false, error }`.
  */
 async function requireProjectOwner(): Promise<
 	{ ok: true } | { ok: false; error: string }
@@ -46,6 +47,7 @@ async function requireProjectOwner(): Promise<
 /**
  * Staff-only gate for READ access to the client registry. Client employees
  * (and unauthenticated callers) must never receive the full client list.
+ * @returns `{ ok: true }` or `{ ok: false, error }`.
  */
 async function requireStaff(): Promise<
 	{ ok: true } | { ok: false; error: string }
@@ -62,6 +64,7 @@ async function requireStaff(): Promise<
 	return { ok: true };
 }
 
+/** Staff-only: the full client registry with member profiles. */
 export async function clientSelectAll() {
 	// Staff-only: the registry (names, TINs, emails, billing) must never be
 	// reachable by client profiles or unauthenticated callers. Throwing lets
@@ -99,6 +102,7 @@ export async function clientSelectAll() {
  * The signed-in user's OWN client row (for company lookups in the account
  * menu). Staff have no client — returns null. Client profiles get exactly
  * their own company, never the registry.
+ * @returns The caller's client row, or null.
  */
 export async function clientSelectOwn() {
 	const userId = await getCurrentUserId();
@@ -119,6 +123,8 @@ export async function clientSelectOwn() {
  * the vanishingly rare hash collision (P2002 on invite_code_hash, ~2^-60).
  * Any other error propagates to the caller. The plain code is returned
  * exactly once — only its hash is persisted.
+ * @param client - The validated client payload.
+ * @returns The created row plus the plain invite code.
  */
 async function createClientWithInviteCode(
 	client: ClientCreateType,
@@ -153,6 +159,7 @@ async function createClientWithInviteCode(
 	throw new Error("Could not allocate a unique invite code.");
 }
 
+/** Owner-only: creates a client with a fresh invite code. */
 export async function clientCreate(
 	client: ClientCreateType,
 ): Promise<ClientMutationResult> {
@@ -189,6 +196,8 @@ export async function clientCreate(
  * Rotate a client's invite code (invalidates the old one). Returns the new
  * plain code exactly once. STAFF ONLY: client employees must never read or
  * rotate codes — the guard rejects any profile linked to a client.
+ * @param clientId - The client whose code is rotated.
+ * @returns The updated row plus the new plain code.
  */
 export async function regenerateClientInviteCode(
 	clientId: string,
@@ -219,6 +228,8 @@ export type InviteResolution =
  * Resolve an invitation code to its client. Used by the client signup form so
  * employees can join their company WITHOUT ever seeing the client list.
  * The code is compared case-insensitively via its HMAC hash.
+ * @param code - The raw invite code.
+ * @returns The client id + name, or a user-facing error.
  */
 export async function resolveClientByInviteCode(
 	code: string,
@@ -249,6 +260,7 @@ export async function resolveClientByInviteCode(
 	}
 }
 
+/** Owner-only: updates client registry fields. */
 export async function clientUpdate(
 	client: ClientType,
 ): Promise<ClientMutationResult> {

@@ -254,10 +254,14 @@ export async function getContractByProjectId(projectId: string) {
 }
 
 // ── APPROVE (2026-08-15 spec: button-based dual approval) ────────────────────
-// Both the Project Owner and the project's client must approve before the
-// first stage may start. The signer's PROFILE name is recorded server-side
-// (initials derived) — no typed signature, no client-supplied identity.
-
+/**
+ * Both the Project Owner and the project's client must approve before the
+ * first stage may start. The signer's PROFILE name is recorded server-side
+ * (initials derived) — no typed signature, no client-supplied identity.
+ * @param projectId - The project whose contract is approved.
+ * @param role - Which party is approving ("client" or "owner").
+ * @returns `{ success: true }` or `{ success: false, error }`.
+ */
 export async function approveContract(
 	projectId: string,
 	role: "client" | "owner",

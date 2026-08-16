@@ -18,6 +18,7 @@ const clientQueryOptions = {
 		}),
 };
 
+/** Query hook: the client registry (staff-only, role-gated server-side). */
 export function useClients(options?: { enabled?: boolean }) {
 	return useQuery({
 		...clientQueryOptions.list(),
@@ -28,6 +29,8 @@ export function useClients(options?: { enabled?: boolean }) {
 /**
  * The signed-in user's own client (company name for the account menu).
  * Returns null for staff; disabled entirely when no session exists.
+ * @param enabled - Whether the query may run (default true).
+ * @returns The caller's client row query.
  */
 export function useClientOwn(enabled?: boolean) {
 	return useQuery({

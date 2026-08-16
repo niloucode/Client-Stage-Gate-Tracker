@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { commentKeys, historyKeys } from "@/shared/query/keys";
 import { createCommentWithImages } from "./commentActions";
 
+/** Mutation hook: create a comment with images. */
 export function useCreateComment() {
 	const queryClient = useQueryClient();
 

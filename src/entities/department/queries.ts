@@ -14,6 +14,7 @@ const departmentQueryOptions = {
 };
 
 /** Department name lookup for a profile's `department_id`. */
+/** Query hook: department details. */
 export function useDepartment(departmentId: string | undefined) {
 	return useQuery(departmentQueryOptions.detail(departmentId));
 }
