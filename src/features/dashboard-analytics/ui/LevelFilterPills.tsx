@@ -15,6 +15,7 @@ const LEVEL_OPTIONS: {
 	{ level: "workflows", label: "Workflows", icon: WorkflowIcon },
 ];
 
+/** Phase/Module/Workflow level filter pills (aria-pressed). */
 export function LevelFilterPills({
 	value,
 	onValueChange,

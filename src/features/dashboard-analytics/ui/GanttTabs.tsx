@@ -9,6 +9,7 @@ const TAB_LABEL: Record<GanttTab, string> = {
 	actual: "Actual Gantt",
 };
 
+/** Planned/Actual tab switcher for the gantt. */
 export function GanttTabs({
 	value,
 	onValueChange,

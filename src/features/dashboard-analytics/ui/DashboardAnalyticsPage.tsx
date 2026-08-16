@@ -28,6 +28,7 @@ const LEVEL_LABEL: Record<GanttLevel, string> = {
 	workflows: "Workflows",
 };
 
+/** Gantt dashboard page: tabs, level pills, and the chart. */
 export function DashboardAnalyticsPage({ projectId }: { projectId: string }) {
 	const [tab, setTab] = useState<GanttTab>("actual");
 	const [level, setLevel] = useState<GanttLevel>("phases");

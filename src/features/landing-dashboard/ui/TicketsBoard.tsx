@@ -173,6 +173,7 @@ function DueDateCell({
 /*                               Main Component                               */
 /* -------------------------------------------------------------------------- */
 
+/** My-tickets board: grouped lanes with click-through to the workflow. */
 export function TicketsBoard({
 	variant = "my",
 	tickets = [],
