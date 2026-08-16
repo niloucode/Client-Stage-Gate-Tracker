@@ -302,6 +302,7 @@ function HistoryEntryRow({ entry }: { entry: TicketHistoryEntry }) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 
+/** Renders a ticket's activity/history timeline. */
 export default function TicketHistoryLog({
 	ticketId,
 }: {
