@@ -16,6 +16,7 @@ import type { PhaseCreateInput, PhaseUpdateInput } from "@/shared/schemas";
  * `{ validationErrors }`. These helpers normalize them into thrown errors
  * so TanStack Query's error machinery (and form `errorMap.onSubmit`)
  * works. Exported for unit testing.
+ * @returns The result, or throws when it failed.
  */
 export function throwIfActionFailed<T>(result: {
 	data?: T;
@@ -29,6 +30,7 @@ export function throwIfActionFailed<T>(result: {
 	throw new Error(result.serverError ?? "Server action failed.");
 }
 
+/** Mutation hook: create a phase. */
 export function useCreatePhase() {
 	const queryClient = useQueryClient();
 
@@ -43,6 +45,7 @@ export function useCreatePhase() {
 	});
 }
 
+/** Mutation hook: update a phase. */
 export function useUpdatePhase() {
 	const queryClient = useQueryClient();
 
@@ -58,6 +61,7 @@ export function useUpdatePhase() {
 	});
 }
 
+/** Mutation hook: cascade-soft-delete a phase. */
 export function useDeletePhase() {
 	const queryClient = useQueryClient();
 
@@ -72,6 +76,7 @@ export function useDeletePhase() {
 	});
 }
 
+/** Mutation hook: reorder phases within a stage. */
 export function useReorderPhase() {
 	const queryClient = useQueryClient();
 

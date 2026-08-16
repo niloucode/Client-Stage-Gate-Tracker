@@ -21,6 +21,7 @@ import { moduleGanttSelect } from "./ganttTypes";
  * Creates a module under a phase. Scheduling fields use the canonical
  * vocabulary (planStart/planEnd/actualStart/actualEnd); missing plan dates
  * default to now so the module is immediately schedulable.
+ * @returns The mutation result.
  *
  * @param phaseId - UUID of the parent phase.
  * @param input - Validated create payload (moduleCreateSchema).
@@ -61,6 +62,7 @@ export async function createModule(phaseId: string, input: ModuleCreateInput) {
  * written (undefined values are skipped by Prisma).
  *
  * @param moduleId - UUID of the module to update.
+ * @returns The mutation result.
  * @param input - Validated partial payload (moduleUpdateSchema).
  */
 export async function updateModule(moduleId: string, input: ModuleUpdateInput) {
@@ -100,6 +102,7 @@ export async function updateModule(moduleId: string, input: ModuleUpdateInput) {
  * per level (one updateMany each). Runs in the caller's transaction when
  * `txClient` is provided, otherwise in its own; inside a parent transaction
  * failures rethrow so the parent rolls back.
+ * @returns The mutation result.
  *
  * @param moduleId - UUID of the module to archive.
  * @param txClient - Optional Prisma transaction to join (used by stage-level cascades).
@@ -147,6 +150,8 @@ export async function cascadeSoftDeleteModule(
 /**
  * Project-scoped module rows for the gantt chart (read-only). Any project
  * profile — team, owners AND clients — may view (2026-08-15 spec).
+ * @param projectId - The project to load modules for.
+ * @returns The gantt-shaped module rows.
  */
 export async function getProjectModulesGantt(projectId: string) {
 	z.uuid().parse(projectId);
