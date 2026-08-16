@@ -60,7 +60,3 @@ export const clientSignupSchema = z
 	});
 
 export type ClientSignupInput = z.infer<typeof clientSignupSchema>;
-
-// ── OTP verification ─────────────────────────────────────────────────────────
-// Removed 2026-08-14: staff signup is invite-code-driven; the contract-
-// signing OTP lives in src/features/contracts (its own schema).
