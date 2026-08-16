@@ -44,6 +44,10 @@ export interface ContractApprovalCardProps {
 	/** Whether THIS user's side is already approved. */
 	alreadyApproved: boolean;
 	contractName: string;
+	/** False when the project has no uploaded contract document — the
+	 * approval UI is replaced by a notice (never gate on `contractName`,
+	 * which carries a display fallback). */
+	hasContract: boolean;
 	signatories?: Signatory[];
 	onSuccess: () => void;
 	className?: string;
@@ -180,6 +184,7 @@ export function ContractApprovalCard({
 	otherPartyApproved,
 	alreadyApproved,
 	contractName,
+	hasContract,
 	signatories = [],
 	onSuccess,
 	className,
@@ -317,7 +322,7 @@ export function ContractApprovalCard({
 			</CardHeader>
 
 			<CardContent>
-				{contractName?<>{/* Signatories / Approval Status List */}
+				{hasContract?<>{/* Signatories / Approval Status List */}
 					<div className="flex flex-col gap-3">
 						{parties.map((party) => {
 								return (
@@ -389,7 +394,7 @@ export function ContractApprovalCard({
 			</CardContent>
 			
 			<CardFooter className="flex flex-col gap-2">
-				{contractName?
+				{hasContract?
 				<>
 				<p className="text-muted-foreground">
 					Please review the document and confirm your approval as the{" "}

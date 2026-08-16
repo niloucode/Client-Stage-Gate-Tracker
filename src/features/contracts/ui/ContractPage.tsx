@@ -199,6 +199,7 @@ export function ContractPage({ projectId }: ContractPageProps) {
 								otherPartyApproved={otherPartyApproved}
 								alreadyApproved={alreadyApproved}
 								contractName={contractName}
+								hasContract={!!contract?.contract_name}
 								onSuccess={refresh}
 							/>
 						)}
