@@ -2,6 +2,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import boundaries from "eslint-plugin-boundaries";
+import jsdoc from "eslint-plugin-jsdoc";
 
 const eslintConfig = defineConfig([
 	...nextVitals,
@@ -19,6 +20,34 @@ const eslintConfig = defineConfig([
 		files: ["scripts/**/*.mjs"],
 		rules: {
 			"no-console": "off",
+		},
+	},
+	// Code documentation standard (2026-08-16): JSDoc consistency on app
+	// code. WARNINGS until the documentation sweep
+	// (docs/code-documentation-sweep.md) converges the codebase — flip to
+	// "error" when the warning count reaches 0 (CONTRIBUTING §5).
+	{
+		files: ["src/**/*.{ts,tsx}"],
+		plugins: { jsdoc },
+		rules: {
+			"jsdoc/require-jsdoc": [
+				"warn",
+				{
+					publicOnly: true,
+					require: {
+						FunctionDeclaration: true,
+						MethodDefinition: false,
+						ClassDeclaration: false,
+						ArrowFunctionExpression: false,
+					},
+				},
+			],
+			"jsdoc/require-param": "warn",
+			"jsdoc/require-param-name": "warn",
+			"jsdoc/check-param-names": "warn",
+			"jsdoc/require-returns": "warn",
+			"jsdoc/check-tag-names": "warn",
+			"jsdoc/check-syntax": "warn",
 		},
 	},
 	// Feature-Sliced Design boundary enforcement (Task 1.9):

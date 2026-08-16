@@ -65,6 +65,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "eslint-plugin-boundaries": "^7.1.0",
+    "eslint-plugin-jsdoc": "^64.2.0",
     "jsdom": "^30.0.1",
     "knip": "^6.32.0",
     "prettier": "^3.9.4",
