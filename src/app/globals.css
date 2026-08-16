@@ -48,12 +48,14 @@
 	/* Custom app palette tokens (replaces literal hex classes in features) */
 	--color-ink: #181724;
 	--color-charcoal: #1A1A1A;
+	--color-plum-300: #9C9AB0;
 	--color-plum-400: #6E6B82;
 	--color-plum-700: #4C4352;
 	--color-navy-900: #060D1C;
 	--color-lavender-50: #EEF0FF;
 	--color-lavender-100: #E6E4F0;
 	--color-lavender-200: #E5E3F1;
+	--color-lavender-300: #C7C4D8;
 	--color-warm-gray-200: #E5E3E0;
 
 	--font-sans: var(--font-hanken), "Hanken Grotesk", system-ui, -apple-system, sans-serif;
@@ -77,13 +79,12 @@
 } */
 
 h1 {
-    font-weight: 200;                     /* "200" = Extra Light / Thin */
-    font-size: clamp(44px, 5vw, 84px);    /* "44–84px" = fluid scaling between min and max */
-    letter-spacing: -0.035em;             /* Tightens the letters slightly */
-    line-height: 1.0;   
-		padding:0.0;
-		margin:0.0;                  /* "1.0" = perfectly snug (no extra space between lines) */
-		
+	font-weight: 200; /* "200" = Extra Light / Thin */
+	font-size: clamp(44px, 5vw, 84px); /* "44–84px" = fluid scaling between min and max */
+	letter-spacing: -0.035em; /* Tightens the letters slightly */
+	line-height: 1.0; /* "1.0" = perfectly snug (no extra space between lines) */
+	padding: 0;
+	margin: 0;
 }
 
 /* H2 - Subheading */
@@ -149,11 +150,6 @@ body {
   background-color: rgba(79, 70, 229, 0.05) !important;
   border-radius: 0.75rem;
   transform: scale(1.02);
-}
-
-.drag-over-workflow {
-  border-left: 2px solid #4F46E5 !important;
-  background-color: rgba(79, 70, 229, 0.05) !important;
 }
 
 [draggable="true"] {

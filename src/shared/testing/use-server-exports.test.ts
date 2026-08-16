@@ -45,7 +45,7 @@ describe("'use server' files (Next.js export rule)", () => {
 			src.split("\n").forEach((line, i) => {
 				const t = line.trim();
 				// `export const X = {` / `export const X = [` → the "found object" error.
-				if (/^export\s+const\s+\w+\s*=\s*(\{|\[)/.test(t)) {
+				if (/^export\s+const\s+\w+\s*=\s*[{\[]/.test(t)) {
 					violations.push(`${file}:${i + 1}: ${t}`);
 				}
 				// Plain (non-async) function exports are also forbidden.

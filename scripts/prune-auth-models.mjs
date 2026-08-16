@@ -65,7 +65,7 @@ const REMOVED = new Set([
 
 /** Remove `model`/`enum` blocks that belong to the auth schema (keep `users`). */
 function stripAuthBlocks(source, kind) {
-	const pattern = new RegExp(`${kind} (\\w+) \\{[\\s\\S]*?\\n\\}`, "g");
+	const pattern = new RegExp(`${kind} (\\w+) \\{[\\s\\S]*?\\n}`, "g");
 	const spans = [];
 	for (const m of source.matchAll(pattern)) {
 		const name = m[1];
@@ -102,7 +102,7 @@ function stripUsersRelations(source) {
 	const kept = [];
 	let removed = 0;
 	for (const line of block.split("\n")) {
-		const m = line.match(/^  (\w+)\s+(\w+)/);
+		const m = line.match(/^ {2}(\w+)\s+(\w+)/);
 		if (m && REMOVED.has(m[2])) {
 			removed += 1;
 			continue;

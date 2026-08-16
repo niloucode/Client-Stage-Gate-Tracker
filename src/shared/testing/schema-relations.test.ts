@@ -25,7 +25,7 @@ describe("prisma/schema.prisma integration state (WebStorm-revert canary)", () =
 	it("keeps Issues.Tickets as a to-many relation (countable)", () => {
 		// `Tickets?` (to-one) makes `_count.select.Tickets` fail at runtime —
 		// exactly the getIssueStats error seen on 2026-08-15.
-		expect(modelBlock("Issues")).toMatch(/Tickets\s+Tickets\[\]/);
+		expect(modelBlock("Issues")).toMatch(/Tickets\s+Tickets\[]/);
 	});
 
 	it("keeps the migration-12 Gates state (no GateSignatures, no creation_date, comment_id present)", () => {

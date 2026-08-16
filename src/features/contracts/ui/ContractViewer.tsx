@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+	useEffect,
+	useRef,
+	useState,
+	type ChangeEvent,
+	type DragEvent,
+} from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -169,12 +175,12 @@ export function ContractViewer({
 		setPendingFile(null);
 	};
 
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
 		selectFile(e.target.files?.[0]);
 		e.target.value = "";
 	};
 
-	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+	const handleDrop = (e: DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		setIsDragging(false);
 		selectFile(e.dataTransfer.files?.[0]);
@@ -226,7 +232,7 @@ export function ContractViewer({
 					{/* Toolbar */}
 					<div className="flex items-center justify-between gap-3 border-b border-lavender-100 px-4 py-3">
 						<div className="flex min-w-0 items-center gap-2">
-							<FileText className="h-5.5 w-5.5 shrink-0 text-[#500086]" />
+							<FileText className="h-5.5 w-5.5 shrink-0 text-brand-600" />
 							<span className="truncate text-sm  text-ink">
 								{initialContractName ?? "Contract"}
 							</span>
@@ -266,7 +272,7 @@ export function ContractViewer({
 											size="icon"
 											onClick={requestRemove}
 											aria-label="Remove document"
-											className="hover:bg-[#FEF2F2] hover:text-red-600"
+											className="hover:bg-red-50 hover:text-red-600"
 										>
 											<X className="h-4 w-4" />
 										</Button>
@@ -298,7 +304,7 @@ export function ContractViewer({
 
 					{/* Content */}
 					{fileUrl ? (
-						<div className="flex-1 overflow-auto bg-[#F6F5FB] p-6">
+						<div className="flex-1 overflow-auto bg-lavender-50 p-6">
 							<div
 								style={{
 									width: `${10000 / zoom}%`,
@@ -316,7 +322,7 @@ export function ContractViewer({
 									// blob URL as-is.
 									src={fileUrl}
 									type="application/pdf"
-									className="aspect-8.5/11 w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
+									className="aspect-8.5/11 w-full rounded-md border border-lavender-100 bg-lavender-200 shadow-sm"
 								/>
 							</div>
 						</div>
@@ -334,12 +340,12 @@ export function ContractViewer({
 							onDrop={canManage ? handleDrop : undefined}
 							onClick={canManage ? () => inputRef.current?.click() : undefined}
 							className={`flex flex-1 min-h-80 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors ${
-								isDragging ? "bg-lavender-50" : "bg-[#FFFFFF]"
+								isDragging ? "bg-lavender-50" : "bg-white"
 							}`}
 						>
 							<div
 								className={`flex h-12 w-12 items-center justify-center rounded-sm transition-colors ${
-									isDragging ? "bg-[#E0B9FF]" : "bg-[#F1DAFF]"
+									isDragging ? "bg-brand-100" : "bg-brand-100"
 								}`}
 							>
 								<Upload className="h-5 w-5 text-brand-600" />
@@ -371,8 +377,8 @@ export function ContractViewer({
 				<DialogContent className="max-w-sm">
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-3">
-							<span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFFBEB]">
-								<AlertTriangle className="h-5 w-5 text-[#B45309]" />
+							<span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50">
+								<AlertTriangle className="h-5 w-5 text-amber-700" />
 							</span>
 							Upload this as the contract?
 						</DialogTitle>

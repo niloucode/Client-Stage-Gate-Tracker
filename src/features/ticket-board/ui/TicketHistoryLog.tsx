@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { action } from "@/lib/generated/prisma";
 import { useTicketHistory } from "../model/queries";
 import type { TicketHistoryEntry } from "../model/types";
@@ -118,7 +119,7 @@ function TargetName({ name }: { name: string }) {
  *   UNASSIGNED      → "unassigned [Juan dela Cruz]"
  *   DELETE          → "deleted the ticket"
  */
-function formatHistoryMessage(entry: TicketHistoryEntry): React.ReactNode {
+function formatHistoryMessage(entry: TicketHistoryEntry): ReactNode {
 	const a = entry.action;
 	const target = entry.targetName;
 

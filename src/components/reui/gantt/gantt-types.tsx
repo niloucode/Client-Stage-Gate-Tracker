@@ -51,9 +51,6 @@ interface GanttResource {
 	children?: GanttResource[];
 }
 
-/** Preferred name for a tree node; `GanttResource` is the legacy alias. */
-type GanttNode = GanttResource;
-
 interface GanttDateRange {
 	/** Inclusive instant. */
 	start: Date;
@@ -251,26 +248,12 @@ interface GanttOffDaysConfig {
 	className?: string;
 }
 
-/**
- * External-data contract. v1 ships the type plus docs recipes (Google
- * events. List / MS Graph calendarView map to GanttEvent in ~15 lines);
- * OAuth, tokens, and sync loops are application backend territory.
- */
-interface GanttDataAdapter<TData = unknown> {
-	getEvents(
-		range: GanttDateRange,
-		signal?: AbortSignal,
-	): Promise<GanttEvent<TData>[]>;
-}
-
 export type {
 	GanttEvent,
-	GanttDataAdapter,
 	GanttDateRange,
 	GanttDragState,
 	GanttBarId,
 	GanttInteractions,
-	GanttNode,
 	GanttOccurrence,
 	GanttOffDaysConfig,
 	GanttOverlapPolicy,

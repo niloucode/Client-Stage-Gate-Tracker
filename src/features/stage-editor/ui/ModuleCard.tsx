@@ -199,7 +199,7 @@ export function ModuleCard({
 			case "on-time":
 				return "text-emerald-500 font-medium";
 			default:
-				return "text-[#8392a6]";
+				return "text-slate-400";
 		}
 	};
 
@@ -303,7 +303,7 @@ export function ModuleCard({
 									<div className="flex items-center gap-3">
 										{/* Contextual Date Badge */}
 										<div
-											className="px-3 py-1.5 bg-[#EEF2FF] border border-[#E0E7FF] rounded-md"
+											className="px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-md"
 											title={
 												status !== "not_started" && module.planStart
 													? `Planned Start: ${formatDateTime(module.planStart)}`

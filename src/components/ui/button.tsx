@@ -16,7 +16,7 @@ const buttonVariants = cva(
 				purple: "bg-brand-500 text-white hover:bg-brand-600 shadow-xs",
 
 				/* Lime Signal — Primary High-Impact CTA */
-				lime: "bg-[#AAFB79] text-[#0D0E11] hover:bg-[#C7FF98] shadow-xs font-semibold",
+				lime: "bg-lime-300 text-neutral-950 hover:bg-lime-200 shadow-xs font-semibold",
 
 				/* Outline Bordered Variant */
 				outline:

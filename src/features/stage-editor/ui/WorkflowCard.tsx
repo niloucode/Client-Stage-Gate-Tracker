@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type DragEvent, type ReactNode } from "react";
 import Link from "next/link";
 import type { Workflow } from "../types";
 import {
@@ -93,7 +93,7 @@ function getDeadlineState(
 }
 
 const DEADLINE_STYLES: Record<DeadlineState, string> = {
-	upcoming: "text-[#8392a6]",
+	upcoming: "text-slate-400",
 	approaching: "text-amber-600",
 	overdue: "text-red-600",
 	on_time_done: "text-emerald-600",
@@ -174,7 +174,7 @@ export function WorkflowCard({
 	};
 
 	// Drag and Drop Handlers
-	const handleDragStart = (e: React.DragEvent, index: number) => {
+	const handleDragStart = (e: DragEvent, index: number) => {
 		if (readOnly) return;
 		setDraggedIndex(index);
 		e.dataTransfer.effectAllowed = "move";
@@ -183,7 +183,7 @@ export function WorkflowCard({
 		}, 0);
 	};
 
-	const handleDragEnd = (e: React.DragEvent) => {
+	const handleDragEnd = (e: DragEvent) => {
 		(e.target as HTMLElement).style.opacity = "1";
 		setDraggedIndex(null);
 		document.querySelectorAll(".drag-over-workflow").forEach((el) => {
@@ -191,7 +191,7 @@ export function WorkflowCard({
 		});
 	};
 
-	const handleDragOver = (e: React.DragEvent, index: number) => {
+	const handleDragOver = (e: DragEvent, index: number) => {
 		e.preventDefault();
 		if (readOnly) return;
 		e.dataTransfer.dropEffect = "move";
@@ -206,11 +206,11 @@ export function WorkflowCard({
 		target.classList.add("drag-over-workflow");
 	};
 
-	const handleDragLeave = (e: React.DragEvent) => {
+	const handleDragLeave = (e: DragEvent) => {
 		(e.currentTarget as HTMLElement).classList.remove("drag-over-workflow");
 	};
 
-	const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+	const handleDrop = async (e: DragEvent, dropIndex: number) => {
 		e.preventDefault();
 		if (readOnly) return;
 
@@ -270,7 +270,7 @@ export function WorkflowCard({
 					);
 
 					// --- Start column label + tooltip ---
-					let startLabel: React.ReactNode;
+					let startLabel: ReactNode;
 					let startTooltip: string | undefined;
 
 					if (status === "not_started") {
@@ -333,7 +333,7 @@ export function WorkflowCard({
 									</Link>
 									{/* Start column: adapts PS -> AS -> AS+AE by status */}
 									<p
-										className="text-xs text-[#8392a6] mt-0.5 w-fit"
+										className="text-xs text-slate-400 mt-0.5 w-fit"
 										title={startTooltip}
 									>
 										{startLabel}

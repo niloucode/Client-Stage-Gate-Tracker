@@ -39,8 +39,6 @@ const CLIENT_PROFILE = {
 	Department: null,
 };
 
-const DEPT_ID = "d-project-team";
-
 describe("generateStaffInviteCode", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();

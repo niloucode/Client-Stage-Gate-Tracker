@@ -87,6 +87,8 @@ const eslintConfig = defineConfig([
 		"next-env.d.ts",
 		// Generated code — never linted
 		"src/lib/generated/**",
+		// Build/test outputs — never linted
+		"coverage/**",
 	]),
 ]);
 

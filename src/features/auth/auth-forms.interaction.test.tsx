@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -71,7 +72,7 @@ if (!window.matchMedia) {
 	})) as unknown as typeof window.matchMedia;
 }
 
-function renderWithQuery(ui: React.ReactNode) {
+function renderWithQuery(ui: ReactNode) {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
 	});

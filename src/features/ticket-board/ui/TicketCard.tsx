@@ -113,7 +113,7 @@ export function TicketCardContent({
 
 						<div className="flex items-center gap-1.5 shrink-0">
 							{isOverdue && (
-								<span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FFDAD7] text-[#6d0007]">
+								<span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-900">
 									OVERDUE
 								</span>
 							)}

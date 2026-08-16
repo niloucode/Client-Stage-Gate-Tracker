@@ -33,13 +33,44 @@ CREATE INDEX "Gates_stage_id_idx" ON "Gates"("stage_id");
 CREATE UNIQUE INDEX "Gates_stage_id_number_key" ON "Gates"("stage_id", "number") WHERE "is_deleted" = false;
 
 -- ── 3. Partial unique indexes (numbers reusable after soft-delete) ──────────
-ALTER TABLE "Stages" DROP CONSTRAINT "Stages_project_id_number_key";
+-- NOTE (2026-08-16): the DROP CONSTRAINTs below originally failed on fresh
+-- shadow-DB replays (P3018, "migrate dev" blocker). `0_init` creates these
+-- names as UNIQUE INDEXes (Prisma baseline), while the live Supabase DB has
+-- (or had) them as table constraints — DROP CONSTRAINT works on one form and
+-- fails on the other. The DO-blocks drop whichever form exists and are
+-- no-ops when neither does, so the migration replays on any Postgres.
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE "Stages" DROP CONSTRAINT "Stages_project_id_number_key";
+  EXCEPTION WHEN undefined_object THEN
+    DROP INDEX IF EXISTS "Stages_project_id_number_key";
+  END;
+END $$;
 CREATE UNIQUE INDEX "Stages_project_id_number_key" ON "Stages"("project_id", "number") WHERE "is_deleted" = false;
 
-ALTER TABLE "Phases" DROP CONSTRAINT "Phases_stage_id_number_key";
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE "Phases" DROP CONSTRAINT "Phases_stage_id_number_key";
+  EXCEPTION WHEN undefined_object THEN
+    DROP INDEX IF EXISTS "Phases_stage_id_number_key";
+  END;
+END $$;
 CREATE UNIQUE INDEX "Phases_stage_id_number_key" ON "Phases"("stage_id", "number") WHERE "is_deleted" = false;
 
-ALTER TABLE "Workflows" DROP CONSTRAINT "unique_workflow_number_module";
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE "Workflows" DROP CONSTRAINT "unique_workflow_number_module";
+  EXCEPTION WHEN undefined_object THEN
+    DROP INDEX IF EXISTS "unique_workflow_number_module";
+  END;
+END $$;
+-- NOTE (2026-08-16): `Workflows.number` was missing from the migration
+-- chain entirely (present only out-of-band on the live Supabase DB) — a
+-- fresh replay failed here. The schema declares it nullable (`Int?`).
+ALTER TABLE "Workflows" ADD COLUMN "number" INTEGER;
 CREATE UNIQUE INDEX "unique_workflow_number_module" ON "Workflows"("number", "module_id") WHERE "is_deleted" = false;
 
 -- ── 4. Clients.tin unique ───────────────────────────────────────────────────
