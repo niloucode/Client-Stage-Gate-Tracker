@@ -6,6 +6,8 @@
  * @example getInitials(" john   doe ") // "JD"
  * @example getInitials("Alice")        // "A"
  * @example getInitials("   ")          // "?"
+ * @param name - The full name to derive initials from.
+ * @returns Up to two uppercase initials, or "?" for empty input.
  */
 export function getInitials(name: string): string {
 	const initials = name

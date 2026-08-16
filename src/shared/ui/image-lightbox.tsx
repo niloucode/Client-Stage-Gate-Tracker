@@ -9,6 +9,12 @@ interface ImageLightboxProps {
 	onClose: () => void;
 }
 
+/**
+ * Fullscreen image preview with a click-to-close backdrop.
+ * @param src - Image URL to display.
+ * @param alt - Accessible description of the image.
+ * @param onClose - Called when the backdrop or close button is clicked.
+ */
 export default function ImageLightbox({
 	src,
 	alt,

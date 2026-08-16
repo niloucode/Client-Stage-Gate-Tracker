@@ -13,7 +13,9 @@ interface PhoneFieldProps {
 	className?: string;
 }
 
-/** PhoneInput bound to a TanStack Form string field. */
+/** PhoneInput bound to a TanStack Form string field. 
+ * @returns The rendered phone field.
+ */
 export function PhoneField({
 	label,
 	required,

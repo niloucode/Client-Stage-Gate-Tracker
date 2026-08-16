@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { hasValidActualRange, hasValidPlannedRange } from "./chronology";
 
-/** Normalize the schema's undefined-laden shape to the canonical vocabulary. */
+/**
+ * Normalize the schema's undefined-laden shape to the canonical vocabulary.
+ * @param d - The raw shape (undefined or null dates allowed).
+ * @returns The canonical SchedulingDates with nulls instead of undefined.
+ */
 export function toSchedulingDates(d: {
 	planStart?: Date | null;
 	planEnd?: Date | null;

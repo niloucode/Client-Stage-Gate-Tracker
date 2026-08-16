@@ -2,7 +2,11 @@
 import { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
-/** Normalize a URL to its origin; returns null for invalid input. */
+/**
+ * Normalize a URL to its origin.
+ * @param value - The URL string to normalize.
+ * @returns The origin, or null for invalid input.
+ */
 function toOrigin(value: string): string | null {
 	try {
 		return new URL(value).origin;
@@ -13,6 +17,7 @@ function toOrigin(value: string): string | null {
 
 /**
  * Build the connect-src allowlist from the environment.
+ * @returns The space-separated connect-src directive value.
  */
 function buildConnectSrc(): string {
 	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -39,6 +44,7 @@ const CONNECT_SRC = buildConnectSrc();
  * - 'self' allows Next.js chunk files (_next/static/chunks/*).
  * - 'unsafe-inline' & 'unsafe-eval' allow Next.js hydration and React Compiler bootstrap scripts.
  * - Google Fonts and Supabase Storage domains are permitted for styles, fonts, and images.
+ * @returns The full Content-Security-Policy header value.
  */
 function buildCsp(): string {
 	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -69,6 +75,7 @@ function buildCsp(): string {
 	].join("; ");
 }
 
+/** Middleware entry: refreshes the session and sets the CSP header. */
 export async function proxy(request: NextRequest) {
 	const response = await updateSession(request);
 	response.headers.set("Content-Security-Policy", buildCsp());

@@ -21,6 +21,7 @@ interface DateTimeFieldProps {
  * All Date <-> input-string conversion goes through the shared scheduling
  * date adapter (`@/shared/lib/scheduling/dateInput`) — never inline
  * `getTimezoneOffset()` math in forms.
+ * @returns The rendered datetime field.
  */
 export function DateTimeField({
 	label,

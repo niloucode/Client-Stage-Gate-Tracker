@@ -2,6 +2,8 @@
  * Normalizes TanStack Form's `state.errorMap.*` values (string, zod issue,
  * issue array, `GlobalFormValidationError`, or a thrown `Error`) into a
  * displayable message. Returns `null` when there is nothing to show.
+ * @param err - The raw error value from the form state.
+ * @returns A displayable message, or null.
  */
 export function formErrorToMessage(err: unknown): string | null {
 	if (!err) return null;

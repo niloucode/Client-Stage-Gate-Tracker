@@ -28,6 +28,8 @@ interface SelectFieldProps {
 /**
  * Shadcn Select bound to a TanStack Form string field.
  * Render inside `form.AppField` children.
+ 
+ * @returns The rendered select field.
  */
 export function SelectField({
 	label,

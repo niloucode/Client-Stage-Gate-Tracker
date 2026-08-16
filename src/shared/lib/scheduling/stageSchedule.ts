@@ -15,6 +15,9 @@
 /**
  * Spec 1: effective contract signing date. Returns null until BOTH parties
  * have signed; otherwise the later of the two signature timestamps.
+ * @param ownerSignedAt - The project owner's signature timestamp (nullable).
+ * @param clientSignedAt - The client's signature timestamp (nullable).
+ * @returns The later of the two timestamps, or null until both have signed.
  */
 export function contractSignedStart(
 	ownerSignedAt: Date | null,
@@ -32,6 +35,9 @@ export function contractSignedStart(
  * Wired into `decideGate` (src/entities/gate/gateActions.ts, 2026-08-15):
  * the approval is status-based (Gates.status = APPROVED + a feedback comment)
  * — the old GateSignatures row model was dropped.
+ * @param approvedAt - The gate approval timestamp.
+ * @param hasNextStage - Whether a following stage exists to start.
+ * @returns The stage's actual end and (optionally) the next stage's start.
  */
 export function gateApprovalDates(
 	approvedAt: Date,

@@ -4,6 +4,9 @@ import { ImageParentType } from "@/lib/generated/prisma";
 /**
  * Next gate number (gate-overview spec 2/9): later gates have larger numbers,
  * so a new gate takes max(existing) + 1 (1 when the stage has no gates).
+ 
+ * @param numbers - Existing gate numbers (nulls allowed for unset).
+ * @returns max(existing) + 1, or 1 when there are no gates.
  */
 export function deriveNextGateNumber(numbers: (number | null)[]): number {
 	const max = numbers.reduce<number>(
@@ -17,6 +20,9 @@ export function deriveNextGateNumber(numbers: (number | null)[]): number {
  * The ImageParentType for a comment's attachments follows the comment's
  * parent type (fixes the TICKET_COMMENT hardcodes in the comment slice —
  * gate feedback/discussion images must be stored and loaded as GATE_COMMENT).
+ 
+ * @param parentType - The comment's parent type.
+ * @returns The matching image parent type (GATE_COMMENT vs TICKET_COMMENT).
  */
 export function imageParentTypeFor(
 	parentType: CommentParentType,
@@ -32,6 +38,9 @@ export function imageParentTypeFor(
  * rollup (actual_end_at set only when all their workflows are finished).
  * A stage with no phases is vacuously decidable (createStage always ships
  * gate #1, and an empty stage has nothing unfinished).
+ 
+ * @param phases - The stage's phases (actual_end_at null when unfinished).
+ * @returns True when every phase is finished (empty stage: vacuously true).
  */
 export function allPhasesFinished(
 	phases: { actual_end_at: Date | null }[],

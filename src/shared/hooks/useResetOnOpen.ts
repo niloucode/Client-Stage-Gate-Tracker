@@ -8,6 +8,9 @@ import { useEffect, useRef } from "react";
  * finish mounting before controlled inputs are reset — replacing the
  * hand-rolled `useEffect` + `setTimeout(fn, 0)` pattern duplicated across
  * modals.
+ * @param trigger - When `whenOpen` is true, reset after this becomes truthy.
+ * @param resetFn - The callback to run (kept fresh via a ref).
+ * @param whenOpen - Invert the trigger polarity (reset when false instead).
  */
 export function useResetOnOpen(
 	trigger: boolean,

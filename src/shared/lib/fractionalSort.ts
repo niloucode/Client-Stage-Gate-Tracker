@@ -21,6 +21,12 @@ interface ReorderResult {
 	newKey?: string;
 }
 
+/** Computes the fractional sort keys after a row move.
+ * @param siblings - The current ordered siblings.
+ * @param rowId - The id of the moved row.
+ * @param targetNumber - The 1-based target position.
+ * @returns The reorder result with the new keys (unchanged when static).
+ */
 export function reorderBySortKey(
 	siblings: SortableSibling[],
 	rowId: string,

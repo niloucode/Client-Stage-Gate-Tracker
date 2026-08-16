@@ -46,6 +46,8 @@ export const TAG_COLOR_NAMES: Record<string, string> = {
 /** Normalizes a hex color string: strips a leading `#`, expands 3-digit
  * shorthand (`abc` → `aabbcc`), uppercases. Returns `null` for anything
  * that is not a valid hex color.
+ * @param input - The raw color string.
+ * @returns The normalized 6-digit hex (no `#`), or null when invalid.
  */
 function normalizeHex(input: string): string | null {
 	const stripped = input.trim().replace(/^#/, "");
@@ -60,6 +62,10 @@ function normalizeHex(input: string): string | null {
 	return expanded.toUpperCase();
 }
 
+/** Builds pastel bg/text/border styles from a hex color.
+ * @param hex - The color to derive styles from.
+ * @returns The rgba-based style triple.
+ */
 export function getPastelStyle(hex: string): {
 	bg: string;
 	text: string;
@@ -88,6 +94,10 @@ const DEPARTMENT_BADGE_STYLES: Record<string, string> = {
 	"Finance Team": "bg-green-100 text-green-800",
 };
 
+/** Tailwind classes for a department/role badge (fallback: neutral slate).
+ * @param name - The department or role name.
+ * @returns The badge class string.
+ */
 export function departmentBadgeStyle(name: string): string {
 	return DEPARTMENT_BADGE_STYLES[name] ?? "bg-slate-100 text-slate-600";
 }
