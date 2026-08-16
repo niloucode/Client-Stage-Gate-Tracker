@@ -3,6 +3,9 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { env } from "@/env";
 
+/** Server-side Supabase client bound to the request's cookies (anon key, RLS).
+ * @returns The configured server client.
+ */
 export async function createClient() {
 	const cookieStore = await cookies();
 

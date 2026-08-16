@@ -28,6 +28,12 @@ export const getCurrentUserId = cache(async (): Promise<string | null> => {
 	}
 });
 
+/**
+ * Checks a roleAssignments row for the user on the project.
+ * @param projectId - The project to check membership in.
+ * @param userId - The profile id to check.
+ * @returns True when the user has any role assignment on the project.
+ */
 export async function requireProjectMember(
 	projectId: string,
 	userId: string,
@@ -40,6 +46,12 @@ export async function requireProjectMember(
 
 const PROJECT_OWNER_ROLE = "Project Owner";
 
+/**
+ * Checks the user holds the Project Owner role on the project.
+ * @param projectId - The project to check.
+ * @param userId - The profile id to check.
+ * @returns True when the user is a project owner.
+ */
 export async function requireProjectOwner(
 	projectId: string,
 	userId: string,
@@ -63,7 +75,8 @@ type AuthResult = { ok: true; userId: string } | { ok: false; error: string };
 
 /**
  * Verifies the current session user is a member of the project.
- * Returns `{ ok: true, userId }` on success, or a user-facing error.
+ * @param projectId - The project to check membership in.
+ * @returns `{ ok: true, userId }` on success, or a user-facing error.
  */
 export async function assertProjectMember(
 	projectId: string,
@@ -84,6 +97,8 @@ export async function assertProjectMember(
  * project team and project owners may edit project structure; clients are
  * read-only — their profile links to the project through the contract, not
  * through an editable role). Use for mutating project-structure actions.
+ * @param projectId - The project to check membership in.
+ * @returns `{ ok: true, userId }` on success, or a user-facing error.
  */
 export async function assertProjectMemberNotClient(
 	projectId: string,
@@ -114,6 +129,8 @@ export async function assertProjectMemberNotClient(
  * spec 2026-08-15: both clients and project team/owners may report issues).
  * Clients are linked to a project through their contract, not through
  * roleAssignments, so the plain member check alone would reject them.
+ * @param projectId - The project to check access to.
+ * @returns `{ ok: true, userId }` on success, or a user-facing error.
  */
 export async function assertProjectMemberOrClient(
 	projectId: string,
@@ -156,6 +173,8 @@ export async function assertProjectMemberOrClient(
  * Client-only project gate (gate-overview spec 2026-08-15): ONLY the client
  * connected to the project (via a non-deleted contract) may approve or
  * decline stage gates. Role-assigned staff are explicitly rejected.
+ * @param projectId - The project whose gate is being decided.
+ * @returns `{ ok: true, userId }` on success, or a user-facing error.
  */
 export async function assertProjectClient(
 	projectId: string,
@@ -192,6 +211,11 @@ export async function assertProjectClient(
 
 // ── project_id resolvers for child entities ─────────────────────────────────
 
+/**
+ * Resolves a stage's project id.
+ * @param stageId - The stage to resolve.
+ * @returns The project id, or null when the stage does not exist.
+ */
 export async function resolveStageProject(
 	stageId: string,
 ): Promise<string | null> {
@@ -202,6 +226,11 @@ export async function resolveStageProject(
 	return stage?.project_id ?? null;
 }
 
+/**
+ * Resolves a phase's project id through its stage.
+ * @param phaseId - The phase to resolve.
+ * @returns The project id, or null when the phase does not exist.
+ */
 export async function resolvePhaseProject(
 	phaseId: string,
 ): Promise<string | null> {
@@ -213,6 +242,11 @@ export async function resolvePhaseProject(
 	return resolveStageProject(phase.stage_id);
 }
 
+/**
+ * Resolves a module's project id through its phase.
+ * @param moduleId - The module to resolve.
+ * @returns The project id, or null when the module does not exist.
+ */
 export async function resolveModuleProject(
 	moduleId: string,
 ): Promise<string | null> {
@@ -224,6 +258,11 @@ export async function resolveModuleProject(
 	return resolvePhaseProject(moduleRow.phase_id);
 }
 
+/**
+ * Resolves a workflow's project id through its module.
+ * @param workflowId - The workflow to resolve.
+ * @returns The project id, or null when the workflow does not exist.
+ */
 export async function resolveWorkflowProject(
 	workflowId: string,
 ): Promise<string | null> {
@@ -235,6 +274,11 @@ export async function resolveWorkflowProject(
 	return resolveModuleProject(workflow.module_id);
 }
 
+/**
+ * Resolves a ticket's project id through its workflow.
+ * @param ticketId - The ticket to resolve.
+ * @returns The project id, or null when the ticket does not exist.
+ */
 export async function resolveTicketProject(
 	ticketId: string,
 ): Promise<string | null> {
@@ -247,6 +291,11 @@ export async function resolveTicketProject(
 	return resolveWorkflowProject(ticket.workflow_id);
 }
 
+/**
+ * Resolves a gate's project id through its stage.
+ * @param gateId - The gate to resolve.
+ * @returns The project id, or null when the gate does not exist.
+ */
 export async function resolveGateProject(
 	gateId: string,
 ): Promise<string | null> {
@@ -261,6 +310,11 @@ export async function resolveGateProject(
 	return gate?.Stages?.project_id ?? null;
 }
 
+/**
+ * Resolves a variable's project id directly.
+ * @param variableId - The variable to resolve.
+ * @returns The project id, or null when the variable does not exist.
+ */
 export async function resolveVariableProject(
 	variableId: string,
 ): Promise<string | null> {
