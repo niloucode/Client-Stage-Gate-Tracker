@@ -89,6 +89,7 @@ interface ModuleCardProps {
 	readOnly?: boolean;
 }
 
+/** Module card: date summary, workflow list, and edit/delete controls. */
 export function ModuleCard({
 	activePhase,
 	phases,
