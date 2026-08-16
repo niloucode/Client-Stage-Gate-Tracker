@@ -36,5 +36,8 @@ import { NextResponse, type NextRequest } from "next/server";
  *   // ... handle event.idempotently
  */
 export async function POST(_request: NextRequest) {
+	// Intentionally unused: the stub accepts any request and performs no
+	// side effects (see the signature-verification contract above).
+	void _request;
 	return NextResponse.json({ ok: true });
 }

@@ -1,7 +1,5 @@
-export default function ProjectLayout({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+import type { ReactNode } from "react";
+
+export default function ProjectLayout({ children }: { children: ReactNode }) {
 	return <>{children}</>;
 }

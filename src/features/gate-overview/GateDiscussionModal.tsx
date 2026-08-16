@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import {
+	useMemo,
+	useRef,
+	useState,
+	type ChangeEvent,
+	type SyntheticEvent,
+} from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -80,7 +86,7 @@ export function GateDiscussionModal({
 		[comments],
 	);
 
-	function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+	function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
 		const selected = e.target.files;
 		if (!selected || selected.length === 0) return;
 		const nextFiles: File[] = [];
@@ -117,7 +123,7 @@ export function GateDiscussionModal({
 		setPreviews([]);
 	}
 
-	async function handleSubmit(e: React.SyntheticEvent) {
+	async function handleSubmit(e: SyntheticEvent) {
 		e.preventDefault();
 		if (!gateId || isSubmitting) return;
 		const trimmed = text.trim();

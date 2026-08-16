@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
 	Eye,
@@ -193,7 +193,7 @@ export function TicketsBoard({
 		);
 	};
 
-	const openTicketOnKeyDown = (e: React.KeyboardEvent, ticket: TicketItem) => {
+	const openTicketOnKeyDown = (e: KeyboardEvent, ticket: TicketItem) => {
 		if (e.key === "Enter" || e.key === " ") {
 			e.preventDefault();
 			openTicket(ticket);

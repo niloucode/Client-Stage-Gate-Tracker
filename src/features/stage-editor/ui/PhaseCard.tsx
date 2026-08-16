@@ -6,6 +6,7 @@ import {
 	useState,
 	useRef,
 	useEffect,
+	type DragEvent,
 } from "react";
 import type { Phase } from "../types";
 import { ConfirmDeleteModal } from "@/shared/ui";
@@ -238,7 +239,7 @@ export const PhaseCard = forwardRef<
 	};
 
 	// Drag and Drop Handlers
-	const handleDragStart = (e: React.DragEvent, index: number) => {
+	const handleDragStart = (e: DragEvent, index: number) => {
 		if (readOnly) return;
 		setDraggedIndex(index);
 		e.dataTransfer.effectAllowed = "move";
@@ -247,7 +248,7 @@ export const PhaseCard = forwardRef<
 		}, 0);
 	};
 
-	const handleDragEnd = (e: React.DragEvent) => {
+	const handleDragEnd = (e: DragEvent) => {
 		(e.target as HTMLElement).style.opacity = "1";
 		setDraggedIndex(null);
 		document.querySelectorAll(".drag-over").forEach((el) => {
@@ -255,7 +256,7 @@ export const PhaseCard = forwardRef<
 		});
 	};
 
-	const handleDragOver = (e: React.DragEvent, index: number) => {
+	const handleDragOver = (e: DragEvent, index: number) => {
 		e.preventDefault();
 		if (readOnly) return;
 		e.dataTransfer.dropEffect = "move";
@@ -270,11 +271,11 @@ export const PhaseCard = forwardRef<
 		target.classList.add("drag-over");
 	};
 
-	const handleDragLeave = (e: React.DragEvent) => {
+	const handleDragLeave = (e: DragEvent) => {
 		(e.currentTarget as HTMLElement).classList.remove("drag-over");
 	};
 
-	const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+	const handleDrop = async (e: DragEvent, dropIndex: number) => {
 		e.preventDefault();
 		if (readOnly) return;
 

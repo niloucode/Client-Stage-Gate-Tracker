@@ -50,12 +50,6 @@ export const projectUpdateSchema = baseProject
 		},
 	);
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used via typeof
-const projectDeleteSchema = z.object({
-	project_id: z.uuid({ message: "Invalid project ID" }),
-	confirmation_name: z.string().min(1, "Project name confirmation is required"),
-});
-
 // ── Stage ────────────────────────────────────────────────────────────────────
 // Date rules: plan dates REQUIRED for stages (DB NOT NULL); the form keeps
 // them nullable while picking, hence the nullable+refine pattern (types stay
@@ -108,7 +102,6 @@ export type StageCreateInput = z.infer<typeof stageCreateSchema>;
 
 export type ProjectCreateInput = z.infer<typeof projectCreateSchema>;
 export type ProjectUpdateInput = z.infer<typeof projectUpdateSchema>;
-export type ProjectDeleteInput = z.infer<typeof projectDeleteSchema>;
 
 // ── Phase ────────────────────────────────────────────────────────────────────
 // Canonical scheduling vocabulary (Task 1.5): planStart / planEnd /

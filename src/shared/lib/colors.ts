@@ -82,10 +82,10 @@ export function getPastelStyle(hex: string): {
  * `ManageMembersModal`. Unknown departments fall back to a neutral slate.
  */
 const DEPARTMENT_BADGE_STYLES: Record<string, string> = {
-	"Project Owner": "bg-[#FFDAD7] text-[#410004]",
-	"Project Team": "bg-brand-500 text-[#DAD7FF]",
-	"Client Viewer": "bg-[#DBEAFE] text-[#1E3A8A]",
-	"Finance Team": "bg-[#BAE9D4] text-[#00714D]",
+	"Project Owner": "bg-red-100 text-red-950",
+	"Project Team": "bg-brand-500 text-brand-100",
+	"Client Viewer": "bg-blue-100 text-blue-900",
+	"Finance Team": "bg-green-100 text-green-800",
 };
 
 export function departmentBadgeStyle(name: string): string {

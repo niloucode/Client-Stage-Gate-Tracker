@@ -84,7 +84,7 @@ export function ConfirmTextModal({
 						borderBottom: "1px solid #c7c4d8",
 					}}
 				>
-					<DialogTitle className="text-base font-bold text-[#151c27]">
+					<DialogTitle className="text-base font-bold text-ink">
 						{displayTitle}
 					</DialogTitle>
 				</DialogHeader>
@@ -92,9 +92,7 @@ export function ConfirmTextModal({
 				{/* Body */}
 				<div className="flex flex-col gap-5 px-6 py-6">
 					{/* Warning text */}
-					<p className="text-sm leading-relaxed text-[#464555]">
-						{displayText}
-					</p>
+					<p className="text-sm leading-relaxed text-plum-700">{displayText}</p>
 
 					{/* Confirm input */}
 					<Input

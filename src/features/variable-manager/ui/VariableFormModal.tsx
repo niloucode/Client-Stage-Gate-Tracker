@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { Link2, Key, Code2 } from "lucide-react";
 import {
 	Dialog,
@@ -44,7 +44,7 @@ const TYPE_OPTIONS: {
 		label: "Credential",
 		icon: Key,
 		activeClass:
-			"bg-[#E5D7FA] text-[#500086] border-[#AE87BB] ring-2 ring-brand-500/20",
+			"bg-brand-100 text-brand-600 border-brand-200 ring-2 ring-brand-500/20",
 	},
 	{
 		type: "repository",
@@ -105,7 +105,7 @@ export function VariableFormModal({
 		return Object.keys(newErrors).length === 0;
 	};
 
-	const handleSubmit = async (e: FormEvent) => {
+	const handleSubmit = async (e: SyntheticEvent) => {
 		e.preventDefault();
 		if (!validate()) return;
 

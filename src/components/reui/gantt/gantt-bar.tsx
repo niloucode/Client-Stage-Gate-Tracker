@@ -3,7 +3,6 @@
 import type * as React from "react";
 import {
 	createContext,
-	useContext,
 	useMemo,
 	useState,
 	type CSSProperties,
@@ -40,23 +39,6 @@ import {
 } from "@/components/ui/tooltip";
 import { RepeatIcon, CheckIcon } from "lucide-react";
 
-/**
- * Effective Tailwind palette presets for bar colors; every entry works on
- * light and dark surfaces through the bar's alpha background + accent border.
- */
-const GANTT_COLORS: Array<{ name: string; value: string }> = [
-	{ name: "Blue", value: "var(--color-blue-500)" },
-	{ name: "Emerald", value: "var(--color-emerald-500)" },
-	{ name: "Violet", value: "var(--color-violet-500)" },
-	{ name: "Rose", value: "var(--color-rose-500)" },
-	{ name: "Amber", value: "var(--color-amber-500)" },
-	{ name: "Cyan", value: "var(--color-cyan-500)" },
-	{ name: "Orange", value: "var(--color-orange-500)" },
-	{ name: "Pink", value: "var(--color-pink-500)" },
-	{ name: "Teal", value: "var(--color-teal-500)" },
-	{ name: "Indigo", value: "var(--color-indigo-500)" },
-];
-
 interface GanttBarContextValue<TData = unknown> {
 	occurrence: GanttOccurrence<TData>;
 	segment: GanttSegment<TData>;
@@ -67,15 +49,6 @@ interface GanttBarContextValue<TData = unknown> {
 const GanttBarContext =
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	createContext<GanttBarContextValue<any> | null>(null);
-
-/** The bar's subject; usable inside renderEvent content and bar children. */
-function useGanttBarContext<TData = unknown>(): GanttBarContextValue<TData> {
-	const ctx = useContext(GanttBarContext);
-	if (!ctx) {
-		throw new Error("useGanttBarContext must be used within <GanttBar>");
-	}
-	return ctx as GanttBarContextValue<TData>;
-}
 
 interface GanttBarProps<TData = unknown> extends Omit<
 	useRender.ComponentProps<"button">,

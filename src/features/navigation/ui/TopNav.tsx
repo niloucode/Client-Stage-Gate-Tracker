@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useProject } from "@/entities/project";
-import { useStageTree } from "@/entities/stage/queries";
+import { useStageTree } from "@/entities/stage";
 import { getWorkflowById } from "@/entities/workflow";
 import { Breadcrumbs, type BreadcrumbItem } from "./Breadcrumbs";
 import { AccountMenu } from "./AccountMenu";

@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Back } from "@/components/ui/back";
 import { cn } from "@/lib/utils";
-import { useStageTree } from "@/entities/stage/queries";
+import { useStageTree } from "@/entities/stage";
 import { useStageGates } from "@/entities/gate";
 import type { GateFeedbackEntry } from "@/entities/gate";
 import { allPhasesFinished } from "@/shared/lib/gateRules";

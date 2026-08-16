@@ -43,9 +43,9 @@ describe("getPastelStyle", () => {
 
 describe("departmentBadgeStyle (Task 5.8 #22)", () => {
 	it("returns the mapped classes for known departments", () => {
-		expect(departmentBadgeStyle("Project Owner")).toContain("bg-[#FFDAD7]");
+		expect(departmentBadgeStyle("Project Owner")).toContain("bg-red-100");
 		expect(departmentBadgeStyle("Project Team")).toContain("bg-brand-500");
-		expect(departmentBadgeStyle("Client Viewer")).toContain("bg-[#DBEAFE]");
+		expect(departmentBadgeStyle("Client Viewer")).toContain("bg-blue-100");
 	});
 
 	it("every TAG_COLORS entry has an accessible label in TAG_COLOR_NAMES", () => {

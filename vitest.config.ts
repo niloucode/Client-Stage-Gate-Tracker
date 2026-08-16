@@ -35,6 +35,17 @@ export default defineConfig({
 			],
 			exclude: ["**/*.test.{ts,tsx}", "src/lib/generated/**"],
 			reporter: ["text", "html"],
+			// Baseline regression gate (2026-08-16): measured from the current
+			// suite (28.18% stmts / 33.67% branch / 28.13% funcs / 28.36%
+			// lines). Set a few points BELOW today's numbers so the gate
+			// passes now and fails on meaningful drops — raise the numbers as
+			// entity slices gain tests (CONTRIBUTING §9 backlog item 9).
+			thresholds: {
+				statements: 26,
+				branches: 30,
+				functions: 25,
+				lines: 26,
+			},
 		},
 	},
 	resolve: {

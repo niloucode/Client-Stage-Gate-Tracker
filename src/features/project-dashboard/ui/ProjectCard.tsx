@@ -70,7 +70,7 @@ export function ProjectCard({
 				: undefined;
 
 	return (
-		<div className="relative hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 @container bg-neutral-surface-subtle rounded-md border border-[#C7C4D8] gap-4 p-5 flex flex-col justify-between h-full select-none">
+		<div className="relative hover:-translate-y-0.5 hover:border-brand-300 transition-all duration-150 @container bg-neutral-surface-subtle rounded-md border border-lavender-300 gap-4 p-5 flex flex-col justify-between h-full select-none">
 			<Link
 				href={targetHref}
 				className="absolute inset-0 rounded-md"

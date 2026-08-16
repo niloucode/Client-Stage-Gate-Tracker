@@ -36,7 +36,7 @@ function TypeBadge({ type }: { type: VariableType }) {
 	}
 	if (type === "credential") {
 		return (
-			<Badge className="bg-[#E5D7FA] text-[#500086] border-[#AE87BB] hover:bg-[#E5D7FA] gap-1.5 text-xs font-medium">
+			<Badge className="bg-brand-100 text-brand-600 border-brand-200 hover:bg-brand-100 gap-1.5 text-xs font-medium">
 				<Key className="size-3" />
 				<span>Credential</span>
 			</Badge>

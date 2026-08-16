@@ -479,6 +479,7 @@ export async function updateTicketStatus(
  *
  * @param ticketId - The UUID of the ticket to softly delete.
  * @param performed_by - The UUID of the profile performing the deletion.
+ * @param mode - `"cascade"` soft-deletes the whole parent_id subtree; `"promote"` re-parents subtasks to top level first.
  * @param _txClient - Optional Prisma transaction client when invoked inside an existing transaction.
  * @returns `{ success: boolean, error?: string }`.
  */

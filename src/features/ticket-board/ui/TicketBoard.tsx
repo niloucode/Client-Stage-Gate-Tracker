@@ -23,7 +23,7 @@ import { Back } from "@/components/ui/back";
 
 // TanStack Query hooks
 import { useTicketsByWorkflow } from "@/entities/ticket/queries";
-import { useCurrentUser } from "@/entities/profile/queries";
+import { useCurrentUser } from "@/entities/profile";
 import {
 	useCreateTicket,
 	useUpdateTicketStatus,

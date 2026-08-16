@@ -7,7 +7,6 @@ import {
 	getProjectById,
 	getProjectMembers,
 	getProjectStats,
-	searchProfilesForProject,
 	selectProjectsForMember,
 } from "./projectActions";
 
@@ -33,18 +32,6 @@ const projectQueryOptions = {
 			queryKey: projectKeys.members(projectId ?? ""),
 			queryFn: () => getProjectMembers(projectId!),
 			enabled: !!projectId,
-		}),
-	/**
-	 * Disabled-by-default profile search (callers enable via `refetch`).
-	 */
-	profileSearch: () =>
-		queryOptions({
-			queryKey: ["profiles", "search", ""],
-			queryFn: () =>
-				Promise.resolve(
-					[] as Awaited<ReturnType<typeof searchProfilesForProject>>,
-				),
-			enabled: false,
 		}),
 	stats: (projectId: string | null) =>
 		queryOptions({

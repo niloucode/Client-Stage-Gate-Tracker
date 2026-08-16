@@ -19,11 +19,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Post-pull schema guard: `db pull` re-infers relations and can break
+      # app-authored cardinalities (Issues.Tickets must stay Tickets[]).
+      # Fails fast on accidental schema edits too.
+      - name: Verify Prisma relation invariants
+        run: node scripts/verify-prisma-relations.mjs
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Tests
         run: npm test
+
+      # Coverage regression gate (baseline thresholds in vitest.config.ts).
+      - name: Coverage
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build
@@ -38,12 +48,12 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SKIP_ENV_VALIDATION: ${{ secrets.SKIP_ENV_VALIDATION }}
 
-      # Lint is not a hard gate yet: the repo carries ~800 pre-existing
-      # legacy-code lint errors. Run it visibly so the count stays on the
-      # radar while the debt is paid down (see Planned-Fixes.md Phase 6).
-      - name: Lint (non-blocking)
-        run: npm run lint
-        continue-on-error: true
+      # Lint gate (2026-08-16): hard-fails on ESLint ERRORS outside the
+      # vendored reui gantt (its 21 React-Compiler errors are deliberate
+      # upstream patterns — triaged in CONTRIBUTING §9 item 10; WebStorm
+      # still inspects the folder via the project config).
+      - name: Lint
+        run: npx eslint . --ignore-pattern "src/components/reui/**"
 
       # Dead-code gate (2026-08-15): knip is clean under knip.json —
       # vendored surfaces (reui gantt, shadcn kit) and config-referenced

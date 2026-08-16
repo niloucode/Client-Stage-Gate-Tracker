@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useContract } from "@/entities/contract";
 import { contractKeys } from "@/shared/query/keys";
-import { useCurrentUser } from "@/entities/profile/queries";
+import { useCurrentUser } from "@/entities/profile";
 import { getProjectOwnerByProjectId } from "@/entities/roleAssignment";
 import { contractSignedStart } from "@/shared/lib/scheduling/stageSchedule";
 import { Back } from "@/components/ui/back";
@@ -176,7 +176,7 @@ export function ContractPage({ projectId }: ContractPageProps) {
 
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
 					<ContractViewer
-						className="h-fit py-0 bg-[#F9F9F7]"
+						className="h-fit py-0 bg-neutral-50"
 						projectId={projectId}
 						canManage={role === "owner"}
 						initialFilePath={contract?.file_path ?? null}

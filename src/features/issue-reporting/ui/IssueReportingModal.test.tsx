@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -39,7 +39,7 @@ import { IssueReportingModal } from "./IssueReportingModal";
  * the dialog (needed for the in-flight-close assertion).
  */
 function renderModal(
-	props: Partial<React.ComponentProps<typeof IssueReportingModal>> = {},
+	props: Partial<ComponentProps<typeof IssueReportingModal>> = {},
 ) {
 	const onOpenChange = vi.fn();
 	function Harness() {

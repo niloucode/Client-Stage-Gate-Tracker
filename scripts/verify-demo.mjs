@@ -18,6 +18,11 @@ const P1 = "d3adbeef-0000-4000-8000-000000000001";
 const P2 = "d3adbeef-0000-4000-8000-000000000201";
 const P3 = "d3adbeef-0000-4000-8000-000000000301";
 
+/**
+ * @param {string} sql
+ * @param {unknown[]} [params]
+ * @returns {Promise<{ n: number } | undefined>}
+ */
 async function one(sql, params) {
 	const { rows } = await pool.query(sql, params);
 	return rows[0];
