@@ -12,6 +12,7 @@ const hanken = Hanken_Grotesk({
 	weight: ["400", "500", "600", "700"],
 });
 
+/** Staff signup page (department invite code). */
 export default function SignupPage() {
 	return (
 		<div className={`${hanken.className} flex min-h-screen w-full`}>
