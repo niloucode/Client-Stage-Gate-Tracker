@@ -46,7 +46,10 @@ type DeadlineState =
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
-/** Not Started / Started Already / Ended, derived from what dates we actually have. */
+/** Not Started / Started Already / Ended, derived from what dates we actually have. 
+ * @param workflow - The workflow to classify.
+ * @returns The derived status.
+ */
 function getWorkflowStatus(workflow: Workflow): WorkflowStatus {
 	if (workflow.actualEnd) return "ended";
 	if (workflow.actualStart) return "started";
@@ -59,12 +62,17 @@ function getWorkflowStatus(workflow: Workflow): WorkflowStatus {
 /**
  * Returns the actual start date to display. Falls back to `planStart`
  * (i.e. assumes an on-time start) when the real field isn't populated yet.
+ * @param workflow - The workflow to read dates from.
+ * @returns The display start date.
  */
 function getActualStart(workflow: Workflow): Date | null {
 	return workflow.actualStart ?? workflow.planStart ?? null;
 }
 
-/** Days late a workflow started, relative to its planned start. Null if not late / not started. */
+/** Days late a workflow started, relative to its planned start. Null if not late / not started. 
+ * @param workflow - The workflow to measure.
+ * @returns Whole days late, or null.
+ */
 function getStartDelayDays(workflow: Workflow): number | null {
 	const planned = workflow.planStart;
 	const actual = getActualStart(workflow);
@@ -73,7 +81,12 @@ function getStartDelayDays(workflow: Workflow): number | null {
 	return diffDays > 0 ? diffDays : null;
 }
 
-/** Three-state (upcoming/approaching/overdue) while active, or on-time/late once ended. */
+/** Three-state (upcoming/approaching/overdue) while active, or on-time/late once ended. 
+ * @param status - The workflow status.
+ * @param deadline - The planned end date.
+ * @param actualEnd - The actual end date (null while active).
+ * @returns The derived deadline state.
+ */
 function getDeadlineState(
 	status: WorkflowStatus,
 	deadline: Date | null,
@@ -100,6 +113,7 @@ const DEADLINE_STYLES: Record<DeadlineState, string> = {
 	late_done: "text-red-600",
 };
 
+/** Workflow card: date badges, progress, and edit/delete controls. */
 export function WorkflowCard({
 	workflows,
 	moduleId,
