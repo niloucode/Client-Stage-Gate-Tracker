@@ -1,9 +1,9 @@
 "use client";
 
-import { ShieldCheck, AlertCircle, Clock } from "lucide-react";
+import { ShieldCheck, AlertCircle, Clock, TriangleAlert, CircleCheck, LineChart } from "lucide-react";
 import { Bar, BarChart, XAxis, PieChart, Pie, Sector } from "recharts";
 import type { PieSectorShapeProps } from "recharts";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import {
 	ChartContainer,
 	ChartTooltip,
@@ -399,28 +399,30 @@ function VelocityCard({ data }: { data?: WeeklyVelocityData }) {
 	const daily = data?.daily ?? [];
 
 	return (
-		<Card className="p-5 border-brand-100 border flex flex-col justify-between">
-			<div>
-				<h4 className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+		<Card>
+			<CardHeader className="flex gap-2 items-center">
+				<LineChart size={16} strokeWidth={2} className="text-gray-500"/>
+				<h4>
 					WEEKLY VELOCITY
 				</h4>
-				<div className="flex items-baseline gap-2 mt-1">
-					<h2 className="text-2xl font-bold tracking-tight text-foreground">
-						{value}
-					</h2>
-					<h4
-						className={`text-xs ${
-							change === "—"
-								? "text-muted-foreground"
-								: changePositive
-									? "text-emerald-600! dark:text-emerald-500!"
-									: "text-destructive"
-						}`}
-					>
-						{change}
-					</h4>
-				</div>
-			</div>
+			</CardHeader>
+			<CardContent className="flex gap-2">
+				<h2>
+					{value}
+				</h2>
+				<h4
+					className={`mt-auto text-xs ${
+						change === "—"
+							? "text-muted-foreground"
+							: changePositive
+								? "text-emerald-600! dark:text-emerald-500!"
+								: "text-destructive"
+					}`}
+				>
+					{change}
+				</h4>
+			</CardContent>
+			<div className="h-full"></div>
 			<WeeklyVelocityChart daily={daily} />
 		</Card>
 	);
@@ -445,21 +447,26 @@ function RiskAndDeadlinesCard({
 	const riskLabel = riskFactor?.label ?? "Low";
 
 	return (
-		<Card className="p-5 border-brand-100 border flex flex-col justify-between">
-			{/* Top section: Risk Factor */}
-			<div className="flex flex-col gap-1 pb-6 border-b border-border">
-				<div className="flex items-center gap-2">
-					<ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-500 shrink-0" />
+		<div className="flex flex-col gap-5">
+			<Card>
+				<CardHeader className="flex gap-2 items-center">
+					<ShieldCheck className="h-4 w-4 text-neutral-border shrink-0" />
 					<h4 className="text-xs uppercase tracking-wider text-muted-foreground">
 						Risk Factor
 					</h4>
-				</div>
-				<h3 className="text-xl text-foreground pl-6">{riskLabel}</h3>
-			</div>
-
-			{/* Bottom section: Upcoming Deadlines (Stacked Rows) */}
-			<div className="flex flex-col gap-1.5 pt-2">
-				<div className="flex items-center gap-2">
+				</CardHeader>
+				{/* Top section: Risk Factor */}
+				<CardContent>
+					<div className="mt-2 text-xl flex gap-2 items-center text-foreground">
+						{!(riskLabel == "Low") ?
+						<TriangleAlert className="text-red-700" strokeWidth={2}/> :
+						<CircleCheck className="text-emerald-700" strokeWidth={2}/>}
+						<h3>{riskLabel}</h3>
+					</div>
+				</CardContent>
+			</Card>
+			<Card>
+				<CardHeader className="flex gap-2 items-center">
 					<DeadlineIcon
 						className={`h-4 w-4 shrink-0 ${
 							isUrgent ? "text-destructive" : "text-muted-foreground"
@@ -468,24 +475,25 @@ function RiskAndDeadlinesCard({
 					<h4 className="text-xs uppercase tracking-wider text-muted-foreground">
 						Upcoming Deadlines
 					</h4>
-				</div>
-
-				<div className="space-y-1 text-xs text-muted-foreground">
-					<div className="flex items-center gap-2">
-						<h3>{dayCount}</h3>
-						<h4>Today</h4>
+				</CardHeader>
+				<CardContent>
+					<div className="space-y-1 text-xs text-muted-foreground">
+						<div className="flex items-center gap-2">
+							<h3>{dayCount}</h3>
+							<h4>Today</h4>
+						</div>
+						<div className="flex items-center gap-2">
+							<h3>{weekCount}</h3>
+							<h4>This Week</h4>
+						</div>
+						<div className="flex items-center gap-2">
+							<h3>{monthCount}</h3>
+							<h4>This Month</h4>
+						</div>
 					</div>
-					<div className="flex items-center gap-2">
-						<h3>{weekCount}</h3>
-						<h4>This Week</h4>
-					</div>
-					<div className="flex items-center gap-2">
-						<h3>{monthCount}</h3>
-						<h4>This Month</h4>
-					</div>
-				</div>
-			</div>
-		</Card>
+				</CardContent>
+			</Card>
+		</div>
 	);
 }
 
