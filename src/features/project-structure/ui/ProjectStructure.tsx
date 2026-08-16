@@ -371,6 +371,7 @@ function StageActionButton({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+/** Stage stepper + per-stage structure editor. */
 export function ProjectStructure({
 	projectId,
 	onViewContract,

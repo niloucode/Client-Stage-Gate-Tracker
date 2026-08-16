@@ -103,6 +103,7 @@ const severityChartConfig = {
 /**
  * Donut tooltip formatter: the empty-state ring uses a placeholder slice
  * (value 1, purely to draw the circle) — never show that fabricated count.
+ * @returns The formatted tooltip label.
  */
 function donutTooltipFormatter(value: unknown, name: unknown) {
 	if (name === "None") {
@@ -142,7 +143,8 @@ const assignmentChartConfig = {
 	None: { label: "No issues", color: "var(--border)" },
 } satisfies ChartConfig;
 
-/** Weekly velocity sparkline: one bar per weekday (Mon–Sun). */
+/** Weekly velocity sparkline: one bar per weekday (Mon–Sun). * @returns The rendered weekday bar chart.
+ */
 function WeeklyVelocityChart({ daily = [] }: { daily?: number[] }) {
 	const chartData = WEEKDAY_LABELS.map((day, i) => ({
 		day,
@@ -170,7 +172,8 @@ function WeeklyVelocityChart({ daily = [] }: { daily?: number[] }) {
 	);
 }
 
-/** Card 1: Issues by Severity Doughnut Chart */
+/** Card 1: Issues by Severity Doughnut Chart * @returns The rendered donut card.
+ */
 function IssuesBySeverityCard({ data }: { data?: IssuesBySeverityData }) {
 	const chartData = [
 		{

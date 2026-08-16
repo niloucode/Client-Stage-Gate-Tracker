@@ -38,6 +38,7 @@ function DepartmentDisplay({ departmentName }: { departmentName: string }) {
 	);
 }
 
+/** Project member add/remove dialog. */
 export function ManageMembersModal({
 	isOpen,
 	projectId,
