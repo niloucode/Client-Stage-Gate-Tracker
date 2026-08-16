@@ -1,6 +1,13 @@
 "use client";
 
-import { ShieldCheck, AlertCircle, Clock, TriangleAlert, CircleCheck, LineChart } from "lucide-react";
+import {
+	ShieldCheck,
+	AlertCircle,
+	Clock,
+	TriangleAlert,
+	CircleCheck,
+	LineChart,
+} from "lucide-react";
 import { Bar, BarChart, XAxis, PieChart, Pie, Sector } from "recharts";
 import type { PieSectorShapeProps } from "recharts";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -401,15 +408,11 @@ function VelocityCard({ data }: { data?: WeeklyVelocityData }) {
 	return (
 		<Card>
 			<CardHeader className="flex gap-2 items-center">
-				<LineChart size={16} strokeWidth={2} className="text-gray-500"/>
-				<h4>
-					WEEKLY VELOCITY
-				</h4>
+				<LineChart size={16} strokeWidth={2} className="text-gray-500" />
+				<h4>WEEKLY VELOCITY</h4>
 			</CardHeader>
 			<CardContent className="flex gap-2">
-				<h2>
-					{value}
-				</h2>
+				<h2>{value}</h2>
 				<h4
 					className={`mt-auto text-xs ${
 						change === "—"
@@ -458,9 +461,11 @@ function RiskAndDeadlinesCard({
 				{/* Top section: Risk Factor */}
 				<CardContent>
 					<div className="mt-2 text-xl flex gap-2 items-center text-foreground">
-						{!(riskLabel == "Low") ?
-						<TriangleAlert className="text-red-700" strokeWidth={2}/> :
-						<CircleCheck className="text-emerald-700" strokeWidth={2}/>}
+						{!(riskLabel === "Low") ? (
+							<TriangleAlert className="text-red-700" strokeWidth={2} />
+						) : (
+							<CircleCheck className="text-emerald-700" strokeWidth={2} />
+						)}
 						<h3>{riskLabel}</h3>
 					</div>
 				</CardContent>
