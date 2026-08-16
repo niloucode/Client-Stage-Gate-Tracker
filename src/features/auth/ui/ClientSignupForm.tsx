@@ -1,5 +1,5 @@
 /**
- * @fileoverview Client employee registration form.
+ * @file Client employee registration form.
  * Employees join an EXISTING client via an invitation code issued by the
  * project owner (client-manager). The form never creates a Clients row and
  * never lists clients: the code resolves the client server-side, then the
@@ -24,6 +24,7 @@ import { clientSignupSchema } from "@/shared/schemas";
 import { env } from "@/env";
 import { profileKeys } from "@/shared/query/keys";
 
+/** Client (invite-code) signup form. */
 export function ClientSignupForm() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
