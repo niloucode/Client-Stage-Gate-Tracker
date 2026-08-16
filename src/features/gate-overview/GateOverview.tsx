@@ -288,7 +288,10 @@ function WorkflowCell({ workflow }: { workflow: TreeWorkflow }) {
 /* Page                                                                       */
 /* -------------------------------------------------------------------------- */
 
-/** Stage gate overview: stepper, status, and approve/decline controls. */
+/**
+ * Stage gate overview: stepper, status, and approve/decline controls.
+ * @returns The result.
+ */
 export function GateOverview({ projectId, stageId }: GateOverviewProps) {
 	const { data: tree, isError: treeError } = useStageTree(stageId);
 	const {

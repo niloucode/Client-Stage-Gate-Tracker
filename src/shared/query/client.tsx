@@ -34,7 +34,10 @@ function getQueryClient() {
 	return browserQueryClient;
 }
 
-/** Provides the app-wide TanStack QueryClient to the tree. */
+/**
+ * Provides the app-wide TanStack QueryClient to the tree.
+ * @returns The rendered component.
+ */
 export function QueryProvider({ children }: { children: ReactNode }) {
 	const [queryClient] = useState(getQueryClient);
 

@@ -87,12 +87,20 @@ function ModuleModal({
 
 // ── Backward-compatible Aliases ──────────────────────────────────────────────
 
-/** Create-mode alias for the shared module modal. */
+/**
+ * Create-mode alias for the shared module modal.
+ * @param props
+ * @returns The rendered component.
+ */
 export function AddModule(props: Omit<ModuleModalProps, "module">) {
 	return <ModuleModal {...props} module={null} />;
 }
 
-/** Edit-mode alias for the shared module modal. */
+/**
+ * Edit-mode alias for the shared module modal.
+ * @param props
+ * @returns The rendered component.
+ */
 export function EditModule(props: ModuleModalProps) {
 	return <ModuleModal {...props} />;
 }

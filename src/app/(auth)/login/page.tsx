@@ -10,7 +10,10 @@ const hanken = Hanken_Grotesk({
 	weight: ["400", "500", "600", "700"],
 });
 
-/** Login page (split-panel with LoginForm). */
+/**
+ * Login page (split-panel with LoginForm).
+ * @returns The rendered component.
+ */
 export default function LoginPage() {
 	return (
 		<div className={`${hanken.className} flex min-h-screen w-full`}>

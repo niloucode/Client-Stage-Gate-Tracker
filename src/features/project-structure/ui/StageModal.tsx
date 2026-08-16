@@ -42,6 +42,7 @@ export interface StageModalProps {
 	/**
 	 * Called after a successful create or update. Receives the saved stage
 	 * so callers can sync their queries.
+ * @returns The result.
 	 */
 	onSaved?: (saved: { stage_id: string; name: string }) => void;
 	onDelete?: () => void;
@@ -51,7 +52,10 @@ const stageModalSchema = stageCreateSchema;
 
 type StageFormValues = z.input<typeof stageModalSchema>;
 
-/** Create/edit stage dialog with required plan dates. */
+/**
+ * Create/edit stage dialog with required plan dates.
+ * @returns The result.
+ */
 export function StageModal({
 	isOpen,
 	onClose,

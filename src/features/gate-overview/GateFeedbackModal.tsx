@@ -154,7 +154,10 @@ function GateFeedbackCard({
 	);
 }
 
-/** Gate feedback history: comments and images for every gate decision. */
+/**
+ * Gate feedback history: comments and images for every gate decision.
+ * @returns The rendered component.
+ */
 export function GateFeedbackModal({
 	isOpen,
 	onClose,

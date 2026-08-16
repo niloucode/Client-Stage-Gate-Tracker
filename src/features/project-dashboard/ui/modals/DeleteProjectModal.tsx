@@ -18,7 +18,10 @@ interface DeleteProjectModalProps {
 	onConfirm: () => void;
 }
 
-/** Type-to-confirm project deletion dialog. */
+/**
+ * Type-to-confirm project deletion dialog.
+ * @returns The result.
+ */
 export function DeleteProjectModal({
 	isOpen,
 	projectName,

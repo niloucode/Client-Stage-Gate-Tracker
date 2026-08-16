@@ -19,6 +19,10 @@ function truncateLabel(text: string, maxLength = 20): string {
 	return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
 }
 
+/**
+ *
+ * @returns The rendered component.
+ */
 export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
 	return (
 		<nav

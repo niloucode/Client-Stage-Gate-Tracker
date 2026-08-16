@@ -30,7 +30,10 @@ export function throwIfActionFailed<T>(result: {
 	throw new Error(result.serverError ?? "Server action failed.");
 }
 
-/** Mutation hook: create a phase. */
+/**
+ * Mutation hook: create a phase.
+ * @returns The result.
+ */
 export function useCreatePhase() {
 	const queryClient = useQueryClient();
 
@@ -45,7 +48,10 @@ export function useCreatePhase() {
 	});
 }
 
-/** Mutation hook: update a phase. */
+/**
+ * Mutation hook: update a phase.
+ * @returns The result.
+ */
 export function useUpdatePhase() {
 	const queryClient = useQueryClient();
 
@@ -61,7 +67,10 @@ export function useUpdatePhase() {
 	});
 }
 
-/** Mutation hook: cascade-soft-delete a phase. */
+/**
+ * Mutation hook: cascade-soft-delete a phase.
+ * @returns The result.
+ */
 export function useDeletePhase() {
 	const queryClient = useQueryClient();
 
@@ -76,7 +85,10 @@ export function useDeletePhase() {
 	});
 }
 
-/** Mutation hook: reorder phases within a stage. */
+/**
+ * Mutation hook: reorder phases within a stage.
+ * @returns The result.
+ */
 export function useReorderPhase() {
 	const queryClient = useQueryClient();
 

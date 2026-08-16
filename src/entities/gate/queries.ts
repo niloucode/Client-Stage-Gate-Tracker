@@ -29,17 +29,29 @@ const gateQueryOptions = {
 		}),
 };
 
-/** Query hook: a stage's gates + canDecide. */
+/**
+ * Query hook: a stage's gates + canDecide.
+ * @param stageId
+ * @returns The result.
+ */
 export function useStageGates(stageId: string | undefined) {
 	return useQuery(gateQueryOptions.list(stageId));
 }
 
-/** Query hook: a gate's discussion thread. */
+/**
+ * Query hook: a gate's discussion thread.
+ * @param gateId
+ * @returns The result.
+ */
 export function useGateComments(gateId: string | undefined) {
 	return useQuery(gateQueryOptions.comments(gateId));
 }
 
-/** Mutation hook: decide (approve/decline) a stage gate. */
+/**
+ * Mutation hook: decide (approve/decline) a stage gate.
+ * @param stageId
+ * @returns The result.
+ */
 export function useDecideGate(stageId: string | undefined) {
 	const queryClient = useQueryClient();
 
@@ -68,6 +80,12 @@ export function useDecideGate(stageId: string | undefined) {
 	});
 }
 
+/**
+ *
+ * @param gateId
+ * @param stageId
+ * @returns The result.
+ */
 export function useCreateGateComment(
 	gateId: string | undefined,
 	stageId: string | undefined,

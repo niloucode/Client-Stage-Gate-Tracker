@@ -8,6 +8,10 @@ import {
 	approveContract,
 } from "./contractActions";
 
+/**
+ *
+ * @returns The result.
+ */
 export function useUploadContract() {
 	const queryClient = useQueryClient();
 
@@ -31,6 +35,10 @@ export function useUploadContract() {
 	});
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function useDeleteContract() {
 	const queryClient = useQueryClient();
 
@@ -45,6 +53,10 @@ export function useDeleteContract() {
 	});
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function useApproveContract() {
 	const queryClient = useQueryClient();
 

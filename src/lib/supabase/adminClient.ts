@@ -11,8 +11,12 @@ import { env } from "@/env";
  * upload/removal in `src/entities/contract/contractActions.ts`).
  *
  * For normal request-scoped access use `@/lib/supabase/server` (anon key).
+ * @returns The result.
  */
-/** Service-role client factory (see the admin-only warning above). */
+/**
+ * Service-role client factory (see the admin-only warning above).
+ * @returns The result.
+ */
 export function createAdminClient() {
 	return createClient(
 		env.NEXT_PUBLIC_SUPABASE_URL,

@@ -14,7 +14,10 @@ const tagQueryOptions = {
 		}),
 };
 
-/** Query hook: the tag list. */
+/**
+ * Query hook: the tag list.
+ * @returns The result.
+ */
 export function useTags() {
 	return useQuery(tagQueryOptions.list());
 }

@@ -181,6 +181,8 @@ export async function updateWorkflow(
 }
 
 /** Cascading soft delete: workflow + its tickets (batched).
+ * @param workflowId
+ * @param txClient
  * @returns The mutation result.
  */
 export async function cascadeSoftDeleteWorkflow(

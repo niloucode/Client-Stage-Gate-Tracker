@@ -4,7 +4,10 @@ interface PageParams {
 	projectId: string;
 }
 
-/** Gantt dashboard route. */
+/**
+ * Gantt dashboard route.
+ * @returns The rendered component.
+ */
 export default async function DashboardAnalyticsRoute({
 	params,
 }: {

@@ -2,7 +2,11 @@ import { status as StatusEnum } from "@/lib/generated/prisma";
 import { getInitials } from "@/shared/lib/strings";
 import type { LinkedIssueChip } from "@/entities/issue";
 
-/** Stable short display code derived from the uuid (no fake 'LRN-BNN' strings). */
+/**
+ * Stable short display code derived from the uuid (no fake 'LRN-BNN' strings).
+ * @param ticketId
+ * @returns The result.
+ */
 export function ticketCode(ticketId: string): string {
 	return ticketId.slice(0, 8).toUpperCase();
 }
@@ -34,6 +38,10 @@ export const STATUSES = [
 	StatusEnum.FINISHED,
 ];
 
+/**
+ *
+ * @returns The result.
+ */
 export function UserAvatar({
 	name,
 	color = "bg-brand-500",
@@ -52,6 +60,11 @@ export function UserAvatar({
 	);
 }
 
+/**
+ *
+ * @param issue
+ * @returns The result.
+ */
 export function getLinkedIssueStyle(issue: LinkedIssueChip | null) {
 	if (!issue) {
 		return {

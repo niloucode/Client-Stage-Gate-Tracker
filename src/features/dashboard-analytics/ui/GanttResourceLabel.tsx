@@ -1,6 +1,10 @@
 import type { GanttRowResource } from "../lib/ganttMapping";
 
-/** Two-line tree-row label: "PHASE 01" (status-colored) over the row's name. * @returns The rendered label.
+/**
+
+ * Two-line tree-row label: "PHASE 01" (status-colored) over the row's name.
+
+ * @returns The rendered label.
  */
 export function GanttResourceLabel({
 	resource,

@@ -13,6 +13,11 @@ const ticketQueryOptions = {
 		}),
 };
 
+/**
+ * Query hook: a workflow's ticket board rows.
+ * @param workflowId
+ * @returns The result.
+ */
 export function useTicketsByWorkflow(workflowId: string | undefined) {
 	return useQuery(ticketQueryOptions.byWorkflow(workflowId));
 }

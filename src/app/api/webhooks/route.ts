@@ -21,6 +21,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * This route currently accepts anything and performs no side effects; it
  * must not gain unauthenticated behavior until signature verification
  * lands in the same commit.
+ * @returns `{ ok: true }` — the stub response.
  *
  * Reference implementation shape (Stripe):
  *
@@ -34,6 +35,7 @@ import { NextResponse, type NextRequest } from "next/server";
  *     return NextResponse.json({ error: "invalid signature" }, { status: 400 });
  *   }
  *   // ... handle event.idempotently
+ * @param _request
  */
 export async function POST(_request: NextRequest) {
 	// Intentionally unused: the stub accepts any request and performs no

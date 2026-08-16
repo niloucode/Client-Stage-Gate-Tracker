@@ -18,6 +18,8 @@ const BUG_TYPE_LABELS: Record<BugType, string> = {
 /**
  * Label for an issue's stored type. Issues of type "other" store the free
  * text in the DB `type` column, so the lookup falls back to the raw string.
+ * @param type
+ * @returns The result.
  */
 export function bugTypeLabel(type: string): string {
 	return BUG_TYPE_LABELS[type as BugType] ?? type;

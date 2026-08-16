@@ -7,6 +7,7 @@ import { getCurrentUserId } from "@/lib/auth/projectAccess";
  * Requires an authenticated session (rejects with 401 otherwise). No
  * notifications are produced yet; the payload shape is defined when the
  * notifications feature lands (planned: HistoryEvent-driven digests).
+ * @returns The result.
  */
 export async function POST() {
 	const userId = await getCurrentUserId();

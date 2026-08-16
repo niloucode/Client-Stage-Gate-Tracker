@@ -25,6 +25,7 @@ export interface IssueStats {
  * at most one row (FINISHED soft-deleted tickets keep their link per spec).
  * Module-private: a "use server" file may only export async functions
  * (Next.js rule — an exported object breaks every import of this module).
+ * @returns The result.
  */
 const issueDetailInclude = {
 	IssueSteps: { orderBy: { number: "asc" as const } },
@@ -36,6 +37,9 @@ const issueDetailInclude = {
  * Creates a project-scoped issue. Both clients and project team/owners may
  * report issues (spec 2026-08-15); the reporter profile is recorded
  * server-side from the session.
+ * @param projectId
+ * @param data
+ * @returns The result.
  */
 export async function createIssue(
 	projectId: string,
@@ -82,6 +86,8 @@ export async function createIssue(
 /**
  * Project-scoped issue list (newest first), mapped to the UI shape.
  * Any project member — including the contract client — may read.
+ * @param projectId
+ * @returns The result.
  */
 export async function listIssues(projectId: string): Promise<IssueItem[]> {
 	const auth = await assertProjectMemberOrClient(projectId);
@@ -104,6 +110,7 @@ export async function listIssues(projectId: string): Promise<IssueItem[]> {
  *
  * Issues are not user- or project-scoped in the schema, so the stats are
  * system-wide. Returns null when there is no authenticated user.
+ * @returns The result.
  */
 export async function getIssueStats(): Promise<IssueStats | null> {
 	const userId = await getCurrentUserId();

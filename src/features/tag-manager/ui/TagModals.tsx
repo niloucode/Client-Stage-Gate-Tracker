@@ -19,6 +19,10 @@ import { Plus } from "lucide-react";
 
 // ── Tag List Modal ────────────────────────────────────────────────────────────
 
+/**
+ *
+ * @returns The result.
+ */
 export function TagManager({
 	isOpen,
 	onClose,

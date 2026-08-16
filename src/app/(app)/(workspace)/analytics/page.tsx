@@ -1,4 +1,7 @@
-/** Analytics route (stub). */
+/**
+ * Analytics route (stub).
+ * @returns The rendered component.
+ */
 export default async function AnalyticsPage({
 	params,
 }: {

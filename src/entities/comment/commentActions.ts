@@ -43,7 +43,12 @@ async function guardParentRead(
 	return { ok: false };
 }
 
-/** Images attached to a comment parent (membership-guarded). */
+/**
+ * Images attached to a comment parent (membership-guarded).
+ * @param parentType
+ * @param parentId
+ * @returns The result.
+ */
 export async function selectImagesByParent(
 	parentType: ImageParentType,
 	parentId: string,
@@ -55,7 +60,12 @@ export async function selectImagesByParent(
 	});
 }
 
-/** A comment with its images (membership-guarded). */
+/**
+ * A comment with its images (membership-guarded).
+ * @param parentType
+ * @param parentId
+ * @returns The result.
+ */
 export async function selectComment(
 	parentType: CommentParentType,
 	parentId: string,
@@ -106,7 +116,11 @@ export async function selectComment(
 	}));
 }
 
-/** Creates a comment + its images atomically (membership-guarded). */
+/**
+ * Creates a comment + its images atomically (membership-guarded).
+ * @param data
+ * @returns The result.
+ */
 export async function createCommentWithImages(data: CommentCreateInput) {
 	commentCreateSchema.parse(data);
 

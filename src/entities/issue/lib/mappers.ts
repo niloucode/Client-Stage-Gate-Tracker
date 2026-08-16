@@ -51,7 +51,11 @@ export interface LinkedIssueRow {
 	status: IssueStatus;
 }
 
-/** Matches the legacy mock's display format: "08/02/2026, 14:30" (24h). */
+/**
+ * Matches the legacy mock's display format: "08/02/2026, 14:30" (24h).
+ * @param date
+ * @returns The result.
+ */
 export function formatIssueDateTime(date: Date): string {
 	return `${date.toLocaleDateString("en-US", {
 		month: "2-digit",
@@ -67,6 +71,8 @@ export function formatIssueDateTime(date: Date): string {
 /**
  * Maps a server issue row (with IssueSteps / Tickets / Profile includes) to
  * the UI `IssueItem` shape used by the issue page and the ticket-board picker.
+ * @param row
+ * @returns The result.
  */
 export function mapIssueRow(row: IssueRow): IssueItem {
 	const ticket = row.Tickets[0] ?? null;
@@ -100,6 +106,8 @@ export function mapIssueRow(row: IssueRow): IssueItem {
  * reporter/linked-ticket tree) to the board's linked-issue chip shape.
  * Keeps board queries light: the full row is only fetched by the issue
  * slice's own actions (listIssues / createIssue).
+ * @param row
+ * @returns The result.
  */
 export function mapLinkedIssueChip(row: LinkedIssueRow): LinkedIssueChip {
 	return {

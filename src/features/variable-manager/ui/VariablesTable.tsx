@@ -128,11 +128,17 @@ interface VariablesTableProps {
 	onViewNotes: (variable: VariableItem) => void;
 	onEdit: (variable: VariableItem) => void;
 	onDeleteRequest: (variable: VariableItem) => void;
-	/** Clients are read-only: no toggle/edit/delete (server-enforced too). */
+/**
+ * Clients are read-only: no toggle/edit/delete (server-enforced too).
+ * @returns The result.
+ */
 	readOnly?: boolean;
 }
 
-/** Sortable variables table with visibility toggles and row actions. */
+/**
+ * Sortable variables table with visibility toggles and row actions.
+ * @returns The result.
+ */
 export function VariablesTable({
 	variables,
 	sortField,

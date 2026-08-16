@@ -22,12 +22,20 @@ const commentQueryOptions = {
 		}),
 };
 
-/** Query hook: a ticket's comments. */
+/**
+ * Query hook: a ticket's comments.
+ * @param ticketId
+ * @returns The result.
+ */
 export function useTicketComments(ticketId: string | undefined) {
 	return useQuery(commentQueryOptions.list(ticketId));
 }
 
-/** Query hook: a ticket's attached images. */
+/**
+ * Query hook: a ticket's attached images.
+ * @param ticketId
+ * @returns The result.
+ */
 export function useTicketImages(ticketId: string | undefined) {
 	return useQuery(commentQueryOptions.images(ticketId));
 }

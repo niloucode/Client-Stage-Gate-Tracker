@@ -4,7 +4,10 @@
 
 import { ClientsPage } from "@/features/client-manager";
 
-/** Clients route (registry, staff-only). */
+/**
+ * Clients route (registry, staff-only).
+ * @returns The rendered component.
+ */
 export default function ClientsRoute() {
 	return <ClientsPage />;
 }

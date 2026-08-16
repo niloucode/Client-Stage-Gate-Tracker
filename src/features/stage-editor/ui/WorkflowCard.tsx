@@ -113,7 +113,10 @@ const DEADLINE_STYLES: Record<DeadlineState, string> = {
 	late_done: "text-red-600",
 };
 
-/** Workflow card: date badges, progress, and edit/delete controls. */
+/**
+ * Workflow card: date badges, progress, and edit/delete controls.
+ * @returns The result.
+ */
 export function WorkflowCard({
 	workflows,
 	moduleId,

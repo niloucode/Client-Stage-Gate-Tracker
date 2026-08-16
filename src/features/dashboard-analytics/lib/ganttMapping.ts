@@ -50,7 +50,11 @@ export function statusColorToken(status: GanttRowStatus): string {
 	}
 }
 
-/** The planned bar range (plan dates, always present). */
+/**
+ * The planned bar range (plan dates, always present).
+ * @param row
+ * @returns The result.
+ */
 export function getPlannedRange(row: GanttRowData): { start: Date; end: Date } {
 	return { start: row.plan_start_at, end: row.plan_end_at };
 }

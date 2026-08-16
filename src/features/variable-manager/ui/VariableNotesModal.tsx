@@ -12,12 +12,18 @@ import type { VariableItem } from "@/entities/variable";
 interface VariableNotesModalProps {
 	isOpen: boolean;
 	variable: VariableItem | null;
-	/** Client viewers see ONLY their own (client) notes — team notes never render. */
+/**
+ * Client viewers see ONLY their own (client) notes — team notes never render.
+ * @returns The rendered component.
+ */
 	clientView?: boolean;
 	onClose: () => void;
 }
 
-/** Team/owner notes viewer for a variable (hidden for clients). */
+/**
+ * Team/owner notes viewer for a variable (hidden for clients).
+ * @returns The rendered component.
+ */
 export function VariableNotesModal({
 	isOpen,
 	variable,

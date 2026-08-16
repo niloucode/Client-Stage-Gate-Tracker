@@ -52,7 +52,10 @@ function StatusBadge({ status }: { status: ContractStatus }) {
 	);
 }
 
-/** Pending-contracts list card for the dashboard. */
+/**
+ * Pending-contracts list card for the dashboard.
+ * @returns The result.
+ */
 export function PendingContracts({ contracts = [] }: PendingContractsProps) {
 	const router = useRouter();
 	const [currentPage, setCurrentPage] = useState(1);

@@ -13,7 +13,9 @@ const roleQueryOptions = {
 };
 
 /** Global dashboard-role query — owner iff the user holds a Project Owner
- * roleAssignment on any project (resolveDashboardRole). */
+ * roleAssignment on any project (resolveDashboardRole).
+ * @returns Whether the caller is a project owner.
+ */
 export function useDashboardRole() {
 	return useQuery(roleQueryOptions.role());
 }

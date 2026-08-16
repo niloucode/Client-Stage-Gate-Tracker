@@ -424,6 +424,8 @@ export async function softDeleteProject(
 
 /**
  * Fetches all members of a project, including their profile and role info.
+ * @param projectId
+ * @returns The result.
  */
 export async function getProjectMembers(projectId: string) {
 	const userId = await getCurrentUserId();
@@ -457,6 +459,8 @@ export async function getProjectMembers(projectId: string) {
  * Searches for profiles that can be added to a project.
  * Searches by first_name, last_name, or email, limited to 20 results.
  * Excludes soft-deleted profiles.
+ * @param query
+ * @returns The result.
  */
 export async function searchProfilesForProject(query: string) {
 	const userId = await getCurrentUserId();
@@ -489,6 +493,10 @@ export async function searchProfilesForProject(query: string) {
 /**
  * Adds a profile to a project with the given role name.
  * Throws if the assignment already exists (unique constraint).
+ * @param projectId
+ * @param profileId
+ * @param roleName
+ * @returns The result.
  */
 export async function addProjectMember(
 	projectId: string,
@@ -552,6 +560,9 @@ export async function addProjectMember(
 /**
  * Removes a profile from a project by deleting the RoleAssignments row.
  * Prevents removing the last remaining Project Owner.
+ * @param projectId
+ * @param profileId
+ * @returns The result.
  */
 export async function removeProjectMember(
 	projectId: string,
@@ -626,6 +637,8 @@ export async function removeProjectMember(
  *               tickets finish — see src/entities/ticket/lib/dateRollup.ts)
  *   - module:   actual_end_at set (same rollup)
  *   - phase:    every non-deleted child module has actual_end_at
+ * @param projectId
+ * @returns The result.
  */
 export async function getProjectStats(projectId: string) {
 	const auth = await assertProjectMember(projectId);

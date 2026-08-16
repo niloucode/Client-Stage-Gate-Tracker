@@ -123,7 +123,10 @@ const FormField = ({
 	</div>
 );
 
-/** Priority Selector Component with active highlights and error state */
+/**
+ * Priority Selector Component with active highlights and error state
+ * @returns The result.
+ */
 const UrgencySelector = ({
 	value,
 	onChange,
@@ -189,7 +192,10 @@ const UrgencySelector = ({
 	);
 };
 
-/** Form-kit bound urgency selector (reads its field via context). */
+/**
+ * Form-kit bound urgency selector (reads its field via context).
+ * @returns The rendered component.
+ */
 function UrgencyField() {
 	const field = useFieldContext<UrgencyLevel | "">();
 	const error = firstFieldError(field.state.meta.errors);
@@ -204,7 +210,10 @@ function UrgencyField() {
 	);
 }
 
-/** Form-kit bound "Time of Error" picker (Date | null ↔ DateTimePicker). */
+/**
+ * Form-kit bound "Time of Error" picker (Date | null ↔ DateTimePicker).
+ * @returns The rendered component.
+ */
 function TimeOfErrorField() {
 	const field = useFieldContext<Date | null>();
 	const error = firstFieldError(field.state.meta.errors);
@@ -646,7 +655,10 @@ export const IssueReportingModal: React.FC<IssueReportingModalProps> = ({
 	);
 };
 
-/** Individual Step Row Helper */
+/**
+ * Individual Step Row Helper
+ * @returns The result.
+ */
 const StepRow = ({
 	index,
 	step,

@@ -88,17 +88,29 @@ const dashboardAnalyticsQueryOptions = {
 		}),
 };
 
-/** Gantt data for the phases level. */
+/**
+ * Gantt data for the phases level.
+ * @param projectId
+ * @returns The result.
+ */
 export function usePhasesGantt(projectId: string) {
 	return useQuery(dashboardAnalyticsQueryOptions.phases(projectId));
 }
 
-/** Gantt data for the modules level. */
+/**
+ * Gantt data for the modules level.
+ * @param projectId
+ * @returns The result.
+ */
 export function useModulesGantt(projectId: string) {
 	return useQuery(dashboardAnalyticsQueryOptions.modules(projectId));
 }
 
-/** Gantt data for the workflows level. */
+/**
+ * Gantt data for the workflows level.
+ * @param projectId
+ * @returns The result.
+ */
 export function useWorkflowsGantt(projectId: string) {
 	return useQuery(dashboardAnalyticsQueryOptions.workflows(projectId));
 }

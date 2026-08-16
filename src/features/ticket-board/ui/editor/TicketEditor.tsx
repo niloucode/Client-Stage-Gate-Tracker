@@ -22,6 +22,10 @@ import {
 import { TicketActivitySection } from "./TicketActivitySection";
 import { ticketCode } from "./helpers";
 
+/**
+ *
+ * @returns The result.
+ */
 export default function TicketEditor({
 	initialTicket,
 	tags,

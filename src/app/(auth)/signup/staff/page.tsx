@@ -1,6 +1,7 @@
 /**
  * Staff signup page — split-panel layout with StaffSignupForm on the left
  * and the Asceoft brand panel on the right.
+ * @returns The rendered component.
  */
 
 import Image from "next/image";
@@ -12,7 +13,10 @@ const hanken = Hanken_Grotesk({
 	weight: ["400", "500", "600", "700"],
 });
 
-/** Staff signup page (department invite code). */
+/**
+ * Staff signup page (department invite code).
+ * @returns The rendered component.
+ */
 export default function SignupPage() {
 	return (
 		<div className={`${hanken.className} flex min-h-screen w-full`}>

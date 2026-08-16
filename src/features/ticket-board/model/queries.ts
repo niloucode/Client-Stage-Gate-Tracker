@@ -37,7 +37,11 @@ async function fetchTicketHistory(
 	);
 }
 
-/** TanStack Query hook for a ticket's history log. */
+/**
+ * TanStack Query hook for a ticket's history log.
+ * @param ticketId
+ * @returns The result.
+ */
 export function useTicketHistory(ticketId: string | undefined) {
 	return useQuery({
 		queryKey: historyKeys.list(ticketId!),

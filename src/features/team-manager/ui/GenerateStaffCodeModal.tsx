@@ -27,6 +27,10 @@ interface GenerateStaffCodeModalProps {
 	onClose: () => void;
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function GenerateStaffCodeModal({
 	isOpen,
 	onClose,

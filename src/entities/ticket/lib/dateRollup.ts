@@ -32,7 +32,10 @@ interface RolledUpDates {
 	actual_end_at: Date | null;
 }
 
-/** Roll a list of child tickets up into one Workflow boundary. */
+/** Roll a list of child tickets up into one Workflow boundary. 
+ * @param tickets - The workflow's tickets.
+ * @returns The rolled-up boundary dates.
+ */
 export function rollupWorkflowDates(tickets: TicketDateInput[]): RolledUpDates {
 	if (tickets.length === 0) {
 		return {
@@ -76,6 +79,8 @@ export function rollupWorkflowDates(tickets: TicketDateInput[]): RolledUpDates {
  * Roll child Workflows up into a Module boundary. A Module's dates come
  * from its workflows' rolled-up dates; actualEnd additionally requires
  * every workflow to be finished (all tickets finished).
+ * @param workflows - The module's workflows.
+ * @returns The rolled-up boundary dates.
  */
 export function rollupModuleDates(
 	workflows: {
@@ -132,6 +137,8 @@ export function rollupModuleDates(
  * Execute the workflow + module rollup for the workflow a ticket belongs
  * to. Must be called inside the caller's Prisma transaction so the parent
  * boundaries update atomically with the ticket write.
+ * @param tx - The caller's transaction client.
+ * @param workflowId - The workflow whose ancestors roll up.
  */
 export async function rollupTicketAncestors(
 	tx: Prisma.TransactionClient,

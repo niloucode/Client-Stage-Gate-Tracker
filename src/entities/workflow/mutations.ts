@@ -16,8 +16,12 @@ import type {
 /**
  * Workflow mutations use the canonical scheduling vocabulary
  * (planStart/planEnd/actualStart/actualEnd) — see Task 3.1.
+ * @returns The result.
  */
-/** Mutation hook: create a workflow. */
+/**
+ * Mutation hook: create a workflow.
+ * @returns The result.
+ */
 export function useCreateWorkflow() {
 	const queryClient = useQueryClient();
 
@@ -38,7 +42,10 @@ export function useCreateWorkflow() {
 	});
 }
 
-/** Mutation hook: update a workflow. */
+/**
+ * Mutation hook: update a workflow.
+ * @returns The result.
+ */
 export function useUpdateWorkflow() {
 	const queryClient = useQueryClient();
 
@@ -59,7 +66,10 @@ export function useUpdateWorkflow() {
 	});
 }
 
-/** Mutation hook: cascade-soft-delete a workflow. */
+/**
+ * Mutation hook: cascade-soft-delete a workflow.
+ * @returns The result.
+ */
 export function useDeleteWorkflow() {
 	const queryClient = useQueryClient();
 
@@ -78,7 +88,10 @@ export function useDeleteWorkflow() {
 	});
 }
 
-/** Mutation hook: reorder workflows within a module. */
+/**
+ * Mutation hook: reorder workflows within a module.
+ * @returns The result.
+ */
 export function useReorderWorkflow() {
 	const queryClient = useQueryClient();
 

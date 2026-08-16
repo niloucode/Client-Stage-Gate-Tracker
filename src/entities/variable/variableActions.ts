@@ -21,6 +21,7 @@ import { variableClientSelect, variableSelect } from "./types";
  * Project-scoped variable list. Team/owners see everything; client viewers
  * receive ONLY client_visible rows (value included) and never notes_team.
  * Hidden rows are not sent at all (2026-08-15 user decision).
+  * @param projectId
   * @returns The role-shaped variable list.
 */
 export async function getProjectVariables(projectId: string) {

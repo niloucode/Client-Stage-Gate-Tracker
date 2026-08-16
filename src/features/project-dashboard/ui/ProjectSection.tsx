@@ -54,7 +54,10 @@ const STATUS_CONFIG: Record<
 	},
 };
 
-/** Collapsible project section grouped by status. */
+/**
+ * Collapsible project section grouped by status.
+ * @returns The result.
+ */
 export function ProjectSection({
 	title,
 	status,

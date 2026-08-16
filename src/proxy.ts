@@ -75,7 +75,11 @@ function buildCsp(): string {
 	].join("; ");
 }
 
-/** Middleware entry: refreshes the session and sets the CSP header. */
+/**
+ * Middleware entry: refreshes the session and sets the CSP header.
+ * @param request
+ * @returns The result.
+ */
 export async function proxy(request: NextRequest) {
 	const response = await updateSession(request);
 	response.headers.set("Content-Security-Policy", buildCsp());

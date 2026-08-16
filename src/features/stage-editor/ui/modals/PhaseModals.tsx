@@ -380,10 +380,20 @@ function PhaseModal({
 
 // ── Backward-compatible Aliases ──────────────────────────────────────────────
 
+/**
+ *
+ * @param props
+ * @returns The rendered component.
+ */
 export function AddPhase(props: Omit<PhaseModalProps, "phase">) {
 	return <PhaseModal {...props} phase={null} />;
 }
 
+/**
+ *
+ * @param props
+ * @returns The rendered component.
+ */
 export function EditPhase(props: PhaseModalProps) {
 	return <PhaseModal {...props} />;
 }

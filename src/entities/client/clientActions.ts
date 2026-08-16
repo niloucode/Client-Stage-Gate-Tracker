@@ -64,7 +64,10 @@ async function requireStaff(): Promise<
 	return { ok: true };
 }
 
-/** Staff-only: the full client registry with member profiles. */
+/**
+ * Staff-only: the full client registry with member profiles.
+ * @returns The result.
+ */
 export async function clientSelectAll() {
 	// Staff-only: the registry (names, TINs, emails, billing) must never be
 	// reachable by client profiles or unauthenticated callers. Throwing lets
@@ -159,7 +162,11 @@ async function createClientWithInviteCode(
 	throw new Error("Could not allocate a unique invite code.");
 }
 
-/** Owner-only: creates a client with a fresh invite code. */
+/**
+ * Owner-only: creates a client with a fresh invite code.
+ * @param client
+ * @returns The result.
+ */
 export async function clientCreate(
 	client: ClientCreateType,
 ): Promise<ClientMutationResult> {
@@ -260,7 +267,11 @@ export async function resolveClientByInviteCode(
 	}
 }
 
-/** Owner-only: updates client registry fields. */
+/**
+ * Owner-only: updates client registry fields.
+ * @param client
+ * @returns The result.
+ */
 export async function clientUpdate(
 	client: ClientType,
 ): Promise<ClientMutationResult> {

@@ -16,6 +16,8 @@ import {
  * Server-side PDF magic-byte check. A PDF starts with "%PDF-"
  * (0x25 0x50 0x44 0x46 0x2D). `File.type` is browser-supplied metadata and
  * cannot be trusted (Task 2.7).
+ * @param file
+ * @returns The result.
  */
 export async function isPdfFile(file: File): Promise<boolean> {
 	const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
@@ -29,6 +31,11 @@ export async function isPdfFile(file: File): Promise<boolean> {
 	);
 }
 
+/**
+ *
+ * @param formData
+ * @returns The result.
+ */
 export async function uploadContract(formData: FormData) {
 	const projectId = formData.get("projectId") as string;
 	const file = formData.get("file") as File;
@@ -141,6 +148,11 @@ export async function uploadContract(formData: FormData) {
 
 // ── GET SIGNED URL ────────────────────────────────────────────────────────────
 
+/**
+ *
+ * @param filePath
+ * @returns The result.
+ */
 export async function getContractUrl(filePath: string) {
 	try {
 		if (!filePath) {
@@ -167,6 +179,12 @@ export async function getContractUrl(filePath: string) {
 }
 
 // ── SOFT DELETE ───────────────────────────────────────────────────────────────
+/**
+ *
+ * @param projectId
+ * @param filePath
+ * @returns The result.
+ */
 export async function deleteContract(projectId: string, filePath: string) {
 	try {
 		// Authorization: owner-only (2026-08-15 spec)
@@ -226,6 +244,11 @@ export async function deleteContract(projectId: string, filePath: string) {
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
 
+/**
+ *
+ * @param projectId
+ * @returns The result.
+ */
 export async function getContractByProjectId(projectId: string) {
 	try {
 		if (!projectId) {
@@ -386,6 +409,7 @@ export type ContractRow = Awaited<ReturnType<typeof getMyContracts>>[number];
  * Owners get contracts of projects they own; everyone else gets none.
  * The caller's own role decides the scope — a caller can never request
  * another client's or project's contracts.
+ * @returns The result.
  */
 export async function getMyContracts() {
 	const userId = await getCurrentUserId();

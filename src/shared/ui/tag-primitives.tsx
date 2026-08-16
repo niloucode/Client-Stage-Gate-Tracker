@@ -3,7 +3,10 @@
 import { Check } from "lucide-react";
 import { TAG_COLORS, TAG_COLOR_NAMES } from "@/shared/lib/colors";
 
-/** Color-swatch grid for choosing a tag color. */
+/**
+ * Color-swatch grid for choosing a tag color.
+ * @returns The rendered component.
+ */
 export function ColorPicker({
 	value,
 	onChange,

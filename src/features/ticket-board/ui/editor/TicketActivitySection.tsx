@@ -18,6 +18,10 @@ import { toast } from "@/components/ui/toast";
 import TicketHistoryLog from "../TicketHistoryLog";
 import { UserAvatar } from "./helpers";
 
+/**
+ *
+ * @returns The result.
+ */
 export function TicketActivitySection({
 	ticketId,
 	comments,

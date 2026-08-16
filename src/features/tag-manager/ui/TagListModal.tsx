@@ -7,6 +7,10 @@ import { TagBadge } from "@/entities/tag";
 import { Lacking } from "@/shared/ui/search-status";
 import { matchesTagSearch, sortTagsForDisplay } from "../model/tagOrdering";
 
+/**
+ *
+ * @returns The result.
+ */
 export default function TagListModal({
 	tags,
 	onEditTag,

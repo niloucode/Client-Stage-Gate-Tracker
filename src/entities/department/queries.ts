@@ -13,8 +13,15 @@ const departmentQueryOptions = {
 		}),
 };
 
-/** Department name lookup for a profile's `department_id`. */
-/** Query hook: department details. */
+/**
+ * Department name lookup for a profile's `department_id`.
+ * @returns The result.
+ */
+/**
+ * Query hook: department details.
+ * @param departmentId
+ * @returns The result.
+ */
 export function useDepartment(departmentId: string | undefined) {
 	return useQuery(departmentQueryOptions.detail(departmentId));
 }

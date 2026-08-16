@@ -132,7 +132,10 @@ function getIssueUrgencyStyle(issue: IssueItem | null) {
 /* 1. TICKET CREATE MODAL (DIALOG)                                            */
 /* -------------------------------------------------------------------------- */
 
-/** Create-ticket dialog (dialog shell; see TicketModals for the editor). */
+/**
+ * Create-ticket dialog (dialog shell; see TicketModals for the editor).
+ * @returns The result.
+ */
 export function TicketModalCreate({
 	isOpen,
 	onClose,
@@ -811,7 +814,10 @@ export function TicketModalCreate({
 /* 2. TICKET EDIT MODAL (SLIDING PANEL DRAWER)                                */
 /* -------------------------------------------------------------------------- */
 
-/** Edit-ticket sliding panel; renders the TicketEditor. */
+/**
+ * Edit-ticket sliding panel; renders the TicketEditor.
+ * @returns The result.
+ */
 export function TicketModalEdit({
 	ticket,
 	isOpen,
@@ -877,7 +883,11 @@ export type TicketModalProps =
 	| ({ mode: "create" } & CreateTicketModalProps)
 	| ({ mode: "edit" } & TicketModalEditProps);
 
-/** Dispatches to the create dialog or the edit drawer by mode. */
+/**
+ * Dispatches to the create dialog or the edit drawer by mode.
+ * @param props
+ * @returns The rendered component.
+ */
 export default function TicketModal(props: TicketModalProps) {
 	if (props.mode === "create") {
 		return <TicketModalCreate {...props} />;

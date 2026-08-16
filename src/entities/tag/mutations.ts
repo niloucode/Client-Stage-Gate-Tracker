@@ -4,7 +4,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { tagKeys } from "@/shared/query/keys";
 import { createTag, updateTag, softDeleteTag } from "./tagActions";
 
-/** Mutation hook: create a tag. */
+/**
+ * Mutation hook: create a tag.
+ * @returns The result.
+ */
 export function useCreateTag() {
 	const queryClient = useQueryClient();
 
@@ -16,7 +19,10 @@ export function useCreateTag() {
 	});
 }
 
-/** Mutation hook: update a tag. */
+/**
+ * Mutation hook: update a tag.
+ * @returns The result.
+ */
 export function useUpdateTag() {
 	const queryClient = useQueryClient();
 
@@ -28,7 +34,10 @@ export function useUpdateTag() {
 	});
 }
 
-/** Mutation hook: soft-delete a tag (protected tags refused). */
+/**
+ * Mutation hook: soft-delete a tag (protected tags refused).
+ * @returns The result.
+ */
 export function useDeleteTag() {
 	const queryClient = useQueryClient();
 

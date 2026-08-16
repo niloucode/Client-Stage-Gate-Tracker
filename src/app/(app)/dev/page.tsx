@@ -18,7 +18,10 @@ import {
 	Loader2,
 } from "lucide-react";
 
-/** Dev showcase route (toast playground). */
+/**
+ * Dev showcase route (toast playground).
+ * @returns The result.
+ */
 export default function ToastShowcasePage() {
 	const triggerSuccessToast = () => {
 		toast.add({
