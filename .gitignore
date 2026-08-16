@@ -87,3 +87,7 @@ repomix-output.xml
 *.swp
 *.swo
 *.kate-swp
+/docs/
+/DB/
+/docs/867-Article Text-2420-1-10-20240722.pdf
+/docs/Lorem_ipsum.png
