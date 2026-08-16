@@ -130,6 +130,20 @@ const eslintConfig = defineConfig([
 			"jsdoc/check-syntax": "off",
 		},
 	},
+	// Vendored code stays light (standard §6) — reui gantt + shadcn kit
+	// carry upstream docs; do not churn them with repo JSDoc conventions.
+	{
+		files: ["src/components/reui/**", "src/components/ui/**"],
+		rules: {
+			"jsdoc/require-jsdoc": "off",
+			"jsdoc/require-param": "off",
+			"jsdoc/require-param-name": "off",
+			"jsdoc/check-param-names": "off",
+			"jsdoc/require-returns": "off",
+			"jsdoc/check-tag-names": "off",
+			"jsdoc/check-syntax": "off",
+		},
+	},
 	// Override default ignores of eslint-config-next.
 	globalIgnores([
 		// Default ignores of eslint-config-next:
