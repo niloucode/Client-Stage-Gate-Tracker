@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, Clock3 } from "lucide-react";
+import { CircleCheck, CheckCircle2, Clock3 } from "lucide-react";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
+	CardFooter,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -303,97 +304,110 @@ export function ContractApprovalCard({
 	return (
 		<Card
 			className={cn(
-				"gap-0 p-0 bg-neutral-surface border border-border rounded-md shadow-xs",
 				className,
 			)}
 		>
-			<CardHeader className="px-5 py-4 border-b border-border gap-1">
+			<CardHeader>
 				<CardTitle>Approve Contract</CardTitle>
-				<CardDescription className="text-xs text-muted-foreground">
+				<CardDescription>
 					Both the Project Owner and the Client must approve before the project
 					can begin.
 				</CardDescription>
 			</CardHeader>
 
-			<CardContent className="p-5 flex flex-col gap-4">
-				{/* Signatories / Approval Status List */}
-				<div className="flex flex-col gap-3">
-					{parties.map((party) => {
-							return (
-								<div
-									key={party.id}
-									className="flex flex-col gap-3 rounded-md border border-border bg-neutral-surface p-3.5"
-								>
-									<div className="flex items-center gap-3 w-full">
-										<Avatar className="h-10 w-10">
-											<AvatarFallback
-												className="text-sm"
-												style={{
-													backgroundColor: "#EAEDFF",
-													color: "#131B2E",
-												}}
-											>
-												{initialsFor(party.name)}
-											</AvatarFallback>
-										</Avatar>
+			<CardContent>
+				{contractName?<>{/* Signatories / Approval Status List */}
+					<div className="flex flex-col gap-3">
+						{parties.map((party) => {
+								return (
+									<div
+										key={party.id}
+										className="flex flex-col gap-3 rounded-md border border-border bg-neutral-surface p-3.5"
+									>
+										<div className="flex items-center gap-3 w-full">
+											<Avatar className="h-10 w-10">
+												<AvatarFallback
+													className="text-sm"
+													style={{
+														backgroundColor: "#EAEDFF",
+														color: "#131B2E",
+													}}
+												>
+													{initialsFor(party.name)}
+												</AvatarFallback>
+											</Avatar>
 
-										<div className="min-w-0 flex-1">
-											<p className="truncate text-sm text-foreground font-medium">
-												{party.name}
-											</p>
-											<p className="truncate text-xs text-neutral-subtle-foreground">
-												{party.role}
-											</p>
-											{party.timestamp && (
-												<p className="mt-0.5 text-[11px] text-muted-foreground">
-													Approved {party.timestamp}
+											<div className="min-w-0 flex-1">
+												<p className="truncate text-sm text-foreground font-medium">
+													{party.name}
 												</p>
-											)}
-										</div>
-										{
-											party.isApproved ? 
-											<div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-												<CheckCircle2 className="h-4 w-4" />
-												<span>Approved</span>
-											</div>	:
-											<div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
-												<Clock3 className="h-4 w-4" />
-												<span>Pending</span>
+												<p className="truncate text-xs text-neutral-subtle-foreground">
+													{party.role}
+												</p>
+												{party.timestamp && (
+													<p className="mt-0.5 text-[11px] text-muted-foreground">
+														Approved {party.timestamp}
+													</p>
+												)}
 											</div>
-										}
+											{
+												party.isApproved ? 
+												<div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+													<CheckCircle2 className="h-4 w-4" />
+													<span>Approved</span>
+												</div>	:
+												<div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
+													<Clock3 className="h-4 w-4" />
+													<span>Pending</span>
+												</div>
+											}
+										</div>
+										{party.signatory && <SignatureBox person={party.signatory} />}
 									</div>
-									{party.signatory && <SignatureBox person={party.signatory} />}
-								</div>
-							)})
-					}
-				</div>
+								)})
+						}
+					</div>
 
-				{/* Outcome Banner or Action Button */}
-				{bothApproved ? (
-					<div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs text-emerald-800">
-						<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-						<span>Both parties have approved.</span>
-					</div>
-				) : alreadyApproved ? (
-					<div className="flex items-center gap-2.5 rounded-md border border-border bg-neutral-subtle px-3.5 py-3 text-xs text-muted-foreground">
-						<Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />
-						<span>You have approved. Awaiting {otherRoleLabel} approval.</span>
-					</div>
-				) : (
-					<div className="space-y-3 pt-1">
-						<p className="text-xs text-muted-foreground leading-relaxed">
-							Please review the document and confirm your approval as the{" "}
-							<strong className="text-foreground">{roleLabel}</strong>.
-						</p>
-						<Button
-							onClick={() => setConfirmOpen(true)}
-							className="w-full h-10 text-xs cursor-pointer"
-						>
-							Approve as {roleLabel}
-						</Button>
-					</div>
-				)}
+					{/* Outcome Banner or Action Button */}
+					{bothApproved ? (
+						<div className="flex items-center gap-2.5 rounded-md border border-emerald-200 bg-emerald-50 px-3.5 py-3 text-xs text-emerald-800">
+							<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+							<span>Both parties have approved.</span>
+						</div>
+					) : alreadyApproved ? (
+						<div className="flex items-center gap-2.5 rounded-md border border-border bg-neutral-subtle px-3.5 py-3 text-xs text-muted-foreground">
+							<Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />
+							<span>You have approved. Awaiting {otherRoleLabel} approval.</span>
+						</div>
+					) : (
+						<div className="space-y-3 pt-1">
+							
+						</div>
+					)}
+				</>:""}
 			</CardContent>
+			
+			<CardFooter className="flex flex-col gap-2">
+				{contractName?
+				<>
+				<p className="text-muted-foreground">
+					Please review the document and confirm your approval as the{" "}
+					<span className="text-brand-600!">{roleLabel}</span>.
+				</p>
+				<Button
+					onClick={() => setConfirmOpen(true)}
+					className="w-full"
+				>
+					<CircleCheck/>
+					Approve as {roleLabel}
+				</Button>
+				</>
+				:
+				<div className="w-full flex justify-center text-slate-600">
+					This project does not have a uploaded contract file.
+				</div>
+				}
+			</CardFooter>
 
 			<ConfirmTextModal
 				open={confirmOpen}
