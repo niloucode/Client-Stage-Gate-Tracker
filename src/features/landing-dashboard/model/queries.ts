@@ -47,27 +47,47 @@ const dashboardQueryOptions = {
 
 export { useDashboardRole } from "@/entities/roleAssignment";
 
-/** Dashboard query: tickets assigned to me. */
+/**
+ * Dashboard query: tickets assigned to me.
+ * @param enabled
+ * @returns The result.
+ */
 export function useMyTickets(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.myTickets(enabled));
 }
 
-/** Dashboard query: tickets I watch. */
+/**
+ * Dashboard query: tickets I watch.
+ * @param enabled
+ * @returns The result.
+ */
 export function useWatchedTickets(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.watchedTickets(enabled));
 }
 
-/** Dashboard query: my pending contracts. */
+/**
+ * Dashboard query: my pending contracts.
+ * @param enabled
+ * @returns The result.
+ */
 export function useMyContracts(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.myContracts(enabled));
 }
 
-/** Dashboard query: weekly velocity/risk/deadline sparkline data. */
+/**
+ * Dashboard query: weekly velocity/risk/deadline sparkline data.
+ * @param enabled
+ * @returns The result.
+ */
 export function useActivitySparklines(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.sparklines(enabled));
 }
 
-/** Dashboard query: issue severity + assignment stats. */
+/**
+ * Dashboard query: issue severity + assignment stats.
+ * @param enabled
+ * @returns The result.
+ */
 export function useIssueStats(enabled: boolean) {
 	return useQuery(dashboardQueryOptions.issueStats(enabled));
 }

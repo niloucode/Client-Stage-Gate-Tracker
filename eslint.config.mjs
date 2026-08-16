@@ -23,15 +23,14 @@ const eslintConfig = defineConfig([
 		},
 	},
 	// Code documentation standard (2026-08-16): JSDoc consistency on app
-	// code. WARNINGS until the documentation sweep
-	// (docs/code-documentation-sweep.md) converges the codebase — flip to
-	// "error" when the warning count reaches 0 (CONTRIBUTING §5).
+	// code. ENFORCED (2026-08-16): the sweep converged — 224/224 files,
+	// zero warnings. New exports without JSDoc now fail CI (CONTRIBUTING §5).
 	{
 		files: ["src/**/*.{ts,tsx}"],
 		plugins: { jsdoc },
 		rules: {
 			"jsdoc/require-jsdoc": [
-				"warn",
+				"error",
 				{
 					publicOnly: true,
 					require: {
@@ -43,20 +42,20 @@ const eslintConfig = defineConfig([
 				},
 			],
 			"jsdoc/require-param": [
-				"warn",
+				"error",
 				// Component props are typed inline — per-destructured-key
 				// @param tags are noise (CONTRIBUTING §5 code docs).
 				{ checkDestructured: false, checkDestructuredRoots: false },
 			],
-			"jsdoc/require-param-name": "warn",
+			"jsdoc/require-param-name": "error",
 			"jsdoc/check-param-names": [
 				"warn",
 				// Matches require-param: destructured props stay undocumented.
 				{ checkDestructured: false },
 			],
-			"jsdoc/require-returns": "warn",
-			"jsdoc/check-tag-names": "warn",
-			"jsdoc/check-syntax": "warn",
+			"jsdoc/require-returns": "error",
+			"jsdoc/check-tag-names": "error",
+			"jsdoc/check-syntax": "error",
 		},
 	},
 	// Feature-Sliced Design boundary enforcement (Task 1.9):

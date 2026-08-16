@@ -34,7 +34,10 @@ const profileQueryOptions = {
 		}),
 };
 
-/** Query hook: the team profile list. */
+/**
+ * Query hook: the team profile list.
+ * @returns The result.
+ */
 export function useTeamProfiles(options?: { enabled?: boolean }) {
 	return useQuery({
 		...profileQueryOptions.team(),
@@ -42,12 +45,19 @@ export function useTeamProfiles(options?: { enabled?: boolean }) {
 	});
 }
 
-/** Query hook: a project's member profiles. */
+/**
+ * Query hook: a project's member profiles.
+ * @param projectId
+ * @returns The result.
+ */
 export function useProjectMembers(projectId: string | undefined) {
 	return useQuery(profileQueryOptions.projectMembers(projectId));
 }
 
-/** Query hook: the session profile. */
+/**
+ * Query hook: the session profile.
+ * @returns The result.
+ */
 export function useCurrentUser() {
 	return useQuery(profileQueryOptions.currentUser());
 }

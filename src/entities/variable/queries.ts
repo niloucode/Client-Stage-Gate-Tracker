@@ -29,7 +29,11 @@ const variableQueryOptions = {
 		}),
 };
 
-/** Query hook: a project's variables (role-shaped). */
+/**
+ * Query hook: a project's variables (role-shaped).
+ * @param projectId
+ * @returns The result.
+ */
 export function useProjectVariables(projectId: string | undefined) {
 	return useQuery(variableQueryOptions.list(projectId));
 }
@@ -40,7 +44,11 @@ function useInvalidateList(projectId: string) {
 		queryClient.invalidateQueries({ queryKey: variableKeys.list(projectId) });
 }
 
-/** Mutation hook: create a variable. */
+/**
+ * Mutation hook: create a variable.
+ * @param projectId
+ * @returns The result.
+ */
 export function useCreateVariable(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({
@@ -55,7 +63,11 @@ export function useCreateVariable(projectId: string) {
 	});
 }
 
-/** Mutation hook: update a variable. */
+/**
+ * Mutation hook: update a variable.
+ * @param projectId
+ * @returns The result.
+ */
 export function useUpdateVariable(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({
@@ -73,7 +85,11 @@ export function useUpdateVariable(projectId: string) {
 	});
 }
 
-/** Mutation hook: flip a variable's client visibility. */
+/**
+ * Mutation hook: flip a variable's client visibility.
+ * @param projectId
+ * @returns The result.
+ */
 export function useToggleVariableVisibility(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({
@@ -88,7 +104,11 @@ export function useToggleVariableVisibility(projectId: string) {
 	});
 }
 
-/** Mutation hook: soft-delete a variable. */
+/**
+ * Mutation hook: soft-delete a variable.
+ * @param projectId
+ * @returns The result.
+ */
 export function useDeleteVariable(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({

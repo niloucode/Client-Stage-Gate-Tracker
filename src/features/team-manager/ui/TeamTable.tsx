@@ -87,7 +87,10 @@ export interface TeamTableProps {
 	onSort: (field: TeamSortField) => void;
 }
 
-/** Sortable team-member table with role/department columns. */
+/**
+ * Sortable team-member table with role/department columns.
+ * @returns The rendered component.
+ */
 export function TeamTable({
 	members,
 	sortField,

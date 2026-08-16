@@ -5,7 +5,10 @@ interface PageParams {
 	stageId: string;
 }
 
-/** Gate overview route. */
+/**
+ * Gate overview route.
+ * @returns The rendered component.
+ */
 export default async function GatePage({
 	params,
 }: {

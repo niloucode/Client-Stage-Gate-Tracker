@@ -2,7 +2,10 @@
 import { useParams, useRouter } from "next/navigation";
 import { ProjectStructure } from "@/features/project-structure";
 
-/** Project detail route (overview + access cards). */
+/**
+ * Project detail route (overview + access cards).
+ * @returns The rendered component.
+ */
 export default function PS() {
 	const router = useRouter();
 	const params = useParams<{ projectId: string }>();

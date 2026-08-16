@@ -1,7 +1,10 @@
 import Image from "next/image";
 import { ClientSignupForm } from "@/features/auth";
 
-/** Client signup page (invite code). */
+/**
+ * Client signup page (invite code).
+ * @returns The rendered component.
+ */
 export default function ClientSignupPage() {
 	return (
 		<div className="flex w-full">

@@ -141,7 +141,10 @@ function StageStep({
 	);
 }
 
-/** Horizontal stage stepper navigation. */
+/**
+ * Horizontal stage stepper navigation.
+ * @returns The result.
+ */
 export function StageSequence({
 	stages,
 	selectedId,

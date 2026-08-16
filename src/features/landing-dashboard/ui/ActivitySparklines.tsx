@@ -103,6 +103,8 @@ const severityChartConfig = {
 /**
  * Donut tooltip formatter: the empty-state ring uses a placeholder slice
  * (value 1, purely to draw the circle) — never show that fabricated count.
+ * @param value
+ * @param name
  * @returns The formatted tooltip label.
  */
 function donutTooltipFormatter(value: unknown, name: unknown) {
@@ -143,7 +145,11 @@ const assignmentChartConfig = {
 	None: { label: "No issues", color: "var(--border)" },
 } satisfies ChartConfig;
 
-/** Weekly velocity sparkline: one bar per weekday (Mon–Sun). * @returns The rendered weekday bar chart.
+/**
+
+ * Weekly velocity sparkline: one bar per weekday (Mon–Sun).
+
+ * @returns The rendered weekday bar chart.
  */
 function WeeklyVelocityChart({ daily = [] }: { daily?: number[] }) {
 	const chartData = WEEKDAY_LABELS.map((day, i) => ({
@@ -172,7 +178,11 @@ function WeeklyVelocityChart({ daily = [] }: { daily?: number[] }) {
 	);
 }
 
-/** Card 1: Issues by Severity Doughnut Chart * @returns The rendered donut card.
+/**
+
+ * Card 1: Issues by Severity Doughnut Chart
+
+ * @returns The rendered donut card.
  */
 function IssuesBySeverityCard({ data }: { data?: IssuesBySeverityData }) {
 	const chartData = [
@@ -277,7 +287,10 @@ function IssuesBySeverityCard({ data }: { data?: IssuesBySeverityData }) {
 	);
 }
 
-/** Card 2: Assigned vs Unassigned Doughnut Chart */
+/**
+ * Card 2: Assigned vs Unassigned Doughnut Chart
+ * @returns The result.
+ */
 function AssignedVsUnassignedCard({
 	data,
 }: {
@@ -375,7 +388,10 @@ function AssignedVsUnassignedCard({
 	);
 }
 
-/** Card 3: Weekly Velocity Card */
+/**
+ * Card 3: Weekly Velocity Card
+ * @returns The rendered component.
+ */
 function VelocityCard({ data }: { data?: WeeklyVelocityData }) {
 	const value = data?.value ?? 0;
 	const change = data?.change ?? "—";
@@ -410,7 +426,10 @@ function VelocityCard({ data }: { data?: WeeklyVelocityData }) {
 	);
 }
 
-/** Card 4: Risk Factor + Upcoming Deadlines Combined (Two Split Sections) */
+/**
+ * Card 4: Risk Factor + Upcoming Deadlines Combined (Two Split Sections)
+ * @returns The result.
+ */
 function RiskAndDeadlinesCard({
 	riskFactor,
 	upcomingDeadlines,
@@ -474,6 +493,10 @@ function RiskAndDeadlinesCard({
 /*                               Main Component                               */
 /* -------------------------------------------------------------------------- */
 
+/**
+ *
+ * @returns The rendered component.
+ */
 export function ActivitySparklines({
 	weeklyVelocity,
 	riskFactor,

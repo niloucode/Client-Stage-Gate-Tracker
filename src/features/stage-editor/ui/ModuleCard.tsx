@@ -85,11 +85,17 @@ interface ModuleCardProps {
 	phases: Phase[];
 	projectId: string;
 	stageId: string;
-	/** Clients are read-only: hide add/edit/delete controls. */
+/**
+ * Clients are read-only: hide add/edit/delete controls.
+ * @returns The result.
+ */
 	readOnly?: boolean;
 }
 
-/** Module card: date summary, workflow list, and edit/delete controls. */
+/**
+ * Module card: date summary, workflow list, and edit/delete controls.
+ * @returns The result.
+ */
 export function ModuleCard({
 	activePhase,
 	phases,

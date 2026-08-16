@@ -14,7 +14,11 @@ export interface ActualDatesPatch {
  * - FINISHED -> PENDING:     both reverted to null
  * - IN_PROGRESS -> PENDING:  actual_start_at = null
  * - same status: no patch (server values preserved)
- */
+  * @param oldStatus
+  * @param newStatus
+  * @param now
+  * @returns The actual-date patch.
+*/
 export function computeActualDates(
 	oldStatus: status,
 	newStatus: status,

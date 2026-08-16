@@ -104,7 +104,12 @@ function AssigneesCell({ assignees }: { assignees?: AssigneeData[] }) {
 	);
 }
 
-/** Formats time remaining: Days left -> Hours left -> Minutes left -> Overdue */
+/**
+ * Formats time remaining: Days left -> Hours left -> Minutes left -> Overdue
+ * @param dueAt
+ * @param fallbackText
+ * @returns The result.
+ */
 function formatTimeLeft(
 	dueAt?: Date | string,
 	fallbackText?: string,
@@ -173,7 +178,10 @@ function DueDateCell({
 /*                               Main Component                               */
 /* -------------------------------------------------------------------------- */
 
-/** My-tickets board: grouped lanes with click-through to the workflow. */
+/**
+ * My-tickets board: grouped lanes with click-through to the workflow.
+ * @returns The result.
+ */
 export function TicketsBoard({
 	variant = "my",
 	tickets = [],

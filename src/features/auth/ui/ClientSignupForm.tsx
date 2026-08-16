@@ -5,6 +5,7 @@
  * never lists clients: the code resolves the client server-side, then the
  * auth user + profile (linked via client_id) are created — mirroring the
  * StaffSignupForm flow. Validated by `clientSignupSchema`.
+ * @returns The result.
  */
 
 "use client";
@@ -24,7 +25,10 @@ import { clientSignupSchema } from "@/shared/schemas";
 import { env } from "@/env";
 import { profileKeys } from "@/shared/query/keys";
 
-/** Client (invite-code) signup form. */
+/**
+ * Client (invite-code) signup form.
+ * @returns The result.
+ */
 export function ClientSignupForm() {
 	const router = useRouter();
 	const queryClient = useQueryClient();

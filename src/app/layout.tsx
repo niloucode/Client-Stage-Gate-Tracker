@@ -31,7 +31,10 @@ export const metadata: Metadata = {
 	description: "Acesoft project tracker",
 };
 
-/** Root layout: fonts, providers, toaster. */
+/**
+ * Root layout: fonts, providers, toaster.
+ * @returns The rendered component.
+ */
 export default function RootLayout({
 	children,
 }: Readonly<{

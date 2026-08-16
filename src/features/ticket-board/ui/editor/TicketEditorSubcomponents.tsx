@@ -58,6 +58,10 @@ function StatusBadge({ status }: { status: StatusEnum }) {
 	);
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function SubtaskSelectionModal({
 	open,
 	onOpenChangeAction,
@@ -162,6 +166,10 @@ export function SubtaskSelectionModal({
 	);
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function TicketTitleAndStatus({
 	ticket,
 	tags,
@@ -313,6 +321,10 @@ export function TicketTitleAndStatus({
 	);
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function TicketAssignees({
 	ticket,
 	profiles,
@@ -498,6 +510,10 @@ export function TicketAssignees({
 	);
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function TicketApiDetails({
 	apiMethod,
 	apiRoute,
@@ -546,6 +562,10 @@ export function TicketApiDetails({
 	);
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function TicketSchedule({
 	ticket,
 	setTicketAction,

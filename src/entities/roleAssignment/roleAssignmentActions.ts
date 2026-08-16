@@ -17,6 +17,7 @@ import { resolveDashboardRole } from "./dashboardRole";
  */
 /**
  * The project's Project Owner assignment (or null). Requires membership.
+ * @param projectId
  * @returns The owner profile, or null.
  */
 export async function getProjectOwnerByProjectId(projectId: string) {

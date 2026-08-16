@@ -24,7 +24,11 @@ export async function selectTag() {
 	});
 }
 
-/** Creates a tag (is_protected defaults false). */
+/**
+ * Creates a tag (is_protected defaults false).
+ * @param data
+ * @returns The result.
+ */
 export async function createTag(data: TagCreateInput) {
 	tagCreateSchema.parse(data);
 	// Authorization: any authenticated user may manage global tags
@@ -53,7 +57,11 @@ export async function createTag(data: TagCreateInput) {
 	}
 }
 
-/** Updates a tag's name/color (is_deleted guard). */
+/**
+ * Updates a tag's name/color (is_deleted guard).
+ * @param data
+ * @returns The result.
+ */
 export async function updateTag(data: TagUpdateInput) {
 	// Partial updates validated with the update schema, not the create one.
 	z.uuid().parse(data.tag_id);

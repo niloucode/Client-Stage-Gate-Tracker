@@ -8,6 +8,7 @@
  * page) is required — the code determines the department the account joins
  * (resolved server-side against Department.invite_code_hash).
  * All 8 fields are required — validated by `signupSchema`.
+ * @returns The result.
  */
 
 "use client";
@@ -26,7 +27,10 @@ import { signupSchema } from "@/shared/schemas";
 import { env } from "@/env";
 import { profileKeys } from "@/shared/query/keys";
 
-/** Staff signup form (department invite code). */
+/**
+ * Staff signup form (department invite code).
+ * @returns The result.
+ */
 export function StaffSignupForm() {
 	const router = useRouter();
 	const queryClient = useQueryClient();

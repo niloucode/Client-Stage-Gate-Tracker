@@ -27,6 +27,7 @@ import { generateKeyBetween } from "fractional-indexing";
  *
  * Failures surface as stable `ActionErrorCode` strings, never raw
  * exceptions.
+ * @returns The result.
  */
 
 /**
@@ -34,6 +35,8 @@ import { generateKeyBetween } from "fractional-indexing";
  * a member — the same check for every phase action. Throws stable
  * ActionError codes (NOT_FOUND / FORBIDDEN) so the client never sees a
  * raw exception.
+ * @param phaseId
+ * @returns The result.
  */
 async function requirePhaseMemberOrThrow(phaseId: string): Promise<string> {
 	const projectId = await resolvePhaseProject(phaseId);

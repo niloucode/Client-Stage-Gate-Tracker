@@ -38,7 +38,11 @@ export function tagToBadge(
 	return { label, bg: `${color}1A`, text: color };
 }
 
-/** Maps a joined dashboard ticket row to the board TicketItem. */
+/**
+ * Maps a joined dashboard ticket row to the board TicketItem.
+ * @param row
+ * @returns The result.
+ */
 export function mapDashboardTicketRow(row: DashboardTicketRow): TicketItem {
 	const workflow = row.Workflows;
 	const moduleRow = workflow?.Modules;
@@ -69,7 +73,11 @@ export function mapDashboardTicketRow(row: DashboardTicketRow): TicketItem {
 	};
 }
 
-/** Maps a contract row to the pending-contract card shape. */
+/**
+ * Maps a contract row to the pending-contract card shape.
+ * @param row
+ * @returns The result.
+ */
 export function mapContractRow(row: ContractRow): PendingContract {
 	const executed = Boolean(row.client_signature && row.project_owner_signature);
 	return {

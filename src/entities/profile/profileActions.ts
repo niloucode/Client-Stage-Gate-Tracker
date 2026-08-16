@@ -9,10 +9,16 @@ import type { Profiles } from "@/lib/generated/prisma";
 import { hashInviteCode } from "@/shared/lib/inviteCode";
 import type { EntityFilterStatus } from "@/entities/types";
 
-/** Assignee-dropdown profile shape (what `selectProfile` returns). */
+/**
+ * Assignee-dropdown profile shape (what `selectProfile` returns).
+ * @returns The result.
+ */
 export type ProfileSelect = Awaited<ReturnType<typeof selectProfile>>[number];
 
-/** The caller's own profile row. */
+/**
+ * The caller's own profile row.
+ * @returns The result.
+ */
 export async function selectProfile() {
 	// Assignee-dropdown shape only — never the full row (phone, job_title…).
 	return prisma.profiles.findMany({
@@ -30,6 +36,7 @@ export async function selectProfile() {
  * Profiles that can be ASSIGNED to tickets of a project: everyone with a
  * RoleAssignments row in the project (team + owners). Client profiles are
  * excluded (spec: clients are never assignable). Membership-guarded read.
+ * @param projectId
  * @returns The project's member profiles.
  */
 export async function selectProjectMembers(projectId: string) {
@@ -62,7 +69,12 @@ export async function selectProjectMembers(projectId: string) {
 		.filter((p): p is NonNullable<typeof p> => p !== null);
 }
 
-/** A profile row by id (membership-guarded). */
+/**
+ * A profile row by id (membership-guarded).
+ * @param profileId
+ * @param status
+ * @returns The result.
+ */
 export async function getProfileById(
 	profileId: string,
 	status: EntityFilterStatus = "active",
@@ -157,6 +169,7 @@ type CreateProfileResult =
  * Idempotent: if the row already exists (external auth trigger, retried
  * submit), the unique violation is absorbed and the existing profile is
  * returned so signup flows can't double-create.
+ * @param input
  * @returns The created profile.
  */
 export async function createProfileForCurrentUser(
@@ -307,7 +320,11 @@ export async function createProfileForCurrentUser(
 	}
 }
 
-/** A profile row by email (membership-guarded). */
+/**
+ * A profile row by email (membership-guarded).
+ * @param profileEmail
+ * @returns The result.
+ */
 export async function getProfileByEmail(profileEmail: string) {
 	try {
 		z.email().parse(profileEmail);

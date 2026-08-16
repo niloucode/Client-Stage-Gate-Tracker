@@ -6,8 +6,13 @@ import { createClient } from "@/lib/supabase/server";
  * real session so clicking the confirmation link signs the user in, then
  * routes them to the app shell (which redirects role-appropriately).
  * Falls back to /login when the code is missing or invalid.
+ * @returns The result.
  */
-/** OAuth callback: exchanges the code for a session. */
+/**
+ * OAuth callback: exchanges the code for a session.
+ * @param request
+ * @returns The result.
+ */
 export async function GET(request: NextRequest) {
 	const code = request.nextUrl.searchParams.get("code");
 	if (!code) {

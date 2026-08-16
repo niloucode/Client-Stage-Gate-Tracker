@@ -17,6 +17,11 @@ const contractQueryOptions = {
 		}),
 };
 
+/**
+ *
+ * @param projectId
+ * @returns The result.
+ */
 export function useContract(projectId: string | undefined) {
 	return useQuery(contractQueryOptions.detail(projectId));
 }

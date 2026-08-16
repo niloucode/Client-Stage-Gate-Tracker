@@ -17,7 +17,12 @@ export const uiTypeToDbType: Record<VariableType, VariablePayload["type"]> = {
 	repository: "REPOSITORY",
 };
 
-/** Team/owner view: every column. * @returns The mapped UI item.
+/**
+
+ * Team/owner view: every column.
+
+ * @returns The mapped UI item.
+ * @param row
  */
 export function mapVariableRow(row: VariablePayload): VariableItem {
 	return {
@@ -32,7 +37,12 @@ export function mapVariableRow(row: VariablePayload): VariableItem {
 	};
 }
 
-/** Client view: team notes replaced with "" — the column is never sent. * @returns The mapped UI item.
+/**
+
+ * Client view: team notes replaced with "" — the column is never sent.
+
+ * @returns The mapped UI item.
+ * @param row
  */
 export function mapClientVariableRow(row: VariableClientPayload): VariableItem {
 	return {

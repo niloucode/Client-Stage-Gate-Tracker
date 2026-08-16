@@ -70,7 +70,10 @@ function VariablesToolbar({
 	);
 }
 
-/** Variables page: list, create/edit/delete, and client read-only gating. */
+/**
+ * Variables page: list, create/edit/delete, and client read-only gating.
+ * @returns The result.
+ */
 export function VariablesPage({ projectId }: { projectId: string }) {
 	const {
 		data: variables = [],

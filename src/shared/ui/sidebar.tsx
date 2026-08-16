@@ -180,7 +180,10 @@ const SidebarFooter = ({
 	</div>
 );
 
-/** App shell sidebar: logo, role-aware nav and collapse toggle. */
+/**
+ * App shell sidebar: logo, role-aware nav and collapse toggle.
+ * @returns The result.
+ */
 export default function SidebarLayout({
 	children,
 	showClientsLink = true,

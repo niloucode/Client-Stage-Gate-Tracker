@@ -19,10 +19,20 @@ const issueQueryOptions = {
 		}),
 };
 
+/**
+ *
+ * @param projectId
+ * @returns The result.
+ */
 export function useProjectIssues(projectId: string | undefined) {
 	return useQuery(issueQueryOptions.list(projectId));
 }
 
+/**
+ *
+ * @param projectId
+ * @returns The result.
+ */
 export function useCreateIssue(projectId: string) {
 	const queryClient = useQueryClient();
 

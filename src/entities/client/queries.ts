@@ -18,7 +18,10 @@ const clientQueryOptions = {
 		}),
 };
 
-/** Query hook: the client registry (staff-only, role-gated server-side). */
+/**
+ * Query hook: the client registry (staff-only, role-gated server-side).
+ * @returns The result.
+ */
 export function useClients(options?: { enabled?: boolean }) {
 	return useQuery({
 		...clientQueryOptions.list(),

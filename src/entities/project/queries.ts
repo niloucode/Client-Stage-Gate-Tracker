@@ -45,18 +45,37 @@ const projectQueryOptions = {
 		}),
 };
 
+/**
+ *
+ * @param projectId
+ * @returns The result.
+ */
 export function useProject(projectId: string | null) {
 	return useQuery(projectQueryOptions.detail(projectId));
 }
 
+/**
+ *
+ * @param projectId
+ * @returns The result.
+ */
 export function useProjectMembers(projectId: string | null) {
 	return useQuery(projectQueryOptions.members(projectId));
 }
 
+/**
+ *
+ * @returns The result.
+ */
 export function useProjectsForMember() {
 	return useQuery(projectQueryOptions.owned());
 }
 
+/**
+ *
+ * @param projectId
+ * @returns The result.
+ */
 export function useProjectStats(projectId: string | null) {
 	return useQuery(projectQueryOptions.stats(projectId));
 }

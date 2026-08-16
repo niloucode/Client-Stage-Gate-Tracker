@@ -130,7 +130,10 @@ function EditorContent({
 	);
 }
 
-/** Stage editor route. */
+/**
+ * Stage editor route.
+ * @returns The rendered component.
+ */
 export default function EditorPage({
 	params,
 }: {

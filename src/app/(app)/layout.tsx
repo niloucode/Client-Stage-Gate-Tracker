@@ -24,7 +24,10 @@ export const metadata: Metadata = {
 	description: "Acesoft project tracker",
 };
 
-/** App shell: sidebar + top nav around the workspace children. */
+/**
+ * App shell: sidebar + top nav around the workspace children.
+ * @returns The rendered component.
+ */
 export default async function AppLayout({
 	children,
 }: Readonly<{

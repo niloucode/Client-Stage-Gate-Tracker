@@ -17,6 +17,10 @@ import {
 import type { status } from "@/lib/generated/prisma";
 import { ImageParentType } from "@/lib/generated/prisma";
 
+/**
+ * Mutation hook: create a ticket.
+ * @returns The result.
+ */
 export function useCreateTicket() {
 	const queryClient = useQueryClient();
 
@@ -41,6 +45,10 @@ export function useCreateTicket() {
 	});
 }
 
+/**
+ * Mutation hook: update a ticket.
+ * @returns The result.
+ */
 export function useUpdateTicket() {
 	const queryClient = useQueryClient();
 
@@ -65,6 +73,10 @@ export function useUpdateTicket() {
 	});
 }
 
+/**
+ * Mutation hook: status-only ticket update.
+ * @returns The result.
+ */
 export function useUpdateTicketStatus() {
 	const queryClient = useQueryClient();
 
@@ -92,6 +104,10 @@ export function useUpdateTicketStatus() {
 	});
 }
 
+/**
+ * Mutation hook: cascade/promote soft-delete of a ticket.
+ * @returns The result.
+ */
 export function useDeleteTicket() {
 	const queryClient = useQueryClient();
 
@@ -122,6 +138,10 @@ export function useDeleteTicket() {
 // Add this at the bottom of src/entities/ticket/mutations.ts
 import { updateTicketParent } from "./ticketActions";
 
+/**
+ * Mutation hook: move a ticket to a different parent.
+ * @returns The result.
+ */
 export function useUpdateTicketParent() {
 	const queryClient = useQueryClient();
 

@@ -8,7 +8,10 @@ import {
 } from "@/entities/ticket/mutations";
 import { toast } from "@/components/ui/toast";
 
-/** Editor state hook: form value, subtask list, and save/delete actions. */
+/**
+ * Editor state hook: form value, subtask list, and save/delete actions.
+ * @returns The result.
+ */
 export function useTicketEditor({
 	initialTicket,
 	tags,

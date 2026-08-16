@@ -122,6 +122,10 @@ function buildNodeSchema(entityLabel: string) {
 
 type NodeFormValues = z.input<ReturnType<typeof buildNodeSchema>>;
 
+/**
+ *
+ * @returns The result.
+ */
 export function ScheduleNodeModal({
 	isOpen,
 	onClose,

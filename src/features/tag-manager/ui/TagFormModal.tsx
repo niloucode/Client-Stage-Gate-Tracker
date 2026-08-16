@@ -15,7 +15,10 @@ import { Label } from "@/components/ui/label";
 import { ColorPicker } from "@/shared/ui";
 import { useResetOnOpen } from "@/shared/hooks/useResetOnOpen";
 
-/** Create/edit tag form dialog. */
+/**
+ * Create/edit tag form dialog.
+ * @returns The result.
+ */
 export default function TagFormModal({
 	mode,
 	initial,

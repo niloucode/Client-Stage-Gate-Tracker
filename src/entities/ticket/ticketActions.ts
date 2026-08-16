@@ -43,6 +43,9 @@ type DbClient = Prisma.TransactionClient | typeof prisma;
  * ticket: RESOLVED when the ticket is FINISHED, LINKED while pending/in
  * progress, UNLINKED when no active ticket is linked. A soft-deleted ticket
  * keeps the link only when FINISHED (spec rule), so the derived status is
+ * @param issueId - The issue to recompute.
+ * @param db - The transaction client (or prisma).
+ * @returns The recomputed status.
  * computed from the active ticket only.
  */
 async function syncLinkedIssueStatus(issueId: string, db: DbClient = prisma) {
@@ -72,6 +75,8 @@ async function syncLinkedIssueStatus(issueId: string, db: DbClient = prisma) {
  * Maps a Prisma unique-constraint error on the 1-to-1 issue link (an issue
  * can only be linked to a ticket once) to a user-facing message. Other
  * P2002s (join-table composite keys) are rethrown untouched.
+ * @param error - The caught Prisma error.
+ * @returns Never — throws the mapped error.
  */
 function rethrowIssueLinkConflict(error: unknown): never {
 	if (
@@ -97,6 +102,10 @@ function rethrowIssueLinkConflict(error: unknown): never {
  * Guards the 1-to-1 link against cross-project issues: a project member may
  * only link issues belonging to the ticket's own project (defense in depth —
  * the picker already lists project-scoped issues only).
+ * @param db - The transaction client (or prisma).
+ * @param issueId - The issue being linked.
+ * @param projectId - The ticket's project.
+ * @returns Void, or throws when the issue is cross-project.
  */
 async function assertIssueInProject(
 	db: DbClient,
@@ -112,6 +121,10 @@ async function assertIssueInProject(
 	}
 }
 
+/** Creates a ticket with assignees/tags/issue-link inside one transaction.
+ * @param data - The validated ticket payload.
+ * @returns The created ticket.
+ */
 export async function createTicket(
 	data: CreateTicketParams & { performed_by?: string },
 ) {
@@ -198,6 +211,10 @@ export async function createTicket(
 	});
 }
 
+/** Updates a ticket (diff-based) and syncs the linked issue status.
+ * @param data - The validated update payload.
+ * @returns The updated ticket.
+ */
 export async function updateTicket(
 	data: UpdateTicketParams & { performed_by?: string },
 ) {
@@ -410,6 +427,13 @@ export async function updateTicket(
 	});
 }
 
+/**
+ * Status-only ticket update with actual-date transitions.
+ * @param ticketId
+ * @param status
+ * @param performed_by
+ * @returns The result.
+ */
 export async function updateTicketStatus(
 	ticketId: string,
 	status: status,
@@ -621,6 +645,11 @@ export async function cascadeSoftDeleteTicket(
 	}
 }
 
+/**
+ * A workflow's active tickets (membership-guarded).
+ * @param workflow_id
+ * @returns The result.
+ */
 export async function selectTicketsByWorkflow(workflow_id: string) {
 	// No catch: a thrown error lets React Query retry and surface isError.
 	z.uuid().parse(workflow_id);
@@ -642,6 +671,8 @@ export async function selectTicketsByWorkflow(workflow_id: string) {
 /**
  * Fetches the full history log for a ticket, including the names of both the
  * performer (who did the action) and the target profile (who was assigned/unassigned).
+ * @param ticketId - The ticket whose history is fetched.
+ * @returns The history entries.
  */
 export async function selectTicketHistory(ticketId: string) {
 	// No catch: a thrown error lets React Query retry and surface isError.
@@ -667,6 +698,12 @@ export async function selectTicketHistory(ticketId: string) {
 	});
 }
 
+/**
+ * Moves a ticket under a new parent (or clears it to top level).
+ * @param ticketId
+ * @param parentId
+ * @returns The result.
+ */
 export async function updateTicketParent(
 	ticketId: string,
 	parentId: string | null,
@@ -746,7 +783,9 @@ export type DashboardTicketRow = Prisma.TicketsGetPayload<{
 	select: typeof ticketDashboardSelect;
 }>;
 
-/** Tickets assigned to the signed-in user, soonest plan_end_at first. */
+/** Tickets assigned to the signed-in user, soonest plan_end_at first.
+ * @returns The ticket rows.
+ */
 export async function selectMyTickets() {
 	const userId = await getCurrentUserId();
 	if (!userId) return [];
@@ -760,7 +799,9 @@ export async function selectMyTickets() {
 	});
 }
 
-/** Tickets the signed-in user is watching (Tickets.watcher_id), soonest first. */
+/** Tickets the signed-in user is watching (Tickets.watcher_id), soonest first.
+ * @returns The ticket rows.
+ */
 export async function selectWatchedTickets() {
 	const userId = await getCurrentUserId();
 	if (!userId) return [];
@@ -780,7 +821,8 @@ export async function selectWatchedTickets() {
  *    (includes overdue), with a "Today" flag when any is due today.
  *
  * Returns null when there is no authenticated user.
- */
+  * @returns The stats payload.
+*/
 export async function getActivitySparklines() {
 	const userId = await getCurrentUserId();
 	if (!userId) return null;

@@ -30,7 +30,10 @@ function getInitials(firstName: string, lastName: string): string {
 	return `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
 }
 
-/** Read-only client team member list dialog. */
+/**
+ * Read-only client team member list dialog.
+ * @returns The result.
+ */
 export default function ViewTeamMembersModal({
 	isOpen,
 	members,

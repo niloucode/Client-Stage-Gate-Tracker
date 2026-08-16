@@ -227,7 +227,10 @@ function TopNavBreadcrumbs() {
 	return <Breadcrumbs items={breadcrumbs} />;
 }
 
-/** Top navigation bar: breadcrumbs + account menu. */
+/**
+ * Top navigation bar: breadcrumbs + account menu.
+ * @returns The rendered component.
+ */
 export default function TopNav() {
 	return (
 		<header className="bg-neutral-surface relative flex items-center justify-between px-8 py-3 border-b border-brand-100 shrink-0">

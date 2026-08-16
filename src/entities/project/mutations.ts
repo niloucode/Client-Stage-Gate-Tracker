@@ -11,7 +11,10 @@ import {
 } from "./projectActions";
 import type { ProjectCreateInput, ProjectUpdateInput } from "@/shared/schemas";
 
-/** Mutation hook: create a project (owner only). */
+/**
+ * Mutation hook: create a project (owner only).
+ * @returns The result.
+ */
 export function useCreateProject() {
 	const queryClient = useQueryClient();
 
@@ -23,7 +26,10 @@ export function useCreateProject() {
 	});
 }
 
-/** Mutation hook: update a project. */
+/**
+ * Mutation hook: update a project.
+ * @returns The result.
+ */
 export function useUpdateProject() {
 	const queryClient = useQueryClient();
 
@@ -38,7 +44,10 @@ export function useUpdateProject() {
 	});
 }
 
-/** Mutation hook: soft-delete a project. */
+/**
+ * Mutation hook: soft-delete a project.
+ * @returns The result.
+ */
 export function useDeleteProject() {
 	const queryClient = useQueryClient();
 
@@ -56,7 +65,10 @@ export function useDeleteProject() {
 	});
 }
 
-/** Mutation hook: add a member to a project. */
+/**
+ * Mutation hook: add a member to a project.
+ * @returns The result.
+ */
 export function useAddProjectMember() {
 	const queryClient = useQueryClient();
 
@@ -78,7 +90,10 @@ export function useAddProjectMember() {
 	});
 }
 
-/** Mutation hook: remove a member from a project. */
+/**
+ * Mutation hook: remove a member from a project.
+ * @returns The result.
+ */
 export function useRemoveProjectMember() {
 	const queryClient = useQueryClient();
 

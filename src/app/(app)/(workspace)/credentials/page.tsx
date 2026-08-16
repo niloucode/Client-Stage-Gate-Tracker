@@ -1,4 +1,7 @@
-/** Credentials route (stub). */
+/**
+ * Credentials route (stub).
+ * @returns The rendered component.
+ */
 export default async function CredentialsPage({
 	params,
 }: {

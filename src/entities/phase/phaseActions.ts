@@ -140,6 +140,7 @@ export async function reorderPhase(phaseId: string, targetNumber: number) {
 /**
  * Project-scoped phase rows for the gantt chart (read-only). Any project
  * profile — team, owners AND clients — may view (2026-08-15 spec).
+ * @param projectId
  * @returns The gantt-shaped phase rows.
  */
 export async function getProjectPhasesGantt(projectId: string) {

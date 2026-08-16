@@ -34,7 +34,10 @@ export function useCreateModule() {
 	});
 }
 
-/** Mutation hook: update a module. */
+/**
+ * Mutation hook: update a module.
+ * @returns The result.
+ */
 export function useUpdateModule() {
 	const queryClient = useQueryClient();
 
@@ -55,7 +58,10 @@ export function useUpdateModule() {
 	});
 }
 
-/** Mutation hook: cascade-soft-delete a module. */
+/**
+ * Mutation hook: cascade-soft-delete a module.
+ * @returns The result.
+ */
 export function useDeleteModule() {
 	const queryClient = useQueryClient();
 

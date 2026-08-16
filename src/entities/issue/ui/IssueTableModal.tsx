@@ -14,13 +14,17 @@ export interface IssueTableModalProps {
 	onOpenChange: (open: boolean) => void;
 	/** Project whose issues are listed (issue-reporting spec: project-scoped). */
 	projectId?: string;
-	/** Callback fired when an issue is linked by clicking its "Link" button. */
+/**
+ * Callback fired when an issue is linked by clicking its "Link" button.
+ * @returns The result.
+ */
 	onSelectIssue?: (issue: IssueItem) => void;
 }
 
 /**
  * Real issue picker for the ticket editor (1-to-1 spec): lists only
  * UNLINKED issues of the project, so every pick is a valid link target.
+ * @returns The result.
  */
 export const IssueTableModal: React.FC<IssueTableModalProps> = ({
 	open,

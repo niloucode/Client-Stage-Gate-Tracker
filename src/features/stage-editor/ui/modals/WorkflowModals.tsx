@@ -86,10 +86,20 @@ function WorkflowModal({
 
 // ── Backward-compatible Aliases ──────────────────────────────────────────────
 
+/**
+ *
+ * @param props
+ * @returns The rendered component.
+ */
 export function AddWorkflow(props: Omit<WorkflowModalProps, "workflow">) {
 	return <WorkflowModal {...props} workflow={null} />;
 }
 
+/**
+ *
+ * @param props
+ * @returns The rendered component.
+ */
 export function EditWorkflow(props: WorkflowModalProps) {
 	return <WorkflowModal {...props} />;
 }

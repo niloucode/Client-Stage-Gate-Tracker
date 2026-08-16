@@ -23,7 +23,10 @@ interface ClientCodeModalProps {
 	error: string | null;
 }
 
-/** One-time display of a client invite code (copy-to-clipboard). */
+/**
+ * One-time display of a client invite code (copy-to-clipboard).
+ * @returns The result.
+ */
 export function ClientCodeModal({
 	isOpen,
 	onClose,

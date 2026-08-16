@@ -5,7 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { generateInviteCode, hashInviteCode } from "@/shared/lib/inviteCode";
 import { getCurrentUserId } from "@/lib/auth/projectAccess";
 
-/** Resolves a department by id (or the caller's own when omitted). */
+/**
+ * Resolves a department by id (or the caller's own when omitted).
+ * @param departmentId
+ * @returns The result.
+ */
 export async function getDepartmentById(departmentId?: string) {
 	if (!departmentId) return null;
 
@@ -31,8 +35,13 @@ export async function getDepartmentById(departmentId?: string) {
  * Owner-only (spec: clients and project team members cannot generate codes):
  * the caller must be a member of the "Project Owner" department — the same
  * department-name convention the client registry uses.
+ * @returns The result.
  */
-/** Owner-gated: generates + persists a new staff invite code (hash only). */
+/**
+ * Owner-gated: generates + persists a new staff invite code (hash only).
+ * @param departmentName
+ * @returns The result.
+ */
 export async function generateStaffInviteCode(
 	departmentName: "Project Team" | "Project Owner",
 ) {

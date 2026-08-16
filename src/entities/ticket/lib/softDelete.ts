@@ -8,6 +8,8 @@ import type { Prisma } from "@/lib/generated/prisma";
  * 2026-08-14).
  *
  * Must be called inside the caller's Prisma transaction.
+ * @param tx - The caller's transaction client.
+ * @param workflowIds - The workflow ids to delete.
  */
 export async function softDeleteWorkflowSubtree(
 	tx: Prisma.TransactionClient,
