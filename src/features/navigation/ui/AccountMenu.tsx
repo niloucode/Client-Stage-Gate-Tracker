@@ -18,6 +18,7 @@ import {
 // features/auth (same-layer import, forbidden by FSD rule 4-1). Fix by moving
 // the auth context to the app providers layer (src/app) so both slices can
 // consume it downward, then delete this comment.
+/** User menu: profile info, role/company, and logout. */
 export function AccountMenu() {
 	const { user, logout } = useAuth();
 	// Local pending state so the LOG-OUT button disables while sign-out and

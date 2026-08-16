@@ -70,6 +70,7 @@ function ClientToolbar({
  * Role visibility: Project Owner sees everything (add/edit/company code);
  * Project Team sees the list + members only; client profiles are redirected
  * away and never fetch the list.
+ * @returns The rendered clients page.
  */
 export function ClientsPage() {
 	const router = useRouter();

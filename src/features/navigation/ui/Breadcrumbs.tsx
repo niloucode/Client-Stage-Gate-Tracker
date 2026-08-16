@@ -10,6 +10,9 @@ export interface BreadcrumbItem {
 
 /**
  * Truncates string after `maxLength` characters with an ellipsis.
+ * @param text - The label to truncate.
+ * @param maxLength - The character cap (default 20).
+ * @returns The truncated label.
  */
 function truncateLabel(text: string, maxLength = 20): string {
 	if (!text) return "";
