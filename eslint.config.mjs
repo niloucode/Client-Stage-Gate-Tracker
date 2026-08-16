@@ -42,7 +42,12 @@ const eslintConfig = defineConfig([
 					},
 				},
 			],
-			"jsdoc/require-param": "warn",
+			"jsdoc/require-param": [
+				"warn",
+				// Component props are typed inline — per-destructured-key
+				// @param tags are noise (CONTRIBUTING §5 code docs).
+				{ checkDestructured: false, checkDestructuredRoots: false },
+			],
 			"jsdoc/require-param-name": "warn",
 			"jsdoc/check-param-names": "warn",
 			"jsdoc/require-returns": "warn",

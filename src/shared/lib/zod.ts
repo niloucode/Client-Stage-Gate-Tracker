@@ -2,7 +2,8 @@ import { z, type ZodError } from "zod";
 
 /**
  * Maps a failed zod `safeParse` into `{ [field]: firstErrorMessage }`.
- * Returns `{}` for successful parses.
+ * @param result - The outcome of a zod `safeParse` call.
+ * @returns `{}` for successful parses, else `{ [field]: firstErrorMessage }`.
  */
 export function getFieldErrors(
 	result: { success: false; error: ZodError } | { success: true },

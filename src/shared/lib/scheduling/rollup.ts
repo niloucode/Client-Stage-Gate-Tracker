@@ -7,12 +7,20 @@ import { earliestDate, latestDate } from "./chronology";
  * ticket-driven rollup engine in Section 3 builds on top of them).
  */
 
-/** The block's overall start: earliest of the four dates, or null. */
+/**
+ * The block's overall start: earliest of the four dates, or null.
+ * @param d - The scheduling block to roll up.
+ * @returns The earliest date, or null.
+ */
 export function rollupStart(d: SchedulingDates): Date | null {
 	return earliestDate(d);
 }
 
-/** The block's overall end: latest of the four dates, or null. */
+/**
+ * The block's overall end: latest of the four dates, or null.
+ * @param d - The scheduling block to roll up.
+ * @returns The latest date, or null.
+ */
 export function rollupEnd(d: SchedulingDates): Date | null {
 	return latestDate(d);
 }
@@ -20,6 +28,8 @@ export function rollupEnd(d: SchedulingDates): Date | null {
 /**
  * Parent boundary from children: start = earliest child start,
  * end = latest child end. Returns nulls when no child contributes dates.
+ * @param children - The child scheduling blocks.
+ * @returns The parent boundary (earliest start / latest end), or nulls.
  */
 export function rollupChildrenDates(children: SchedulingDates[]): {
 	start: Date | null;

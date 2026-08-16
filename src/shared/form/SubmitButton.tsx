@@ -13,6 +13,8 @@ interface SubmitButtonProps extends ComponentProps<typeof Button> {
  * Form-level submit button bound to the shared form context.
  * Disables itself while the form is submitting so double-submits are
  * impossible; use inside `<form.AppForm>`.
+ 
+ * @returns The rendered submit button.
  */
 export function SubmitButton({
 	children,

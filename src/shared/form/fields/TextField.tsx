@@ -10,6 +10,8 @@ import { formErrorToMessage } from "../errors";
  * First error message from a TanStack Form field (string, issue object,
  * Error, ...). Delegates to `formErrorToMessage` so all field modules share
  * one normalization path.
+ * @param errors - The field's error list (may be empty).
+ * @returns The first error message, or undefined.
  */
 export function firstFieldError(
 	errors: readonly (string | { message?: string } | undefined)[],
@@ -30,6 +32,7 @@ interface TextFieldProps {
 /**
  * Shadcn-bound text input wired to a TanStack Form field via
  * `useFieldContext`. Render inside `form.AppField` children.
+ * @returns The rendered text input field.
  */
 export function TextField({
 	label,

@@ -17,6 +17,7 @@ interface PasswordFieldProps {
 /**
  * PasswordInput (eye-toggle) bound to a TanStack Form string field.
  * Render inside `form.AppField` children.
+ * @returns The rendered password field.
  */
 export function PasswordField({
 	label,

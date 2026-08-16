@@ -13,6 +13,9 @@ export interface CollectedImage {
  * Filters a file picker's FileList: enforces the 5MB cap and creates
  * object-URL previews. Callers keep `e.target.value = ""` so re-selecting
  * the same file re-fires change.
+ 
+ * @param fileList - The picker's FileList (may be null/empty).
+ * @returns Accepted images with preview URLs, plus rejected file names.
  */
 export function collectImages(fileList: FileList | null): {
 	images: CollectedImage[];
@@ -35,6 +38,11 @@ export function collectImages(fileList: FileList | null): {
  * All-or-nothing upload into the `images` bucket under `<folder>/` (e.g.
  * "gates", "issues", "tickets"). On failure returns the already-uploaded
  * paths so callers can remove orphans (shared ticket-board pattern).
+ 
+ * @param files - The files to upload.
+ * @param folder - Storage folder under the `images` bucket (e.g. "gates").
+ * @returns Public URLs, the paths uploaded so far (for orphan cleanup), and
+ * the first error, or null on success.
  */
 export async function uploadImages(
 	files: File[],
@@ -72,7 +80,9 @@ export async function uploadImages(
 	return { imageUrls, uploadedPaths, error: uploadError };
 }
 
-/** Releases every object URL (call on remove/close/unmount). */
+/** Releases every object URL (call on remove/close/unmount). 
+ * @param previews - The object URLs to revoke.
+ */
 export function revokeImagePreviews(previews: string[]) {
 	for (const url of previews) URL.revokeObjectURL(url);
 }

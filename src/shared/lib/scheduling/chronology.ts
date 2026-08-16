@@ -7,24 +7,40 @@ import type { SchedulingDates } from "./scheduling";
  * invariant lives in exactly one place.
  */
 
-/** True when both planned dates are set and planStart ≤ planEnd. */
+/**
+ * True when both planned dates are set and planStart ≤ planEnd.
+ * @param d - The scheduling block to validate.
+ * @returns True when the planned range is valid (or incomplete).
+ */
 export function hasValidPlannedRange(d: SchedulingDates): boolean {
 	if (!d.planStart || !d.planEnd) return true;
 	return d.planStart.getTime() <= d.planEnd.getTime();
 }
 
-/** True when both actual dates are set and actualStart ≤ actualEnd. */
+/**
+ * True when both actual dates are set and actualStart ≤ actualEnd.
+ * @param d - The scheduling block to validate.
+ * @returns True when the actual range is valid (or incomplete).
+ */
 export function hasValidActualRange(d: SchedulingDates): boolean {
 	if (!d.actualStart || !d.actualEnd) return true;
 	return d.actualStart.getTime() <= d.actualEnd.getTime();
 }
 
-/** True when the whole scheduling block is chronologically valid. */
+/**
+ * True when the whole scheduling block is chronologically valid.
+ * @param d - The scheduling block to validate.
+ * @returns True when both planned and actual ranges are valid.
+ */
 export function isChronologyValid(d: SchedulingDates): boolean {
 	return hasValidPlannedRange(d) && hasValidActualRange(d);
 }
 
-/** Earliest non-null date of the four, or null when none is set. */
+/**
+ * Earliest non-null date of the four, or null when none is set.
+ * @param d - The scheduling block to inspect.
+ * @returns The earliest non-null date, or null.
+ */
 export function earliestDate(d: SchedulingDates): Date | null {
 	const candidates = [
 		d.planStart,
@@ -36,7 +52,11 @@ export function earliestDate(d: SchedulingDates): Date | null {
 	return new Date(Math.min(...candidates.map((c) => c.getTime())));
 }
 
-/** Latest non-null date of the four, or null when none is set. */
+/**
+ * Latest non-null date of the four, or null when none is set.
+ * @param d - The scheduling block to inspect.
+ * @returns The latest non-null date, or null.
+ */
 export function latestDate(d: SchedulingDates): Date | null {
 	const candidates = [
 		d.planStart,

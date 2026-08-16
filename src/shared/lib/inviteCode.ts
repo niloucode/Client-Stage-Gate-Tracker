@@ -35,7 +35,9 @@ function getPepper(): string {
 	return pepper;
 }
 
-/** Generate a fresh invite code (12 chars from an unambiguous alphabet). */
+/** Generate a fresh invite code (12 chars from an unambiguous alphabet). 
+ * @returns The generated code.
+ */
 export function generateInviteCode(): string {
 	const bytes = randomBytes(CODE_LENGTH);
 	let code = "";
@@ -48,6 +50,8 @@ export function generateInviteCode(): string {
 /**
  * Hash a code for storage/lookup. Codes are compared case-insensitively:
  * the input is trimmed + uppercased before hashing.
+ * @param code - The raw code to hash.
+ * @returns The HMAC-SHA256 hex digest.
  */
 export function hashInviteCode(code: string): string {
 	return createHmac("sha256", getPepper())

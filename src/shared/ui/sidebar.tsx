@@ -46,7 +46,6 @@ const SidebarLogo = ({ collapsed }: { collapsed?: boolean }) => (
 			className={`flex flex-col min-w-0 transition-all duration-300 ease-in-out`}
 		>
 			{" "}
-			{/* ${collapsed ? "mx-auto" : ""} */}
 			{/* Logo container: switches between icon and full logo based on collapsed state */}
 			<div className="relative overflow-hidden h-5 transition-all duration-300 ease-in-out">
 				{collapsed ? (
@@ -181,6 +180,7 @@ const SidebarFooter = ({
 	</div>
 );
 
+/** App shell sidebar: logo, role-aware nav and collapse toggle. */
 export default function SidebarLayout({
 	children,
 	showClientsLink = true,

@@ -15,7 +15,9 @@ interface TextAreaFieldProps {
 	className?: string;
 }
 
-/** Shadcn-bound textarea wired to a TanStack Form field. */
+/** Shadcn-bound textarea wired to a TanStack Form field. 
+ * @returns The rendered textarea field.
+ */
 export function TextAreaField({
 	label,
 	required,
