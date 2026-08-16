@@ -26,7 +26,8 @@ import { workflowGanttSelect } from "./ganttTypes";
  *
  * @param moduleId - UUID of the parent module.
  * @param input - Validated create payload (workflowCreateSchema).
- */
+  * @returns The mutation result.
+*/
 export async function createWorkflow(
 	moduleId: string,
 	input: WorkflowCreateInput,
@@ -79,7 +80,8 @@ export async function createWorkflow(
  *
  * @param workflowId - UUID of the workflow.
  * @param status - active (default) | deleted | all.
- */
+  * @returns The mutation result.
+*/
 export async function getWorkflowById(
 	workflowId: string,
 	status: EntityFilterStatus = "active",
@@ -138,7 +140,8 @@ export async function getWorkflowById(
  *
  * @param workflowId - UUID of the workflow to update.
  * @param input - Validated partial payload (workflowUpdateSchema).
- */
+  * @returns The mutation result.
+*/
 export async function updateWorkflow(
 	workflowId: string,
 	input: WorkflowUpdateInput,
@@ -177,6 +180,9 @@ export async function updateWorkflow(
 	}
 }
 
+/** Cascading soft delete: workflow + its tickets (batched).
+ * @returns The mutation result.
+ */
 export async function cascadeSoftDeleteWorkflow(
 	workflowId: string,
 	txClient?: Prisma.TransactionClient,
@@ -229,7 +235,8 @@ export async function cascadeSoftDeleteWorkflow(
  *
  * @param workflowId - UUID of the workflow being moved.
  * @param targetNumber - The desired 1-based position.
- */
+  * @returns The mutation result.
+*/
 export async function reorderWorkflow(
 	workflowId: string,
 	targetNumber: number,
@@ -292,6 +299,8 @@ export async function reorderWorkflow(
 /**
  * Project-scoped workflow rows for the gantt chart (read-only). Any project
  * profile — team, owners AND clients — may view (2026-08-15 spec).
+ * @param projectId - The project to load workflows for.
+ * @returns The gantt-shaped workflow rows.
  */
 export async function getProjectWorkflowsGantt(projectId: string) {
 	z.uuid().parse(projectId);

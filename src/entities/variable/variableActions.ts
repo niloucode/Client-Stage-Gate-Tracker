@@ -21,7 +21,8 @@ import { variableClientSelect, variableSelect } from "./types";
  * Project-scoped variable list. Team/owners see everything; client viewers
  * receive ONLY client_visible rows (value included) and never notes_team.
  * Hidden rows are not sent at all (2026-08-15 user decision).
- */
+  * @returns The role-shaped variable list.
+*/
 export async function getProjectVariables(projectId: string) {
 	z.uuid().parse(projectId);
 	const auth = await assertProjectMemberOrClient(projectId);
@@ -58,7 +59,11 @@ export async function getProjectVariables(projectId: string) {
 	}
 }
 
-/** Team/owner only. Creates a variable with client visibility OFF. */
+/** Team/owner only. Creates a variable with client visibility OFF.
+ * @param projectId - The owning project.
+ * @param input - The validated payload.
+ * @returns The mutation result.
+ */
 export async function createVariable(
 	projectId: string,
 	input: VariableCreateInput,
@@ -86,7 +91,11 @@ export async function createVariable(
 	}
 }
 
-/** Team/owner only. Updates name/type/value/notes (not visibility). */
+/** Team/owner only. Updates name/type/value/notes (not visibility).
+ * @param variableId - The variable to update.
+ * @param input - The validated payload.
+ * @returns The mutation result.
+ */
 export async function updateVariable(
 	variableId: string,
 	input: VariableCreateInput,
@@ -117,7 +126,10 @@ export async function updateVariable(
 	}
 }
 
-/** Team/owner only. Flips client_visible (the confirm-gated toggle). */
+/** Team/owner only. Flips client_visible (the confirm-gated toggle).
+ * @param variableId - The variable to toggle.
+ * @returns The mutation result.
+ */
 export async function toggleVariableVisibility(variableId: string) {
 	z.uuid().parse(variableId);
 	const projectId = await resolveVariableProject(variableId);
@@ -147,7 +159,10 @@ export async function toggleVariableVisibility(variableId: string) {
 	}
 }
 
-/** Team/owner only. Soft delete (project rule 1). */
+/** Team/owner only. Soft delete (project rule 1).
+ * @param variableId - The variable to delete.
+ * @returns The mutation result.
+ */
 export async function softDeleteVariable(variableId: string) {
 	z.uuid().parse(variableId);
 	const projectId = await resolveVariableProject(variableId);

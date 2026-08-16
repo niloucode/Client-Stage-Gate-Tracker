@@ -29,6 +29,7 @@ const variableQueryOptions = {
 		}),
 };
 
+/** Query hook: a project's variables (role-shaped). */
 export function useProjectVariables(projectId: string | undefined) {
 	return useQuery(variableQueryOptions.list(projectId));
 }
@@ -39,6 +40,7 @@ function useInvalidateList(projectId: string) {
 		queryClient.invalidateQueries({ queryKey: variableKeys.list(projectId) });
 }
 
+/** Mutation hook: create a variable. */
 export function useCreateVariable(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({
@@ -53,6 +55,7 @@ export function useCreateVariable(projectId: string) {
 	});
 }
 
+/** Mutation hook: update a variable. */
 export function useUpdateVariable(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({
@@ -70,6 +73,7 @@ export function useUpdateVariable(projectId: string) {
 	});
 }
 
+/** Mutation hook: flip a variable's client visibility. */
 export function useToggleVariableVisibility(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({
@@ -84,6 +88,7 @@ export function useToggleVariableVisibility(projectId: string) {
 	});
 }
 
+/** Mutation hook: soft-delete a variable. */
 export function useDeleteVariable(projectId: string) {
 	const invalidate = useInvalidateList(projectId);
 	return useMutation({
