@@ -219,7 +219,7 @@ export function ModuleCard({
 			<div className="space-y-4">
 				{activePhase === null ? (
 					<div className="bg-neutral-surface border border-slate-200 rounded-md shadow-sm p-8 text-center">
-						<p className="text-sm text-neutral-subtle">No phase selected</p>
+						<p className="text-sm">No phase selected</p>
 						<p className="text-xs text-slate-400 mt-1">
 							Select a phase from the stepper above to manage its modules
 						</p>

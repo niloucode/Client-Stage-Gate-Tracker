@@ -39,8 +39,8 @@ const STATUS_CONFIG: Record<
 		iconColor: "text-brand-500",
 		// Dark badge (brand-500) with light text for contrast — verified
 		// against the design tokens (--color-brand-500 #6B1FA8).
-		badgeText: "text-brand-50",
-		badgeBg: "bg-brand-500",
+		badgeText: "text-brand-500",
+		badgeBg: "bg-brand-50",
 		emptyText: "No active projects.",
 		icon: Layers,
 	},
@@ -76,12 +76,12 @@ export function ProjectSection({
 					<IconComponent size={24} className={config.iconColor} />
 					{/* span, not h2: a heading inside the toggle <button> is
 					 * invalid flow content (buttons allow phrasing only). */}
-					<span className="text-lg font-semibold">{title}</span>
 					<span
-						className={`text-md font-semibold px-4 py-0.5 rounded-full ${config.badgeText} ${config.badgeBg}`}
+						className={`text-md font-semibold px-4 py-0.5 rounded-md ${config.badgeText} ${config.badgeBg}`}
 					>
 						{projects.length}
 					</span>
+					<span className="text-lg font-semibold">{title}</span>
 				</div>
 				<ChevronDown
 					size={24}
