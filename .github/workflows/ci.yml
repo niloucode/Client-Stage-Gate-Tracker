@@ -8,6 +8,14 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SKIP_ENV_VALIDATION: ${{ secrets.SKIP_ENV_VALIDATION }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,9 +27,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Post-pull schema guard: `db pull` re-infers relations and can break
-      # app-authored cardinalities (Issues.Tickets must stay Tickets[]).
-      # Fails fast on accidental schema edits too.
       - name: Verify Prisma relation invariants
         run: node scripts/verify-prisma-relations.mjs
 
@@ -31,32 +36,14 @@ jobs:
       - name: Tests
         run: npm test
 
-      # Coverage regression gate (baseline thresholds in vitest.config.ts).
       - name: Coverage
         run: npm run test:coverage
 
       - name: Build
         run: npm run build
-        env:
-          # t3-env validates server vars at import time (Task 1.8), so the
-          # build needs the full set — NEXT_PUBLIC_* are inlined into the
-          # client bundle, DATABASE_URL/SUPABASE_SERVICE_ROLE_KEY are
-          # validated server-side.
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SKIP_ENV_VALIDATION: ${{ secrets.SKIP_ENV_VALIDATION }}
 
-      # Lint gate (2026-08-16): hard-fails on ESLint ERRORS outside the
-      # vendored reui gantt (its 21 React-Compiler errors are deliberate
-      # upstream patterns — triaged in CONTRIBUTING §9 item 10; WebStorm
-      # still inspects the folder via the project config).
       - name: Lint
         run: npx eslint . --ignore-pattern "src/components/reui/**"
 
-      # Dead-code gate (2026-08-15): knip is clean under knip.json —
-      # vendored surfaces (reui gantt, shadcn kit) and config-referenced
-      # stubs are ignored; type-only reports stay informational.
       - name: Dead-code check
         run: npx knip --include files,dependencies,exports
