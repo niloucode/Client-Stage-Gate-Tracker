@@ -15,6 +15,9 @@ import {
  * comment/image reads (2026-08-14 ticket deep-link audit): the ticket
  * slide-over calls these, so non-members must not read another project's
  * comments (which include commenter profiles).
+ * @param parentType - The polymorphic parent type.
+ * @param parentId - The parent row id.
+ * @returns `{ ok: true }` when the caller may read the parent.
  */
 async function guardParentRead(
 	parentType: string,
@@ -40,6 +43,7 @@ async function guardParentRead(
 	return { ok: false };
 }
 
+/** Images attached to a comment parent (membership-guarded). */
 export async function selectImagesByParent(
 	parentType: ImageParentType,
 	parentId: string,
@@ -51,6 +55,7 @@ export async function selectImagesByParent(
 	});
 }
 
+/** A comment with its images (membership-guarded). */
 export async function selectComment(
 	parentType: CommentParentType,
 	parentId: string,
@@ -101,6 +106,7 @@ export async function selectComment(
 	}));
 }
 
+/** Creates a comment + its images atomically (membership-guarded). */
 export async function createCommentWithImages(data: CommentCreateInput) {
 	commentCreateSchema.parse(data);
 
