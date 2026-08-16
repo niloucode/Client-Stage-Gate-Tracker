@@ -78,7 +78,10 @@ export function ProjectCard({
 			/>
 
 			{/* Client Name — always shown */}
-			<div aria-hidden className="relative flex justify-between items-center w-full">
+			<div
+				aria-hidden
+				className="relative flex justify-between items-center w-full"
+			>
 				<p className="text-xs text-brand-500 truncate pointer-events-none">
 					{project.client_name ?? "—"}
 				</p>
@@ -108,7 +111,10 @@ export function ProjectCard({
 			</div>
 
 			{/* Bottom Row: Responsive Timeline */}
-			<div aria-hidden className="relative flex items-end justify-between gap-2 pt-3 border-t border-brand-100 pointer-events-none">
+			<div
+				aria-hidden
+				className="relative flex items-end justify-between gap-2 pt-3 border-t border-brand-100 pointer-events-none"
+			>
 				<div className="flex flex-col @[300px]:flex-row @[300px]:items-center gap-1 text-xs text-slate-600 min-w-0">
 					{/* Date 1 + dash */}
 					<div className="flex items-center gap-1.5 min-w-0">

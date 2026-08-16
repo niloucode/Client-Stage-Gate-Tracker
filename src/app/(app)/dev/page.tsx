@@ -46,7 +46,8 @@ export default function ToastShowcasePage() {
 	const triggerErrorToast = () => {
 		toast.add({
 			title: "Action Failed",
-			description: "Unable to connect to the server. Please check your network.",
+			description:
+				"Unable to connect to the server. Please check your network.",
 			type: "error",
 		});
 	};
@@ -54,7 +55,8 @@ export default function ToastShowcasePage() {
 	const triggerDeleteToast = () => {
 		toast.add({
 			title: "Item Deleted",
-			description: '"Database Migration" workflow has been permanently removed.',
+			description:
+				'"Database Migration" workflow has been permanently removed.',
 			type: "delete",
 		});
 	};
@@ -75,7 +77,8 @@ export default function ToastShowcasePage() {
 					Toast Notification Showcase
 				</h1>
 				<p className="text-muted-foreground mt-2 text-sm">
-					Click any button below to trigger and preview the corresponding toast variation.
+					Click any button below to trigger and preview the corresponding toast
+					variation.
 				</p>
 			</div>
 
@@ -93,7 +96,10 @@ export default function ToastShowcasePage() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Button onClick={triggerSuccessToast} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+						<Button
+							onClick={triggerSuccessToast}
+							className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+						>
 							Show Success Toast
 						</Button>
 					</CardContent>
@@ -111,7 +117,11 @@ export default function ToastShowcasePage() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Button onClick={triggerInfoToast} variant="outline" className="w-full">
+						<Button
+							onClick={triggerInfoToast}
+							variant="outline"
+							className="w-full"
+						>
 							Show Info Toast
 						</Button>
 					</CardContent>
@@ -129,7 +139,11 @@ export default function ToastShowcasePage() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Button onClick={triggerWarningToast} variant="secondary" className="w-full bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-200">
+						<Button
+							onClick={triggerWarningToast}
+							variant="secondary"
+							className="w-full bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-200"
+						>
 							Show Warning Toast
 						</Button>
 					</CardContent>
@@ -147,7 +161,11 @@ export default function ToastShowcasePage() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Button onClick={triggerErrorToast} variant="destructive" className="w-full">
+						<Button
+							onClick={triggerErrorToast}
+							variant="destructive"
+							className="w-full"
+						>
 							Show Error Toast
 						</Button>
 					</CardContent>
@@ -165,7 +183,10 @@ export default function ToastShowcasePage() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Button onClick={triggerDeleteToast} className="w-full bg-red-600 hover:bg-red-700 text-white">
+						<Button
+							onClick={triggerDeleteToast}
+							className="w-full bg-red-600 hover:bg-red-700 text-white"
+						>
 							Show Delete Toast
 						</Button>
 					</CardContent>
@@ -183,7 +204,11 @@ export default function ToastShowcasePage() {
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<Button onClick={triggerLoadingToast} variant="outline" className="w-full border-brand-500 text-brand-600 hover:bg-brand-50">
+						<Button
+							onClick={triggerLoadingToast}
+							variant="outline"
+							className="w-full border-brand-500 text-brand-600 hover:bg-brand-50"
+						>
 							Show Loading Toast
 						</Button>
 					</CardContent>

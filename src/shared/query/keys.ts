@@ -115,4 +115,3 @@ export const dashboardKeys = {
 	myContracts: () => [...dashboardKeys.all, "my-contracts"] as const,
 	sparklines: () => [...dashboardKeys.all, "sparklines"] as const,
 };
-

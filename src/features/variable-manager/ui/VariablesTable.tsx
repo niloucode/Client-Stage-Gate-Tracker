@@ -20,10 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import type {
-	VariableItem,
-	VariableType,
-} from "@/entities/variable";
+import type { VariableItem, VariableType } from "@/entities/variable";
 
 export type VariableSortField = "name" | "type" | "clientVisibility";
 export type SortDirection = "asc" | "desc";
@@ -98,7 +95,11 @@ function ValueCell({ value }: { value: string }) {
 					onClick={() => setRevealed((prev) => !prev)}
 					title={revealed ? "Hide value" : "Reveal value"}
 				>
-					{revealed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+					{revealed ? (
+						<EyeOff className="size-3.5" />
+					) : (
+						<Eye className="size-3.5" />
+					)}
 				</Button>
 				<Button
 					type="button"
@@ -144,7 +145,9 @@ export function VariablesTable({
 }: VariablesTableProps) {
 	const getSortIcon = (field: VariableSortField): ReactNode => {
 		if (sortField !== field) {
-			return <ArrowUpDown className="h-3 w-3 shrink-0 opacity-40 hover:opacity-100" />;
+			return (
+				<ArrowUpDown className="h-3 w-3 shrink-0 opacity-40 hover:opacity-100" />
+			);
 		}
 		return sortDirection === "asc" ? (
 			<ChevronUp className="h-3 w-3 shrink-0 text-brand-600" />
@@ -158,59 +161,62 @@ export function VariablesTable({
 			<div className="max-h-[calc(65vh)] overflow-auto">
 				<table className="w-full min-w-240 border-collapse text-left">
 					<thead className="sticky top-0 z-10 border-b border-brand-100/50 bg-neutral-subtle text-[11px] font-normal uppercase text-muted-foreground">
-                        <tr>
-                            {/* 1. Variable Name (Sortable) */}
-                            <th className="w-[24%] px-6 py-3">
-                                <button
-                                    type="button"
-                                    onClick={() => onSort("name")}
-                                    className="flex items-center gap-1 text-[11px] font-normal uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                                >
-                                    <span>VARIABLE NAME</span>
-                                    {getSortIcon("name")}
-                                </button>
-                            </th>
+						<tr>
+							{/* 1. Variable Name (Sortable) */}
+							<th className="w-[24%] px-6 py-3">
+								<button
+									type="button"
+									onClick={() => onSort("name")}
+									className="flex items-center gap-1 text-[11px] font-normal uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+								>
+									<span>VARIABLE NAME</span>
+									{getSortIcon("name")}
+								</button>
+							</th>
 
-                            {/* 2. Type (Sortable) */}
-                            <th className="w-[16%] px-6 py-3">
-                                <button
-                                    type="button"
-                                    onClick={() => onSort("type")}
-                                    className="flex items-center gap-1 text-[11px] font-normal uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                                >
-                                    <span>TYPE</span>
-                                    {getSortIcon("type")}
-                                </button>
-                            </th>
+							{/* 2. Type (Sortable) */}
+							<th className="w-[16%] px-6 py-3">
+								<button
+									type="button"
+									onClick={() => onSort("type")}
+									className="flex items-center gap-1 text-[11px] font-normal uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+								>
+									<span>TYPE</span>
+									{getSortIcon("type")}
+								</button>
+							</th>
 
-                            {/* 3. Value / Address (Non-Sortable) */}
-                            <th className="w-[30%] px-6 py-3 text-[11px] font-normal uppercase text-muted-foreground">
-                                VALUE / ADDRESS
-                            </th>
+							{/* 3. Value / Address (Non-Sortable) */}
+							<th className="w-[30%] px-6 py-3 text-[11px] font-normal uppercase text-muted-foreground">
+								VALUE / ADDRESS
+							</th>
 
-                            {/* 4. Client Visibility (Sortable) */}
-                            <th className="w-[16%] px-6 py-3">
-                                <button
-                                    type="button"
-                                    onClick={() => onSort("clientVisibility")}
-                                    className="flex items-center gap-1 text-[11px] font-normal uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                                >
-                                    <span>CLIENT VISIBILITY</span>
-                                    {getSortIcon("clientVisibility")}
-                                </button>
-                            </th>
+							{/* 4. Client Visibility (Sortable) */}
+							<th className="w-[16%] px-6 py-3">
+								<button
+									type="button"
+									onClick={() => onSort("clientVisibility")}
+									className="flex items-center gap-1 text-[11px] font-normal uppercase text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+								>
+									<span>CLIENT VISIBILITY</span>
+									{getSortIcon("clientVisibility")}
+								</button>
+							</th>
 
-                            {/* 5. Actions (Non-Sortable) */}
-                            <th className="w-[14%] px-6 py-3 text-[11px] font-normal uppercase text-muted-foreground">
-                                ACTIONS
-                            </th>
-                        </tr>
-                    </thead>
+							{/* 5. Actions (Non-Sortable) */}
+							<th className="w-[14%] px-6 py-3 text-[11px] font-normal uppercase text-muted-foreground">
+								ACTIONS
+							</th>
+						</tr>
+					</thead>
 
 					<tbody className="divide-y divide-brand-100/50 bg-neutral-surface">
 						{variables.length === 0 ? (
 							<tr>
-								<td colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
+								<td
+									colSpan={5}
+									className="py-12 text-center text-sm text-muted-foreground"
+								>
 									No variables found.
 								</td>
 							</tr>
@@ -243,14 +249,18 @@ export function VariablesTable({
 											onClick={() => onToggleVisibilityRequest(v)}
 											className={cn(
 												"relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600",
-												v.clientVisibility ? "bg-brand-600" : "bg-neutral-border/40",
-												readOnly && "cursor-default opacity-70"
+												v.clientVisibility
+													? "bg-brand-600"
+													: "bg-neutral-border/40",
+												readOnly && "cursor-default opacity-70",
 											)}
 										>
 											<span
 												className={cn(
 													"pointer-events-none inline-block size-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
-													v.clientVisibility ? "translate-x-4" : "translate-x-0"
+													v.clientVisibility
+														? "translate-x-4"
+														: "translate-x-0",
 												)}
 											/>
 										</button>

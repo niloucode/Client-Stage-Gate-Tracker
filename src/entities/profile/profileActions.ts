@@ -1,7 +1,10 @@
 "use server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserId, assertProjectMember } from "@/lib/auth/projectAccess";
+import {
+	getCurrentUserId,
+	assertProjectMember,
+} from "@/lib/auth/projectAccess";
 import type { Profiles } from "@/lib/generated/prisma";
 import { hashInviteCode } from "@/shared/lib/inviteCode";
 import type { EntityFilterStatus } from "@/entities/types";

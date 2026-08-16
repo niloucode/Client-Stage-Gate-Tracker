@@ -2,7 +2,12 @@
 
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { profileKeys } from "@/shared/query/keys";
-import { selectProfile, getCurrentUserProfile, selectTeamProfiles, selectProjectMembers } from "./profileActions";
+import {
+	selectProfile,
+	getCurrentUserProfile,
+	selectTeamProfiles,
+	selectProjectMembers,
+} from "./profileActions";
 
 const profileQueryOptions = {
 	list: () =>

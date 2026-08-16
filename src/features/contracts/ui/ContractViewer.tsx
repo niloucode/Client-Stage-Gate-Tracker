@@ -309,10 +309,12 @@ export function ContractViewer({
 							>
 								<embed
 									// fileUrl is always a blob: URL (see the
-									// load effect / confirmUpload) — appending
-									// #toolbar=0 to a blob: URL breaks the
-									// Chrome viewer (gray embed), so skip it.
-									src={`${fileUrl}#toolbar=0&navpanes=0 `}
+									// load effect / confirmUpload). Chrome's
+									// PDF viewer breaks on #toolbar/#navpanes
+									// fragments appended to blob: URLs (gray
+									// embed — commit f072b9f), so render the
+									// blob URL as-is.
+									src={fileUrl}
 									type="application/pdf"
 									className="aspect-8.5/11 w-full rounded-md border border-lavender-100 bg-[#D2D9F4] shadow-sm"
 								/>

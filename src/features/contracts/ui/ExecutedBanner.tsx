@@ -23,16 +23,13 @@ export function ExecutedBanner({
 		>
 			<CheckCircle2 className="h-20 w-20 text-green-700" />
 			<div className="min-w-0 flex flex-col gap-3">
-				<h3>
-					Agreement Fully Executed
-				</h3>
+				<h3>Agreement Fully Executed</h3>
 				<h4 className="text-xs text-plum-400">
 					All parties have signed. This agreement is now legally binding.
 					{formatted && (
 						<>
 							{" "}
-							Executed on{" "}
-							<span className="text-foreground">{formatted}</span>.
+							Executed on <span className="text-foreground">{formatted}</span>.
 						</>
 					)}
 				</h4>
@@ -40,4 +37,3 @@ export function ExecutedBanner({
 		</div>
 	);
 }
-

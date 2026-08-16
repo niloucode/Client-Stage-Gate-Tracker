@@ -44,7 +44,8 @@ export const IssueCard: React.FC<IssueCardProps> = ({
 						{issue.name}
 					</h4>
 					<p className="text-xs text-muted-foreground truncate">
-						{formattedType} • Reported By {issue.clientName} on {issue.reportedAt}
+						{formattedType} • Reported By {issue.clientName} on{" "}
+						{issue.reportedAt}
 					</p>
 				</div>
 			</div>

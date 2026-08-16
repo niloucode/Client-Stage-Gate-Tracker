@@ -6,12 +6,16 @@ const validPayload = {
 	type: "not_saving",
 	specificType: "",
 	urgency: "high",
-	description: "Session terminates unexpectedly when the user submits dynamic form data.",
+	description:
+		"Session terminates unexpectedly when the user submits dynamic form data.",
 	systemEnv: "Chrome v126 / macOS Sonoma",
 	timeOfError: new Date("2026-08-02T14:28:00Z"),
 	steps: [
 		{ description: "Navigate to the dashboard." },
-		{ description: "Click Save repeatedly.", image: "https://cdn.example.com/step.png" },
+		{
+			description: "Click Save repeatedly.",
+			image: "https://cdn.example.com/step.png",
+		},
 	],
 };
 
@@ -28,10 +32,15 @@ describe("issueCreateSchema", () => {
 	});
 
 	it("rejects an empty name", () => {
-		const result = issueCreateSchema.safeParse({ ...validPayload, name: "   " });
+		const result = issueCreateSchema.safeParse({
+			...validPayload,
+			name: "   ",
+		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("name"))).toBe(true);
+			expect(result.error.issues.some((i) => i.path.includes("name"))).toBe(
+				true,
+			);
 		}
 	});
 
@@ -42,7 +51,9 @@ describe("issueCreateSchema", () => {
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("name"))).toBe(true);
+			expect(result.error.issues.some((i) => i.path.includes("name"))).toBe(
+				true,
+			);
 		}
 	});
 
@@ -53,7 +64,9 @@ describe("issueCreateSchema", () => {
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("type"))).toBe(true);
+			expect(result.error.issues.some((i) => i.path.includes("type"))).toBe(
+				true,
+			);
 		}
 	});
 
@@ -64,7 +77,9 @@ describe("issueCreateSchema", () => {
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("urgency"))).toBe(true);
+			expect(result.error.issues.some((i) => i.path.includes("urgency"))).toBe(
+				true,
+			);
 		}
 	});
 
@@ -76,7 +91,9 @@ describe("issueCreateSchema", () => {
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("specificType"))).toBe(true);
+			expect(
+				result.error.issues.some((i) => i.path.includes("specificType")),
+			).toBe(true);
 		}
 	});
 

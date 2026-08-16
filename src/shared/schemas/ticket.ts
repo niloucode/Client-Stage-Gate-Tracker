@@ -8,8 +8,16 @@ import { z } from "zod";
 //   actual_end_at    → when the entity finished (previously "end date")
 
 export const ticketCreateSchema = z.object({
-	name: z.string().trim().min(1, "Ticket name is required").max(50, "Ticket name must be 50 characters or less"),
-	description: z.string().max(360, "Description must be 360 characters or less").optional().nullable(),
+	name: z
+		.string()
+		.trim()
+		.min(1, "Ticket name is required")
+		.max(50, "Ticket name must be 50 characters or less"),
+	description: z
+		.string()
+		.max(360, "Description must be 360 characters or less")
+		.optional()
+		.nullable(),
 	watcher_id: z.uuid().optional().nullable(),
 	tagIds: z.array(z.uuid()).optional().nullable(),
 	plan_start_at: z.date().optional().nullable(),
@@ -38,8 +46,8 @@ export type CreateTicketParams = TicketCreateInput & {
 // ── Update ticket ────────────────────────────────────────────────────────────
 
 export const ticketUpdateSchema = ticketCreateSchema.partial().extend({
-  status: z.enum(["PENDING", "IN_PROGRESS", "FINISHED"]).optional(),
-  parent_id: z.uuid().optional().nullable(),
+	status: z.enum(["PENDING", "IN_PROGRESS", "FINISHED"]).optional(),
+	parent_id: z.uuid().optional().nullable(),
 });
 
 export type TicketUpdateInput = z.infer<typeof ticketUpdateSchema>;
@@ -59,9 +67,9 @@ export type CommentCreateInput = z.infer<typeof commentCreateSchema>;
 // ── Update ticket (full server-action params) ────────────────────────────────
 
 export type UpdateTicketParams = TicketUpdateInput & {
-  ticket_id: string;
-  workflow_id: string;
-  TicketAssigned: string[];
-  tagIds: string[];
-  parent_id?: string | null;
+	ticket_id: string;
+	workflow_id: string;
+	TicketAssigned: string[];
+	tagIds: string[];
+	parent_id?: string | null;
 };

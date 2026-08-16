@@ -742,7 +742,9 @@ const DateTimePicker = React.forwardRef<
 	) => {
 		const errorMessage = typeof error === "string" ? error : undefined;
 		const isError =
-			!!error || props["aria-invalid"] === true || props["aria-invalid"] === "true";
+			!!error ||
+			props["aria-invalid"] === true ||
+			props["aria-invalid"] === "true";
 
 		const [month, setMonth] = React.useState<Date>(value ?? new Date());
 		const buttonRef = useRef<HTMLButtonElement>(null);
@@ -829,7 +831,9 @@ const DateTimePicker = React.forwardRef<
 						{value ? (
 							format(
 								value,
-								hourCycle === 24 ? initHourFormat.hour24 : initHourFormat.hour12,
+								hourCycle === 24
+									? initHourFormat.hour24
+									: initHourFormat.hour12,
 								{
 									locale: loc,
 								},

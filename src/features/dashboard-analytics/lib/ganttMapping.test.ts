@@ -32,7 +32,9 @@ describe("deriveRowStatus", () => {
 	});
 
 	it("returns in_progress when only actual_start_at is set", () => {
-		expect(deriveRowStatus(makeRow({ actual_start_at: NOW }))).toBe("in_progress");
+		expect(deriveRowStatus(makeRow({ actual_start_at: NOW }))).toBe(
+			"in_progress",
+		);
 	});
 
 	it("returns upcoming when no actual dates exist", () => {
@@ -81,7 +83,10 @@ describe("getActualRange", () => {
 		const start = new Date("2026-07-01T00:00:00.000Z");
 		const end = new Date("2026-07-20T00:00:00.000Z");
 		expect(
-			getActualRange(makeRow({ actual_start_at: start, actual_end_at: end }), NOW),
+			getActualRange(
+				makeRow({ actual_start_at: start, actual_end_at: end }),
+				NOW,
+			),
 		).toEqual({ start, end });
 	});
 

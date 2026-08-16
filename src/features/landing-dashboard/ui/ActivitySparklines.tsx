@@ -242,8 +242,7 @@ function IssuesBySeverityCard({ data }: { data?: IssuesBySeverityData }) {
 							// Recharts 3 deprecates Cell — color each slice via the shape prop.
 							shape={(props: PieSectorShapeProps) => {
 								const entry = props.payload as
-									| { color?: string; fillClass?: string }
-									| undefined;
+									{ color?: string; fillClass?: string } | undefined;
 								return (
 									<Sector
 										{...props}
@@ -345,8 +344,7 @@ function AssignedVsUnassignedCard({
 							// Recharts 3 deprecates Cell — color each slice via the shape prop.
 							shape={(props: PieSectorShapeProps) => {
 								const entry = props.payload as
-									| { color?: string; fillClass?: string }
-									| undefined;
+									{ color?: string; fillClass?: string } | undefined;
 								return (
 									<Sector
 										{...props}

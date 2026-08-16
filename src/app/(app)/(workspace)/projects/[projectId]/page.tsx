@@ -13,9 +13,13 @@ export default function PS() {
 				key={projectId}
 				projectId={projectId}
 				onViewContract={() => router.push(`/projects/${projectId}/contract`)}
-				onCredentialsRepo={() => router.push(`/projects/${projectId}/variables`)}
+				onCredentialsRepo={() =>
+					router.push(`/projects/${projectId}/variables`)
+				}
 				onIssueReport={() => router.push(`/projects/${projectId}/issues`)}
-				onGanttChart={() => router.push(`/projects/${projectId}/dashboard-analytics`)}
+				onGanttChart={() =>
+					router.push(`/projects/${projectId}/dashboard-analytics`)
+				}
 			/>
 		</>
 	);

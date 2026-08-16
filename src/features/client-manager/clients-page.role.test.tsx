@@ -31,7 +31,9 @@ vi.mock("@/features/auth", () => ({
 	}),
 }));
 vi.mock("@/entities/department", () => ({
-	useDepartment: () => ({ data: mockDepartment.name ? { name: mockDepartment.name } : undefined }),
+	useDepartment: () => ({
+		data: mockDepartment.name ? { name: mockDepartment.name } : undefined,
+	}),
 }));
 vi.mock("@/entities/client", () => ({
 	useClients: mockUseClients,
@@ -94,10 +96,16 @@ describe("ClientsPage role visibility", () => {
 
 		renderPage();
 
-		expect(screen.getByRole("button", { name: "Add Client" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Add Client" }),
+		).toBeInTheDocument();
 		expect(screen.getByText("COMPANY CODE")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Edit client" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Regenerate invite code" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Edit client" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Regenerate invite code" }),
+		).toBeInTheDocument();
 	});
 
 	it("project team sees the list and members but NOT add/code/edit", () => {
@@ -114,11 +122,19 @@ describe("ClientsPage role visibility", () => {
 		renderPage();
 
 		expect(screen.getByText("Acme Corp")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "View team members" })).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Add Client" })).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "View team members" }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Add Client" }),
+		).not.toBeInTheDocument();
 		expect(screen.queryByText("COMPANY CODE")).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Edit client" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Regenerate invite code" })).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Edit client" }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("button", { name: "Regenerate invite code" }),
+		).not.toBeInTheDocument();
 	});
 
 	it("client profiles are redirected away and never render the page", () => {
@@ -133,11 +149,12 @@ describe("ClientsPage role visibility", () => {
 		renderPage();
 
 		expect(mockRouter.replace).toHaveBeenCalledWith("/dashboard");
-		expect(screen.queryByRole("heading", { name: "Clients" })).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("heading", { name: "Clients" }),
+		).not.toBeInTheDocument();
 		// The list must not be fetched for client profiles.
 		const enabledArg = mockUseClients.mock.calls[0]?.[0] as
-			| { enabled?: boolean }
-			| undefined;
+			{ enabled?: boolean } | undefined;
 		expect(enabledArg?.enabled).toBe(false);
 	});
 });

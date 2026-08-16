@@ -15,7 +15,11 @@ const testSchema = z.object({
 	name: z.string().min(3, "Name must be at least 3 characters"),
 });
 
-function TestForm({ onSubmit }: { onSubmit: (value: { name: string }) => void }) {
+function TestForm({
+	onSubmit,
+}: {
+	onSubmit: (value: { name: string }) => void;
+}) {
 	const form = useAppForm({
 		defaultValues: { name: "" },
 		validators: { onSubmit: testSchema },
@@ -35,9 +39,7 @@ function TestForm({ onSubmit }: { onSubmit: (value: { name: string }) => void })
 				)}
 			</form.AppField>
 			<form.Subscribe selector={(state) => state.errorMap.onSubmit}>
-				{(err) =>
-					err ? <p role="alert">{formErrorToMessage(err)}</p> : null
-				}
+				{(err) => (err ? <p role="alert">{formErrorToMessage(err)}</p> : null)}
 			</form.Subscribe>
 			<form.AppForm>
 				<form.SubmitButton>Save</form.SubmitButton>

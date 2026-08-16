@@ -13,7 +13,10 @@ function collectSourceFiles(dir: string, out: string[] = []): string[] {
 	for (const entry of readdirSync(dir)) {
 		const p = join(dir, entry);
 		if (statSync(p).isDirectory()) collectSourceFiles(p, out);
-		else if ((p.endsWith(".ts") || p.endsWith(".tsx")) && !p.includes(".test.")) {
+		else if (
+			(p.endsWith(".ts") || p.endsWith(".tsx")) &&
+			!p.includes(".test.")
+		) {
 			out.push(p);
 		}
 	}

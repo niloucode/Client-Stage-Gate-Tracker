@@ -16,24 +16,24 @@ import { join } from "node:path";
 const HEX_TO_TOKEN = {
 	"0F172A": "slate-900",
 	"94A3B8": "slate-400",
-	"E2E8F0": "slate-200",
-	"F8FAFC": "slate-50",
-	"F1F5F9": "slate-100",
-	"475569": "slate-600",
+	E2E8F0: "slate-200",
+	F8FAFC: "slate-50",
+	F1F5F9: "slate-100",
+	475569: "slate-600",
 	"64748B": "slate-500",
 	"4338CA": "indigo-700",
-	"DC2626": "red-600",
-	"EF4444": "red-500",
+	DC2626: "red-600",
+	EF4444: "red-500",
 	"15803D": "green-700",
 	"6B1FA8": "brand-500",
-	"181724": "ink",
+	181724: "ink",
 	"6E6B82": "plum-400",
 	"4C4352": "plum-700",
 	"060D1C": "navy-900",
-	"E6E4F0": "lavender-100",
-	"EEF0FF": "lavender-50",
-	"E5E3F1": "lavender-200",
-	"E5E3E0": "warm-gray-200",
+	E6E4F0: "lavender-100",
+	EEF0FF: "lavender-50",
+	E5E3F1: "lavender-200",
+	E5E3E0: "warm-gray-200",
 	"1A1A1A": "charcoal",
 };
 
@@ -69,4 +69,6 @@ for (const file of files) {
 	if (updated !== original) writeFileSync(file, updated);
 }
 
-console.log(`Tokenized ${total} literal-hex classes across ${files.length} files.`);
+console.log(
+	`Tokenized ${total} literal-hex classes across ${files.length} files.`,
+);

@@ -24,14 +24,24 @@ for (const b of buckets ?? []) {
 
 const demoContractPath =
 	"d3adbeef-0000-4000-8000-000000000001/primefoods-portal-agreement.pdf";
-const { data: contractObjects, error: listError } =
-	await admin.storage.from("contracts").list("", { limit: 50 });
-console.log("contracts bucket objects:", listError?.message ?? contractObjects?.map((o) => o.name).join(", ") ?? "(none)");
+const { data: contractObjects, error: listError } = await admin.storage
+	.from("contracts")
+	.list("", { limit: 50 });
+console.log(
+	"contracts bucket objects:",
+	listError?.message ??
+		contractObjects?.map((o) => o.name).join(", ") ??
+		"(none)",
+);
 
-const { data: existing } = await admin.storage.from("contracts").info(demoContractPath);
+const { data: existing } = await admin.storage
+	.from("contracts")
+	.info(demoContractPath);
 console.log("demo contract object exists:", existing ? "YES" : "NO");
 if (existing) {
-	const { data: pub } = admin.storage.from("contracts").getPublicUrl(demoContractPath);
+	const { data: pub } = admin.storage
+		.from("contracts")
+		.getPublicUrl(demoContractPath);
 	console.log("public URL:", pub.publicUrl);
 	const probe = await fetch(pub.publicUrl, { method: "HEAD" });
 	console.log("public URL HEAD status:", probe.status);

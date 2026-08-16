@@ -12,7 +12,10 @@ import {
 	hasValidPlannedRange,
 	toSchedulingDates,
 } from "@/shared/lib/scheduling";
-import { useCreateWorkflow, useUpdateWorkflow } from "@/entities/workflow/mutations";
+import {
+	useCreateWorkflow,
+	useUpdateWorkflow,
+} from "@/entities/workflow/mutations";
 import {
 	Button,
 	ConfirmationModal,
@@ -96,7 +99,9 @@ function WorkflowModal({
 			name: workflow?.name ?? "",
 			planStart: workflow?.planStart ? new Date(workflow.planStart) : null,
 			planEnd: workflow?.planEnd ? new Date(workflow.planEnd) : null,
-			actualStart: workflow?.actualStart ? new Date(workflow.actualStart) : null,
+			actualStart: workflow?.actualStart
+				? new Date(workflow.actualStart)
+				: null,
 			actualEnd: workflow?.actualEnd ? new Date(workflow.actualEnd) : null,
 		}),
 		[workflow],
@@ -303,7 +308,9 @@ function WorkflowModal({
 								>
 									Cancel
 								</Button>
-								<form.SubmitButton pendingLabel={isEditMode ? "Saving…" : "Creating…"}>
+								<form.SubmitButton
+									pendingLabel={isEditMode ? "Saving…" : "Creating…"}
+								>
 									{isEditMode ? (
 										<>
 											<Save className="mr-2 h-4 w-4" /> Save Changes

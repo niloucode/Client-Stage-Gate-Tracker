@@ -1,8 +1,5 @@
-export {
-	searchProfilesForProject,
-} from "./projectActions";
+export { searchProfilesForProject } from "./projectActions";
 export type { ProjectStatus, ProjectWithStatus } from "./projectActions";
-
 
 export {
 	useProject,

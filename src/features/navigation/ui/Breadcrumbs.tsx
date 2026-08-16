@@ -18,13 +18,19 @@ function truncateLabel(text: string, maxLength = 20): string {
 
 export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
 	return (
-		<nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs! min-w-0 flex-wrap">
+		<nav
+			aria-label="Breadcrumb"
+			className="flex items-center gap-1.5 text-xs! min-w-0 flex-wrap"
+		>
 			{items.map((item, i) => {
 				const isLast = i === items.length - 1;
 				const displayLabel = truncateLabel(item.label, 20);
 
 				return (
-					<span key={i} className="flex items-center gap-1.5 min-w-0 max-w-full">
+					<span
+						key={i}
+						className="flex items-center gap-1.5 min-w-0 max-w-full"
+					>
 						{i > 0 && (
 							<span className="text-gray-400 shrink-0" aria-hidden="true">
 								<ChevronRight className="w-3 h-3" />

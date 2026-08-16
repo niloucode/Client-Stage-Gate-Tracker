@@ -1,84 +1,84 @@
-"use client"
+"use client";
 
-import { use, useState, useRef, useCallback } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { ModuleCard } from "@/features/stage-editor"
-import { PhaseCard } from "@/features/stage-editor"
-import type { Phase } from "@/features/stage-editor"
-import { useStageTree } from "@/entities/stage/queries"
-import { useCurrentUser } from "@/entities/profile/queries"
-import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Back } from "@/components/ui/back"
+import { use, useState, useRef, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ModuleCard } from "@/features/stage-editor";
+import { PhaseCard } from "@/features/stage-editor";
+import type { Phase } from "@/features/stage-editor";
+import { useStageTree } from "@/entities/stage/queries";
+import { useCurrentUser } from "@/entities/profile/queries";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Back } from "@/components/ui/back";
 
 interface PageParams {
-	projectId: string
-	stageId: string
+	projectId: string;
+	stageId: string;
 }
 
 function EditorContent({
 	projectId,
 	stageId,
 }: {
-	projectId: string
-	stageId: string
+	projectId: string;
+	stageId: string;
 }) {
-	const router = useRouter()
-	const searchParams = useSearchParams()
-	const { data: stageTree, isLoading, error } = useStageTree(stageId)
-	const { data: profile } = useCurrentUser()
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const { data: stageTree, isLoading, error } = useStageTree(stageId);
+	const { data: profile } = useCurrentUser();
 	// Spec: client profiles (linked via the contract) are read-only here;
 	// project team and project owners have full edit access.
-	const isClientProfile = !!profile?.client_id
+	const isClientProfile = !!profile?.client_id;
 	// PhaseNode (stage tree) is structurally assignable to Phase — no cast needed
-	const phases: Phase[] = stageTree?.phases ?? []
+	const phases: Phase[] = stageTree?.phases ?? [];
 
 	// Restore phase: sessionStorage → URL param → null
 	const initialPhase = (() => {
 		const stored =
 			typeof window !== "undefined"
 				? sessionStorage.getItem("stageEditorPhase")
-				: null
-		if (stored) return Number(stored)
-		const param = searchParams.get("phase")
-		return param ? Number(param) : null
-	})()
+				: null;
+		if (stored) return Number(stored);
+		const param = searchParams.get("phase");
+		return param ? Number(param) : null;
+	})();
 	const [activePhase, setActivePhaseState] = useState<number | null>(
 		initialPhase,
-	)
-	const stepperRef = useRef<{ openCreateModal: () => void } | null>(null)
+	);
+	const stepperRef = useRef<{ openCreateModal: () => void } | null>(null);
 
 	// Wrap setActivePhase: state + sessionStorage + URL (no effect loop)
 	const setActivePhase = useCallback(
 		(phase: number | null) => {
-			setActivePhaseState(phase)
+			setActivePhaseState(phase);
 			if (typeof window !== "undefined") {
 				if (phase !== null) {
-					sessionStorage.setItem("stageEditorPhase", String(phase))
+					sessionStorage.setItem("stageEditorPhase", String(phase));
 				} else {
-					sessionStorage.removeItem("stageEditorPhase")
+					sessionStorage.removeItem("stageEditorPhase");
 				}
 			}
-			const params = new URLSearchParams(searchParams.toString())
+			const params = new URLSearchParams(searchParams.toString());
 			if (phase !== null) {
-				params.set("phase", String(phase))
+				params.set("phase", String(phase));
 			} else {
-				params.delete("phase")
+				params.delete("phase");
 			}
 			const newUrl = params.toString()
 				? `?${params.toString()}`
-				: window.location.pathname
-			router.replace(newUrl, { scroll: false })
+				: window.location.pathname;
+			router.replace(newUrl, { scroll: false });
 		},
 		[router, searchParams],
-	)
+	);
 
 	if (isLoading) {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
 				<p className="text-sm text-neutral-subtle">Loading stage structure…</p>
 			</div>
-		)
+		);
 	}
 
 	if (error) {
@@ -86,7 +86,7 @@ function EditorContent({
 			<div className="min-h-screen flex items-center justify-center">
 				<p className="text-sm text-red-500">Failed to load stage data.</p>
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -96,11 +96,10 @@ function EditorContent({
 
 			<div className="flex justify-between items-end my-4">
 				<div>
-					<h1>
-						{stageTree?.name ?? "Stage Name"}
-					</h1>
+					<h1>{stageTree?.name ?? "Stage Name"}</h1>
 					<p className="subtitle w-3/4">
-						{stageTree?.description || "Define project phases, modules, and workflows."}
+						{stageTree?.description ||
+							"Define project phases, modules, and workflows."}
 					</p>
 				</div>
 				{!isClientProfile && (
@@ -128,14 +127,14 @@ function EditorContent({
 				readOnly={isClientProfile}
 			/>
 		</div>
-	)
+	);
 }
 
 export default function EditorPage({
 	params,
 }: {
-	params: Promise<PageParams>
+	params: Promise<PageParams>;
 }) {
-	const { projectId, stageId } = use(params)
-	return <EditorContent projectId={projectId} stageId={stageId} />
+	const { projectId, stageId } = use(params);
+	return <EditorContent projectId={projectId} stageId={stageId} />;
 }

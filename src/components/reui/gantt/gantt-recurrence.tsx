@@ -348,9 +348,4 @@ function expandRecurrence<TData>(
 	return occurrences;
 }
 
-export {
-	GanttRecurrenceError,
-	expandRecurrence,
-	MAX_OCCURRENCES,
-	parseRRuleString,
-};
+export { expandRecurrence };

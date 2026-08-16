@@ -1628,21 +1628,12 @@ function Gantt<TData = unknown>({
 
 export {
 	DEFAULT_ROW_ALIGN,
-	DEFAULT_SCHEDULE_MODE,
-	DEFAULT_VIEW_CONFIG,
 	Gantt,
-	GanttContext,
-	GanttViewConfigContext,
 	resolveScheduleMode,
 	resolveTimelineLines,
 	useGantt,
-	useGanttNavigation,
-	useGanttOccurrences,
-	useGanttScale,
 	useGanttSelector,
 	useGanttSettings,
-	useGanttSettingsVersion,
-	useGanttState,
 	useGanttViewConfig,
 };
 export type {

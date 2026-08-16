@@ -544,7 +544,6 @@ export {
 	getRangeKey,
 	MIN_PACK_SLOT,
 	packTimedSegments,
-	rangesIntersect,
 	reorderResources,
 	resolveOffDay,
 	snapMinutes,

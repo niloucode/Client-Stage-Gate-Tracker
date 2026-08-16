@@ -264,5 +264,5 @@ function mergeGanttI18n(overrides?: GanttI18nOverrides): GanttI18nConfig {
 	};
 }
 
-export { DEFAULT_GANTT_I18N, mergeGanttI18n };
+export { mergeGanttI18n };
 export type { GanttI18nConfig, GanttI18nOverrides };

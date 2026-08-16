@@ -11,37 +11,34 @@ const buttonVariants = cva(
 				/* Voltage Purple — Default Primary Brand CTA */
 				default:
 					"bg-primary text-primary-foreground hover:bg-brand-600 shadow-xs",
-				
+
 				/* Explicit Voltage Purple variant */
-				purple:
-					"bg-brand-500 text-white hover:bg-brand-600 shadow-xs",
-				
+				purple: "bg-brand-500 text-white hover:bg-brand-600 shadow-xs",
+
 				/* Lime Signal — Primary High-Impact CTA */
-				lime:
-					"bg-[#AAFB79] text-[#0D0E11] hover:bg-[#C7FF98] shadow-xs font-semibold",
-				
+				lime: "bg-[#AAFB79] text-[#0D0E11] hover:bg-[#C7FF98] shadow-xs font-semibold",
+
 				/* Outline Bordered Variant */
 				outline:
 					"border border-border bg-background text-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
-				
+
 				/* Secondary Neutral Surface Variant */
 				secondary:
 					"bg-neutral-surface text-foreground font-normal border border-gray-200 hover:bg-neutral-subtle",
-				
+
 				/* Ghost / Subtle Variant */
 				ghost:
 					"bg-transparent text-foreground border border-transparent hover:border-brand-100 hover:bg-muted hover:text-brand-600 aria-expanded:bg-muted aria-expanded:text-foreground",
-				
+
 				/* Asceoft Nav Uppercase Mono Variant */
-				nav:
-					"bg-transparent text-primary border border-primary font-mono text-[11px] uppercase tracking-[0.12em] hover:bg-primary hover:text-primary-foreground",
-				
+				nav: "bg-transparent text-primary border border-primary font-mono text-[11px] uppercase tracking-[0.12em] hover:bg-primary hover:text-primary-foreground",
+
 				/* Destructive / Warning Variants */
 				destructive:
 					"bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
 				danger:
 					"bg-danger text-danger-foreground hover:bg-red-600 focus-visible:border-red-600/40 focus-visible:ring-red-600/20",
-				
+
 				/* Minimal Text Link */
 				link: "text-primary underline-offset-4 hover:underline p-0 h-auto",
 			},

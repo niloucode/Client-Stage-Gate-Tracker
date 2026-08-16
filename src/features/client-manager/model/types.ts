@@ -22,10 +22,6 @@ export interface Client {
 }
 
 export type SortField =
-	| "name"
-	| "tin"
-	| "email"
-	| "contactNumber"
-	| "billingAddress";
+	"name" | "tin" | "email" | "contactNumber" | "billingAddress";
 
 export type SortDirection = "asc" | "desc";

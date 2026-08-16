@@ -24,7 +24,12 @@ export function SubmitButton({
 	const isSubmitting = form.state.isSubmitting;
 
 	return (
-		<Button {...props} type="submit" disabled={disabled || isSubmitting} aria-busy={isSubmitting || undefined}>
+		<Button
+			{...props}
+			type="submit"
+			disabled={disabled || isSubmitting}
+			aria-busy={isSubmitting || undefined}
+		>
 			{isSubmitting && pendingLabel ? pendingLabel : children}
 		</Button>
 	);

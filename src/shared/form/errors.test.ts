@@ -22,9 +22,9 @@ describe("formErrorToMessage", () => {
 	});
 
 	it("extracts the message from a Zod-style issue object", () => {
-		expect(formErrorToMessage({ message: "Must be at least 3 characters" })).toBe(
-			"Must be at least 3 characters",
-		);
+		expect(
+			formErrorToMessage({ message: "Must be at least 3 characters" }),
+		).toBe("Must be at least 3 characters");
 		expect(formErrorToMessage({ message: undefined })).toBeNull();
 	});
 

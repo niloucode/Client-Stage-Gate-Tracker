@@ -1,6 +1,11 @@
 "use client";
 
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	queryOptions,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { gateKeys, stageKeys } from "@/shared/query/keys";
 import {
 	createGateComment,
@@ -51,14 +56,19 @@ export function useDecideGate(stageId: string | undefined) {
 			// Status/comment changed and stage dates materialized — refresh
 			// the gate list and the stage tree/project-structure summaries.
 			if (stageId) {
-				await queryClient.invalidateQueries({ queryKey: gateKeys.list(stageId) });
+				await queryClient.invalidateQueries({
+					queryKey: gateKeys.list(stageId),
+				});
 			}
 			await queryClient.invalidateQueries({ queryKey: stageKeys.all });
 		},
 	});
 }
 
-export function useCreateGateComment(gateId: string | undefined, stageId: string | undefined) {
+export function useCreateGateComment(
+	gateId: string | undefined,
+	stageId: string | undefined,
+) {
 	const queryClient = useQueryClient();
 
 	return useMutation({
@@ -71,10 +81,14 @@ export function useCreateGateComment(gateId: string | undefined, stageId: string
 		}) => createGateComment(gateId!, description, imageUrls),
 		onSuccess: async () => {
 			if (gateId) {
-				await queryClient.invalidateQueries({ queryKey: gateKeys.comments(gateId) });
+				await queryClient.invalidateQueries({
+					queryKey: gateKeys.comments(gateId),
+				});
 			}
 			if (stageId) {
-				await queryClient.invalidateQueries({ queryKey: gateKeys.list(stageId) });
+				await queryClient.invalidateQueries({
+					queryKey: gateKeys.list(stageId),
+				});
 			}
 		},
 	});

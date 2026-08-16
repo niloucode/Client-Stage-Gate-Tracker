@@ -1,9 +1,15 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserId, assertProjectMemberOrClient } from "@/lib/auth/projectAccess";
+import {
+	getCurrentUserId,
+	assertProjectMemberOrClient,
+} from "@/lib/auth/projectAccess";
 import type { Prisma, IssueUrgency } from "@/lib/generated/prisma";
-import { issueCreateSchema, type IssueCreateInput } from "@/shared/schemas/issue";
+import {
+	issueCreateSchema,
+	type IssueCreateInput,
+} from "@/shared/schemas/issue";
 import { mapIssueRow } from "./lib/mappers";
 import type { IssueItem } from "./types";
 
@@ -45,7 +51,9 @@ export async function createIssue(
 		parsed.type === "other" && parsed.specificType.trim()
 			? parsed.specificType.trim()
 			: parsed.type;
-	const steps = parsed.steps.filter((s) => s.description.trim() !== "" || !!s.image);
+	const steps = parsed.steps.filter(
+		(s) => s.description.trim() !== "" || !!s.image,
+	);
 
 	const created = await prisma.issues.create({
 		data: {

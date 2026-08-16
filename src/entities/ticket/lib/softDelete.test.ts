@@ -5,10 +5,9 @@ function makeTx() {
 	return {
 		workflows: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
 		tickets: {
-			findMany: vi.fn().mockResolvedValue([
-				{ ticket_id: "t1" },
-				{ ticket_id: "t2" },
-			]),
+			findMany: vi
+				.fn()
+				.mockResolvedValue([{ ticket_id: "t1" }, { ticket_id: "t2" }]),
 			updateMany: vi.fn().mockResolvedValue({ count: 0 }),
 		},
 	};

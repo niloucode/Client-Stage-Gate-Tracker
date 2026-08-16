@@ -303,9 +303,7 @@ function TicketCard({
 		>
 			<CardContent className="flex flex-col justify-between gap-3 px-3 lg:flex-row lg:items-center">
 				<div className="flex flex-col align-left gap-2 min-w-0 flex-1">
-					<h3 className="truncate">
-						{name}
-					</h3>
+					<h3 className="truncate">{name}</h3>
 					<Badge
 						variant="outline"
 						className="shrink-0 gap-1 rounded border-neutral-border/60 bg-neutral-subtle/50 px-2 py-0.5 text-2xs font-semibold text-muted-foreground"
@@ -677,9 +675,7 @@ export function ProjectStructure({
 							onClick={() =>
 								projectId &&
 								selectedStageId &&
-								router.push(
-									`/projects/${projectId}/stages/${selectedStageId}`,
-								)
+								router.push(`/projects/${projectId}/stages/${selectedStageId}`)
 							}
 							isPrimary
 						/>
@@ -701,9 +697,7 @@ export function ProjectStructure({
 				<CardContent>
 					<Card className="bg-neutral-subtle/50">
 						<CardHeader>
-							<CardTitle>
-								Expiring Tickets
-							</CardTitle>
+							<CardTitle>Expiring Tickets</CardTitle>
 							<CardDescription className="text-2xs text-muted-foreground">
 								Unfinished tickets with the closest deadlines
 							</CardDescription>
@@ -745,13 +739,8 @@ export function ProjectStructure({
 			<ConfirmDeleteModal
 				isOpen={stageToDelete !== null}
 				noun="Stage"
-				title={
-					stageToDelete ? `Delete Stage?` : undefined
-				}
-				description={
-					stageDeleteError ??
-					"This action cannot be undone."
-				}
+				title={stageToDelete ? `Delete Stage?` : undefined}
+				description={stageDeleteError ?? "This action cannot be undone."}
 				onConfirm={() => {
 					if (!stageToDelete) return;
 					const deletedName = stageToDelete.name;

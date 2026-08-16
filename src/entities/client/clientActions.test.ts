@@ -187,8 +187,9 @@ describe("clientCreate", () => {
 		expect(result.success).toBe(true);
 		if (result.success) {
 			expect(result.inviteCode).toMatch(/^[A-Z2-9]{12}$/);
-			const createdData = mockedPrisma.clients.create.mock.calls[0][0]
-				.data as { invite_code_hash: string };
+			const createdData = mockedPrisma.clients.create.mock.calls[0][0].data as {
+				invite_code_hash: string;
+			};
 			expect(createdData.invite_code_hash).toBe(
 				hashInviteCode(result.inviteCode!),
 			);
@@ -273,9 +274,7 @@ describe("clientSelectAll (read-path guard)", () => {
 	it("throws for unauthenticated callers", async () => {
 		mockedUserId.mockResolvedValue(null);
 
-		await expect(clientSelectAll()).rejects.toThrow(
-			"Authentication required.",
-		);
+		await expect(clientSelectAll()).rejects.toThrow("Authentication required.");
 		expect(mockedPrisma.clients.findMany).not.toHaveBeenCalled();
 	});
 });

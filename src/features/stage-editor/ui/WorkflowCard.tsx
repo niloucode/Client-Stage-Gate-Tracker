@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Workflow } from "../types";
-import { AddWorkflow, EditWorkflow } from "@/features/stage-editor/ui/modals/WorkflowModals";
+import {
+	AddWorkflow,
+	EditWorkflow,
+} from "@/features/stage-editor/ui/modals/WorkflowModals";
 import { ConfirmDeleteModal } from "@/shared/ui";
 import {
 	useDeleteWorkflow,
@@ -386,20 +389,16 @@ export function WorkflowCard({
 
 								{/* Workflow Actions — edit hidden when completed (Task 5.7) */}
 								<div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-									{!readOnly &&
-										getWorkflowStatus(workflow) !== "ended" && (
-											<button
-												type="button"
-												onClick={() => openEditWorkflowModal(workflow)}
-												className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded cursor-pointer"
-												aria-label="Edit workflow"
-											>
-												<EllipsisVertical
-													size={14}
-													className="text-slate-500"
-												/>
-											</button>
-										)}
+									{!readOnly && getWorkflowStatus(workflow) !== "ended" && (
+										<button
+											type="button"
+											onClick={() => openEditWorkflowModal(workflow)}
+											className="opacity-60 hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded cursor-pointer"
+											aria-label="Edit workflow"
+										>
+											<EllipsisVertical size={14} className="text-slate-500" />
+										</button>
+									)}
 								</div>
 							</div>
 						</div>

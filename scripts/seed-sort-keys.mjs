@@ -23,10 +23,10 @@ async function assignKeys(table, idColumn, rows) {
 	let count = 0;
 	for (const row of rows) {
 		const key = generateKeyBetween(prev, null);
-		await pool.query(`UPDATE "${table}" SET sort_key = $1 WHERE "${idColumn}" = $2`, [
-			key,
-			row[idColumn],
-		]);
+		await pool.query(
+			`UPDATE "${table}" SET sort_key = $1 WHERE "${idColumn}" = $2`,
+			[key, row[idColumn]],
+		);
 		prev = key;
 		count++;
 	}

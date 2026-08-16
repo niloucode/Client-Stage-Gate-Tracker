@@ -59,9 +59,7 @@ export function AccountMenu() {
 							{userInitials}
 						</AvatarFallback>
 					</Avatar>
-					<div className="text-foreground text-base">
-						{userName}
-					</div>
+					<div className="text-foreground text-base">{userName}</div>
 					<Badge
 						variant="secondary"
 						className="mt-1.5 text-[11px] tracking-wide uppercase"

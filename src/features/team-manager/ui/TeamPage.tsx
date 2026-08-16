@@ -17,9 +17,7 @@ function TeamHeader() {
 			<h1 className="text-4xl font-bold tracking-wide text-foreground">
 				Acesoft Team
 			</h1>
-			<p className="subtitle">
-				View your fellow Acesoft Team members.
-			</p>
+			<p className="subtitle">View your fellow Acesoft Team members.</p>
 		</div>
 	);
 }

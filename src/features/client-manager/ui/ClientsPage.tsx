@@ -22,9 +22,7 @@ function ClientHeader() {
 			<h1 className="text-4xl font-bold tracking-wide text-foreground">
 				Clients
 			</h1>
-			<p className="subtitle">
-				View the clients your company is working with.
-			</p>
+			<p className="subtitle">View the clients your company is working with.</p>
 		</div>
 	);
 }
@@ -83,7 +81,9 @@ export function ClientsPage() {
 	const { data: clientsData, refetch } = useClients({ enabled: !isClient });
 
 	const [showAddModal, setShowAddModal] = useState(false);
-	const [viewMembersClient, setViewMembersClient] = useState<Client | null>(null);
+	const [viewMembersClient, setViewMembersClient] = useState<Client | null>(
+		null,
+	);
 	const [editClient, setEditClient] = useState<Client | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [sortField, setSortField] = useState<SortField>("name");
@@ -117,8 +117,11 @@ export function ClientsPage() {
 	}));
 
 	const filteredClients = useMemo(
-		() => clients.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase())),
-		[clients, searchQuery]
+		() =>
+			clients.filter((c) =>
+				c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+			),
+		[clients, searchQuery],
 	);
 
 	const sortedClients = useMemo(() => {

@@ -2,7 +2,6 @@
 import { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
-
 /** Normalize a URL to its origin; returns null for invalid input. */
 function toOrigin(value: string): string | null {
 	try {
@@ -43,7 +42,9 @@ const CONNECT_SRC = buildConnectSrc();
  */
 function buildCsp(): string {
 	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-	const supabaseOrigin = supabaseUrl ? toOrigin(supabaseUrl) : "https://*.supabase.co";
+	const supabaseOrigin = supabaseUrl
+		? toOrigin(supabaseUrl)
+		: "https://*.supabase.co";
 
 	return [
 		"default-src 'self'",

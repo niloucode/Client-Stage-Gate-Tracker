@@ -23,7 +23,10 @@ export default function TagListModal({
 	// alphabetical — protection comes from Tags.is_protected, never from
 	// hardcoded names (2026-08-15 spec).
 	const displayedTags = useMemo(
-		() => sortTagsForDisplay(tags.filter((tag) => matchesTagSearch(tag, searchQuery))),
+		() =>
+			sortTagsForDisplay(
+				tags.filter((tag) => matchesTagSearch(tag, searchQuery)),
+			),
 		[tags, searchQuery],
 	);
 

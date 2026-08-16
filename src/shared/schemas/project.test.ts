@@ -47,9 +47,9 @@ describe("projectCreateSchema (required plan dates, Input Rules)", () => {
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(
-				result.error.issues.some((i) => i.path.includes("planEnd")),
-			).toBe(true);
+			expect(result.error.issues.some((i) => i.path.includes("planEnd"))).toBe(
+				true,
+			);
 		}
 	});
 
@@ -246,15 +246,22 @@ describe("stageCreateSchema (date rules: plan dates required for stages)", () =>
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("planStart"))).toBe(true);
+			expect(
+				result.error.issues.some((i) => i.path.includes("planStart")),
+			).toBe(true);
 		}
 	});
 
 	it("rejects a null planEnd", () => {
-		const result = stageCreateSchema.safeParse({ ...validStage, planEnd: null });
+		const result = stageCreateSchema.safeParse({
+			...validStage,
+			planEnd: null,
+		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("planEnd"))).toBe(true);
+			expect(result.error.issues.some((i) => i.path.includes("planEnd"))).toBe(
+				true,
+			);
 		}
 	});
 
@@ -265,7 +272,9 @@ describe("stageCreateSchema (date rules: plan dates required for stages)", () =>
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues.some((i) => i.path.includes("planStart"))).toBe(true);
+			expect(
+				result.error.issues.some((i) => i.path.includes("planStart")),
+			).toBe(true);
 		}
 	});
 
@@ -273,5 +282,4 @@ describe("stageCreateSchema (date rules: plan dates required for stages)", () =>
 		const result = stageCreateSchema.safeParse({ ...validStage, name: "  " });
 		expect(result.success).toBe(false);
 	});
-
 });

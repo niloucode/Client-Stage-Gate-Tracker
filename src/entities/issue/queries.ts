@@ -1,6 +1,11 @@
 "use client";
 
-import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	queryOptions,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { issueKeys } from "@/shared/query/keys";
 import { createIssue, listIssues } from "./issueActions";
 import type { IssueCreateInput } from "@/shared/schemas/issue";
@@ -25,7 +30,9 @@ export function useCreateIssue(projectId: string) {
 		mutationFn: (data: IssueCreateInput) => createIssue(projectId, data),
 		onSuccess: async () => {
 			// New issue → refresh this project's list and the landing-dashboard stats.
-			await queryClient.invalidateQueries({ queryKey: issueKeys.list(projectId) });
+			await queryClient.invalidateQueries({
+				queryKey: issueKeys.list(projectId),
+			});
 			await queryClient.invalidateQueries({ queryKey: issueKeys.stats() });
 		},
 	});

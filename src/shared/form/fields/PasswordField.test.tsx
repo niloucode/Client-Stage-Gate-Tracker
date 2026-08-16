@@ -14,7 +14,11 @@ const testSchema = z.object({
 	password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-function TestForm({ onSubmit }: { onSubmit: (value: { password: string }) => void }) {
+function TestForm({
+	onSubmit,
+}: {
+	onSubmit: (value: { password: string }) => void;
+}) {
 	const form = useAppForm({
 		defaultValues: { password: "" },
 		validators: { onSubmit: testSchema },
@@ -91,6 +95,9 @@ describe("PasswordField (shared form kit)", () => {
 		expect(screen.getByLabelText("Password *")).toHaveAttribute("type", "text");
 
 		await user.click(screen.getByRole("button", { name: "Hide password" }));
-		expect(screen.getByLabelText("Password *")).toHaveAttribute("type", "password");
+		expect(screen.getByLabelText("Password *")).toHaveAttribute(
+			"type",
+			"password",
+		);
 	});
 });

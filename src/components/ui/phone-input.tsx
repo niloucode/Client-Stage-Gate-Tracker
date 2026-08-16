@@ -68,7 +68,9 @@ function PhoneInput({
 }: PhoneInputProps) {
 	const errorMessage = typeof error === "string" ? error : undefined;
 	const isError =
-		!!error || props["aria-invalid"] === true || props["aria-invalid"] === "true";
+		!!error ||
+		props["aria-invalid"] === true ||
+		props["aria-invalid"] === "true";
 
 	const content = (
 		<PhoneInputContext.Provider

@@ -50,10 +50,15 @@ export function GateDiscussionModal({
 	canComment,
 	onClose,
 }: GateDiscussionModalProps) {
-	const { data: comments = [], isLoading, isError } = useGateComments(
+	const {
+		data: comments = [],
+		isLoading,
+		isError,
+	} = useGateComments(gateId ?? undefined);
+	const createCommentMutation = useCreateGateComment(
 		gateId ?? undefined,
+		stageId,
 	);
-	const createCommentMutation = useCreateGateComment(gateId ?? undefined, stageId);
 
 	const [text, setText] = useState("");
 	const [files, setFiles] = useState<File[]>([]);
@@ -195,7 +200,8 @@ export function GateDiscussionModal({
 						<DialogTitle>Gate Discussion</DialogTitle>
 						<DialogDescription>
 							Further comments from the client and the project team.
-							{!canComment && " New comments are only allowed on the latest gate."}
+							{!canComment &&
+								" New comments are only allowed on the latest gate."}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -257,7 +263,10 @@ export function GateDiscussionModal({
 					</div>
 
 					{canComment && gateId && (
-						<form onSubmit={handleSubmit} className="space-y-3 border-t border-border pt-3">
+						<form
+							onSubmit={handleSubmit}
+							className="space-y-3 border-t border-border pt-3"
+						>
 							<Textarea
 								value={text}
 								onChange={(e) => setText(e.target.value)}
@@ -309,7 +318,9 @@ export function GateDiscussionModal({
 								<Button
 									type="submit"
 									size="sm"
-									disabled={isSubmitting || (!text.trim() && files.length === 0)}
+									disabled={
+										isSubmitting || (!text.trim() && files.length === 0)
+									}
 								>
 									<Send className="size-3.5" />
 									{isSubmitting ? "Posting…" : "Post Comment"}

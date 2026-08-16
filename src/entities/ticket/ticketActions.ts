@@ -12,7 +12,10 @@ import { ticketInclude } from "./types";
 import { rollupTicketAncestors } from "./lib/dateRollup";
 import { computeActualDates } from "./lib/statusTransitions";
 import { logHistoryEvent } from "./lib/logHistoryEvent";
-import { deriveIssueStatus, shouldKeepLinkOnDelete } from "@/shared/lib/issueStatus";
+import {
+	deriveIssueStatus,
+	shouldKeepLinkOnDelete,
+} from "@/shared/lib/issueStatus";
 import {
 	currentWeekStart,
 	previousWeekStart,
@@ -55,7 +58,9 @@ async function syncLinkedIssueStatus(issueId: string, db: DbClient = prisma) {
 	if (!issue) return;
 	const ticket = issue.Tickets[0] ?? null;
 	const activeTicket =
-		ticket && (!ticket.is_deleted || ticket.status === "FINISHED") ? ticket : null;
+		ticket && (!ticket.is_deleted || ticket.status === "FINISHED")
+			? ticket
+			: null;
 	const next = deriveIssueStatus(activeTicket ? activeTicket.status : null);
 	await db.issues.update({
 		where: { issue_id: issueId },
@@ -78,7 +83,10 @@ function rethrowIssueLinkConflict(error: unknown): never {
 		// robustness fallback for driver variants.
 		const target = error.meta?.target;
 		const targets = Array.isArray(target) ? target : [target];
-		if (targets.includes("issue_id") || targets.includes("Tickets_issue_id_key")) {
+		if (
+			targets.includes("issue_id") ||
+			targets.includes("Tickets_issue_id_key")
+		) {
 			throw new Error("This issue is already linked to another ticket.");
 		}
 	}
@@ -330,8 +338,7 @@ export async function updateTicket(
 					api_method: data.api_method ?? null,
 					// 1-to-1 issue link: undefined = don't touch; null = unlink;
 					// uuid = link (P2002 when the issue is already claimed).
-					issue_id:
-						data.issue_id === undefined ? undefined : data.issue_id,
+					issue_id: data.issue_id === undefined ? undefined : data.issue_id,
 
 					...((assigneesToRemove.length > 0 || assigneesToAdd.length > 0) && {
 						TicketAssigned: {
@@ -429,7 +436,11 @@ export async function updateTicketStatus(
 			data: {
 				status,
 				// Spec: actual dates derive from the status transition (pure helper)
-				...computeActualDates(existing?.status ?? "PENDING", status, new Date()),
+				...computeActualDates(
+					existing?.status ?? "PENDING",
+					status,
+					new Date(),
+				),
 			},
 			include: ticketInclude,
 		});
@@ -501,7 +512,10 @@ export async function cascadeSoftDeleteTicket(
 		) => {
 			for (const row of rows) {
 				if (row.issue_id && !shouldKeepLinkOnDelete(row.status)) {
-					linkReleasePairs.push({ ticket_id: row.ticket_id, issue_id: row.issue_id });
+					linkReleasePairs.push({
+						ticket_id: row.ticket_id,
+						issue_id: row.issue_id,
+					});
 				}
 			}
 		};
@@ -661,7 +675,7 @@ export async function updateTicketParent(
 
 	const projectId = await resolveTicketProject(ticketId);
 	if (!projectId) return { success: false, error: "Ticket not found." };
-	
+
 	const auth = await assertProjectMemberNotClient(projectId);
 	if (!auth.ok) throw new Error(auth.error);
 
@@ -782,45 +796,50 @@ export async function getActivitySparklines() {
 
 	const UPCOMING_WINDOW_MS = 7 * 86_400_000;
 
-	const [thisWeekTickets, lastWeekCount, activeCount, overdueCount, upcomingTickets] =
-		await Promise.all([
-			// Finished this week — full rows so daily bars can be bucketed.
-			// Upper bound guards against future-dated actual_end_at values
-			// (re-saving a finished ticket passes actual_end_at through).
-			prisma.tickets.findMany({
-				where: {
-					...myAssigned,
-					status: "FINISHED",
-					actual_end_at: { gte: weekStart, lt: nextWeekStartBound },
-				},
-				select: { actual_end_at: true },
-			}),
-			prisma.tickets.count({
-				where: {
-					...myAssigned,
-					status: "FINISHED",
-					actual_end_at: { gte: lastWeekStart, lt: weekStart },
-				},
-			}),
-			prisma.tickets.count({
-				where: { ...myAssigned, status: { not: "FINISHED" } },
-			}),
-			prisma.tickets.count({
-				where: {
-					...myAssigned,
-					status: { not: "FINISHED" },
-					plan_end_at: { lt: now },
-				},
-			}),
-			prisma.tickets.findMany({
-				where: {
-					...myAssigned,
-					status: { not: "FINISHED" },
-					plan_end_at: { lte: new Date(now.getTime() + UPCOMING_WINDOW_MS) },
-				},
-				select: { plan_end_at: true },
-			}),
-		]);
+	const [
+		thisWeekTickets,
+		lastWeekCount,
+		activeCount,
+		overdueCount,
+		upcomingTickets,
+	] = await Promise.all([
+		// Finished this week — full rows so daily bars can be bucketed.
+		// Upper bound guards against future-dated actual_end_at values
+		// (re-saving a finished ticket passes actual_end_at through).
+		prisma.tickets.findMany({
+			where: {
+				...myAssigned,
+				status: "FINISHED",
+				actual_end_at: { gte: weekStart, lt: nextWeekStartBound },
+			},
+			select: { actual_end_at: true },
+		}),
+		prisma.tickets.count({
+			where: {
+				...myAssigned,
+				status: "FINISHED",
+				actual_end_at: { gte: lastWeekStart, lt: weekStart },
+			},
+		}),
+		prisma.tickets.count({
+			where: { ...myAssigned, status: { not: "FINISHED" } },
+		}),
+		prisma.tickets.count({
+			where: {
+				...myAssigned,
+				status: { not: "FINISHED" },
+				plan_end_at: { lt: now },
+			},
+		}),
+		prisma.tickets.findMany({
+			where: {
+				...myAssigned,
+				status: { not: "FINISHED" },
+				plan_end_at: { lte: new Date(now.getTime() + UPCOMING_WINDOW_MS) },
+			},
+			select: { plan_end_at: true },
+		}),
+	]);
 
 	// Bucket finished tickets into weekday bars (index 0 = Monday).
 	const daily = new Array<number>(7).fill(0);

@@ -10,7 +10,12 @@ import {
 	buildGanttResources,
 	type GanttRowResource,
 } from "../lib/ganttMapping";
-import type { GanttBarEventData, GanttLevel, GanttRowData, GanttTab } from "../types";
+import type {
+	GanttBarEventData,
+	GanttLevel,
+	GanttRowData,
+	GanttTab,
+} from "../types";
 import { EmptyGanttState } from "./EmptyGanttState";
 import { GanttBarContent } from "./GanttBarContent";
 import { GanttResourceLabel } from "./GanttResourceLabel";
@@ -33,7 +38,12 @@ const LEVEL_HEADER_LABEL: Record<GanttLevel, string> = {
  * its resources/events shape and swaps only the bar CONTENT (GanttBarContent)
  * and the empty state — layout, scroll and the today line stay library-owned.
  */
-export function ProjectGanttChart({ rows, tab, level, today }: ProjectGanttChartProps) {
+export function ProjectGanttChart({
+	rows,
+	tab,
+	level,
+	today,
+}: ProjectGanttChartProps) {
 	const resources = useMemo(() => buildGanttResources(rows), [rows]);
 	const events = useMemo(
 		() => buildGanttEvents(rows, tab, today),

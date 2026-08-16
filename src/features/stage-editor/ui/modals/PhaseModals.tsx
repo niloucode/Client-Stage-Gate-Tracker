@@ -293,9 +293,7 @@ function PhaseModal({
 															? new Date(field.state.value)
 															: undefined
 													}
-													onChange={(date) =>
-														field.handleChange(date ?? null)
-													}
+													onChange={(date) => field.handleChange(date ?? null)}
 													placeholder="Pick Planned Start"
 													error={error ?? undefined}
 												/>
@@ -317,9 +315,7 @@ function PhaseModal({
 															? new Date(field.state.value)
 															: undefined
 													}
-													onChange={(date) =>
-														field.handleChange(date ?? null)
-													}
+													onChange={(date) => field.handleChange(date ?? null)}
 													placeholder="Pick Planned End"
 													error={error ?? undefined}
 												/>

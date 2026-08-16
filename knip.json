@@ -1,7 +1,6 @@
 {
 	"$schema": "https://unpkg.com/knip@5/schema.json",
 	"ignore": [
-		"src/components/reui/**",
 		"src/components/ui/**",
 		"src/shared/testing/server-only-stub.ts"
 	],

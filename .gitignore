@@ -46,48 +46,14 @@ next-env.d.ts
 # repomx
 repomix-output.xml
 
-/src/lib/generated/prisma
-/.idea/Client-Stage-Gate-Tracker.iml
-/.idea/material_theme_project_new.xml
-/.idea/modules.xml
-/.idea/inspectionProfiles/Project_Default.xml
-/.idea/vcs.xml
-/.idea/workspace.xml
-/.idea/shelf/Uncommitted_changes_before_Update_at_7_4_26__1_39PM__Changes_.xml
-/.idea/shelf/Uncommitted_changes_before_Update_at_7_4_26,_1_39 PM_[Changes]/shelved.patch
-
-/project_permissions.txt
-/.reasonix/truncated-results/1783340454111-34528dad-run_command.txt
-/.reasonix/truncated-results/1783341336429-0cb12989-run_command.txt
-/.reasonix/truncated-results/1783360626999-0312afee-run_command.txt
-/fix_assigned.py
-/fix_checkbox3.py
-/.idea/dictionaries/project.xml
-/.reasonix/reasonix.toml
-/.reasonix/desktop-topic-created-at.json
-/.reasonix/desktop-topic-title-sources.json
-/.reasonix/desktop-topic-titles.json
-/figma-client-dashboard.json
-/figma-project-owner-dashboard.json
-/figma-project-owner-modal.json
-/figma-project-team-dashboard.json
-/project-owner-dashboard-preliminary-plan.txt
-/project-owner-modal-preliminary-plan.txt
-/reasonix.toml
-/REASONIX.md
-/.reasonix/attachments/clipboard-20260729-233243.767354-000001.md
-/REASONIX SESSION/July22chat.md
-/REASONIX SESSION/July22chat.pdf
-/REASONIX SESSION/July22chat-compressed.pdf
-/docs/project-analysis-outdated.md
-/docs/previous-prompt.md
-/.reasonix/
-
 # Editor swap files (kate/vim)
 *.swp
 *.swo
 *.kate-swp
+
+/src/lib/generated/prisma
+/.idea/
+/reasonix.toml
+/REASONIX.md
+/.reasonix/
 /docs/
-/DB/
-/docs/867-Article Text-2420-1-10-20240722.pdf
-/docs/Lorem_ipsum.png

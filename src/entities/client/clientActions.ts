@@ -47,7 +47,9 @@ async function requireProjectOwner(): Promise<
  * Staff-only gate for READ access to the client registry. Client employees
  * (and unauthenticated callers) must never receive the full client list.
  */
-async function requireStaff(): Promise<{ ok: true } | { ok: false; error: string }> {
+async function requireStaff(): Promise<
+	{ ok: true } | { ok: false; error: string }
+> {
 	const userId = await getCurrentUserId();
 	if (!userId) return { ok: false, error: "Authentication required." };
 	const profile = await prisma.profiles.findUnique({
@@ -136,9 +138,8 @@ async function createClientWithInviteCode(
 			});
 			return { client: newClient, inviteCode };
 		} catch (error) {
-			const meta = (
-				error as { code?: unknown; meta?: { target?: unknown } }
-			).meta;
+			const meta = (error as { code?: unknown; meta?: { target?: unknown } })
+				.meta;
 			const isCollision =
 				error &&
 				typeof error === "object" &&
@@ -233,7 +234,8 @@ export async function resolveClientByInviteCode(
 		if (!client || client.is_deleted) {
 			return {
 				success: false,
-				error: "Invalid invite code. Ask your project owner for the current code.",
+				error:
+					"Invalid invite code. Ask your project owner for the current code.",
 			};
 		}
 		return {

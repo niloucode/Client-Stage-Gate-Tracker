@@ -1,7 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { User, Pencil, ArrowUpDown, ChevronUp, ChevronDown, RefreshCw } from "lucide-react";
+import {
+	User,
+	Pencil,
+	ArrowUpDown,
+	ChevronUp,
+	ChevronDown,
+	RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Client, SortField, SortDirection } from "../model/types";
 
@@ -166,7 +173,9 @@ export function ClientsTable({
 }: ClientsTableProps) {
 	const getSortIcon = (field: SortField) => {
 		if (sortField !== field) {
-			return <ArrowUpDown className="h-3 w-3 shrink-0 opacity-40 hover:opacity-100" />;
+			return (
+				<ArrowUpDown className="h-3 w-3 shrink-0 opacity-40 hover:opacity-100" />
+			);
 		}
 		return sortDirection === "asc" ? (
 			<ChevronUp className="h-3 w-3 shrink-0 text-brand-600" />

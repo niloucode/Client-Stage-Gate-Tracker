@@ -336,10 +336,8 @@ export async function updateProject(data: ProjectUpdateInput) {
 		// plan_start_at/plan_end_at are NOT NULL; update dates are
 		// non-nullable in the schema, so only absent (undefined) means
 		// "leave unchanged" — never send null to the DB.
-		if (data.planStart !== undefined)
-			updateData.plan_start_at = data.planStart;
-		if (data.planEnd !== undefined)
-			updateData.plan_end_at = data.planEnd;
+		if (data.planStart !== undefined) updateData.plan_start_at = data.planStart;
+		if (data.planEnd !== undefined) updateData.plan_end_at = data.planEnd;
 
 		// The client linkage lives on the Contracts row (NOT NULL invariant);
 		// update it atomically with the project fields.

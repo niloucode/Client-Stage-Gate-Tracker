@@ -39,7 +39,11 @@ export function collectImages(fileList: FileList | null): {
 export async function uploadImages(
 	files: File[],
 	folder: string,
-): Promise<{ imageUrls: string[]; uploadedPaths: string[]; error: string | null }> {
+): Promise<{
+	imageUrls: string[];
+	uploadedPaths: string[];
+	error: string | null;
+}> {
 	const uploadedPaths: string[] = [];
 	const imageUrls: string[] = [];
 	let uploadError: string | null = null;
@@ -60,7 +64,8 @@ export async function uploadImages(
 			const { data } = supabase.storage.from("images").getPublicUrl(filePath);
 			imageUrls.push(data.publicUrl);
 		} catch (err) {
-			uploadError = err instanceof Error ? err.message : "Failed to upload images.";
+			uploadError =
+				err instanceof Error ? err.message : "Failed to upload images.";
 			break;
 		}
 	}

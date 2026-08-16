@@ -1,7 +1,13 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ticketKeys, historyKeys, stageKeys, commentKeys, issueKeys } from "@/shared/query/keys";
+import {
+	ticketKeys,
+	historyKeys,
+	stageKeys,
+	commentKeys,
+	issueKeys,
+} from "@/shared/query/keys";
 import {
 	createTicket,
 	updateTicket,
@@ -43,7 +49,10 @@ export function useUpdateTicket() {
 		onSuccess: async (_data, variables) => {
 			await queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
 			await queryClient.invalidateQueries({
-				queryKey: commentKeys.images(ImageParentType.TICKET, variables.ticket_id),
+				queryKey: commentKeys.images(
+					ImageParentType.TICKET,
+					variables.ticket_id,
+				),
 			});
 			// Link/unlink changes the issue status — refresh issue lists + stats.
 			await queryClient.invalidateQueries({ queryKey: issueKeys.all });
@@ -125,7 +134,7 @@ export function useUpdateTicketParent() {
 			parentId: string | null;
 		}) => updateTicketParent(ticketId, parentId),
 		onSuccess: async () => {
-			// This invalidation forces the board to refetch, which instantly 
+			// This invalidation forces the board to refetch, which instantly
 			// updates the subtask list in your TicketEditor!
 			await queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
 		},

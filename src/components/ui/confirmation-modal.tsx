@@ -76,7 +76,8 @@ export function ConfirmationModal({
 								: ""
 						}
 					>
-						{confirmLabel ?? (variant === "destructive" ? `Delete ${noun}` : "Confirm")}
+						{confirmLabel ??
+							(variant === "destructive" ? `Delete ${noun}` : "Confirm")}
 					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>

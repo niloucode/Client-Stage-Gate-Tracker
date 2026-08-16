@@ -41,7 +41,9 @@ export function LoginForm() {
 				return;
 			}
 
-			await queryClient.invalidateQueries({ queryKey: profileKeys.currentUser() });
+			await queryClient.invalidateQueries({
+				queryKey: profileKeys.currentUser(),
+			});
 			router.refresh();
 		},
 	});
@@ -49,9 +51,7 @@ export function LoginForm() {
 	return (
 		<div className="bg-neutral-surface rounded-md p-6 border border-brand-100">
 			<div className="mb-7">
-				<h2>
-					Welcome back
-				</h2>
+				<h2>Welcome back</h2>
 				<p className="text-sm text-gray-400 mt-1">Sign in to your workspace</p>
 			</div>
 

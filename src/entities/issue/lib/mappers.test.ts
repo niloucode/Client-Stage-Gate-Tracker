@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatIssueDateTime, mapIssueRow, type IssueRow } from "./mappers";
+import {
+	formatIssueDateTime,
+	mapIssueRow,
+	mapLinkedIssueChip,
+	type IssueRow,
+} from "./mappers";
+import type { IssueItem, LinkedIssueChip } from "../types";
 
 // Local-time construction so the formatted output is timezone-independent.
 const reportedAt = new Date(2026, 7, 2, 14, 30); // Aug 2, 2026 14:30 local
@@ -18,9 +24,15 @@ const baseRow: IssueRow = {
 	time_of_error: new Date(2026, 7, 2, 14, 28),
 	IssueSteps: [
 		{ number: 1, step: "Navigate to the dashboard.", image: null },
-		{ number: 2, step: "Click Save repeatedly.", image: "https://cdn.example.com/step.png" },
+		{
+			number: 2,
+			step: "Click Save repeatedly.",
+			image: "https://cdn.example.com/step.png",
+		},
 	],
-	Tickets: [{ ticket_id: "44444444-4444-4444-4444-444444444444", name: "TICK-1042" }],
+	Tickets: [
+		{ ticket_id: "44444444-4444-4444-4444-444444444444", name: "TICK-1042" },
+	],
 	Profile: { first_name: "Jane", last_name: "Smith" },
 };
 
@@ -83,5 +95,54 @@ describe("mapIssueRow", () => {
 describe("formatIssueDateTime", () => {
 	it("formats like the legacy mock (MM/DD/YYYY, HH:MM 24h)", () => {
 		expect(formatIssueDateTime(reportedAt)).toBe("08/02/2026, 14:30");
+	});
+});
+
+describe("mapLinkedIssueChip", () => {
+	it("maps the light board row to the chip shape (lowercased)", () => {
+		const chip = mapLinkedIssueChip({
+			issue_id: "11111111-1111-1111-1111-111111111111",
+			name: "Authentication Token Expiration Bug",
+			type: "not_saving",
+			urgency: "HIGH",
+			status: "RESOLVED",
+		});
+		expect(chip).toEqual({
+			id: "11111111-1111-1111-1111-111111111111",
+			name: "Authentication Token Expiration Bug",
+			type: "not_saving",
+			urgency: "high",
+			status: "resolved",
+		});
+	});
+
+	it("keeps the free-text type for 'other' issues", () => {
+		const chip = mapLinkedIssueChip({
+			issue_id: "11111111-1111-1111-1111-111111111111",
+			name: "UI Bug",
+			type: "UI Bug",
+			urgency: "LOW",
+			status: "UNLINKED",
+		});
+		expect(chip.type).toBe("UI Bug");
+		expect(chip.status).toBe("unlinked");
+	});
+
+	it("is assignable from a full IssueItem (picker selection)", () => {
+		const full: IssueItem = {
+			id: "11111111-1111-1111-1111-111111111111",
+			name: "Full",
+			type: "deadlinks",
+			urgency: "medium",
+			status: "linked",
+			clientName: "Jane Smith",
+			reportedAt: "08/02/2026, 14:30",
+			description: "",
+			systemEnv: "",
+			timeOfError: "N/A",
+			steps: [],
+		};
+		const chip: LinkedIssueChip = full;
+		expect(chip.status).toBe("linked");
 	});
 });

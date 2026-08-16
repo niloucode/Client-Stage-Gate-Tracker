@@ -1,4 +1,7 @@
-import type { GanttEvent, GanttResource } from "@/components/reui/gantt/gantt-types";
+import type {
+	GanttEvent,
+	GanttResource,
+} from "@/components/reui/gantt/gantt-types";
 import type {
 	GanttBarEventData,
 	GanttLevel,
@@ -87,7 +90,8 @@ export function buildGanttEvents(
 	const events: GanttEvent<GanttBarEventData>[] = [];
 
 	for (const row of rows) {
-		const range = tab === "planned" ? getPlannedRange(row) : getActualRange(row, now);
+		const range =
+			tab === "planned" ? getPlannedRange(row) : getActualRange(row, now);
 		if (!range) continue;
 
 		const status = deriveRowStatus(row);

@@ -967,7 +967,6 @@ function useGanttGestures<TData = unknown>() {
 
 export {
 	cancelActiveGanttGestures,
-	GANTT_ACTIVATION,
 	markGestureEnd,
 	useGanttGestures,
 	useGanttGestureTeardown,

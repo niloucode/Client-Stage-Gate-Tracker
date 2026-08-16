@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"scripts/**/*.mjs\" \"next.config.ts\" \"eslint.config.mjs\" \"postcss.config.mjs\" \"prisma.config.ts\" \"vitest.config.ts\"",
     "deploy": "npx prisma migrate deploy"
   },
   "dependencies": {
