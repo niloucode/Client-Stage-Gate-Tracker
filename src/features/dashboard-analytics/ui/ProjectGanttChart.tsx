@@ -37,6 +37,7 @@ const LEVEL_HEADER_LABEL: Record<GanttLevel, string> = {
  * Thin wrapper around the reui Gantt engine: maps our normalized rows into
  * its resources/events shape and swaps only the bar CONTENT (GanttBarContent)
  * and the empty state — layout, scroll and the today line stay library-owned.
+ * @returns The rendered chart.
  */
 export function ProjectGanttChart({
 	rows,

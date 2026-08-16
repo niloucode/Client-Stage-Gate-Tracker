@@ -7,6 +7,7 @@ const LEVEL_LABEL: Record<GanttLevel, string> = {
 	workflows: "Workflows",
 };
 
+/** Empty-state panel shown when a level has no rows. */
 export function EmptyGanttState({ level }: { level: GanttLevel }) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-3 py-20 text-center">

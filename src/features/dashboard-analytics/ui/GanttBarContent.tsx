@@ -8,6 +8,7 @@ import type { GanttBarEventData } from "../types";
  * Replaces reui's default translucent-tint bar with a solid fill (Planned tab
  * gets a dashed outline instead) — the engine still owns all positioning,
  * drag/resize wiring and lane packing; this only swaps the bar's content.
+ * @returns The rendered bar content.
  */
 export function GanttBarContent({
 	occurrence,
