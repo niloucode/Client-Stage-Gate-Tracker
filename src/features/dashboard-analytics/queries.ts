@@ -88,14 +88,17 @@ const dashboardAnalyticsQueryOptions = {
 		}),
 };
 
+/** Gantt data for the phases level. */
 export function usePhasesGantt(projectId: string) {
 	return useQuery(dashboardAnalyticsQueryOptions.phases(projectId));
 }
 
+/** Gantt data for the modules level. */
 export function useModulesGantt(projectId: string) {
 	return useQuery(dashboardAnalyticsQueryOptions.modules(projectId));
 }
 
+/** Gantt data for the workflows level. */
 export function useWorkflowsGantt(projectId: string) {
 	return useQuery(dashboardAnalyticsQueryOptions.workflows(projectId));
 }

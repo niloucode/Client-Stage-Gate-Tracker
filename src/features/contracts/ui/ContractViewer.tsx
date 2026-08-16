@@ -40,6 +40,7 @@ interface PDFViewerProps {
 	onSuccess: () => void;
 }
 
+/** PDF viewer + upload/delete controls for the project contract. */
 export function ContractViewer({
 	className = "",
 	projectId,

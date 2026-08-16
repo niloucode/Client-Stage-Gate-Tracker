@@ -172,6 +172,7 @@ function SignatureBox({ person }: { person: Signatory }) {
  * 2026-08-15 spec: Combined signatory list and approval workflow.
  * Approved signatories show their details and signature; pending parties
  * only show a pending status indicator.
+ * @returns The rendered approval card for the viewer's role.
  */
 export function ContractApprovalCard({
 	projectId,
