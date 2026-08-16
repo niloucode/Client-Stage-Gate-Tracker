@@ -55,6 +55,7 @@ const TYPE_OPTIONS: {
 	},
 ];
 
+/** Create/edit modal for project variables (form-kit based). */
 export function VariableFormModal({
 	isOpen,
 	variable,
